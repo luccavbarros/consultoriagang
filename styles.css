@@ -165,7 +165,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   padding: 32px 0;
 }
 .s1__left { width: 411px; flex: none; display: flex; flex-direction: column; gap: 64px; }
-.s1__art { align-self: flex-start; width: auto; height: auto; max-height: 224px; object-fit: contain; }
+.s1__art { align-self: flex-start; width: auto; height: auto; max-height: 224px; overflow: visible; }
+.s1__art path { stroke-dasharray: 1; }
 .s1__list { flex: 1; padding-top: 44px; }
 .s1__list li { padding: 16px 0; border-bottom: 1px solid var(--greybemlight); }
 .s1__list li:first-child { padding-top: 0; }
@@ -188,6 +189,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .s2__stage {
   position: relative;
   flex: 1;
+  /* set from JS on desktop so the stage centers on the screen, not on the space under the title */
+  margin-bottom: var(--s2-lift, 0px);
   width: min(100%, var(--container));
   display: grid;
   grid-template-columns: 1fr 208px 1fr;
@@ -204,7 +207,6 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   border: 1px solid #c9c9c9;
   border-radius: 24px;
   display: flex; align-items: center; justify-content: center;
-  background: var(--white);
 }
 .s2__grid { overflow: visible; }
 
@@ -234,6 +236,15 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   font-weight: 500; font-size: clamp(36px, 5vw, 72px); line-height: 1; letter-spacing: -0.018em;
   color: var(--darkgrey);
 }
+
+/* "=" lights up and a soft glow sits behind the result */
+.s3__glow {
+  position: absolute; left: 50%; top: 50%; translate: -50% -50%;
+  width: 150%; height: 150%; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(243, 243, 243, .14), rgba(243, 243, 243, 0));
+  pointer-events: none;
+}
+.s3__icon--stack > img { position: relative; }
 
 /* ===== Section 04 ===== */
 .s4 {
@@ -346,6 +357,17 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 }
 .modal__card::-webkit-scrollbar { display: none; }
 .modal.is-open .modal__card { transform: none; }
+.form-progress {
+  position: sticky; top: -12px; z-index: 3; /* sticks to the card's edge, above its 12px top padding */
+  height: 2px; margin: -12px -32px 10px;
+  background: rgba(243, 243, 243, .08);
+}
+.form-progress__bar {
+  display: block; height: 100%;
+  background: var(--white);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform .6s cubic-bezier(.2, .8, .2, 1);
+}
 .modal__close {
   position: absolute; top: 12px; right: 12px; z-index: 2;
   width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
@@ -404,20 +426,18 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .opt input:focus-visible + span { outline: 2px solid var(--ganggrey); outline-offset: 2px; }
 
 .form-error { margin-top: 20px; color: #e08a8a; font-size: 14px; }
-.form-nav { position: relative; display: flex; justify-content: center; align-items: center; margin-top: 32px; }
-.form-back {
-  position: absolute; left: 0;
-  font-size: 14px; color: var(--ganggrey);
-  transition: color .2s;
-}
-.form-back:hover { color: var(--greybemlight); }
-.form-back[hidden] { display: none; }
+.form-nav { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 32px; }
+.form-back,
 .form-next {
   width: 64px; height: 64px; border-radius: 73px;
   display: flex; align-items: center; justify-content: center;
   background: #1e1e1e;
   transition: background-color .3s, transform .3s;
 }
+.form-back { background: var(--darkgrey); }
+.form-back img { width: 32px; height: 32px; transform: rotate(180deg); filter: brightness(3.2); }
+.form-back:hover { transform: translateX(-4px); }
+.form-back[hidden] { display: none; }
 .form-next img { width: 32px; height: 32px; transition: filter .3s; }
 .form-next:not(:disabled) { background: var(--darkgrey); }
 .form-next:not(:disabled) img { filter: brightness(3.2); }
@@ -436,6 +456,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 }
 
 @media (max-width: 860px) {
+  .br-d { display: none; } /* line breaks tuned for desktop only */
   .site-header__bar { padding-left: 20px; }
   .site-header__actions { gap: 16px; }
 
@@ -485,6 +506,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   .footer__bottom { margin-top: 40px; height: auto; gap: 48px; }
 
   .modal__card { padding: 12px 20px 24px; }
+  .form-progress { margin: -12px -20px 10px; }
 }
 
 @media (max-height: 760px) and (min-width: 861px) {

@@ -37,6 +37,25 @@
       duration: gsap.utils.random(3.2, 5), ease: 'sine.inOut', yoyo: true, repeat: -1, delay: i * 0.25,
     });
   });
+  // Mouse parallax: images drift slightly away from the cursor, deeper ones a bit more
+  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    const movers = [...document.querySelectorAll('.hero__img')].map((el) => {
+      const img = el.querySelector('img');
+      const depth = Math.abs(parseFloat(el.dataset.speed || '-0.3')) * 60;
+      return {
+        depth,
+        x: gsap.quickTo(img, 'x', { duration: 1.2, ease: 'power3.out' }),
+        y: gsap.quickTo(img, 'y', { duration: 1.2, ease: 'power3.out' }),
+      };
+    });
+    hero.addEventListener('mousemove', (e) => {
+      const nx = e.clientX / window.innerWidth - 0.5;
+      const ny = e.clientY / window.innerHeight - 0.5;
+      movers.forEach((m) => { m.x(-nx * m.depth); m.y(-ny * m.depth); });
+    });
+    hero.addEventListener('mouseleave', () => movers.forEach((m) => { m.x(0); m.y(0); }));
+  }
+
   // Scroll parallax, different speed per image
   document.querySelectorAll('.hero__img').forEach((el) => {
     const speed = parseFloat(el.dataset.speed || '-0.3');
@@ -73,7 +92,12 @@
       },
     });
 
-    const reveal = (p, at) => tl.to(parts(p), { ...SHOWN, duration: 0.6, stagger: 0.1 }, at);
+    const reveal = (p, at) => {
+      tl.to(parts(p), { ...SHOWN, duration: 0.6, stagger: 0.1 }, at);
+      // the arrows draw themselves in as the panel appears
+      tl.fromTo(p.querySelectorAll('.s1__art path'), { strokeDashoffset: 1 },
+        { strokeDashoffset: 0, duration: 0.9, stagger: 0.03, ease: 'power2.inOut' }, at + 0.1);
+    };
     const hide = (p, at) => tl.to(parts(p), { ...GONE, duration: 0.5, stagger: 0.04, ease: 'power2.in' }, at);
 
     tl.to(dots[0], { backgroundColor: '#050505', scale: 1.15, duration: 0.3 }, 0);
@@ -88,6 +112,43 @@
     reveal(panels[2], 7.0);
     tl.to({}, { duration: 4.4 }); // hold the last message long enough to read it
 
+    // Idle motion for the arrows, only while the section is on screen
+    const arrows = (sel) => gsap.utils.toArray(sel + ' .s1-arrow');
+    const along = (g, d) => ({ x: +g.dataset.dx * d, y: +g.dataset.dy * d });
+    const loops = [];
+
+    // Por que você está aqui: every arrow pulls its own way, only the black one rises steadily
+    arrows('.s1__art--scattered').forEach((g) => {
+      const key = g.classList.contains('s1-arrow--key');
+      loops.push(gsap.to(g, {
+        ...along(g, key ? 8 : gsap.utils.random(5, 9)),
+        duration: key ? 1.6 : gsap.utils.random(0.9, 1.6),
+        delay: key ? 0 : gsap.utils.random(0, 1),
+        ease: 'sine.inOut', yoyo: true, repeat: -1, paused: true,
+      }));
+    });
+
+    // Encontre seu ponto ideal: the arrows rise together in a wave, the black one goes highest
+    const up = arrows('.s1__art--up');
+    loops.push(gsap.timeline({ repeat: -1, paused: true, defaults: { ease: 'sine.inOut' } })
+      .to(up, { y: (i, g) => (g.classList.contains('s1-arrow--key') ? -16 : -8), duration: 0.9, stagger: 0.08 })
+      .to(up, { y: 0, duration: 0.9, stagger: 0.08 }, '>-0.3'));
+
+    // O que você quer: everything converges on the dot, which pulses on arrival
+    const conv = arrows('.s1__art--converge');
+    loops.push(gsap.timeline({ repeat: -1, repeatDelay: 0.4, paused: true })
+      .to(conv, { x: (i, g) => +g.dataset.dx * 8, y: (i, g) => +g.dataset.dy * 8, duration: 0.9, ease: 'power2.in' })
+      .to('.s1-core', { scale: 1.35, svgOrigin: '108 112.5', duration: 0.25, ease: 'power2.out' })
+      .to(conv, { x: 0, y: 0, duration: 1.1, ease: 'power2.out' }, '<')
+      .to('.s1-core', { scale: 1, svgOrigin: '108 112.5', duration: 0.6, ease: 'power2.inOut' }, '<0.15'));
+
+    ScrollTrigger.create({
+      trigger: section,
+      start: 'top bottom',
+      end: 'bottom top',
+      onToggle: (self) => loops.forEach((l) => (self.isActive ? l.play() : l.pause())),
+    });
+
     // Section 02 rises over this one with the same background: fade our content out first so no edge is ever seen
     gsap.to('.s1__inner', {
       autoAlpha: 0, filter: 'blur(12px)', ease: 'none',
@@ -98,6 +159,22 @@
   /* ---------- Section 02: sticky presentation ---------- */
   (() => {
     const section = document.querySelector('.s2');
+
+    // Title stays at the top; the stage below it is centered on the screen (desktop only)
+    const sticky = section.querySelector('.s2__sticky');
+    const headEl = section.querySelector('.s2__head');
+    const desktop = window.matchMedia('(min-width: 861px)');
+    const centerStage = () => {
+      if (!desktop.matches) return sticky.style.removeProperty('--s2-lift');
+      const vh = window.innerHeight;
+      const headBottom = headEl.offsetTop + headEl.offsetHeight;
+      // screen center, but never closer than 96px between the subtitle and the 208px box
+      const centerY = Math.max(vh / 2, headBottom + 96 + 104);
+      sticky.style.setProperty('--s2-lift', Math.max(0, headBottom + vh - 40 - 2 * centerY) + 'px');
+    };
+    centerStage();
+    window.addEventListener('resize', centerStage);
+
     const head = section.querySelectorAll('.s2__head > *');
     const labels = gsap.utils.toArray('.s2__label');
     const descs = gsap.utils.toArray('.s2__desc');
@@ -161,9 +238,13 @@
     const head = section.querySelectorAll('.s3__head > *');
     const seq = section.querySelectorAll('.s3__equation > *');
     const lines = section.querySelector('.s3__lines');
+    const eq = section.querySelector('.s3__op--eq');
+    const glow = section.querySelector('.s3__glow');
+    const result = seq[seq.length - 1];
 
     gsap.set([...head, ...seq], HIDDEN);
     gsap.set(lines, { autoAlpha: 0, scale: 0.6 });
+    gsap.set(glow, { autoAlpha: 0, scale: 0.5 });
 
     const tl = gsap.timeline({
       defaults: { ease: 'power2.out' },
@@ -171,7 +252,15 @@
     });
     tl.to(head, { ...SHOWN, duration: 0.8, stagger: 0.2 }, 0);
     seq.forEach((el, i) => tl.to(el, { ...SHOWN, x: 0, duration: 0.6 }, 1.6 + i * 0.7));
-    tl.to(lines, { autoAlpha: 1, scale: 1, duration: 0.6 }, 1.6 + seq.length * 0.7)
+    const end = 1.6 + seq.length * 0.7;
+    tl.to(lines, { autoAlpha: 1, scale: 1, duration: 0.6 }, end)
+      // the result gets the weight: "=" turns white with a small pulse, then a glow opens behind the icon
+      .to(eq, { color: '#f3f3f3', duration: 0.5 }, end + 0.2)
+      .to(eq, { scale: 1.15, duration: 0.25, yoyo: true, repeat: 1, ease: 'power1.inOut' }, end + 0.2)
+      // everything before the "=" fades back so only the result stands out
+      .to([...seq].slice(0, -2), { opacity: 0.3, duration: 0.6, ease: 'power1.inOut' }, end + 0.2)
+      .to(glow, { autoAlpha: 1, scale: 1, duration: 0.8, ease: 'power2.out' }, end + 0.4)
+      .to(result, { scale: 1.04, duration: 0.6, ease: 'power2.out' }, end + 0.4)
       .to({}, { duration: 0.8 });
   })();
 
@@ -340,7 +429,23 @@
     return true;
   };
 
+  // Progress line: one quarter per step, filling in as each question in it is answered
+  const progressBar = document.querySelector('.form-progress__bar');
+  const stepFraction = (step) => {
+    const texts = [...step.querySelectorAll('input.field[required]')];
+    const groups = [...new Set([...step.querySelectorAll('input[type="radio"], input[type="checkbox"]')].map((i) => i.name))];
+    const total = texts.length + groups.length;
+    const done = texts.filter(isValidField).length
+      + groups.filter((name) => step.querySelector(`input[name="${name}"]:checked`)).length;
+    return total ? done / total : 0;
+  };
+  const updateProgress = () => {
+    const p = current >= LAST_QUESTION_STEP ? 1 : (current + stepFraction(steps[current])) / LAST_QUESTION_STEP;
+    progressBar.style.transform = `scaleX(${p})`;
+  };
+
   const updateNext = () => {
+    updateProgress();
     if (current >= LAST_QUESTION_STEP) return;
     nextBtn.disabled = !stepIsValid(steps[current]);
   };
