@@ -308,11 +308,13 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .footer { position: relative; z-index: 1; background: var(--black); overflow: hidden; }
 .footer__inner { will-change: transform; }
 .footer__about {
-  display: flex; justify-content: space-between; align-items: flex-start; gap: 48px;
+  display: flex; justify-content: space-between; align-items: stretch; gap: 48px;
   padding: 200px var(--gutter) 64px;
   max-width: calc(var(--container) + 2 * var(--gutter)); margin: 0 auto;
 }
 .footer__title { color: #e5e5e5; white-space: nowrap; }
+/* title on top, button at the bottom, level with the last line of the text */
+.footer__lead { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; gap: 40px; }
 .footer__text { width: 497px; color: var(--ganggrey); display: flex; flex-direction: column; gap: 1.2em; }
 .footer__bottom {
   margin-top: 40px;
@@ -510,6 +512,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 
   .footer__about { flex-direction: column; padding-top: 140px; padding-bottom: 40px; }
   .footer__text { width: 100%; }
+  .footer__lead { display: contents; } /* on phones the button goes after the text */
+  .footer__cta { order: 1; align-self: flex-start; margin-top: -8px; }
   .footer__bottom { margin-top: 40px; height: auto; gap: 48px; }
 
   .modal__card { padding: 12px 20px 24px; }
