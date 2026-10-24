@@ -7,6 +7,59 @@
 
   gsap.registerPlugin(ScrollTrigger);
 
+  /* ---------- Typography: no orphan words on any screen ---------- */
+  // 1) connecting words ("o", "e", "de", "que", "sem", "para"...) never end a line: they stick to the next word
+  // 2) the last word of every text block never sits alone on its line: it sticks to the word before it,
+  //    as long as that pair is narrow enough for the block (measured, re-run when the width changes)
+  (() => {
+    const NBSP = '\u00a0';
+    const WORDS = 'a|o|e|é|à|as|os|ao|aos|de|do|da|dos|das|em|no|na|nos|nas|um|uma|por|com|sem|que|se|ou|mas|nem|para|pela|pelo|como|entre|sobre';
+    const SHORT = new RegExp(`(^|[\\s\\u00a0(])(${WORDS}) (?=\\S)`, 'gi');
+    const blocks = [...document.querySelectorAll('.hero__title .line, h2, h3, p, li, label')];
+    const ctx = document.createElement('canvas').getContext('2d');
+    const original = new Map();
+    const textNodes = (el) => {
+      const out = [];
+      const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      while (walk.nextNode()) out.push(walk.currentNode);
+      return out;
+    };
+    const fix = () => {
+      blocks.forEach((el) => {
+        const nodes = textNodes(el);
+        nodes.forEach((n) => {
+          if (!original.has(n)) original.set(n, n.data);
+          let t = original.get(n), prev;
+          do { prev = t; t = t.replace(SHORT, `$1$2${NBSP}`); } while (t !== prev);
+          n.data = t;
+        });
+        // hidden form steps report 0: use the nearest ancestor that has a width
+        let box = el;
+        while (box && !box.clientWidth) box = box.parentElement;
+        const width = box ? box.clientWidth : 0;
+        if (!width) return;
+        // words are split on plain spaces only; ones already joined by NBSP count as one chunk
+        const last = nodes.reverse().find((n) => /[^ \n] +[^ \n]/.test(n.data.trimEnd()));
+        if (!last) return;
+        const m = last.data.trimEnd().match(/([^ \n]+) +([^ \n]+)$/);
+        if (!m) return;
+        const cs = getComputedStyle(el);
+        ctx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+        if (ctx.measureText(m[1] + ' ' + m[2]).width <= width * 0.85) {
+          last.data = last.data.replace(/ +([^ \n]+\s*)$/, NBSP + '$1');
+        }
+      });
+    };
+    fix();
+    if (document.fonts) document.fonts.ready.then(fix);
+    let lastW = window.innerWidth;
+    window.addEventListener('resize', () => {
+      if (window.innerWidth === lastW) return;
+      lastW = window.innerWidth;
+      fix();
+    });
+  })();
+
   /* ---------- Smooth scroll (Lenis) ---------- */
   const lenis = new Lenis({ lerp: reduceMotion ? 1 : 0.08, smoothWheel: true, wheelMultiplier: 1 });
   lenis.on('scroll', ScrollTrigger.update);
