@@ -198,8 +198,10 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   column-gap: 32px;
 }
 .s2__col { position: relative; height: 200px; }
-.s2__label, .s2__desc { position: absolute; top: 50%; translate: 0 -50%; }
+/* centered with auto margins (GSAP owns transforms on these, so no translate here) */
+.s2__label, .s2__desc { position: absolute; top: 0; bottom: 0; height: fit-content; margin: auto 0; }
 .s2__col--left .s2__label { left: 0; }
+.s2__label { white-space: nowrap; } /* line breaks are set in the HTML */
 .s2__col--right { justify-self: center; width: 100%; max-width: 260px; margin-left: 150px; }
 .s2__desc { left: 0; width: 100%; }
 .s2__box {
