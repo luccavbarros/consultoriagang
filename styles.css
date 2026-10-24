@@ -193,7 +193,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   margin-bottom: var(--s2-lift, 0px);
   width: min(100%, var(--container));
   display: grid;
-  grid-template-columns: 1fr 208px 1fr;
+  grid-template-columns: 1fr 288px 1fr;
   align-items: center;
   column-gap: 32px;
 }
@@ -202,15 +202,15 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .s2__label, .s2__desc { position: absolute; top: 0; bottom: 0; height: fit-content; margin: auto 0; }
 .s2__col--left .s2__label { left: 0; }
 .s2__label { white-space: nowrap; } /* line breaks are set in the HTML */
-.s2__col--right { justify-self: center; width: 100%; max-width: 260px; margin-left: 150px; }
+.s2__col--right { justify-self: center; width: 100%; max-width: 260px; margin-left: clamp(32px, calc(26vw - 220px), 150px); }
 .s2__desc { left: 0; width: 100%; }
 .s2__box {
-  width: 208px; height: 208px;
+  width: 288px; height: 288px;
   border: 1px solid #c9c9c9;
-  border-radius: 24px;
+  border-radius: 32px;
   display: flex; align-items: center; justify-content: center;
 }
-.s2__grid { overflow: visible; }
+.s2__grid { overflow: visible; width: 176px; height: auto; }
 
 /* ===== Section 03 ===== */
 .s3 { position: relative; height: 340vh; }
@@ -488,8 +488,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   .s2__col--right { margin-left: 0; max-width: none; height: 60px; }
   .s2__label, .s2__desc { left: 0; right: 0; text-align: center; }
   .s2__col--left .s2__label { left: 0; }
-  .s2__box { width: 160px; height: 160px; border-radius: 20px; }
-  .s2__grid { width: 96px; height: auto; }
+  .s2__box { width: clamp(150px, calc(100vh - 500px), 208px); height: auto; aspect-ratio: 1; border-radius: 26px; } /* smaller on short phones */
+  .s2__grid { width: 60%; height: auto; }
 
   .s3__equation { width: 100%; }
   .s3__item { width: auto; flex: 1; min-width: 0; max-width: 120px; gap: 10px; }
