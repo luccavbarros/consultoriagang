@@ -193,7 +193,6 @@
         <div class="s3__head">
           <h2 class="title-xl s3__title">De quem<br />você precisa</h2>
           <p class="text s3__sub">De quem conecte todas as peças e faça com que as outras pessoas enxerguem o mesmo que você.</p>
-          <button class="btn btn--gray s3__cta" data-open-form>Estou Interessado</button>
         </div>
         <div class="s3__equation">
           <div class="s3__item">
@@ -218,41 +217,71 @@
             <p class="small">Compreende<br />o cenário completo.</p>
           </div>
         </div>
+        <button class="btn btn--gray s3__cta" data-open-form>Estou Interessado</button>
       </div>
     </section>
 
     <!-- SECTION 04 -->
     <section class="s4" id="s4">
-      <div class="s4__media"><img src="assets/s4-image.png" alt="Ecobag com identidade visual da marca Viventeris" /></div>
+      <div class="s4__media s4__stage" aria-hidden="true">
+        <!-- one symbol per step, driven by the accordion: scattered → direction → connected → one mark -->
+        <svg class="s4__art" viewBox="0 0 400 400" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <g class="s4-lines" stroke="#c9c9c9" stroke-width="1.5">
+            <path d="M130 130H270" pathLength="1"/>
+            <path d="M130 200H270" pathLength="1"/>
+            <path d="M130 270H270" pathLength="1"/>
+            <path d="M130 130V270" pathLength="1"/>
+            <path d="M200 130V270" pathLength="1"/>
+            <path d="M270 130V270" pathLength="1"/>
+            <path d="M130 130L270 270" pathLength="1"/>
+            <path d="M270 130L130 270" pathLength="1"/>
+          </g>
+          <path class="s4-arrow" d="M84 316L316 84M272 84H316V128" stroke="#050505" stroke-width="1.5" pathLength="1"/>
+          <circle class="s4-ring" cx="200" cy="200" r="104" stroke="#050505" stroke-width="1.5" pathLength="1"/>
+          <circle class="s4-scan" cx="150" cy="150" r="46" stroke="#050505" stroke-width="1.5"/>
+          <g class="s4-dots" fill="#050505">
+            <circle class="s4-dot" cx="200" cy="200" r="12"/>
+            <circle class="s4-dot" cx="200" cy="200" r="12"/>
+            <circle class="s4-dot" cx="200" cy="200" r="12"/>
+            <circle class="s4-dot" cx="200" cy="200" r="12"/>
+            <circle class="s4-dot" cx="200" cy="200" r="12"/>
+            <circle class="s4-dot" cx="200" cy="200" r="12"/>
+            <circle class="s4-dot" cx="200" cy="200" r="12"/>
+            <circle class="s4-dot" cx="200" cy="200" r="12"/>
+            <circle class="s4-dot" cx="200" cy="200" r="12"/>
+          </g>
+        </svg>
+      </div>
       <div class="s4__content">
         <div class="s4__head">
           <h2 class="title-xl reveal">O que fazemos</h2>
           <p class="text reveal">Aplicamos estratégia e gestão de marca ao seu marketing para que as pessoas compreendam tudo o que sua marca tem a oferecer.</p>
         </div>
         <div class="accordion">
+          <span class="acc__rail" aria-hidden="true"></span><span class="acc__fill" aria-hidden="true"></span>
           <div class="acc reveal is-open">
-            <button class="acc__btn" aria-expanded="true"><span class="acc__dot"></span><span class="title-sm">Diagnóstico</span></button>
+            <button class="acc__btn" aria-expanded="true"><span class="acc__dot"></span><span class="small acc__num">01</span><span class="title-sm">Diagnóstico</span></button>
             <div class="acc__panel"><div class="acc__body">
               <p class="text">Um plano claro para crescer</p>
               <p class="small">Uma análise para entender como as pessoas percebem sua marca, como ela se posiciona diante dos concorrentes e onde estão as oportunidades de crescimento.</p>
             </div></div>
           </div>
           <div class="acc reveal">
-            <button class="acc__btn" aria-expanded="false"><span class="acc__dot"></span><span class="title-sm">Estratégia</span></button>
+            <button class="acc__btn" aria-expanded="false"><span class="acc__dot"></span><span class="small acc__num">02</span><span class="title-sm">Estratégia</span></button>
             <div class="acc__panel"><div class="acc__body">
               <p class="text">Um plano claro para crescer</p>
               <p class="small">Objetivos estratégicos bem definidos, com resultados mensuráveis. Você sabe aonde sua marca precisa chegar e quais caminhos seguir.</p>
             </div></div>
           </div>
           <div class="acc reveal">
-            <button class="acc__btn" aria-expanded="false"><span class="acc__dot"></span><span class="title-sm">Narrativa</span></button>
+            <button class="acc__btn" aria-expanded="false"><span class="acc__dot"></span><span class="small acc__num">03</span><span class="title-sm">Narrativa</span></button>
             <div class="acc__panel"><div class="acc__body">
               <p class="text">Uma mensagem que conecta</p>
               <p class="small">Definimos como sua marca se comunica, o que precisa dizer e o tom de voz adequado para transmitir seu valor e criar conexões com as pessoas.</p>
             </div></div>
           </div>
           <div class="acc reveal">
-            <button class="acc__btn" aria-expanded="false"><span class="acc__dot"></span><span class="title-sm">Design</span></button>
+            <button class="acc__btn" aria-expanded="false"><span class="acc__dot"></span><span class="small acc__num">04</span><span class="title-sm">Design</span></button>
             <div class="acc__panel"><div class="acc__body">
               <p class="text">Uma identidade para ser lembrada</p>
               <p class="small">Transformamos a estratégia em uma identidade visual distintiva, com elementos que tornam sua marca fácil de identificar e consistente em suas aplicações.</p>

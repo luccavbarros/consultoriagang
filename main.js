@@ -289,13 +289,14 @@
   (() => {
     const section = document.querySelector('.s3');
     const head = section.querySelectorAll('.s3__head > *');
+    const cta = section.querySelector('.s3__cta');
     const seq = section.querySelectorAll('.s3__equation > *');
     const lines = section.querySelector('.s3__lines');
     const eq = section.querySelector('.s3__op--eq');
     const glow = section.querySelector('.s3__glow');
     const result = seq[seq.length - 1];
 
-    gsap.set([...head, ...seq], HIDDEN);
+    gsap.set([...head, ...seq, cta], HIDDEN);
     gsap.set(lines, { autoAlpha: 0, scale: 0.6 });
     gsap.set(glow, { autoAlpha: 0, scale: 0.5 });
 
@@ -314,6 +315,8 @@
       .to([...seq].slice(0, -2), { opacity: 0.3, duration: 0.6, ease: 'power1.inOut' }, end + 0.2)
       .to(glow, { autoAlpha: 1, scale: 1, duration: 0.8, ease: 'power2.out' }, end + 0.4)
       .to(result, { scale: 1.04, duration: 0.6, ease: 'power2.out' }, end + 0.4)
+      // the call to action closes the reasoning, right after the result
+      .to(cta, { ...SHOWN, duration: 0.6 }, end + 1.1)
       .to({}, { duration: 0.8 });
   })();
 
@@ -330,26 +333,110 @@
     autoAlpha: 1, scale: 1, filter: 'blur(0px)', duration: 1.2, ease: 'power3.out',
     scrollTrigger: { trigger: '.s4', start: 'top 70%', toggleActions: 'play none none reverse' },
   });
-  gsap.fromTo('.s4__media img', { yPercent: -12 }, {
-    yPercent: 0, ease: 'none',
-    scrollTrigger: { trigger: '.s4__media', start: 'top bottom', end: 'bottom top', scrub: true },
-  });
+  // Steps: numbered, joined by a line that fills up to the open one; the drawing on the left follows the step
+  (() => {
+    const list = document.querySelector('.accordion');
+    const accs = [...list.querySelectorAll('.acc')];
+    const svg = document.querySelector('.s4__art');
+    const dots = [...svg.querySelectorAll('.s4-dot')];
+    const lines = svg.querySelectorAll('.s4-lines path');
+    const arrow = svg.querySelector('.s4-arrow');
+    const ring = svg.querySelector('.s4-ring');
+    const scan = svg.querySelector('.s4-scan');
 
-  const accs = document.querySelectorAll('.acc');
-  accs.forEach((acc) => {
-    acc.querySelector('.acc__btn').addEventListener('click', () => {
-      const willOpen = !acc.classList.contains('is-open');
-      accs.forEach((a) => {
-        a.classList.remove('is-open');
-        a.querySelector('.acc__btn').setAttribute('aria-expanded', 'false');
+    // dot positions for each step (viewBox 400x400)
+    const grid = [130, 200, 270].flatMap((y) => [130, 200, 270].map((x) => [x, y]));
+    const POS = [
+      [[96, 112], [262, 88], [178, 176], [314, 196], [118, 286], [224, 300], [304, 318], [70, 200], [196, 74]], // Diagnóstico: scattered
+      Array.from({ length: 9 }, (_, k) => [100 + k * 22, 300 - k * 22]),                                        // Estratégia: one direction
+      grid,                                                                                                    // Narrativa: connected
+      Array.from({ length: 9 }, () => [200, 200]),                                                             // Design: one mark
+    ];
+
+    // idle motion per step, only while the section is on screen
+    const IDLE = [
+      () => gsap.timeline({ repeat: -1, defaults: { duration: 1.3, ease: 'sine.inOut' } })
+        .to(scan, { attr: { cx: 262, cy: 96 } })
+        .to(scan, { attr: { cx: 300, cy: 300 } })
+        .to(scan, { attr: { cx: 104, cy: 280 } })
+        .to(scan, { attr: { cx: 96, cy: 112 } })
+        .add(dots.map((d) => gsap.to(d, { x: gsap.utils.random(-7, 7), y: gsap.utils.random(-7, 7), duration: 1.3, yoyo: true, repeat: 3, ease: 'sine.inOut' })), 0),
+      () => gsap.timeline({ repeat: -1 })
+        .to(dots, { x: 7, y: -7, duration: 0.5, ease: 'sine.inOut', yoyo: true, repeat: 1, stagger: 0.08 }),
+      () => gsap.timeline({ repeat: -1, repeatDelay: 0.4 })
+        .to(dots, { scale: 1.35, duration: 0.45, ease: 'sine.inOut', yoyo: true, repeat: 1, stagger: { each: 0.12, grid: [3, 3], from: 'start' } }),
+      () => gsap.timeline({ repeat: -1, yoyo: true })
+        .to(dots, { scale: 1.06, duration: 1.4, ease: 'sine.inOut' }, 0)
+        .to(ring, { scale: 1.04, svgOrigin: '200 200', duration: 1.4, ease: 'sine.inOut' }, 0),
+    ];
+
+    let idle = null;
+    let visible = false;
+    const setStep = (i, instant) => {
+      if (idle) idle.kill();
+      gsap.killTweensOf([...dots, ...lines, arrow, ring, scan]);
+      const d = instant ? 0 : 0.9;
+      gsap.to(dots, { x: 0, y: 0, scale: 1, duration: d * 0.5 });
+      dots.forEach((dot, k) => gsap.to(dot, {
+        attr: { cx: POS[i][k][0], cy: POS[i][k][1], r: [12, 7, 12, 58][i] },
+        duration: d, delay: instant ? 0 : k * 0.03, ease: 'power3.inOut',
+      }));
+      // strokes draw in when their step opens; hidden ones also go transparent (a round cap would leave a dot)
+      const draw = (on) => (on ? { strokeDashoffset: 0, autoAlpha: 1 } : { strokeDashoffset: 1, autoAlpha: 0 });
+      gsap.to(lines, { ...draw(i === 2), duration: d * 0.7, stagger: i === 2 ? 0.05 : 0, delay: i === 2 ? d * 0.6 : 0 });
+      gsap.to(arrow, { ...draw(i === 1), duration: d, delay: i === 1 ? d * 0.5 : 0, ease: 'power2.inOut' });
+      gsap.to(ring, { ...draw(i === 3), scale: 1, svgOrigin: '200 200', duration: d * 1.2, delay: i === 3 ? d * 0.6 : 0, ease: 'power2.inOut' });
+      gsap.to(scan, { autoAlpha: i === 0 ? 1 : 0, duration: d * 0.5, delay: i === 0 ? d * 0.6 : 0 });
+      idle = IDLE[i]().pause();
+      gsap.delayedCall(instant ? 0 : d + 0.3, () => { if (visible) idle.play(); });
+    };
+
+    // the line runs from the first dot to the last, and fills up to the open step
+    const placeRail = () => {
+      // layout offsets (not screen rects), so the reveal animations on each item don't shift the line
+      const topIn = (el) => { let y = 0; for (let n = el; n && n !== list; n = n.offsetParent) y += n.offsetTop; return y; };
+      const centers = accs.map((a) => {
+        const dot = a.querySelector('.acc__dot');
+        return topIn(dot) + dot.offsetHeight / 2;
       });
-      if (willOpen) {
-        acc.classList.add('is-open');
-        acc.querySelector('.acc__btn').setAttribute('aria-expanded', 'true');
-      }
-      setTimeout(() => ScrollTrigger.refresh(), 650);
+      const open = accs.findIndex((a) => a.classList.contains('is-open'));
+      list.style.setProperty('--rail-top', centers[0] + 'px');
+      list.style.setProperty('--rail-h', centers[centers.length - 1] - centers[0] + 'px');
+      list.style.setProperty('--fill-h', (open < 0 ? 0 : centers[open] - centers[0]) + 'px');
+      accs.forEach((a, k) => a.classList.toggle('is-done', open >= 0 && k < open));
+    };
+    const followRail = () => {
+      const t0 = performance.now();
+      const tick = () => { placeRail(); if (performance.now() - t0 < 700) requestAnimationFrame(tick); };
+      tick();
+    };
+
+    accs.forEach((acc, i) => {
+      acc.querySelector('.acc__btn').addEventListener('click', () => {
+        const willOpen = !acc.classList.contains('is-open');
+        accs.forEach((a) => {
+          a.classList.remove('is-open');
+          a.querySelector('.acc__btn').setAttribute('aria-expanded', 'false');
+        });
+        if (willOpen) {
+          acc.classList.add('is-open');
+          acc.querySelector('.acc__btn').setAttribute('aria-expanded', 'true');
+          setStep(i);
+        }
+        followRail();
+        setTimeout(() => ScrollTrigger.refresh(), 650);
+      });
     });
-  });
+
+    setStep(0, true);
+    placeRail();
+    window.addEventListener('resize', placeRail);
+    if (document.fonts) document.fonts.ready.then(placeRail);
+    ScrollTrigger.create({
+      trigger: '.s4', start: 'top bottom', end: 'bottom top',
+      onToggle: (self) => { visible = self.isActive; if (idle) (visible ? idle.play() : idle.pause()); },
+    });
+  })();
 
   /* ---------- Section 05: cards + animated symbols ---------- */
   (() => {
