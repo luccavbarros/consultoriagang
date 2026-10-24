@@ -334,13 +334,20 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   position: fixed; inset: 0; z-index: 100;
   display: flex; align-items: center; justify-content: center;
   padding: 24px 16px;
-  visibility: hidden; opacity: 0;
-  transition: opacity .45s ease, visibility 0s linear .45s;
+  visibility: hidden;
+  transition: visibility 0s linear .6s;
   /* wheel events pass through to the page (Lenis listens on window) */
 }
-.modal.is-open { visibility: visible; opacity: 1; transition: opacity .45s ease; }
+.modal.is-open { visibility: visible; transition: none; }
+/* the blur itself dissolves in: fading a parent's opacity would make browsers switch backdrop-filter on all at once */
 .modal__backdrop {
   position: absolute; inset: 0;
+  background: rgba(255, 255, 255, 0);
+  -webkit-backdrop-filter: blur(0px);
+  backdrop-filter: blur(0px);
+  transition: background-color .6s ease, -webkit-backdrop-filter .6s ease, backdrop-filter .6s ease;
+}
+.modal.is-open .modal__backdrop {
   background: rgba(255, 255, 255, .2);
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
@@ -356,11 +363,12 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   padding: 12px 32px 32px;
   background: var(--lightblack);
   border-radius: 16px;
+  opacity: 0;
   transform: translateY(24px) scale(.98);
-  transition: transform .55s cubic-bezier(.2, .8, .2, 1);
+  transition: opacity .45s ease, transform .55s cubic-bezier(.2, .8, .2, 1);
 }
 .modal__card::-webkit-scrollbar { display: none; }
-.modal.is-open .modal__card { transform: none; }
+.modal.is-open .modal__card { opacity: 1; transform: none; transition-delay: .1s; }
 .form-progress {
   position: sticky; top: -12px; z-index: 3; /* sticks to the card's edge, above its 12px top padding */
   height: 2px; margin: -12px -32px 10px;
