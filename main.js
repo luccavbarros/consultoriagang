@@ -430,13 +430,13 @@
       followRail();
     };
 
-    // phones: once "Estratégia" reaches the square, the steps lock there and open one by one with the scroll
+    // phones: the steps start closed; once "Diagnóstico" reaches the square they lock there and open one by one with the scroll
     const phone = window.matchMedia('(max-width: 860px)');
     const content = document.querySelector('.s4__content');
     const pin = document.querySelector('.s4__pin');
     const spacer = document.querySelector('.s4__spacer');
-    let lock = { e1: 0, shift: [0, 0, 0, 0], h: 0, stick: 0 };
-    let phoneStep = 0;
+    let lock = { shift: [0, 0, 0, 0], h: 0, stick: 0 };
+    let phoneStep = -1;
     const measure = () => {
       if (!phone.matches) {
         content.style.removeProperty('--s4-stick');
@@ -453,19 +453,18 @@
       const listTop = list.getBoundingClientRect().top - content.getBoundingClientRect().top;
       const pos = (k, open) => listTop + k * (btnH + gap) + (open >= 0 && open < k ? panel[open] : 0);
       const line = 88 + pin.offsetHeight + 56; // just below the square and its fade
-      lock.e1 = pos(1, 0);
-      lock.shift = [0, 1, 2, 3].map((k) => (k ? lock.e1 - pos(k, k) : 0));
+      lock.shift = [0, 1, 2, 3].map((k) => pos(0, -1) - pos(k, k));
       lock.h = listTop + 4 * btnH + 3 * gap + Math.max(...panel);
-      lock.stick = line - lock.e1;
+      lock.stick = line - pos(0, -1);
       content.style.height = lock.h + 'px';
       content.style.setProperty('--s4-stick', lock.stick + 'px');
-      content.style.transform = phoneStep ? `translateY(${lock.shift[phoneStep]}px)` : '';
+      content.style.transform = phoneStep > 0 ? `translateY(${lock.shift[phoneStep]}px)` : '';
     };
     const goPhoneStep = (k) => {
       if (k === phoneStep) return;
       phoneStep = k;
       openOnly(k);
-      content.style.transform = k ? `translateY(${lock.shift[k]}px)` : '';
+      content.style.transform = k > 0 ? `translateY(${lock.shift[k]}px)` : '';
     };
     ScrollTrigger.addEventListener('refreshInit', measure);
     measure();
@@ -473,8 +472,8 @@
       trigger: spacer,
       start: () => `top ${lock.stick + lock.h}px`,
       end: () => `bottom ${lock.stick + lock.h}px`,
-      onUpdate: (self) => { if (phone.matches) goPhoneStep(1 + Math.min(2, Math.floor(self.progress * 3))); },
-      onLeaveBack: () => { if (phone.matches) goPhoneStep(0); },
+      onUpdate: (self) => { if (phone.matches) goPhoneStep(Math.min(3, Math.floor(self.progress * 4))); },
+      onLeaveBack: () => { if (phone.matches) goPhoneStep(-1); },
     });
 
     accs.forEach((acc, i) => {
@@ -482,7 +481,7 @@
         if (phone.matches) {
           // on phones the scroll drives the steps, so a tap scrolls to that step
           const span = steps.end - steps.start;
-          lenis.scrollTo(i ? steps.start + ((i - 1) / 3) * span + 4 : steps.start - 40, { duration: 1 });
+          lenis.scrollTo(steps.start + (i / 4) * span + 4, { duration: 1 });
           return;
         }
         openOnly(acc.classList.contains('is-open') ? -1 : i);
@@ -491,6 +490,7 @@
     });
 
     setStep(0, true);
+    if (phone.matches) openOnly(-1);
     placeRail();
     window.addEventListener('resize', placeRail);
     if (document.fonts) document.fonts.ready.then(placeRail);
