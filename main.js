@@ -419,19 +419,73 @@
       tick();
     };
 
+    let current = 0;
+    const openOnly = (i) => {
+      accs.forEach((a, k) => {
+        a.classList.toggle('is-open', k === i);
+        a.querySelector('.acc__btn').setAttribute('aria-expanded', String(k === i));
+      });
+      if (i >= 0 && i !== current) setStep(i);
+      current = i;
+      followRail();
+    };
+
+    // phones: once "Estratégia" reaches the square, the steps lock there and open one by one with the scroll
+    const phone = window.matchMedia('(max-width: 860px)');
+    const content = document.querySelector('.s4__content');
+    const pin = document.querySelector('.s4__pin');
+    const spacer = document.querySelector('.s4__spacer');
+    let lock = { e1: 0, shift: [0, 0, 0, 0], h: 0, stick: 0 };
+    let phoneStep = 0;
+    const measure = () => {
+      if (!phone.matches) {
+        content.style.removeProperty('--s4-stick');
+        content.style.height = content.style.transform = '';
+        return;
+      }
+      // computed from sizes, not live positions, since the panels may be mid-animation
+      const btnH = accs[0].querySelector('.acc__btn').offsetHeight;
+      const gap = parseFloat(getComputedStyle(list).rowGap) || 0;
+      const panel = accs.map((a) => {
+        const kids = [...a.querySelector('.acc__body').children];
+        return 22 + kids.reduce((sum, el) => sum + el.offsetHeight, 0) + 10 * (kids.length - 1);
+      });
+      const listTop = list.getBoundingClientRect().top - content.getBoundingClientRect().top;
+      const pos = (k, open) => listTop + k * (btnH + gap) + (open >= 0 && open < k ? panel[open] : 0);
+      const line = 88 + pin.offsetHeight + 56; // just below the square and its fade
+      lock.e1 = pos(1, 0);
+      lock.shift = [0, 1, 2, 3].map((k) => (k ? lock.e1 - pos(k, k) : 0));
+      lock.h = listTop + 4 * btnH + 3 * gap + Math.max(...panel);
+      lock.stick = line - lock.e1;
+      content.style.height = lock.h + 'px';
+      content.style.setProperty('--s4-stick', lock.stick + 'px');
+      content.style.transform = phoneStep ? `translateY(${lock.shift[phoneStep]}px)` : '';
+    };
+    const goPhoneStep = (k) => {
+      if (k === phoneStep) return;
+      phoneStep = k;
+      openOnly(k);
+      content.style.transform = k ? `translateY(${lock.shift[k]}px)` : '';
+    };
+    ScrollTrigger.addEventListener('refreshInit', measure);
+    measure();
+    const steps = ScrollTrigger.create({
+      trigger: spacer,
+      start: () => `top ${lock.stick + lock.h}px`,
+      end: () => `bottom ${lock.stick + lock.h}px`,
+      onUpdate: (self) => { if (phone.matches) goPhoneStep(1 + Math.min(2, Math.floor(self.progress * 3))); },
+      onLeaveBack: () => { if (phone.matches) goPhoneStep(0); },
+    });
+
     accs.forEach((acc, i) => {
       acc.querySelector('.acc__btn').addEventListener('click', () => {
-        const willOpen = !acc.classList.contains('is-open');
-        accs.forEach((a) => {
-          a.classList.remove('is-open');
-          a.querySelector('.acc__btn').setAttribute('aria-expanded', 'false');
-        });
-        if (willOpen) {
-          acc.classList.add('is-open');
-          acc.querySelector('.acc__btn').setAttribute('aria-expanded', 'true');
-          setStep(i);
+        if (phone.matches) {
+          // on phones the scroll drives the steps, so a tap scrolls to that step
+          const span = steps.end - steps.start;
+          lenis.scrollTo(i ? steps.start + ((i - 1) / 3) * span + 4 : steps.start - 40, { duration: 1 });
+          return;
         }
-        followRail();
+        openOnly(acc.classList.contains('is-open') ? -1 : i);
         setTimeout(() => ScrollTrigger.refresh(), 650);
       });
     });

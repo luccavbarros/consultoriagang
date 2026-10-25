@@ -255,6 +255,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   padding: 106px var(--gutter);
   min-height: 100vh;
 }
+.s4__spacer { display: none; } /* phones only: scroll room for opening the steps one by one */
 .s4__pin { display: contents; } /* only a wrapper on phones, where the square sticks to the top */
 .s4__media { flex: 0 1 736px; min-width: 0; aspect-ratio: 1; border-radius: 16px; overflow: hidden; }
 .s4__stage { border: 1px solid #c9c9c9; border-radius: 32px; display: flex; align-items: center; justify-content: center; }
@@ -534,6 +535,9 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
     pointer-events: none;
   }
   .s4__media { position: relative; width: min(100%, 40vh); margin: 0 auto; }
+  /* the steps lock just under the square and open one by one while scrolling (main.js sets the offsets) */
+  .s4__content { position: sticky; top: var(--s4-stick, 0px); transition: transform .6s cubic-bezier(.65, 0, .35, 1); }
+  .s4__spacer { display: block; height: 150vh; margin-top: -64px; }
 
   .s5 { gap: 64px; }
   .s5__head { flex-direction: column; align-items: flex-start; position: sticky; top: 88px; z-index: 2; }
