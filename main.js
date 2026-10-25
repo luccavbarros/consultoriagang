@@ -738,6 +738,7 @@
         throw new Error((json.errors || []).map((er) => er.message).join(' ') || 'Falha no envio');
       }
       submitted = true;
+      if (window.fbq) window.fbq('track', 'Lead'); // only exists if the visitor accepted cookies
       showStep(LAST_QUESTION_STEP);
     } catch (err) {
       errorEl.textContent = 'Não foi possível enviar agora. Verifique sua conexão e tente novamente.';
@@ -768,4 +769,44 @@
 
   backBtn.hidden = true;
   updateNext();
+})();
+
+/* ---------- Meta Pixel, only after cookie consent (LGPD) ---------- */
+(() => {
+  const PIXEL_ID = '398840463638938';
+  const KEY = 'gang-consent';
+  const banner = document.querySelector('.consent');
+  const read = () => { try { return localStorage.getItem(KEY); } catch (e) { return null; } };
+  const save = (v) => { try { localStorage.setItem(KEY, v); } catch (e) { /* private mode: ask again next visit */ } };
+
+  const loadPixel = () => {
+    if (window.fbq) return;
+    /* Meta's base code */
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+    document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    window.fbq('init', PIXEL_ID);
+    window.fbq('track', 'PageView');
+  };
+
+  const choice = read();
+  if (choice === 'yes') return loadPixel();
+  if (choice === 'no' || !banner) return;
+
+  // shown a moment after load, so the hero gets its first impression alone
+  setTimeout(() => {
+    banner.hidden = false;
+    requestAnimationFrame(() => requestAnimationFrame(() => banner.classList.add('is-in')));
+  }, 2500);
+  banner.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-consent]');
+    if (!btn) return;
+    const yes = btn.dataset.consent === 'yes';
+    save(yes ? 'yes' : 'no');
+    if (yes) loadPixel();
+    banner.classList.remove('is-in');
+    setTimeout(() => { banner.hidden = true; }, 500);
+  });
 })();
