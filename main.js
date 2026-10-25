@@ -781,7 +781,7 @@
         throw new Error((json.errors || []).map((er) => er.message).join(' ') || 'Falha no envio');
       }
       submitted = true;
-      if (window.fbq) window.fbq('track', 'Lead'); // only exists if the visitor accepted cookies
+      sendMetaEvent('Lead', { name: form.nome.value, email: form.email.value, phone: form.whatsapp.value });
       showStep(LAST_QUESTION_STEP);
     } catch (err) {
       errorEl.textContent = 'Não foi possível enviar agora. Verifique sua conexão e tente novamente.';
@@ -854,10 +854,32 @@
   });
 })();
 
-/* ---------- WhatsApp link: counted as a contact by the Meta Pixel ---------- */
-document.querySelectorAll('a[href*="wa.me"]').forEach((a) => a.addEventListener('click', () => {
-  if (window.fbq) window.fbq('track', 'Contact');
-}));
+/* ---------- Conversions: Pixel in the browser + Conversions API on the server ----------
+   Both carry the same event ID, so Meta counts each conversion once.
+   Only after cookie consent (fbq exists only then). */
+function sendMetaEvent(name, user) {
+  if (!window.fbq) return;
+  const id = `${name}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  window.fbq('track', name, {}, { eventID: id });
+  const cookie = (k) => (document.cookie.match(new RegExp('(?:^|; )' + k + '=([^;]*)')) || [])[1];
+  const fbclid = new URLSearchParams(location.search).get('fbclid');
+  fetch('/api/meta-event', {
+    method: 'POST',
+    keepalive: true, // still sent if the page is left right away (WhatsApp link)
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      event_name: name,
+      event_id: id,
+      event_source_url: location.href,
+      fbp: cookie('_fbp'),
+      fbc: cookie('_fbc') || (fbclid ? `fb.1.${Date.now()}.${fbclid}` : undefined),
+      user: user || {},
+    }),
+  }).catch(() => {});
+}
+
+/* ---------- WhatsApp link: counted as a contact ---------- */
+document.querySelectorAll('a[href*="wa.me"]').forEach((a) => a.addEventListener('click', () => sendMetaEvent('Contact')));
 
 /* ---------- Buttons: on hover the label rolls up and comes back from below ---------- */
 document.querySelectorAll('.btn, .consent__actions button').forEach((btn) => {
