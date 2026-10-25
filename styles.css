@@ -95,7 +95,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   pointer-events: auto;
   width: min(846px, 100%);
   display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 8px 10px 32px;
+  padding: 9px 8px 9px 32px;
   background: var(--lightblack);
   border-radius: 14px;
 }
