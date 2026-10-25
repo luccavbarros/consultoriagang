@@ -71,16 +71,15 @@
 
   /* ---------- Top blur: off while a section is pinned, so the pinned titles stay sharp ---------- */
   const topBlur = document.querySelector('.top-blur');
-  if (topBlur) {
-    const pinned = new Set();
-    document.querySelectorAll('.s1, .s2, .s3').forEach((sec) => ScrollTrigger.create({
-      trigger: sec, start: 'top top', end: 'bottom bottom',
-      onToggle: (self) => {
-        if (self.isActive) pinned.add(sec); else pinned.delete(sec);
-        topBlur.classList.toggle('is-off', pinned.size > 0);
-      },
-    }));
-  }
+  const pinned = new Set();
+  const setPinned = (key, on) => {
+    if (on) pinned.add(key); else pinned.delete(key);
+    if (topBlur) topBlur.classList.toggle('is-off', pinned.size > 0);
+  };
+  document.querySelectorAll('.s1, .s2, .s3').forEach((sec) => ScrollTrigger.create({
+    trigger: sec, start: 'top top', end: 'bottom bottom',
+    onToggle: (self) => setPinned(sec, self.isActive),
+  }));
 
   /* ---------- Smooth scroll (Lenis) ---------- */
   const lenis = new Lenis({ lerp: reduceMotion ? 1 : 0.08, smoothWheel: true, wheelMultiplier: 1 });
@@ -520,6 +519,16 @@
       trigger: '.s4', start: 'top bottom', end: 'bottom top',
       onToggle: (self) => { visible = self.isActive; if (idle) (visible ? idle.play() : idle.pause()); },
     });
+
+    // desktop: a short hold once the section fills the screen, then the page moves on
+    gsap.matchMedia().add('(min-width: 861px)', () => {
+      ScrollTrigger.create({
+        trigger: '.s4', start: 'top top', end: '+=60%', pin: true,
+        refreshPriority: 1, // laid out before the triggers further down the page
+        onToggle: (self) => setPinned('s4', self.isActive),
+      });
+      return () => setPinned('s4', false);
+    });
   })();
 
   /* ---------- Section 05: cards + animated symbols ---------- */
@@ -902,6 +911,37 @@ function sendMetaEvent(name, user) {
 
 /* ---------- WhatsApp link: counted as a contact ---------- */
 document.querySelectorAll('a[href*="wa.me"]').forEach((a) => a.addEventListener('click', () => sendMetaEvent('Contact')));
+
+/* ---------- Footer e-mail: copies the address and shows "Copiado" for a moment ---------- */
+document.querySelectorAll('[data-copy-email]').forEach((btn) => {
+  const tip = btn.querySelector('.copy-tip');
+  const label = tip.querySelector('.copy-tip__text');
+  let timer;
+  // older browsers (or a refused clipboard): copy through a hidden field
+  const copyByField = (text) => {
+    const field = document.createElement('textarea');
+    field.value = text;
+    field.setAttribute('readonly', '');
+    field.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+    document.body.appendChild(field);
+    field.select();
+    const ok = document.execCommand('copy');
+    field.remove();
+    return ok ? Promise.resolve() : Promise.reject();
+  };
+  const copy = (text) => (navigator.clipboard && window.isSecureContext
+    ? navigator.clipboard.writeText(text).catch(() => copyByField(text))
+    : copyByField(text));
+  btn.addEventListener('click', () => {
+    copy(btn.dataset.copyEmail).then(() => {
+      label.textContent = 'Copiado';
+      tip.classList.add('is-in');
+      clearTimeout(timer);
+      timer = setTimeout(() => tip.classList.remove('is-in'), 1400);
+      sendMetaEvent('Contact');
+    }).catch(() => { window.location.href = 'mailto:' + btn.dataset.copyEmail; });
+  });
+});
 
 /* ---------- Buttons: on hover the label rolls up and comes back from below ---------- */
 document.querySelectorAll('.btn, .consent__actions button').forEach((btn) => {
