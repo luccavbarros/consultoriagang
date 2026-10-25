@@ -582,7 +582,14 @@
   let switching = false;
   let lastFocus = null;
 
-  const openForm = () => {
+  // Funnel events for the Meta Pixel (fbq only exists if the visitor accepted cookies)
+  const track = (name, params) => { if (window.fbq) window.fbq('trackCustom', name, params); };
+  const reachedSteps = new Set();
+  const formOrigin = (btn) =>
+    btn.closest('.site-header') ? 'menu' : btn.closest('.hero') ? 'hero' : btn.closest('.footer') ? 'rodape' : 'secao-03';
+
+  const openForm = (e) => {
+    if (e && e.currentTarget) track('AbriuFormulario', { origem: formOrigin(e.currentTarget) });
     if (submitted) resetForm();
     lastFocus = document.activeElement;
     modal.classList.add('is-open');
@@ -734,6 +741,10 @@
         card.scrollTop = 0;
         current = index;
         switching = false;
+        if (current > 0 && current < LAST_QUESTION_STEP && !reachedSteps.has(current)) {
+          reachedSteps.add(current);
+          track('EtapaFormulario', { etapa: current + 1 }); // step 1 is counted by AbriuFormulario
+        }
         backBtn.hidden = current === 0 || current >= LAST_QUESTION_STEP;
         nav.hidden = current >= LAST_QUESTION_STEP;
         updateNext();
@@ -842,6 +853,11 @@
     setTimeout(() => { banner.hidden = true; }, 500);
   });
 })();
+
+/* ---------- WhatsApp link: counted as a contact by the Meta Pixel ---------- */
+document.querySelectorAll('a[href*="wa.me"]').forEach((a) => a.addEventListener('click', () => {
+  if (window.fbq) window.fbq('track', 'Contact');
+}));
 
 /* ---------- Buttons: on hover the label rolls up and comes back from below ---------- */
 document.querySelectorAll('.btn, .consent__actions button').forEach((btn) => {
