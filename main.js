@@ -508,27 +508,28 @@
       scrollTrigger: { trigger: '.s5__cards', start: 'top 85%', toggleActions: 'play none none reverse' },
     });
 
-    // Definição: the blurry circle comes into focus, then drifts out again
+    // Definição: one blurry circle comes into focus (the problem gets defined), holds, then blurs again
     const defBlur = document.querySelector('.def-blur-amount');
     const def = gsap.timeline({ paused: true, repeat: -1, repeatDelay: 0.6, defaults: { ease: 'sine.inOut' } })
-      .fromTo('.art-definicao svg', { autoAlpha: 0, scale: 0.8 }, { autoAlpha: 1, scale: 1, duration: 0.8, transformOrigin: '50% 50%' })
-      .to(defBlur, { attr: { stdDeviation: 0 }, duration: 1.6 }, 0.4)
-      .to('.def-blur', { x: 16, duration: 1.6 }, 0.4)
-      .to('.def-sharp', { scale: 1.06, svgOrigin: '135.7 41.2', duration: 0.5, yoyo: true, repeat: 1 }, 1.7)
-      .to(defBlur, { attr: { stdDeviation: 5 }, duration: 1.4 }, 3)
-      .to('.def-blur', { x: 0, duration: 1.4 }, 3)
-      .to('.art-definicao svg', { autoAlpha: 1, duration: 0.6 });
+      .fromTo('.art-definicao svg', { autoAlpha: 0, scale: 0.9 }, { autoAlpha: 1, scale: 1, duration: 0.8, transformOrigin: '50% 50%' })
+      .fromTo(defBlur, { attr: { stdDeviation: 5 } }, { attr: { stdDeviation: 0 }, duration: 1.8 }, 0.5)
+      .to('.def-circle', { scale: 1.06, svgOrigin: '41.2308 41.2308', duration: 0.5, yoyo: true, repeat: 1 }, 2.3)
+      .to({}, { duration: 1.4 })
+      .to(defBlur, { attr: { stdDeviation: 5 }, duration: 1.4 })
+      .to('.art-definicao svg', { autoAlpha: 0, duration: 0.5 }, '-=0.4');
 
-    // Clareza: outline draws itself, filled circle grows in
+    // Clareza: the outline draws all the way round (seen in 360), then the circle fills in
     const ring = document.querySelector('.cla-ring');
     const ringLen = ring.getTotalLength();
     gsap.set(ring, { strokeDasharray: ringLen });
-    const cla = gsap.timeline({ paused: true, repeat: -1, repeatDelay: 1.4, defaults: { ease: 'power2.inOut' } })
-      .fromTo(ring, { strokeDashoffset: ringLen }, { strokeDashoffset: 0, duration: 1.4 })
-      .fromTo('.cla-fill', { scale: 0, svgOrigin: '125.7 31.2' }, { scale: 1, svgOrigin: '125.7 31.2', duration: 0.9, ease: 'back.out(1.7)' }, 0.9)
+    const cla = gsap.timeline({ paused: true, repeat: -1, repeatDelay: 1.2, defaults: { ease: 'power2.inOut' } })
+      .set('.cla-fill', { scale: 0, svgOrigin: '32.2308 32.2308' })
+      .fromTo(ring, { strokeDashoffset: ringLen }, { strokeDashoffset: 0, duration: 1.6 })
+      .to('.cla-fill', { scale: 1, svgOrigin: '32.2308 32.2308', duration: 0.9, ease: 'power3.out' }, '-=0.1')
       .to({}, { duration: 1.6 })
-      .to(ring, { strokeDashoffset: -ringLen, duration: 1 })
-      .to('.cla-fill', { scale: 0, duration: 0.6, ease: 'power2.in' }, '<0.2');
+      .to(['.cla-fill', ring], { autoAlpha: 0, duration: 0.6, ease: 'power1.in' })
+      .set('.cla-fill', { autoAlpha: 1, scale: 0, svgOrigin: '32.2308 32.2308' })
+      .set(ring, { autoAlpha: 1, strokeDashoffset: ringLen });
 
     // Síntese: the seesaw finds its balance
     const sin = gsap.timeline({ paused: true, repeat: -1, repeatDelay: 0.8, defaults: { ease: 'power2.inOut' } })
