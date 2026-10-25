@@ -409,7 +409,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .footer__mail:hover img { opacity: .6; }
 /* "Copiado" bubble above the envelope, same look as the cookie notice: dissolves in, then out on its own */
 .copy-tip {
-  position: absolute; right: -4px; bottom: calc(100% + 10px);
+  position: absolute; right: 0; bottom: calc(100% + 10px); /* right edge on the page margin */
+  width: max-content; /* sized by its text, not by the small icon button (Safari squeezed it) */
   display: flex; align-items: center; gap: 8px;
   padding: 10px 14px;
   background: var(--lightblack); border-radius: 14px;
@@ -667,7 +668,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   .s4__pin { display: block; position: sticky; top: 88px; z-index: 2; }
   .s4__pin::before, .s5__head::before {
     content: ''; position: absolute; left: calc(-1 * var(--gutter)); right: calc(-1 * var(--gutter)); top: -88px; bottom: -64px;
-    background: linear-gradient(to bottom, var(--white) calc(100% - 64px), rgba(243, 243, 243, 0));
+    /* same color as the page at every moment (it fades black -> white as section 04 comes in), so no edge shows */
+    background: linear-gradient(to bottom, var(--page-bg, var(--white)) calc(100% - 64px), transparent);
     pointer-events: none;
   }
   .s4__media { position: relative; width: min(100%, 40vh); margin: 0 auto; }

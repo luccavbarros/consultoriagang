@@ -314,11 +314,12 @@
   })();
 
   /* ---------- Page background: white -> black (s3) -> white (s4) ---------- */
-  const bgTo = (trigger, start, end, from, to) =>
-    gsap.fromTo(document.body, { backgroundColor: from }, {
-      backgroundColor: to, ease: 'none', immediateRender: false,
-      scrollTrigger: { trigger, start, end, scrub: true },
-    });
+  // --page-bg follows the same fade, for backgrounds that must match the page (the pinned square's backing on phones)
+  const bgTo = (trigger, start, end, from, to) => {
+    const scrollTrigger = { trigger, start, end, scrub: true };
+    gsap.fromTo(document.body, { backgroundColor: from }, { backgroundColor: to, ease: 'none', immediateRender: false, scrollTrigger });
+    gsap.fromTo(document.documentElement, { '--page-bg': from }, { '--page-bg': to, ease: 'none', immediateRender: false, scrollTrigger: { ...scrollTrigger } });
+  };
   bgTo('.s3', 'top 85%', 'top 15%', '#f3f3f3', '#050505');
   // section 02 has its own background (it covers section 01), so it fades with the page — no visible edge
   gsap.fromTo('.s2', { backgroundColor: '#f3f3f3' }, {
