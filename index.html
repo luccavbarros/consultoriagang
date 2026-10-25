@@ -1149,6 +1149,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 
       <form id="lead-form" novalidate>
         <input type="hidden" name="_subject" value="Novo lead — GANG Landing Page" />
+        <!-- anti-bot trap: people never see it, bots fill it in and Formspree drops the submission -->
+        <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true" style="display:none" />
 
         <!-- STEP 1 -->
         <fieldset class="step is-active" data-step="1">
