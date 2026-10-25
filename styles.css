@@ -475,6 +475,25 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .form-nav[hidden] { display: none; }
 
 /* ===== Responsive ===== */
+/* ===== Privacy policy ===== */
+.modal--privacy { z-index: 110; } /* can open on top of the form */
+.modal--privacy.is-stacked .modal__backdrop { background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.privacy { display: flex; flex-direction: column; gap: 14px; padding: 22px 0 8px; color: var(--greybemlight); font-size: 14px; line-height: 1.6; }
+.privacy .step__title { margin-bottom: 10px; }
+.privacy p, .privacy ul { margin: 0; }
+.privacy ul { padding-left: 18px; list-style: disc; display: flex; flex-direction: column; gap: 4px; }
+.privacy h3 { margin: 18px 0 0; font-size: 16px; font-weight: 500; line-height: 1.4; color: var(--white); }
+.privacy strong { font-weight: 500; color: var(--white); }
+.privacy a { color: var(--white); text-decoration: underline; text-underline-offset: 2px; }
+.privacy__date { color: var(--ganggrey); font-size: 12px; }
+/* links that open the policy */
+.footer__legal { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px 24px; }
+.footer__privacy { margin-left: auto; color: #787878; transition: color .3s ease; } /* stays on the far right, even when it wraps on phones */
+.footer__privacy:hover { color: var(--white); }
+.form-legal { margin: 0; font-size: 12px; line-height: 1.5; color: var(--ganggrey); }
+.form-legal button, .consent__text button { font: inherit; color: inherit; text-decoration: underline; text-underline-offset: 2px; transition: color .3s ease; }
+.form-legal button:hover, .consent__text button:hover { color: var(--white); }
+
 /* ===== Cookie notice ===== */
 /* one row on desktop: 16px inside on every side, text and both buttons share one center line */
 .consent {

@@ -605,6 +605,37 @@
     if ((e.deltaY > 0 && canDown) || (e.deltaY < 0 && canUp)) e.stopPropagation();
   }, { passive: true });
 
+  /* ----- Privacy policy popup (same look as the form, can open on top of it) ----- */
+  const privacy = document.getElementById('privacy-modal');
+  const privacyCard = privacy.querySelector('.modal__card');
+  let privacyFocus = null;
+  const openPrivacy = () => {
+    privacyFocus = document.activeElement;
+    privacyCard.scrollTop = 0;
+    // over the form the page is already blurred, so the policy adds no second blur
+    privacy.classList.toggle('is-stacked', modal.classList.contains('is-open'));
+    privacy.classList.add('is-open');
+    privacy.setAttribute('aria-hidden', 'false');
+  };
+  const closePrivacy = () => {
+    privacy.classList.remove('is-open');
+    privacy.setAttribute('aria-hidden', 'true');
+    if (privacyFocus) privacyFocus.focus({ preventScroll: true });
+  };
+  document.querySelectorAll('[data-open-privacy]').forEach((b) => b.addEventListener('click', openPrivacy));
+  privacy.querySelectorAll('[data-close-privacy]').forEach((b) => b.addEventListener('click', closePrivacy));
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || !privacy.classList.contains('is-open')) return;
+    e.stopImmediatePropagation(); // close only the policy, not the form under it
+    closePrivacy();
+  }, true);
+  // the long text scrolls inside the card; the page only takes the wheel once the card hits its end
+  privacyCard.addEventListener('wheel', (e) => {
+    const canDown = privacyCard.scrollTop + privacyCard.clientHeight < privacyCard.scrollHeight - 1;
+    const canUp = privacyCard.scrollTop > 0;
+    if ((e.deltaY > 0 && canDown) || (e.deltaY < 0 && canUp)) e.stopPropagation();
+  }, { passive: true });
+
   /* ----- Field helpers ----- */
   const phone = form.querySelector('[data-type="phone"]');
   phone.addEventListener('input', () => {

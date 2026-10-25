@@ -390,7 +390,10 @@
         <div class="footer__meta">
           <p class="small">Av. Cerro Azul, 184 - Sl 05<br />Maringá-PR</p>
           <hr />
-          <p class="small">Todos os direitos reservados. © 2026</p>
+          <div class="footer__legal">
+            <p class="small">Todos os direitos reservados. © 2026</p>
+            <button class="small footer__privacy" type="button" data-open-privacy>Política de Privacidade</button>
+          </div>
         </div>
       </div>
     </div>
@@ -427,6 +430,7 @@
             <label class="q__label" for="f-email"><span>03</span>E-mail</label>
             <input class="field" id="f-email" name="email" type="email" placeholder="Seu melhor e-mail" autocomplete="email" required data-type="email" />
           </div>
+          <p class="form-legal">Ao continuar, você concorda com a nossa <button type="button" data-open-privacy>Política de Privacidade</button>.</p>
         </fieldset>
 
         <!-- STEP 2 -->
@@ -524,9 +528,55 @@
     </div>
   </div>
 
+  <!-- PRIVACY POLICY MODAL (same look as the form) -->
+  <div class="modal modal--privacy" id="privacy-modal" aria-hidden="true">
+    <div class="modal__backdrop" data-close-privacy></div>
+    <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="privacy-title">
+      <button class="modal__close" data-close-privacy aria-label="Fechar Política de Privacidade"><img src="assets/close.svg" alt="" width="16" height="16" /></button>
+      <div class="privacy">
+        <h2 class="step__title" id="privacy-title">Política de<br />Privacidade</h2>
+        <p class="privacy__date">Atualizada em 25 de outubro de 2026.</p>
+
+        <p>Esta política explica quais dados pessoais a GANG coleta neste site, por que coleta e como você pode exercer seus direitos, conforme a Lei Geral de Proteção de Dados (Lei nº 13.709/2018 — LGPD).</p>
+
+        <h3>1. Quem somos</h3>
+        <p>A GANG Consultoria de Marca, com endereço na Av. Cerro Azul, 184 - Sl 05, Maringá-PR, é a responsável pelos dados pessoais coletados neste site.</p>
+
+        <h3>2. Quais dados coletamos</h3>
+        <p><strong>Dados que você informa no formulário:</strong> nome, WhatsApp, e-mail, nome da empresa, número de funcionários, desafios da marca, cargo, faixa de investimento e prazo.</p>
+        <p><strong>Dados de navegação:</strong> somente se você aceitar os cookies, coletamos informações como páginas visitadas, tipo de dispositivo e interações no site, por meio do Pixel da Meta.</p>
+
+        <h3>3. Para que usamos seus dados</h3>
+        <ul>
+          <li>Entrar em contato com você sobre o seu interesse nos nossos serviços;</li>
+          <li>Entender o momento da sua empresa e preparar a conversa;</li>
+          <li>Medir e melhorar nossos anúncios, apenas com o seu consentimento.</li>
+        </ul>
+
+        <h3>4. Com quem compartilhamos</h3>
+        <p>Não vendemos nem alugamos seus dados. Eles são tratados apenas por fornecedores necessários para o funcionamento do site: o Formspree, que recebe as respostas do formulário, e a Meta, que fornece o Pixel, quando você aceita os cookies. Esses fornecedores podem armazenar dados em servidores fora do Brasil, seguindo as garantias previstas na LGPD.</p>
+
+        <h3>5. Cookies</h3>
+        <p>Usamos cookies de medição e publicidade apenas se você clicar em “Aceitar” no aviso de cookies. Se recusar, eles não são ativados e o site funciona normalmente. Para mudar sua escolha, apague os dados de navegação deste site no seu navegador e o aviso aparecerá novamente.</p>
+
+        <h3>6. Por quanto tempo guardamos</h3>
+        <p>Mantemos seus dados pelo tempo necessário para o atendimento e a relação comercial, ou pelo prazo exigido por lei. Depois disso, eles são excluídos.</p>
+
+        <h3>7. Seus direitos</h3>
+        <p>Você pode, a qualquer momento, pedir para confirmar se tratamos seus dados, acessá-los, corrigi-los, excluí-los ou revogar o seu consentimento. Basta entrar em contato pelo nosso Instagram, <a href="https://www.instagram.com/gangconsultoria" target="_blank" rel="noopener">@gangconsultoria</a>, ou no endereço acima.</p>
+
+        <h3>8. Segurança</h3>
+        <p>Adotamos medidas técnicas e administrativas para proteger seus dados contra acessos não autorizados, perda ou uso indevido.</p>
+
+        <h3>9. Alterações</h3>
+        <p>Esta política pode ser atualizada. A versão vigente estará sempre disponível neste site, com a data da última atualização.</p>
+      </div>
+    </div>
+  </div>
+
   <!-- Cookie notice: the Meta Pixel only loads after "Aceitar" (LGPD) -->
   <div class="consent" role="dialog" aria-label="Aviso de cookies" hidden>
-    <p class="consent__text">Usamos cookies para melhorar sua experiência e nossos anúncios.</p>
+    <p class="consent__text">Usamos cookies para melhorar sua experiência e nossos anúncios. <button type="button" data-open-privacy>Saiba mais</button></p>
     <div class="consent__actions">
       <button class="consent__no" type="button" data-consent="no">Recusar</button>
       <button class="consent__yes" type="button" data-consent="yes">Aceitar</button>
