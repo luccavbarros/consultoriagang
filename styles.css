@@ -488,6 +488,12 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 /* ===== Responsive ===== */
 /* ===== Privacy policy ===== */
 .modal--privacy { z-index: 110; } /* can open on top of the form */
+/* the X stays pinned at the card's top-right while the long text scrolls under it */
+.modal--privacy .modal__close {
+  position: sticky; top: 0; right: auto; z-index: 3;
+  margin: 0 -20px -22px auto;
+  border-radius: 50%; background: var(--lightblack); box-shadow: 0 0 0 8px var(--lightblack);
+}
 .modal--privacy.is-stacked .modal__backdrop { background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
 .privacy { display: flex; flex-direction: column; gap: 14px; padding: 22px 0 8px; color: var(--greybemlight); font-size: 14px; line-height: 1.6; }
 .privacy .step__title { margin-bottom: 10px; }
@@ -616,6 +622,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   .consent__text { white-space: normal; }
   .consent__actions button { flex: 1; }
   .modal__card { padding: 12px 20px 24px; }
+  .modal--privacy .modal__close { margin-right: -8px; } /* 12px from the edge, like on desktop */
   .form-progress { margin: -12px -20px 10px; }
 }
 
