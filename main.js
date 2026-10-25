@@ -154,6 +154,23 @@
     panels.forEach((p) => gsap.set(parts(p), HIDDEN));
     gsap.set(dots, { backgroundColor: '#dadada' });
 
+    // desktop: each drawing fills the column height (bottom level with the last dot) and keeps its proportions,
+    // growing right into the gap before the list; inline SVGs don't size from their ratio on their own
+    const wide = window.matchMedia('(min-width: 861px)');
+    const sizeArts = () => section.querySelectorAll('.s1__art').forEach((svg) => {
+      svg.style.width = '';
+      if (!wide.matches) return svg.removeAttribute('preserveAspectRatio');
+      const vb = svg.viewBox.baseVal;
+      const h = parseFloat(getComputedStyle(svg).height);
+      const col = svg.parentElement;
+      const room = col.clientWidth + (parseFloat(getComputedStyle(col.parentElement).columnGap) || 0) - 32; // keeps air before the list
+      svg.style.width = Math.min(h * (vb.width / vb.height), room) + 'px';
+      svg.setAttribute('preserveAspectRatio', 'xMinYMax meet'); // if it ever runs out of width, it still sits on the last dot
+    });
+    sizeArts();
+    window.addEventListener('resize', sizeArts);
+    if (document.fonts) document.fonts.ready.then(sizeArts);
+
     const tl = gsap.timeline({
       defaults: { ease: 'power2.out' },
       scrollTrigger: {
@@ -580,6 +597,16 @@
         onLeave: () => tl.pause(),
         onLeaveBack: () => tl.pause(0),
       });
+    });
+
+    // desktop: the same short hold as section 04
+    gsap.matchMedia().add('(min-width: 861px)', () => {
+      ScrollTrigger.create({
+        trigger: '.s5', start: 'top top', end: '+=60%', pin: true,
+        refreshPriority: 1,
+        onToggle: (self) => setPinned('s5', self.isActive),
+      });
+      return () => setPinned('s5', false);
     });
   })();
 

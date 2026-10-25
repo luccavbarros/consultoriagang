@@ -221,8 +221,9 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   display: flex; gap: 128px; align-items: flex-start;
   padding: 32px 0;
 }
-.s1__left { width: 411px; flex: none; display: flex; flex-direction: column; gap: 64px; }
-.s1__art { align-self: flex-start; width: auto; height: auto; max-height: 224px; overflow: visible; }
+.s1__left { width: 411px; flex: none; align-self: stretch; display: flex; flex-direction: column; gap: 64px; }
+/* the drawing takes the rest of the column, so its bottom lines up with the last dot of the rail; it grows down and right, keeping its proportions */
+.s1__art { align-self: flex-start; flex: 1 1 0; min-height: 0; width: auto; height: auto; max-width: none; overflow: visible; }
 .s1__art path { stroke-dasharray: 1; }
 .s1__list { flex: 1; padding-top: 44px; }
 .s1__list li { padding: 16px 0; border-bottom: 1px solid var(--greybemlight); }
@@ -637,7 +638,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   .s1__panel { flex-direction: column; gap: 40px; padding: 0; }
   .s1__left { width: 100%; gap: 36px; }
   /* as big as the screen allows: the rest of the tallest slide takes about 592px */
-  .s1__art { height: clamp(72px, calc(100vh - 592px), 200px); width: auto; max-width: 100%; max-height: none; }
+  .s1__art { flex: none; height: clamp(72px, calc(100vh - 592px), 200px); width: auto; max-width: 100%; max-height: none; }
   .s1__list { padding-top: 0; width: 100%; }
   .s1__list li { padding: 11px 0; }
 
