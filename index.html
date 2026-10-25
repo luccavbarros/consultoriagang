@@ -21,8 +21,36 @@
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  <!-- fonts load without holding up the first paint (system font shows meanwhile) -->
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400&family=Inter:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400&family=Inter:wght@400;500&display=swap" rel="stylesheet" /></noscript>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+  <link rel="preconnect" href="https://unpkg.com" />
   <link rel="stylesheet" href="styles.css" />
+  <!-- Company data for Google (structured data) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ProfessionalService",
+    "name": "GANG Consultoria de Marca",
+    "alternateName": "GANG",
+    "url": "https://gangconsultoria.com.br/",
+    "logo": "https://gangconsultoria.com.br/assets/apple-touch-icon.png",
+    "image": "https://gangconsultoria.com.br/assets/og-image.png",
+    "description": "Estratégia e construção de marca com clareza, consistência e profissionalismo para tornar seu negócio mais lucrativo.",
+    "telephone": "+55 44 99813-4366",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Av. Cerro Azul, 184 - Sl 05",
+      "addressLocality": "Maringá",
+      "addressRegion": "PR",
+      "addressCountry": "BR"
+    },
+    "areaServed": "Worldwide",
+    "knowsAbout": ["Consultoria de marca", "Estratégia de marca", "Branding", "Posicionamento de marca", "Identidade visual"],
+    "sameAs": ["https://www.instagram.com/gangconsultoria"]
+  }
+  </script>
 </head>
 <body>
 
@@ -47,13 +75,13 @@
     <!-- HERO -->
     <section class="hero" id="hero">
       <div class="hero__images" aria-hidden="true">
-        <div class="hero__img" data-speed="-0.35" style="--x:37.97%;--y:10.7%"><div class="hero__float"><img src="assets/hero-ziviz.jpg" alt="" /></div></div>
-        <div class="hero__img" data-speed="-0.2" style="--x:9.54%;--y:14.3%"><div class="hero__float"><img src="assets/hero-gang.jpg" alt="" /></div></div>
-        <div class="hero__img" data-speed="-0.5" style="--x:16.96%;--y:57.8%"><div class="hero__float"><img src="assets/hero-partfix.jpg" alt="" /></div></div>
-        <div class="hero__img" data-speed="-0.65" style="--x:68.04%;--y:86%"><div class="hero__float"><img src="assets/hero-tingo.jpg" alt="" /></div></div>
-        <div class="hero__img" data-speed="-0.4" style="--x:76.79%;--y:65.4%"><div class="hero__float"><img src="assets/hero-camargo.jpg" alt="" /></div></div>
-        <div class="hero__img" data-speed="-0.28" style="--x:90.52%;--y:35.1%"><div class="hero__float"><img src="assets/hero-brandbook.jpg" alt="" /></div></div>
-        <div class="hero__img" data-speed="-0.45" style="--x:72%;--y:15%"><div class="hero__float"><img src="assets/hero-mf.jpg" alt="" /></div></div>
+        <div class="hero__img" data-speed="-0.35" style="--x:37.97%;--y:10.7%"><div class="hero__float"><img src="assets/hero-ziviz-220.webp" srcset="assets/hero-ziviz-120.webp 120w, assets/hero-ziviz-220.webp 220w" sizes="(max-width: 860px) 52px, 109px" alt="Projeto de marca ZIVIZ" /></div></div>
+        <div class="hero__img" data-speed="-0.2" style="--x:9.54%;--y:14.3%"><div class="hero__float"><img src="assets/hero-gang-220.webp" srcset="assets/hero-gang-120.webp 120w, assets/hero-gang-220.webp 220w" sizes="(max-width: 860px) 52px, 109px" alt="Projeto de marca GANG" /></div></div>
+        <div class="hero__img" data-speed="-0.5" style="--x:16.96%;--y:57.8%"><div class="hero__float"><img src="assets/hero-partfix-220.webp" srcset="assets/hero-partfix-120.webp 120w, assets/hero-partfix-220.webp 220w" sizes="(max-width: 860px) 52px, 109px" alt="Projeto de marca PartFix" /></div></div>
+        <div class="hero__img" data-speed="-0.65" style="--x:68.04%;--y:86%"><div class="hero__float"><img src="assets/hero-tingo-220.webp" srcset="assets/hero-tingo-120.webp 120w, assets/hero-tingo-220.webp 220w" sizes="(max-width: 860px) 52px, 109px" alt="Projeto de marca Tingo" /></div></div>
+        <div class="hero__img" data-speed="-0.4" style="--x:76.79%;--y:65.4%"><div class="hero__float"><img src="assets/hero-camargo-220.webp" srcset="assets/hero-camargo-120.webp 120w, assets/hero-camargo-220.webp 220w" sizes="(max-width: 860px) 52px, 109px" alt="Projeto de marca Camargo" /></div></div>
+        <div class="hero__img" data-speed="-0.28" style="--x:90.52%;--y:35.1%"><div class="hero__float"><img src="assets/hero-brandbook-220.webp" srcset="assets/hero-brandbook-120.webp 120w, assets/hero-brandbook-220.webp 220w" sizes="(max-width: 860px) 52px, 109px" alt="Brandbook de um projeto de marca da GANG" /></div></div>
+        <div class="hero__img" data-speed="-0.45" style="--x:72%;--y:15%"><div class="hero__float"><img src="assets/hero-mf-220.webp" srcset="assets/hero-mf-120.webp 120w, assets/hero-mf-220.webp 220w" sizes="(max-width: 860px) 52px, 109px" alt="Projeto de marca M&amp;F" /></div></div>
       </div>
       <div class="hero__content">
         <h1 class="hero__title">
@@ -582,9 +610,9 @@
     </div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-  <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
-  <script src="main.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+  <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js" defer></script>
+  <script src="main.js" defer></script>
 </body>
 </html>
