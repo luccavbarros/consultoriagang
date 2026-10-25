@@ -69,6 +69,19 @@
     });
   })();
 
+  /* ---------- Top blur: off while a section is pinned, so the pinned titles stay sharp ---------- */
+  const topBlur = document.querySelector('.top-blur');
+  if (topBlur) {
+    const pinned = new Set();
+    document.querySelectorAll('.s1, .s2, .s3').forEach((sec) => ScrollTrigger.create({
+      trigger: sec, start: 'top top', end: 'bottom bottom',
+      onToggle: (self) => {
+        if (self.isActive) pinned.add(sec); else pinned.delete(sec);
+        topBlur.classList.toggle('is-off', pinned.size > 0);
+      },
+    }));
+  }
+
   /* ---------- Smooth scroll (Lenis) ---------- */
   const lenis = new Lenis({ lerp: reduceMotion ? 1 : 0.08, smoothWheel: true, wheelMultiplier: 1 });
   lenis.on('scroll', ScrollTrigger.update);
