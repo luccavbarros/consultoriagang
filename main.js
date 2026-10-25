@@ -841,3 +841,9 @@
     setTimeout(() => { banner.hidden = true; }, 500);
   });
 })();
+
+/* ---------- Buttons: on hover the label rolls up and comes back from below ---------- */
+document.querySelectorAll('.btn, .consent__actions button').forEach((btn) => {
+  const text = btn.textContent.trim();
+  btn.innerHTML = `<span class="roll"><span class="roll__label">${text}</span><span class="roll__label" aria-hidden="true">${text}</span></span>`;
+});
