@@ -88,6 +88,9 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .btn--gray:hover { background: var(--greybemlight); }
 .btn--sm { padding: 15.4px 12px; border-radius: 6px; font-size: 12px; line-height: 1; }
 
+/* keyboard focus only (never on mouse click); #737373 stays above 3:1 on both the light and the dark sections */
+:focus-visible { outline: 2px solid var(--ganggrey); outline-offset: 3px; }
+
 .icon-link { display: inline-flex; padding: 4px; opacity: 1; transition: opacity .3s; }
 .icon-link:hover { opacity: .6; }
 
@@ -134,6 +137,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .hero__title .line { display: block; }
 .hero__sub { max-width: 628px; margin-top: 70px; }
 .hero__cta { margin-top: 56px; }
+.hero__note { margin-top: 16px; font-size: 14px; line-height: 1.4; letter-spacing: -0.0063em; color: #666; } /* #666 keeps small text above 4.5:1 on the light background */
 
 .hero__images { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
 .hero__img {
@@ -342,6 +346,10 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .footer__title { color: #e5e5e5; white-space: nowrap; }
 /* title on top, button at the bottom, level with the last line of the text */
 .footer__lead { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; gap: 40px; }
+.footer__action { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
+.footer__wa { font-size: 14px; line-height: 1.4; letter-spacing: -0.0063em; color: #8a8a8a; }
+.footer__wa a { color: #e5e5e5; text-decoration: underline; text-underline-offset: 2px; transition: color .3s ease; }
+.footer__wa a:hover { color: #fff; }
 .footer__text { width: 497px; color: var(--ganggrey); display: flex; flex-direction: column; gap: 1.2em; }
 .footer__bottom {
   margin-top: 40px;
@@ -506,8 +514,9 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .privacy__date { color: var(--ganggrey); font-size: 12px; }
 /* links that open the policy */
 .footer__legal { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px 24px; }
-.footer__privacy { margin-left: auto; color: #787878; transition: color .3s ease; } /* stays on the far right, even when it wraps on phones */
-.footer__privacy:hover { color: var(--white); }
+.footer__privacy { margin-left: auto; padding: 10px 0; margin-block: -10px; transition: color .3s ease; } /* stays on the far right, even when it wraps on phones */
+.footer__meta .footer__privacy { color: #8a8a8a; }
+.footer__meta .footer__privacy:hover { color: var(--white); }
 .form-legal { margin: 0; font-size: 12px; line-height: 1.5; color: var(--ganggrey); }
 .form-legal button, .consent__text button { font: inherit; color: inherit; text-decoration: underline; text-underline-offset: 2px; transition: color .3s ease; }
 .form-legal button:hover, .consent__text button:hover { color: var(--white); }
@@ -615,7 +624,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   .footer__about { flex-direction: column; padding-top: 140px; padding-bottom: 40px; }
   .footer__text { width: 100%; }
   .footer__lead { display: contents; } /* on phones the button goes after the text */
-  .footer__cta { order: 1; align-self: flex-start; margin-top: -8px; }
+  .footer__action { order: 1; margin-top: -8px; }
   .footer__bottom { margin-top: 40px; height: auto; gap: 48px; }
 
   /* phones: text on top, two equal buttons below */

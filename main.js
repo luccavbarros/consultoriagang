@@ -78,7 +78,7 @@
 
   /* ---------- Hero ---------- */
   const hero = document.querySelector('.hero');
-  gsap.from('.hero__title .line, .hero__sub, .hero__cta', {
+  gsap.from('.hero__title .line, .hero__sub, .hero__cta, .hero__note', {
     ...HIDDEN, duration: 1.1, ease: 'power3.out', stagger: 0.12, delay: 0.15,
   });
   gsap.from('.hero__img', { autoAlpha: 0, scale: 0.85, duration: 1.2, ease: 'power3.out', stagger: 0.08, delay: 0.4 });
