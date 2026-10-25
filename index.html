@@ -128,7 +128,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 /* ===== Top blur: progressive, 6 overlapping bands from soft (bottom) to strong (top), so no edge shows ===== */
 .top-blur { position: fixed; top: 0; left: 0; right: 0; height: 200px; z-index: 45; pointer-events: none; }
 .top-blur i { position: absolute; inset: 0; transition: backdrop-filter .4s ease, -webkit-backdrop-filter .4s ease; }
-.top-blur.is-off i { -webkit-backdrop-filter: blur(0); backdrop-filter: blur(0); } /* while a section is pinned nothing scrolls under it */
+.top-blur.is-off i:nth-child(n) { -webkit-backdrop-filter: blur(0); backdrop-filter: blur(0); } /* while a section is pinned nothing scrolls under it */
 .top-blur i:nth-child(1) { -webkit-backdrop-filter: blur(0.5px); backdrop-filter: blur(0.5px); -webkit-mask-image: linear-gradient(to top, transparent 0.0%, #000 12.5%, #000 25.0%, transparent 37.5%); mask-image: linear-gradient(to top, transparent 0.0%, #000 12.5%, #000 25.0%, transparent 37.5%); }
 .top-blur i:nth-child(2) { -webkit-backdrop-filter: blur(1px); backdrop-filter: blur(1px); -webkit-mask-image: linear-gradient(to top, transparent 12.5%, #000 25.0%, #000 37.5%, transparent 50.0%); mask-image: linear-gradient(to top, transparent 12.5%, #000 25.0%, #000 37.5%, transparent 50.0%); }
 .top-blur i:nth-child(3) { -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); -webkit-mask-image: linear-gradient(to top, transparent 25.0%, #000 37.5%, #000 50.0%, transparent 62.5%); mask-image: linear-gradient(to top, transparent 25.0%, #000 37.5%, #000 50.0%, transparent 62.5%); }
@@ -239,7 +239,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .s2__sticky {
   position: sticky; top: 0; height: 100vh;
   display: flex; flex-direction: column; align-items: center;
-  padding: clamp(130px, 19vh, 190px) var(--gutter) 40px; /* title clear of the top blur */
+  padding: clamp(90px, 11vh, 110px) var(--gutter) 40px;
   overflow: hidden;
 }
 .s2__head { text-align: center; max-width: 517px; display: flex; flex-direction: column; gap: 32px; }
