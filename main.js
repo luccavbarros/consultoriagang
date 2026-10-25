@@ -24,8 +24,9 @@
       while (walk.nextNode()) out.push(walk.currentNode);
       return out;
     };
+    // three passes (write text → read sizes → write text) so the browser lays the page out once, not once per block
     const fix = () => {
-      blocks.forEach((el) => {
+      const all = blocks.map((el) => {
         const nodes = textNodes(el);
         nodes.forEach((n) => {
           if (!original.has(n)) original.set(n, n.data);
@@ -33,18 +34,26 @@
           do { prev = t; t = t.replace(SHORT, `$1$2${NBSP}`); } while (t !== prev);
           n.data = t;
         });
+        return { el, nodes };
+      });
+      all.forEach((b) => {
         // hidden form steps report 0: use the nearest ancestor that has a width
-        let box = el;
+        let box = b.el;
         while (box && !box.clientWidth) box = box.parentElement;
-        const width = box ? box.clientWidth : 0;
+        b.width = box ? box.clientWidth : 0;
+        if (b.width) {
+          const cs = getComputedStyle(b.el);
+          b.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+        }
+      });
+      all.forEach(({ nodes, width, font }) => {
         if (!width) return;
         // words are split on plain spaces only; ones already joined by NBSP count as one chunk
         const last = nodes.reverse().find((n) => /[^ \n] +[^ \n]/.test(n.data.trimEnd()));
         if (!last) return;
         const m = last.data.trimEnd().match(/([^ \n]+) +([^ \n]+)$/);
         if (!m) return;
-        const cs = getComputedStyle(el);
-        ctx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+        ctx.font = font;
         if (ctx.measureText(m[1] + ' ' + m[2]).width <= width * 0.85) {
           last.data = last.data.replace(/ +([^ \n]+\s*)$/, NBSP + '$1');
         }
