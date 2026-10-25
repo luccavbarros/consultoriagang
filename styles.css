@@ -255,6 +255,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   padding: 106px var(--gutter);
   min-height: 100vh;
 }
+.s4__pin { display: contents; } /* only a wrapper on phones, where the square sticks to the top */
 .s4__media { flex: 0 1 736px; min-width: 0; aspect-ratio: 1; border-radius: 16px; overflow: hidden; }
 .s4__stage { border: 1px solid #c9c9c9; border-radius: 32px; display: flex; align-items: center; justify-content: center; }
 .s4__art { width: 78%; height: auto; overflow: visible; }
@@ -508,6 +509,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   .s2__head { gap: 16px; }
   .s2__stage { grid-template-columns: 1fr; grid-template-rows: auto auto auto; row-gap: 24px; align-content: center; justify-items: center; }
   .s2__col { height: 140px; width: 100%; }
+  .s2__col--left { margin-top: calc(-1 * var(--s2-pull, 0px)); height: calc(164px + var(--s2-pull, 0px)); margin-bottom: -24px; }
   .s2__col--right { margin-left: 0; max-width: none; height: 60px; }
   .s2__label, .s2__desc { left: 0; right: 0; text-align: center; }
   .s2__col--left .s2__label { left: 0; }
@@ -520,13 +522,22 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   .s3__op { width: 16px; font-size: 32px; }
   .s3__item .small { font-size: min(12px, 3.2vw); }
 
-  .s4 { flex-direction: column; align-items: stretch; gap: 48px; padding-top: 96px; }
+  .s4 { flex-direction: column; align-items: stretch; gap: 64px; padding-top: 96px; }
   .s4__media { flex: none; width: 100%; }
   .s4__content { width: 100%; gap: 32px; }
   .accordion { gap: 16px; padding: 0; }
+  /* the square sticks under the header and the text scrolls beneath it, fading out */
+  .s4__pin { display: block; position: sticky; top: 88px; z-index: 2; }
+  .s4__pin::before, .s5__head::before {
+    content: ''; position: absolute; left: calc(-1 * var(--gutter)); right: calc(-1 * var(--gutter)); top: -88px; bottom: -64px;
+    background: linear-gradient(to bottom, var(--white) calc(100% - 64px), rgba(243, 243, 243, 0));
+    pointer-events: none;
+  }
+  .s4__media { position: relative; width: min(100%, 40vh); margin: 0 auto; }
 
-  .s5 { gap: 40px; }
-  .s5__head { flex-direction: column; align-items: flex-start; }
+  .s5 { gap: 64px; }
+  .s5__head { flex-direction: column; align-items: flex-start; position: sticky; top: 88px; z-index: 2; }
+  .s5__head::before { z-index: -1; }
   .s5__head .text { width: 100%; }
   .s5__cards { grid-template-columns: 1fr; }
   .card { height: 360px; }

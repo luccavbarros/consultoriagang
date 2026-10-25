@@ -218,7 +218,15 @@
     const headEl = section.querySelector('.s2__head');
     const desktop = window.matchMedia('(min-width: 861px)');
     const centerStage = () => {
-      if (!desktop.matches) return sticky.style.removeProperty('--s2-lift');
+      if (!desktop.matches) {
+        sticky.style.removeProperty('--s2-lift');
+        // mobile: stretch the label column over the whole gap between subtitle and box,
+        // so each label sits with equal space above and below (net size stays 140px)
+        const sub = headEl.lastElementChild.getBoundingClientRect().bottom;
+        const boxTop = sticky.querySelector('.s2__box').getBoundingClientRect().top;
+        return sticky.style.setProperty('--s2-pull', Math.max(0, boxTop - 24 - 140 - sub) + 'px');
+      }
+      sticky.style.removeProperty('--s2-pull');
       const vh = window.innerHeight;
       const headBottom = headEl.offsetTop + headEl.offsetHeight;
       // screen center, but never closer than 96px between the subtitle and the 288px box
@@ -490,9 +498,10 @@
   })();
 
   /* ---------- Footer: revealed from behind ---------- */
-  gsap.fromTo('.footer__inner', { yPercent: -30 }, {
+  // on phones the footer is much taller, so a smaller offset keeps "Quem somos" from hiding behind the section above
+  gsap.fromTo('.footer__inner', { yPercent: () => (window.innerWidth > 860 ? -30 : -6) }, {
     yPercent: 0, ease: 'none',
-    scrollTrigger: { trigger: '.footer', start: 'top bottom', end: 'bottom bottom', scrub: true },
+    scrollTrigger: { trigger: '.footer', start: 'top bottom', end: 'bottom bottom', scrub: true, invalidateOnRefresh: true },
   });
   gsap.fromTo('.s5', { boxShadow: '0 40px 80px rgba(0,0,0,0)' }, {
     boxShadow: '0 40px 80px rgba(0,0,0,.25)', ease: 'none',
