@@ -622,6 +622,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   .consent__text { white-space: normal; }
   .consent__actions button { flex: 1; }
   .modal__card { padding: 12px 20px 24px; }
+  .footer__legal { flex-direction: column; align-items: flex-start; }
+  .footer__privacy { order: -1; margin-left: 0; } /* phones: above the copyright line, aligned left */
   .modal--privacy .modal__close { margin-right: -8px; } /* 12px from the edge, like on desktop */
   .form-progress { margin: -12px -20px 10px; }
 }
