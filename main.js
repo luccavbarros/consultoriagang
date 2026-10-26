@@ -363,12 +363,18 @@
       .to({}, { duration: 0.8 });
   })();
 
-  /* ---------- Generic reveal (s4, s5) ---------- */
-  gsap.utils.toArray('.reveal').forEach((el) => {
+  /* ---------- Generic reveal (s5) ---------- */
+  gsap.utils.toArray('.s5 .reveal').forEach((el) => {
     gsap.fromTo(el, HIDDEN, {
       ...SHOWN, duration: 1, ease: 'power3.out',
       scrollTrigger: { trigger: el, start: 'top 88%', toggleActions: 'play none none reverse' },
     });
+  });
+  // section 04 reveals all its text at once, keyed to the section itself: its steps move as they open and close
+  // (and the section pins on desktop), so per-item triggers could leave some of them hidden halfway through a scroll
+  gsap.fromTo('.s4 .reveal', HIDDEN, {
+    ...SHOWN, duration: 1, ease: 'power3.out', stagger: 0.08,
+    scrollTrigger: { trigger: '.s4', start: 'top 70%', toggleActions: 'play none none reverse' },
   });
 
   /* ---------- Section 04 ---------- */
@@ -434,7 +440,12 @@
       gsap.delayedCall(instant ? 0 : d + 0.3, () => { if (visible) idle.play(); });
     };
 
-    // the line runs from the first dot to the last, and fills up to the open step
+    // desktop: the line works as a timer, filling from the open step towards the next one; when it gets there, that step opens
+    const STEP_TIME = 10;
+    const timer = { p: 0 };
+    let timerTween = null;
+
+    // the line runs from the first dot to the last, and fills up to the open step (plus the timer's progress towards the next)
     const placeRail = () => {
       // layout offsets (not screen rects), so the reveal animations on each item don't shift the line
       const topIn = (el) => { let y = 0; for (let n = el; n && n !== list; n = n.offsetParent) y += n.offsetTop; return y; };
@@ -445,7 +456,8 @@
       const open = accs.findIndex((a) => a.classList.contains('is-open'));
       list.style.setProperty('--rail-top', centers[0] + 'px');
       list.style.setProperty('--rail-h', centers[centers.length - 1] - centers[0] + 'px');
-      list.style.setProperty('--fill-h', (open < 0 ? 0 : centers[open] - centers[0]) + 'px');
+      const next = open >= 0 && open < centers.length - 1 ? (centers[open + 1] - centers[open]) * timer.p : 0;
+      list.style.setProperty('--fill-h', (open < 0 ? 0 : centers[open] - centers[0] + next) + 'px');
       accs.forEach((a, k) => a.classList.toggle('is-done', open >= 0 && k < open));
     };
     const followRail = () => {
@@ -520,6 +532,7 @@
           return;
         }
         openOnly(acc.classList.contains('is-open') ? -1 : i);
+        startTimer();
         setTimeout(() => ScrollTrigger.refresh(), 650);
       });
     });
@@ -532,6 +545,31 @@
     ScrollTrigger.create({
       trigger: '.s4', start: 'top bottom', end: 'bottom top',
       onToggle: (self) => { visible = self.isActive; if (idle) (visible ? idle.play() : idle.pause()); },
+    });
+
+    // the timer runs only on desktop (phones follow the scroll), only while the section is in view, and only with a step open;
+    // after the last step it waits the same time and starts over from the first
+    const fill = list.querySelector('.acc__fill');
+    const startTimer = () => {
+      if (timerTween) timerTween.kill();
+      timer.p = 0;
+      // desktop: no CSS easing on the line; it is placed every frame, so its tip stays on the dots even while the panels open and close
+      fill.style.transition = phone.matches ? '' : 'none';
+      if (phone.matches || current < 0) { placeRail(); return; }
+      timerTween = gsap.to(timer, {
+        p: 1, duration: STEP_TIME, ease: 'none', paused: !timerOn,
+        onUpdate: placeRail,
+        onComplete: () => { timer.p = 0; openOnly((current + 1) % accs.length); startTimer(); },
+      });
+    };
+    let timerOn = false;
+    ScrollTrigger.create({
+      trigger: '.s4', start: 'top 60%', end: 'bottom 40%',
+      onToggle: (self) => {
+        timerOn = self.isActive;
+        if (!timerTween) startTimer();
+        if (timerTween) (timerOn ? timerTween.play() : timerTween.pause());
+      },
     });
 
     // desktop: a short hold once the section fills the screen, then the page moves on
@@ -608,7 +646,10 @@
 
   /* ---------- Bento: light parallax, each column drifts at its own pace while the board scrolls by ---------- */
   if (!reduceMotion) {
-    const drift = window.matchMedia('(min-width: 861px)').matches ? [50, 100, 30, 90, 60] : [16, 36];
+    // desktop amounts shrink on narrower screens, where the columns (and their spare room below the edge) are smaller
+    const drift = window.matchMedia('(min-width: 861px)').matches
+      ? [50, 100, 30, 90, 60].map((d) => d * Math.min(1, window.innerWidth / 1440))
+      : [16, 36];
     gsap.utils.toArray('.bento__col').forEach((col, i) => {
       const d = drift[i % drift.length];
       gsap.fromTo(col, { y: d }, {

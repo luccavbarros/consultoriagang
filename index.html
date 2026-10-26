@@ -405,14 +405,16 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .art-sintese .sin-beam { transform-box: view-box; transform-origin: 122px 82.25px; }
 
 /* ===== Bento (above the footer) ===== */
-/* full screen, five staggered columns; tiles keep their own proportions and the board is cut at the bottom edge */
-.bento { position: relative; z-index: 2; height: 100vh; overflow: hidden; background: var(--white); padding: 0 clamp(12px, 1.5vw, 32px); }
-.bento__grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(8px, 1vw, 20px); height: 100%; }
-.bento__col { display: flex; flex-direction: column; gap: clamp(8px, 1vw, 20px); padding-top: var(--off); min-width: 0; }
+/* five staggered columns, full screen on wide screens; never taller than about where the columns end on their own (50vw),
+   so on squarer screens (tablets) the bottom tiles stay close to their own proportions instead of turning long and thin */
+.bento { position: relative; z-index: 2; height: min(100vh, 50vw); overflow: hidden; background: var(--white); } /* edge to edge, no side margins */
+.bento__grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; height: 100%; }
+.bento__col { display: flex; flex-direction: column; gap: 4px; padding-top: var(--off); min-width: 0; }
 .bento__tile { flex: none; aspect-ratio: var(--r); background: #fff; border-radius: 2px; overflow: hidden; }
 /* the last tile of each column runs past the bottom edge, so the board reads as cut off, like a page that goes on */
-.bento__tile:last-child { flex: 1 0 auto; margin-bottom: -140px; } /* room for the parallax to lift the columns */
+.bento__tile:last-child { flex: 1 0 auto; margin-bottom: -110px; } /* room for the parallax to lift the columns */
 .bento__tile img, .bento__tile video { display: block; width: 100%; height: 100%; object-fit: cover; }
+.bento__tile .is-up { height: 140%; transform: translateY(-28%); } /* DOM: the picture rides higher in its frame so the logo sits nearer the top */
 .bento__tile .is-zoom { transform: scale(1.14); } /* these carry small captions along the top and bottom edges: zoomed in just past them */
 @media (max-width: 860px) {
   .bento__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1176,8 +1178,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
         </div>
         <div class="bento__col" style="--off:1.6%">
           <div class="bento__tile" style="--r:.75"><img class="is-zoom" src="assets/bento-hello.webp" alt="Projeto de marca Hello! Tech" width="720" height="900" loading="lazy" decoding="async" /></div>
-          <div class="bento__tile" style="--r:1"><img src="assets/bento-demix.webp" alt="Projeto de marca Demix" width="720" height="720" loading="lazy" decoding="async" /></div>
-          <div class="bento__tile" style="--r:.75"><img src="assets/bento-dom.webp" alt="Projeto de marca DOM" width="720" height="900" loading="lazy" decoding="async" /></div>
+          <div class="bento__tile" style="--r:2.1"><img src="assets/bento-demix.webp" alt="Projeto de marca Demix" width="720" height="720" loading="lazy" decoding="async" /></div>
+          <div class="bento__tile" style="--r:.75"><img class="is-up" src="assets/bento-dom.webp" alt="Projeto de marca DOM" width="720" height="900" loading="lazy" decoding="async" /></div>
         </div>
         <div class="bento__col" style="--off:45%">
           <div class="bento__tile" style="--r:.8"><img src="assets/bento-sal-limao.webp" alt="Projeto de marca Sal &amp; Limão" width="720" height="900" loading="lazy" decoding="async" /></div>
