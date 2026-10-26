@@ -563,26 +563,25 @@
       .to(defBlur, { attr: { stdDeviation: 5 }, duration: 1.4 })
       .to('.art-definicao svg', { autoAlpha: 0, duration: 0.5 }, '-=0.4');
 
-    // Clareza: the outline draws all the way round (seen in 360), then the circle fills in
-    const ring = document.querySelector('.cla-ring');
-    const ringLen = ring.getTotalLength();
-    gsap.set(ring, { strokeDasharray: ringLen });
+    // Clareza: picks up where Definição ends, so the outlined circle is always there; only the fill comes and goes
     const cla = gsap.timeline({ paused: true, repeat: -1, repeatDelay: 1.2, defaults: { ease: 'power2.inOut' } })
-      .set('.cla-fill', { scale: 0, svgOrigin: '32.2308 32.2308' })
-      .fromTo(ring, { strokeDashoffset: ringLen }, { strokeDashoffset: 0, duration: 1.6 })
-      .to('.cla-fill', { scale: 1, svgOrigin: '32.2308 32.2308', duration: 0.9, ease: 'power3.out' }, '-=0.1')
-      .to({}, { duration: 1.6 })
-      .to(['.cla-fill', ring], { autoAlpha: 0, duration: 0.6, ease: 'power1.in' })
       .set('.cla-fill', { autoAlpha: 1, scale: 0, svgOrigin: '32.2308 32.2308' })
-      .set(ring, { autoAlpha: 1, strokeDashoffset: ringLen });
+      .to('.cla-fill', { scale: 1, svgOrigin: '32.2308 32.2308', duration: 0.9, ease: 'power3.out' }, 0.6)
+      .to({}, { duration: 1.6 })
+      .to('.cla-fill', { autoAlpha: 0, duration: 0.6, ease: 'power1.in' });
 
-    // Síntese: the seesaw finds its balance
+    // Síntese: one ball starts big on the left with the beam tipped its way; it shrinks and rolls right
+    // while the beam swings, and ends small with the beam tipped to the right (the ball always rests on the beam)
+    const O = '122 82.25'; // the pivot's tip
     const sin = gsap.timeline({ paused: true, repeat: -1, repeatDelay: 0.8, defaults: { ease: 'power2.inOut' } })
+      .set('.sin-beam', { rotation: -12, svgOrigin: O })
+      .set('.sin-ball', { attr: { cx: 33, cy: 50.75, r: 31 } })
       .fromTo('.sin-pivot', { autoAlpha: 0, y: 10 }, { autoAlpha: 1, y: 0, duration: 0.5 })
-      .fromTo('.sin-beam', { rotation: 4, svgOrigin: '122 82.25', autoAlpha: 0 }, { rotation: 0, svgOrigin: '122 82.25', autoAlpha: 1, duration: 0.7 }, 0.2)
-      .to('.sin-beam', { rotation: -12.1, svgOrigin: '122 82.25', duration: 1.6, ease: 'elastic.out(1, 0.55)' }, '+=0.6')
-      .to('.sin-beam', { rotation: 0, svgOrigin: '122 82.25', duration: 1.2 }, '+=1.6')
-      .to('.sin-pivot', { autoAlpha: 1, duration: 0.01 });
+      .fromTo('.sin-beam', { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.7 }, 0.2)
+      .to('.sin-ball', { attr: { cx: 233, cy: 73.75, r: 8 }, duration: 2.6, ease: 'power1.inOut' }, '+=0.8')
+      .to('.sin-beam', { rotation: 12, svgOrigin: O, duration: 2.6 }, '<')
+      .to({}, { duration: 1.6 })
+      .to(['.sin-beam', '.sin-pivot'], { autoAlpha: 0, duration: 0.6, ease: 'power1.in' });
 
     [def, cla, sin].forEach((tl, i) => {
       ScrollTrigger.create({
