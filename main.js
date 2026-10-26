@@ -350,6 +350,22 @@
   /* ---------- Section 03: 1 + 2 = 3 ---------- */
   (() => {
     const section = document.querySelector('.s3');
+
+    // desktop: title and subtitle start on the left, right over the first column of filled dots (the "Coordenador" icon)
+    const headBox = section.querySelector('.s3__head');
+    const equation = section.querySelector('.s3__equation');
+    const firstIcon = section.querySelector('.s3__icon img');
+    const wideS3 = window.matchMedia('(min-width: 861px)');
+    const alignHead = () => {
+      headBox.style.width = headBox.style.paddingLeft = '';
+      if (!wideS3.matches) return;
+      const left = (el) => { let x = 0; for (let n = el; n && n !== section; n = n.offsetParent) x += n.offsetLeft; return x; };
+      const eqLeft = left(equation);
+      headBox.style.width = equation.offsetWidth + 'px';
+      headBox.style.paddingLeft = left(firstIcon) - eqLeft + 'px';
+    };
+    alignHead();
+    window.addEventListener('resize', alignHead);
     const head = section.querySelectorAll('.s3__head > *');
     const cta = section.querySelector('.s3__cta');
     const seq = section.querySelectorAll('.s3__equation > *');
@@ -730,6 +746,30 @@
       });
     });
   }
+
+  /* ---------- Footer: "Vamos conversar?" shares its baseline with the first line of the text beside it (desktop) ---------- */
+  (() => {
+    const title = document.querySelector('.footer__title');
+    const text = document.querySelector('.footer__text');
+    const wideF = window.matchMedia('(min-width: 861px)');
+    // a zero-size mark at the start of a line sits on that line's baseline
+    const baseline = (el) => {
+      const mark = document.createElement('span');
+      mark.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline';
+      el.prepend(mark);
+      const y = mark.getBoundingClientRect().top;
+      mark.remove();
+      return y;
+    };
+    const alignBaselines = () => {
+      text.style.marginTop = '';
+      if (!wideF.matches) return;
+      text.style.marginTop = baseline(title) - baseline(text.querySelector('p')) + 'px';
+    };
+    alignBaselines();
+    window.addEventListener('resize', alignBaselines);
+    if (document.fonts) document.fonts.ready.then(alignBaselines);
+  })();
 
   /* ---------- Footer: revealed from behind ---------- */
   // on phones the footer is much taller, so a smaller offset keeps "Vamos conversar?" from hiding behind the section above
