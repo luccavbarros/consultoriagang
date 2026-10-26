@@ -551,21 +551,17 @@
         const k = Math.min(3, Math.floor(self.progress * 3.5));
         if (k !== scrollStep) { scrollStep = k; goPhoneStep(k); }
       },
-      onLeave: () => { if (phone.matches && scrollStep !== 3) { scrollStep = 3; goPhoneStep(3); } },
+      // when "Design" has had its moment, the square fades away and the steps scroll on by themselves
+      // (dragging the square up along with them stuttered on iPhone); it comes back when scrolling up into the steps
+      onLeave: () => {
+        if (!phone.matches) return;
+        if (scrollStep !== 3) { scrollStep = 3; goPhoneStep(3); }
+        gsap.to(pin, { autoAlpha: 0, duration: 0.35, ease: 'power1.out', overwrite: true });
+      },
+      onEnterBack: () => { if (phone.matches) gsap.to(pin, { autoAlpha: 1, duration: 0.35, ease: 'power1.out', overwrite: true }); },
       onLeaveBack: () => { if (phone.matches) { scrollStep = -1; goPhoneStep(-1); } },
     });
 
-    // once "Design" opens the steps let go, and the square goes up with them instead of staying stuck on its own a little longer
-    const s4 = document.querySelector('.s4');
-    const followSteps = () => {
-      if (!phone.matches) { pin.style.transform = ''; return; }
-      const y = window.scrollY;
-      // scroll at which the square would let go by itself (when the bottom of the section's content box reaches it)
-      const free = y + s4.getBoundingClientRect().bottom - parseFloat(getComputedStyle(s4).paddingBottom) - 88 - pin.offsetHeight;
-      const lift = Math.min(Math.max(0, y - steps.end), Math.max(0, free - steps.end));
-      pin.style.transform = lift ? `translateY(${-lift}px)` : '';
-    };
-    window.addEventListener('scroll', followSteps, { passive: true });
 
     accs.forEach((acc, i) => {
       acc.querySelector('.acc__btn').addEventListener('click', () => {
