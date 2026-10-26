@@ -624,6 +624,14 @@
     boxShadow: '0 40px 80px rgba(0,0,0,.25)', ease: 'none',
     scrollTrigger: { trigger: '.footer', start: 'top bottom', end: 'top 50%', scrub: true },
   });
+  // desktop: the footer text reaches the top of the screen at the very end of the page, so the top blur steps aside there
+  gsap.matchMedia().add('(min-width: 861px)', () => {
+    ScrollTrigger.create({
+      trigger: '.footer', start: 'top 10%', end: 'bottom top', // never reached, so it stays on to the last pixel
+      onToggle: (self) => setPinned('footer', self.isActive),
+    });
+    return () => setPinned('footer', false);
+  });
 
   window.addEventListener('load', () => ScrollTrigger.refresh());
 
