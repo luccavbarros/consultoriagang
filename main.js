@@ -612,7 +612,7 @@
     yPercent: 0, ease: 'none',
     scrollTrigger: { trigger: '.footer', start: 'top bottom', end: 'bottom bottom', scrub: true, invalidateOnRefresh: true },
   });
-  gsap.fromTo('.s5', { boxShadow: '0 40px 80px rgba(0,0,0,0)' }, {
+  gsap.fromTo('.bento', { boxShadow: '0 40px 80px rgba(0,0,0,0)' }, {
     boxShadow: '0 40px 80px rgba(0,0,0,.25)', ease: 'none',
     scrollTrigger: { trigger: '.footer', start: 'top bottom', end: 'top 50%', scrub: true },
   });

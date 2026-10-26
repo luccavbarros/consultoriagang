@@ -404,6 +404,23 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .card__text { display: flex; flex-direction: column; gap: 16px; }
 .art-sintese .sin-beam { transform-box: view-box; transform-origin: 122px 82.25px; }
 
+/* ===== Bento (above the footer) ===== */
+/* full screen, five staggered columns; tiles keep their own proportions and the board is cut at the bottom edge */
+.bento { position: relative; z-index: 2; height: 100vh; overflow: hidden; background: var(--white); padding: 0 clamp(12px, 1.5vw, 32px); }
+.bento__grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(8px, 1vw, 20px); height: 100%; }
+.bento__col { display: flex; flex-direction: column; gap: clamp(8px, 1vw, 20px); padding-top: var(--off); min-width: 0; }
+.bento__tile { flex: none; aspect-ratio: var(--r); background: #fff; border-radius: 2px; overflow: hidden; }
+/* the last tile of each column runs past the bottom edge, so the board reads as cut off, like a page that goes on */
+.bento__tile:last-child { flex: 1 0 auto; margin-bottom: -24px; }
+.bento__tile img { width: 100%; height: 100%; object-fit: cover; }
+@media (max-width: 860px) {
+  .bento__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bento__col:nth-child(n+3) { display: none; } /* phones: just the first two columns, four images */
+  /* phones: every tile keeps its own proportions (none stretched), so the board is only as tall as its images */
+  .bento { height: auto; padding-bottom: clamp(12px, 1.5vw, 32px); }
+  .bento__tile:last-child { flex: none; margin-bottom: 0; }
+}
+
 /* ===== Footer ===== */
 .footer { position: relative; z-index: 1; background: var(--black); overflow: hidden; }
 .footer__inner { will-change: transform; }
@@ -1138,6 +1155,33 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
             <p class="small">Tudo para orientar o crescimento da sua marca com clareza e objetividade.</p>
           </div>
         </article>
+      </div>
+    </section>
+
+    <!-- BENTO: full-screen board of project images (white placeholders until the images arrive) -->
+    <section class="bento" aria-label="Projetos">
+      <div class="bento__grid">
+        <div class="bento__col" style="--off:6%">
+          <div class="bento__tile" style="--r:.82"></div>
+          <div class="bento__tile" style="--r:.75"></div>
+        </div>
+        <div class="bento__col" style="--off:47%">
+          <div class="bento__tile" style="--r:.75"></div>
+          <div class="bento__tile" style="--r:1.2"></div>
+        </div>
+        <div class="bento__col" style="--off:1.6%">
+          <div class="bento__tile" style="--r:.75"></div>
+          <div class="bento__tile" style="--r:1"></div>
+          <div class="bento__tile" style="--r:.75"></div>
+        </div>
+        <div class="bento__col" style="--off:45%">
+          <div class="bento__tile" style="--r:.8"></div>
+          <div class="bento__tile" style="--r:.75"></div>
+        </div>
+        <div class="bento__col" style="--off:7%">
+          <div class="bento__tile" style="--r:.8"></div>
+          <div class="bento__tile" style="--r:.8"></div>
+        </div>
       </div>
     </section>
   </main>
