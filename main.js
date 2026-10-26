@@ -346,6 +346,13 @@
     scrollTrigger: { trigger: '.s3', start: 'top 95%', end: 'top 40%', scrub: true },
   });
   bgTo('.s4', 'top 95%', 'top 35%', '#050505', '#f3f3f3');
+  // phones: section 03's content fades out while the page turns white, instead of lingering over the new background
+  gsap.matchMedia().add('(max-width: 860px)', () => {
+    gsap.to('.s3__sticky', {
+      autoAlpha: 0, filter: 'blur(10px)', ease: 'none',
+      scrollTrigger: { trigger: '.s4', start: 'top 95%', end: 'top 45%', scrub: true },
+    });
+  });
 
   /* ---------- Section 03: 1 + 2 = 3 ---------- */
   (() => {
