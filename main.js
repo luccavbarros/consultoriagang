@@ -619,7 +619,7 @@
   }
 
   /* ---------- Footer: revealed from behind ---------- */
-  // on phones the footer is much taller, so a smaller offset keeps "Quem somos" from hiding behind the section above
+  // on phones the footer is much taller, so a smaller offset keeps "Vamos conversar?" from hiding behind the section above
   gsap.fromTo('.footer__inner', { yPercent: () => (window.innerWidth > 860 ? -30 : -6) }, {
     yPercent: 0, ease: 'none',
     scrollTrigger: { trigger: '.footer', start: 'top bottom', end: 'bottom bottom', scrub: true, invalidateOnRefresh: true },

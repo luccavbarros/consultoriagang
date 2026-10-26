@@ -417,9 +417,9 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 @media (max-width: 860px) {
   .bento__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bento__col:nth-child(n+3) { display: none; } /* phones: just the first two columns, four images */
-  /* phones: every tile keeps its own proportions (none stretched), so the board is only as tall as its images */
-  .bento { height: auto; padding-bottom: clamp(12px, 1.5vw, 32px); overflow: visible; } /* the parallax nudges the columns past the edges */
-  .bento__tile:last-child { flex: none; margin-bottom: 0; }
+  /* phones: about as tall as the four images, still cut flat at the bottom so the footer starts right at the images' edge */
+  .bento { height: 120vw; }
+  .bento__tile:last-child { margin-bottom: -60px; } /* room for the parallax */
 }
 
 /* ===== Footer ===== */
@@ -447,6 +447,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 }
 .footer__brand { display: flex; justify-content: space-between; align-items: flex-start; }
 .footer__social { display: flex; align-items: center; gap: 16px; }
+.footer__logo { display: inline-flex; transition: opacity .3s; }
+.footer__logo:hover { opacity: .6; }
 .footer__mail { position: relative; }
 .footer__mail:hover { opacity: 1; } /* only the icon dims, not the bubble */
 .footer__mail img { transition: opacity .3s; }
@@ -653,6 +655,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .consent__yes { color: var(--black); background: var(--lightgray); }
 .consent__yes:hover { background: var(--greybemlight); }
 
+.br-m { display: none; } /* line break for phones only */
+@media (max-width: 860px) { .br-m { display: inline; } }
 .br-wide { display: none; } /* line break for tablet and desktop, not phones */
 @media (min-width: 601px) { .br-wide { display: inline; } }
 
@@ -1192,7 +1196,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
     <div class="footer__inner">
       <div class="footer__about">
         <div class="footer__lead">
-          <h2 class="title-xl footer__title">Quem somos?</h2>
+          <h2 class="title-xl footer__title">Vamos <br class="br-m" />conversar?</h2>
           <div class="footer__action">
             <button class="btn btn--gray footer__cta" data-open-form aria-haspopup="dialog">Estou Interessado</button>
             <p class="footer__wa">Prefere Agora? <a href="https://wa.me/5544998134366?text=Ol%C3%A1%21%20Gostaria%20de%20mais%20informa%C3%A7%C3%B5es%20sobre%20a%20consultoria%20de%20marca%20da%20GANG." target="_blank" rel="noopener">Chame no WhatsApp</a></p>
@@ -1208,7 +1212,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
       <div class="footer__bottom">
         <div class="footer__brand">
           <div>
-            <img src="assets/logo.svg" alt="GANG" width="100" height="20" />
+            <a href="#top" class="footer__logo" aria-label="GANG — voltar ao topo"><img src="assets/logo.svg" alt="GANG" width="100" height="20" /></a>
             <p class="text footer__tag">Consultoria de Marca</p>
           </div>
           <div class="footer__social">
