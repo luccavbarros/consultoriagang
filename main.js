@@ -93,15 +93,23 @@
     onToggle: (self) => setPinned(sec, self.isActive),
   }));
 
-  /* ---------- Smooth scroll (Lenis) ---------- */
-  const lenis = new Lenis({ lerp: reduceMotion ? 1 : 0.08, smoothWheel: true, wheelMultiplier: 1 });
-  lenis.on('scroll', ScrollTrigger.update);
-  window.lenis = lenis;
-  gsap.ticker.add((time) => lenis.raf(time * 1000));
+  /* ---------- Smooth scroll (Lenis), mouse and trackpad only ---------- */
+  // touch screens keep the phone's own scrolling: Lenis doesn't smooth touch anyway, and its touch listeners
+  // fought Safari at the end of the page (going back up from the footer gave a quick jump on iPhone)
+  const lenis = touchScreen ? null : new Lenis({ lerp: reduceMotion ? 1 : 0.08, smoothWheel: true, wheelMultiplier: 1 });
+  if (lenis) {
+    lenis.on('scroll', ScrollTrigger.update);
+    window.lenis = lenis;
+    gsap.ticker.add((time) => lenis.raf(time * 1000));
+  }
   gsap.ticker.lagSmoothing(0);
+  const scrollToY = (y, duration) => {
+    if (lenis) lenis.scrollTo(y, { duration });
+    else window.scrollTo({ top: y, behavior: reduceMotion ? 'auto' : 'smooth' });
+  };
 
   document.querySelectorAll('a[href="#top"]').forEach((a) =>
-    a.addEventListener('click', (e) => { e.preventDefault(); lenis.scrollTo(0, { duration: 1.6 }); })
+    a.addEventListener('click', (e) => { e.preventDefault(); scrollToY(0, 1.6); })
   );
 
   // Shared blur-in / blur-out states
@@ -545,7 +553,7 @@
         if (phone.matches) {
           // on phones a tap opens that step right where the page is, without scrolling it away;
           // only before the steps have locked in place does it glide down to them
-          if (window.scrollY < steps.start) lenis.scrollTo(steps.start + (i / 4) * (steps.end - steps.start) + 4, { duration: 1 });
+          if (window.scrollY < steps.start) scrollToY(steps.start + (i / 4) * (steps.end - steps.start) + 4, 1);
           else goPhoneStep(i);
           return;
         }
