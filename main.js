@@ -484,6 +484,7 @@
     const spacer = document.querySelector('.s4__spacer');
     let lock = { shift: [0, 0, 0, 0], h: 0, stick: 0 };
     let phoneStep = -1;
+    let scrollStep = -1; // the step the scroll position points to
     const measure = () => {
       if (!phone.matches) {
         content.style.removeProperty('--s4-stick');
@@ -519,16 +520,22 @@
       trigger: spacer,
       start: () => `top ${lock.stick + lock.h}px`,
       end: () => `bottom ${lock.stick + lock.h}px`,
-      onUpdate: (self) => { if (phone.matches) goPhoneStep(Math.min(3, Math.floor(self.progress * 4))); },
-      onLeaveBack: () => { if (phone.matches) goPhoneStep(-1); },
+      // the scroll only takes over again when it reaches another quarter, so a tapped step stays open where it is
+      onUpdate: (self) => {
+        if (!phone.matches) return;
+        const k = Math.min(3, Math.floor(self.progress * 4));
+        if (k !== scrollStep) { scrollStep = k; goPhoneStep(k); }
+      },
+      onLeaveBack: () => { if (phone.matches) { scrollStep = -1; goPhoneStep(-1); } },
     });
 
     accs.forEach((acc, i) => {
       acc.querySelector('.acc__btn').addEventListener('click', () => {
         if (phone.matches) {
-          // on phones the scroll drives the steps, so a tap scrolls to that step
-          const span = steps.end - steps.start;
-          lenis.scrollTo(steps.start + (i / 4) * span + 4, { duration: 1 });
+          // on phones a tap opens that step right where the page is, without scrolling it away;
+          // only before the steps have locked in place does it glide down to them
+          if (window.scrollY < steps.start) lenis.scrollTo(steps.start + (i / 4) * (steps.end - steps.start) + 4, { duration: 1 });
+          else goPhoneStep(i);
           return;
         }
         openOnly(acc.classList.contains('is-open') ? -1 : i);
