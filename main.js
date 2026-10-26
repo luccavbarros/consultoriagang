@@ -46,8 +46,9 @@
           b.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
         }
       });
-      all.forEach(({ nodes, width, font }) => {
-        if (!width) return;
+      all.forEach(({ el, nodes, width, font }) => {
+        // the form's intro reads better flowing freely: gluing its last words made a ragged break on phones
+        if (!width || el.closest('.step__desc')) return;
         // words are split on plain spaces only; ones already joined by NBSP count as one chunk
         const last = nodes.reverse().find((n) => /[^ \n] +[^ \n]/.test(n.data.trimEnd()));
         if (!last) return;

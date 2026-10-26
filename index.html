@@ -733,6 +733,12 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   .footer__legal { flex-direction: column; align-items: flex-start; }
   .footer__privacy { order: -1; margin-left: 0; } /* phones: above the copyright line, aligned left */
   .modal--privacy .modal__close { margin-right: -8px; } /* 12px from the edge, like on desktop */
+  /* phones: the form's X stays pinned at the top-right while the questions scroll under it */
+  .modal__close[data-close-form] {
+    position: sticky; top: 12px; right: auto; z-index: 3;
+    margin: 0 -8px -22px auto;
+    border-radius: 50%; background: var(--lightblack); box-shadow: 0 0 0 8px var(--lightblack);
+  }
   .form-progress { margin: -12px -20px 10px; }
 }
 
