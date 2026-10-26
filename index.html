@@ -700,8 +700,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   /* the dots grow as big as the screen allows and start right under the subtitle */
   .s2__stage { --s2-box: min(calc(100vw - 32px), clamp(150px, calc(100vh - 470px), 320px)); grid-template-columns: 1fr; grid-template-rows: auto auto auto; row-gap: 24px; align-content: start; justify-items: center; }
   .s2__col { height: 140px; width: 100%; }
-  /* the label hangs right under the dots (24px from the last row; the dots fill 72% of the box), so they read as one item */
-  .s2__col--left { margin-top: calc(-0.14 * var(--s2-box)); margin-bottom: -24px; height: 104px; }
+  /* the label hangs right under the dots (36px from the last row; the dots fill 72% of the box), so they read as one item */
+  .s2__col--left { margin-top: calc(-0.14 * var(--s2-box) + 12px); margin-bottom: -24px; height: 104px; }
   .s2__col--left .s2__label { bottom: auto; margin: 0; }
   /* each text follows its label by 24px; "O que as pessoas ouvem" has one more line, so its text starts one line lower */
   .s2__desc { bottom: auto; margin: 0; }
