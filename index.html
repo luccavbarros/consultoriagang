@@ -334,8 +334,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 }
 .s4__spacer { display: none; } /* phones only: scroll room for opening the steps one by one */
 .s4__pin { display: contents; } /* only a wrapper on phones, where the square sticks to the top */
-.s4__media { flex: 0 1 736px; min-width: 0; aspect-ratio: 1; border-radius: 16px; overflow: hidden; }
-.s4__stage { background: var(--lightblack); border-radius: 32px; display: flex; align-items: center; justify-content: center; }
+.s4__media { flex: 0 1 736px; min-width: 0; aspect-ratio: 1; border-radius: 2px; overflow: hidden; }
+.s4__stage { background: var(--lightblack); border-radius: 2px; display: flex; align-items: center; justify-content: center; }
 .s4__art { width: 78%; height: auto; overflow: visible; }
 .s4__art [pathLength] { stroke-dasharray: 1; stroke-dashoffset: 1; }
 .s4-dot { transform-box: fill-box; transform-origin: center; }
@@ -666,6 +666,10 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   .s1__art { flex: none; margin-top: 0; height: clamp(72px, calc(100vh - 592px), 200px); width: auto; max-width: 100%; max-height: none; }
   .s1__list { padding-top: 0; width: 100%; }
   .s1__list li { padding: 11px 0; }
+  /* the topics rest on the bottom, level with the last dot of the rail (the rail stops 32px above the bottom) */
+  .s1__panel { padding-bottom: 32px; }
+  .s1__list { display: flex; flex-direction: column; justify-content: flex-end; }
+  .s1__list li:last-child { padding-bottom: 0; }
 
   .s2__sticky { padding-top: 110px; }
   .s2__head { gap: 16px; }
