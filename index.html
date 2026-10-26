@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- the header opens from the logo on arrival: start state set before the page paints (main.js plays it; the timeout is a safety net) -->
+  <script>if (!matchMedia('(prefers-reduced-motion: reduce)').matches) { document.documentElement.classList.add('intro'); setTimeout(function () { document.documentElement.classList.remove('intro'); }, 8000); }</script>
   <title>GANG — Consultoria de Marca</title>
   <meta name="description" content="Estratégia e construção de marca com clareza, consistência e profissionalismo para tornar seu negócio mais lucrativo." />
   <!-- Link preview (WhatsApp, Instagram, LinkedIn...) -->
@@ -159,6 +161,11 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .site-header__login { font-size: 14px; line-height: 1; letter-spacing: -0.0063em; color: #fff; text-decoration: none; transition: opacity .3s; }
 .site-header__login:hover { opacity: .6; }
 @media (max-width: 860px) { .site-header__login { display: none; } } /* desktop only */
+/* arrival: only the logo on the black bar, the rest appears as it opens (main.js) */
+.intro .site-header__bar { width: 164px; overflow: hidden; }
+.intro .site-header__brand, .intro .site-header__actions { flex: none; }
+.intro .site-header__tag, .intro .site-header__actions { opacity: 0; }
+@media (max-width: 860px) { .intro .site-header__bar { width: 140px; } }
 
 /* ===== Hero ===== */
 .hero {

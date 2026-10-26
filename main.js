@@ -117,6 +117,22 @@
   const SHOWN = { autoAlpha: 1, filter: 'blur(0px)', y: 0 };
   const GONE = { autoAlpha: 0, filter: 'blur(14px)', y: -28 };
 
+  /* ---------- Header: opens sideways from the logo on arrival ---------- */
+  // the page starts with the "intro" class (set in <head>): a black bar just wide enough for the logo
+  if (document.documentElement.classList.contains('intro')) {
+    const bar = document.querySelector('.site-header__bar');
+    const rest = bar.querySelectorAll('.site-header__tag, .site-header__actions');
+    const start = bar.offsetWidth;
+    bar.style.width = 'min(846px, 100%)';
+    const full = bar.offsetWidth;
+    gsap.timeline({
+      delay: 2.3, // the logo alone holds for a moment first
+      onComplete: () => { document.documentElement.classList.remove('intro'); gsap.set([bar, ...rest], { clearProps: 'all' }); },
+    })
+      .fromTo(bar, { width: start }, { width: full, duration: 1.1, ease: 'power3.inOut' }, 0)
+      .fromTo(rest, { opacity: 0, filter: 'blur(8px)' }, { opacity: 1, filter: 'blur(0px)', duration: 0.6, ease: 'power2.out', stagger: 0.08 }, 0.75);
+  }
+
   /* ---------- Hero ---------- */
   const hero = document.querySelector('.hero');
   gsap.from('.hero__title .line, .hero__sub, .hero__cta, .hero__note', {
