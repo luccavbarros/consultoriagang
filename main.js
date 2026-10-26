@@ -351,7 +351,7 @@
     const result = seq[seq.length - 1];
 
     gsap.set([...head, ...seq, cta], HIDDEN);
-    gsap.set(lines, { autoAlpha: 0, scale: 0.6 });
+    gsap.set(lines, { autoAlpha: 0, scale: 0.6, svgOrigin: '64 64' }); // grows from the middle dot
     gsap.set(glow, { autoAlpha: 0, scale: 0.5 });
 
     const tl = gsap.timeline({
@@ -361,7 +361,7 @@
     tl.to(head, { ...SHOWN, duration: 0.8, stagger: 0.2 }, 0);
     seq.forEach((el, i) => tl.to(el, { ...SHOWN, x: 0, duration: 0.6 }, 1.6 + i * 0.7));
     const end = 1.6 + seq.length * 0.7;
-    tl.to(lines, { autoAlpha: 1, scale: 1, duration: 0.6 }, end)
+    tl.to(lines, { autoAlpha: 1, scale: 1, svgOrigin: '64 64', duration: 0.6 }, end)
       // the result gets the weight: "=" turns white with a small pulse, then a glow opens behind the icon
       .to(eq, { color: '#f3f3f3', duration: 0.5 }, end + 0.2)
       .to(eq, { scale: 1.15, duration: 0.25, yoyo: true, repeat: 1, ease: 'power1.inOut' }, end + 0.2)
@@ -604,10 +604,22 @@
   /* ---------- Section 05: cards + animated symbols ---------- */
   (() => {
     const cards = gsap.utils.toArray('.card');
-    gsap.fromTo(cards, { autoAlpha: 0, y: 60, filter: 'blur(10px)' }, {
-      autoAlpha: 1, y: 0, filter: 'blur(0px)', duration: 1, ease: 'power3.out', stagger: 0.15,
-      scrollTrigger: { trigger: '.s5__cards', start: 'top 85%', toggleActions: 'play none none reverse' },
-    });
+    const CARD_IN = { autoAlpha: 1, y: 0, filter: 'blur(0px)', duration: 1, ease: 'power3.out' };
+    gsap.matchMedia()
+      // desktop: the three cards sit side by side and come in together
+      .add('(min-width: 861px)', () => {
+        gsap.fromTo(cards, { autoAlpha: 0, y: 60, filter: 'blur(10px)' }, {
+          ...CARD_IN, stagger: 0.15,
+          scrollTrigger: { trigger: '.s5__cards', start: 'top 85%', toggleActions: 'play none none reverse' },
+        });
+      })
+      // phones: they are stacked, so each one comes in when it reaches the screen
+      .add('(max-width: 860px)', () => {
+        cards.forEach((card) => gsap.fromTo(card, { autoAlpha: 0, y: 60, filter: 'blur(10px)' }, {
+          ...CARD_IN,
+          scrollTrigger: { trigger: card, start: 'top 85%', toggleActions: 'play none none reverse' },
+        }));
+      });
 
     // Definição: one blurry circle comes into focus (the problem gets defined), holds, then blurs again
     const defBlur = document.querySelector('.def-blur-amount');
@@ -620,6 +632,7 @@
       .to('.art-definicao svg', { autoAlpha: 0, duration: 0.5 }, '-=0.4');
 
     // Clareza: picks up where Definição ends, so the outlined circle is always there; only the fill comes and goes
+    gsap.set('.cla-fill', { scale: 0, svgOrigin: '32.2308 32.2308' }); // empty until its turn, not full
     const cla = gsap.timeline({ paused: true, repeat: -1, repeatDelay: 1.2, defaults: { ease: 'power2.inOut' } })
       .set('.cla-fill', { autoAlpha: 1, scale: 0, svgOrigin: '32.2308 32.2308' })
       .to('.cla-fill', { scale: 1, svgOrigin: '32.2308 32.2308', duration: 0.9, ease: 'power3.out' }, 0.6)
@@ -639,10 +652,12 @@
       .to({}, { duration: 1.6 })
       .to(['.sin-beam', '.sin-pivot'], { autoAlpha: 0, duration: 0.6, ease: 'power1.in' });
 
+    // each drawing starts from the beginning only once it is well inside the screen (on phones the cards are stacked,
+    // so keying this to the card's top made the animation run ahead, out of sight)
     [def, cla, sin].forEach((tl, i) => {
       ScrollTrigger.create({
-        trigger: cards[i],
-        start: 'top 85%',
+        trigger: cards[i].querySelector('.card__art'),
+        start: 'center 75%',
         end: 'bottom top',
         onEnter: () => tl.play(0),
         onEnterBack: () => tl.play(),

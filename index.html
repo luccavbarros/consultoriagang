@@ -309,7 +309,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .s3__icon { width: var(--ic); height: var(--ic); display: flex; align-items: center; justify-content: center; }
 .s3__icon--stack { position: relative; }
 .s3__icon img { width: calc(var(--ic) * .667); height: auto; }
-.s3__icon--stack .s3__lines { position: absolute; left: 50%; top: 50%; translate: -50% -50%; width: calc(var(--ic) * .526); height: auto; }
+.s3__marca { position: relative; width: calc(var(--ic) * .667); height: auto; overflow: visible; }
 .s3__op {
   width: 128px; height: var(--ic); display: flex; align-items: center; justify-content: center;
   font-weight: 500; font-size: clamp(36px, 5vw, 72px); line-height: 1; letter-spacing: -0.018em;
@@ -1022,8 +1022,11 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
           <div class="s3__item">
             <div class="s3__icon s3__icon--stack">
               <span class="s3__glow" aria-hidden="true"></span>
-              <img class="s3__lines" src="assets/s3-marca-lines.svg" alt="" width="101" height="101" />
-              <img src="assets/s3-marca-dots.svg" alt="" width="128" height="128" />
+              <!-- grid and dots in one drawing, so they can never drift apart on any screen -->
+              <svg class="s3__marca" viewBox="0 0 128 128" width="128" height="128" fill="none" aria-hidden="true">
+                <path class="s3__lines" d="M14 14H114 M14 64H114 M14 114H114 M14 14V114 M64 14V114 M114 14V114 M64 64L14 14 M64 64L114 14 M64 64L14 114 M64 64L114 114" stroke="#F3F3F3" stroke-linecap="round" stroke-linejoin="round" />
+                <g fill="#F3F3F3"><circle cx="14" cy="14" r="14"/><circle cx="64" cy="14" r="14"/><circle cx="114" cy="14" r="14"/><circle cx="14" cy="64" r="14"/><circle cx="64" cy="64" r="14"/><circle cx="114" cy="64" r="14"/><circle cx="14" cy="114" r="14"/><circle cx="64" cy="114" r="14"/><circle cx="114" cy="114" r="14"/></g>
+              </svg>
             </div>
             <h3 class="title-sm">Consultor de marca</h3>
             <p class="small">Compreende<br />o cenário completo.</p>
