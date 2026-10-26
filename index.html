@@ -798,6 +798,12 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   .s2__head .title-xl { font-size: 56px; }
 }
 
+/* touch screens (iPhone Safari): a blur on a large block, or on a drawing that spills outside its own box, can leave stray
+   magenta lines on screen while it animates. These fade and move as usual, just without that blur */
+@media (hover: none), (pointer: coarse) {
+  .s1__inner, .s1__art, .s4__media { filter: none !important; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
