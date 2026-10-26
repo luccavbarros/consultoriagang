@@ -505,9 +505,11 @@
     let phoneStep = -1;
     let scrollStep = -1; // the step the scroll position points to
     const measure = () => {
+      const next = document.querySelector('.s5');
       if (!phone.matches) {
         content.style.removeProperty('--s4-stick');
         content.style.height = content.style.transform = '';
+        next.style.marginTop = '';
         return;
       }
       // computed from sizes, not live positions, since the panels may be mid-animation
@@ -524,6 +526,8 @@
       lock.h = listTop + 4 * btnH + 3 * gap + Math.max(...panel);
       lock.stick = line - pos(0, -1);
       content.style.height = lock.h + 'px';
+      // the steps leave with "Design" pulled up to the square, which leaves that much room empty below them: the next section takes it
+      next.style.marginTop = lock.shift[3] + 'px';
       content.style.setProperty('--s4-stick', lock.stick + 'px');
       content.style.transform = phoneStep > 0 ? `translateY(${lock.shift[phoneStep]}px)` : '';
     };
@@ -539,21 +543,36 @@
       trigger: spacer,
       start: () => `top ${lock.stick + lock.h}px`,
       end: () => `bottom ${lock.stick + lock.h}px`,
-      // the scroll only takes over again when it reaches another quarter, so a tapped step stays open where it is
+      // the first three steps share the hold; "Design" opens right as it ends, so it reaches the square
+      // and both move on together instead of holding once more.
+      // The scroll only takes over again when it reaches another stretch, so a tapped step stays open where it is
       onUpdate: (self) => {
         if (!phone.matches) return;
-        const k = Math.min(3, Math.floor(self.progress * 4));
+        const k = self.progress >= 1 ? 3 : Math.floor(self.progress * 3);
         if (k !== scrollStep) { scrollStep = k; goPhoneStep(k); }
       },
+      onLeave: () => { if (phone.matches && scrollStep !== 3) { scrollStep = 3; goPhoneStep(3); } },
       onLeaveBack: () => { if (phone.matches) { scrollStep = -1; goPhoneStep(-1); } },
     });
+
+    // once "Design" opens the steps let go, and the square goes up with them instead of staying stuck on its own a little longer
+    const s4 = document.querySelector('.s4');
+    const followSteps = () => {
+      if (!phone.matches) { pin.style.transform = ''; return; }
+      const y = window.scrollY;
+      // scroll at which the square would let go by itself (when the bottom of the section's content box reaches it)
+      const free = y + s4.getBoundingClientRect().bottom - parseFloat(getComputedStyle(s4).paddingBottom) - 88 - pin.offsetHeight;
+      const lift = Math.min(Math.max(0, y - steps.end), Math.max(0, free - steps.end));
+      pin.style.transform = lift ? `translateY(${-lift}px)` : '';
+    };
+    window.addEventListener('scroll', followSteps, { passive: true });
 
     accs.forEach((acc, i) => {
       acc.querySelector('.acc__btn').addEventListener('click', () => {
         if (phone.matches) {
           // on phones a tap opens that step right where the page is, without scrolling it away;
           // only before the steps have locked in place does it glide down to them
-          if (window.scrollY < steps.start) scrollToY(steps.start + (i / 4) * (steps.end - steps.start) + 4, 1);
+          if (window.scrollY < steps.start) scrollToY(steps.start + (Math.min(i, 3) / 3) * (steps.end - steps.start) + 4, 1);
           else goPhoneStep(i);
           return;
         }
