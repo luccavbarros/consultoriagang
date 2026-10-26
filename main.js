@@ -154,18 +154,21 @@
     panels.forEach((p) => gsap.set(parts(p), HIDDEN));
     gsap.set(dots, { backgroundColor: '#dadada' });
 
-    // desktop: each drawing fills the column height (bottom level with the last dot) and keeps its proportions,
-    // growing right into the gap before the list; inline SVGs don't size from their ratio on their own
+    // desktop: each drawing fills the space above the text in the right column and keeps its proportions;
+    // inline SVGs don't size from their ratio on their own
     const wide = window.matchMedia('(min-width: 861px)');
     const sizeArts = () => section.querySelectorAll('.s1__art').forEach((svg) => {
       svg.style.width = '';
+      svg.style.height = '';
       if (!wide.matches) return svg.removeAttribute('preserveAspectRatio');
       const vb = svg.viewBox.baseVal;
-      const h = parseFloat(getComputedStyle(svg).height);
-      const col = svg.parentElement;
-      const room = col.clientWidth + (parseFloat(getComputedStyle(col.parentElement).columnGap) || 0) - 32; // keeps air before the list
-      svg.style.width = Math.min(h * (vb.width / vb.height), room) + 'px';
-      svg.setAttribute('preserveAspectRatio', 'xMinYMax meet'); // if it ever runs out of width, it still sits on the last dot
+      const panel = svg.closest('.s1__panel');
+      const list = panel.querySelector('.s1__list');
+      const cs = getComputedStyle(panel);
+      const h = panel.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - parseFloat(cs.rowGap) - list.offsetHeight;
+      const w = Math.min(h * (vb.width / vb.height), list.offsetWidth);
+      svg.style.width = w + 'px';
+      svg.style.height = w * (vb.height / vb.width) + 'px';
     });
     sizeArts();
     window.addEventListener('resize', sizeArts);
