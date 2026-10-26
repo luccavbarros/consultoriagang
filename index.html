@@ -310,8 +310,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   padding: 90px var(--gutter) 40px;
   overflow: hidden;
 }
-.s3__head { width: min(100%, 599px); display: flex; flex-direction: column; align-items: center; gap: 32px; text-align: center; }
-@media (min-width: 861px) { .s3__head { align-items: flex-start; text-align: left; max-width: none; } }
+.s3__head { width: min(100%, 599px); display: flex; flex-direction: column; align-items: flex-start; gap: 32px; text-align: left; }
+@media (min-width: 861px) { .s3__head { max-width: none; } }
 .s3__title { color: var(--white); }
 .s3__sub { color: var(--ganggrey); }
 .s3__equation { --ic: min(232px, 21vh); display: flex; align-items: flex-start; justify-content: center; }
