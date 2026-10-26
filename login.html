@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Entrar — GANG</title>
+  <link rel="icon" href="assets/favicon-maleta.png" type="image/png" sizes="32x32" />
+  <link rel="stylesheet" href="app/app.css" />
+</head>
+<body>
+  <main class="auth">
+    <div class="auth__card">
+      <a href="/" aria-label="GANG — voltar ao site"><img class="auth__logo" src="assets/logo.svg" alt="GANG" width="100" height="20" /></a>
+
+      <div class="auth__head">
+        <h1 class="title-xl" id="auth-title">Entrar</h1>
+        <p class="small" id="auth-sub">Acesse sua área com o e-mail e a senha que a GANG enviou para você.</p>
+      </div>
+
+      <div id="auth-body">
+        <!-- sign in -->
+        <form class="auth__form" id="form-login" novalidate>
+          <div><label class="label" for="email">E-mail</label><input class="field" id="email" type="email" autocomplete="username" required /></div>
+          <div><label class="label" for="password">Senha</label><input class="field" id="password" type="password" autocomplete="current-password" required /></div>
+          <p class="msg" id="msg-login" role="status" aria-live="polite"></p>
+          <button class="btn btn--light" type="submit">Entrar</button>
+          <div class="auth__foot"><button class="link" type="button" id="go-forgot">Esqueci minha senha</button></div>
+        </form>
+
+        <!-- forgot password: Supabase e-mails a link back here -->
+        <form class="auth__form" id="form-forgot" novalidate hidden>
+          <div><label class="label" for="email-forgot">E-mail</label><input class="field" id="email-forgot" type="email" autocomplete="username" required /></div>
+          <p class="msg" id="msg-forgot" role="status" aria-live="polite"></p>
+          <button class="btn btn--light" type="submit">Enviar link</button>
+          <div class="auth__foot"><button class="link" type="button" id="go-login">Voltar para entrar</button></div>
+        </form>
+
+        <!-- new password, after opening the link from that e-mail -->
+        <form class="auth__form" id="form-reset" novalidate hidden>
+          <div><label class="label" for="password-new">Nova senha</label><input class="field" id="password-new" type="password" autocomplete="new-password" minlength="8" required /></div>
+          <p class="msg" id="msg-reset" role="status" aria-live="polite"></p>
+          <button class="btn btn--light" type="submit">Salvar nova senha</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="app/config.js"></script>
+  <script src="app/auth.js"></script>
+  <script>
+    (async () => {
+      const { sb, HOME, getProfile, notConfigured } = window.GangAuth;
+      if (!sb) return notConfigured(document.getElementById('auth-body'));
+
+      const $ = (id) => document.getElementById(id);
+      const forms = { login: $('form-login'), forgot: $('form-forgot'), reset: $('form-reset') };
+      const show = (name) => Object.entries(forms).forEach(([k, f]) => { f.hidden = k !== name; });
+      const say = (el, text, kind) => { el.textContent = text; el.className = 'msg' + (kind ? ' is-' + kind : ''); };
+      const busy = (form, on) => { form.querySelector('[type=submit]').disabled = on; };
+
+      const goHome = async () => {
+        const profile = await getProfile();
+        if (profile && profile.active) location.replace(HOME[profile.role] || 'cliente.html');
+        return profile;
+      };
+
+      let recovering = location.hash.includes('type=recovery');
+      sb.auth.onAuthStateChange((event) => {
+        if (event === 'PASSWORD_RECOVERY') {
+          recovering = true;
+          $('auth-title').textContent = 'Nova senha';
+          $('auth-sub').textContent = 'Escolha uma senha com pelo menos 8 caracteres.';
+          show('reset');
+        }
+      });
+
+      if (new URLSearchParams(location.search).has('off')) say($('msg-login'), 'Este acesso está desativado. Fale com a GANG.', 'error');
+      else if (!recovering) await goHome(); // already logged in: straight to their area
+      document.documentElement.classList.add('is-ready');
+
+      $('go-forgot').addEventListener('click', () => { $('email-forgot').value = $('email').value; show('forgot'); });
+      $('go-login').addEventListener('click', () => show('login'));
+
+      forms.login.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = $('email').value.trim(), password = $('password').value;
+        if (!email || !password) return say($('msg-login'), 'Preencha e-mail e senha.', 'error');
+        busy(forms.login, true); say($('msg-login'), 'Entrando…');
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) { busy(forms.login, false); return say($('msg-login'), 'E-mail ou senha incorretos.', 'error'); }
+        const profile = await goHome();
+        if (!profile || !profile.active) {
+          await sb.auth.signOut(); busy(forms.login, false);
+          say($('msg-login'), 'Este acesso está desativado. Fale com a GANG.', 'error');
+        }
+      });
+
+      forms.forgot.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = $('email-forgot').value.trim();
+        if (!email) return say($('msg-forgot'), 'Digite seu e-mail.', 'error');
+        busy(forms.forgot, true);
+        await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+        busy(forms.forgot, false);
+        // same answer whether the e-mail exists or not, so the form can't be used to find accounts
+        say($('msg-forgot'), 'Se este e-mail tiver acesso, você vai receber um link em instantes.', 'ok');
+      });
+
+      forms.reset.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const password = $('password-new').value;
+        if (password.length < 8) return say($('msg-reset'), 'A senha precisa ter pelo menos 8 caracteres.', 'error');
+        busy(forms.reset, true);
+        const { error } = await sb.auth.updateUser({ password });
+        if (error) { busy(forms.reset, false); return say($('msg-reset'), 'Não deu certo. Peça um novo link.', 'error'); }
+        say($('msg-reset'), 'Senha salva.', 'ok');
+        setTimeout(goHome, 800);
+      });
+    })();
+  </script>
+</body>
+</html>

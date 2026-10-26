@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Minha área — GANG</title>
+  <link rel="icon" href="assets/favicon-maleta.png" type="image/png" sizes="32x32" />
+  <link rel="stylesheet" href="app/app.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="app-header__bar">
+      <div class="app-header__brand">
+        <a href="/" aria-label="GANG — site"><img src="assets/logo.svg" alt="GANG" width="100" height="20" /></a>
+        <span class="app-header__tag" id="company">Área do cliente</span>
+      </div>
+      <div class="app-header__actions">
+        <span class="app-header__who" id="who"></span>
+        <button class="btn btn--ghost btn--sm" id="sign-out">Sair</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-main" id="app">
+    <section class="app-section">
+      <h1 class="title-xl" id="hello">Olá</h1>
+      <p class="small">Esta é a sua área na GANG.</p>
+    </section>
+
+    <section class="app-section" aria-labelledby="t-tools">
+      <h2 class="title-sm" id="t-tools">Suas funções</h2>
+      <p class="app-note">Em breve, as funções da sua área aparecem aqui.</p>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="app/config.js"></script>
+  <script src="app/auth.js"></script>
+  <script>
+    (async () => {
+      const { sb, guard, signOut, notConfigured } = window.GangAuth;
+      if (!sb) return notConfigured(document.getElementById('app'));
+      const me = await guard('client');
+      if (!me) return;
+
+      document.getElementById('who').textContent = me.email;
+      document.getElementById('hello').textContent = 'Olá' + (me.name ? ', ' + me.name.split(' ')[0] : '');
+      if (me.company) document.getElementById('company').textContent = me.company;
+      document.getElementById('sign-out').addEventListener('click', signOut);
+    })();
+  </script>
+</body>
+</html>

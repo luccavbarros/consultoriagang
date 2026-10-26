@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Painel — GANG</title>
+  <link rel="icon" href="assets/favicon-maleta.png" type="image/png" sizes="32x32" />
+  <link rel="stylesheet" href="app/app.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="app-header__bar">
+      <div class="app-header__brand">
+        <a href="/" aria-label="GANG — site"><img src="assets/logo.svg" alt="GANG" width="100" height="20" /></a>
+        <span class="app-header__tag">Painel</span>
+      </div>
+      <div class="app-header__actions">
+        <span class="app-header__who" id="who"></span>
+        <button class="btn btn--ghost btn--sm" id="sign-out">Sair</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-main" id="app">
+    <section class="app-section">
+      <h1 class="title-xl" id="hello">Olá</h1>
+      <div class="cards">
+        <div class="tile"><span class="tile__num" id="n-total">–</span><span class="small">Clientes</span></div>
+        <div class="tile"><span class="tile__num" id="n-active">–</span><span class="small">Com acesso ativo</span></div>
+      </div>
+    </section>
+
+    <section class="app-section" aria-labelledby="t-clients">
+      <div class="app-section__head">
+        <h2 class="title-sm" id="t-clients">Clientes</h2>
+        <button class="btn btn--light btn--sm" id="open-new" aria-expanded="false" aria-controls="new-card">Novo cliente</button>
+      </div>
+
+      <form class="card" id="new-card" novalidate hidden>
+        <h3 class="title-sm">Novo cliente</h3>
+        <div class="new-client">
+          <div><label class="label" for="nc-name">Nome</label><input class="field" id="nc-name" autocomplete="off" required /></div>
+          <div><label class="label" for="nc-company">Empresa</label><input class="field" id="nc-company" autocomplete="off" /></div>
+          <div class="full"><label class="label" for="nc-email">E-mail de acesso</label><input class="field" id="nc-email" type="email" autocomplete="off" required /></div>
+          <div class="full">
+            <label class="label" for="nc-pass">Senha inicial (mínimo 8 caracteres)</label>
+            <div class="new-client__pass">
+              <input class="field" id="nc-pass" type="text" autocomplete="off" minlength="8" required />
+              <button class="btn btn--ghost btn--sm" type="button" id="nc-gen">Gerar</button>
+            </div>
+          </div>
+        </div>
+        <div class="new-client__foot">
+          <button class="btn btn--light" type="submit">Criar acesso</button>
+          <p class="msg" id="nc-msg" role="status" aria-live="polite"></p>
+        </div>
+      </form>
+
+      <p class="msg" id="list-msg" role="status" aria-live="polite"></p>
+      <ul class="clients" id="clients"></ul>
+    </section>
+
+    <section class="app-section" aria-labelledby="t-tools">
+      <h2 class="title-sm" id="t-tools">Suas funções</h2>
+      <p class="app-note">Espaço reservado para as funções do seu painel.</p>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="app/config.js"></script>
+  <script src="app/auth.js"></script>
+  <script>
+    (async () => {
+      const { sb, guard, signOut, notConfigured } = window.GangAuth;
+      if (!sb) return notConfigured(document.getElementById('app'));
+      const me = await guard('admin');
+      if (!me) return;
+
+      const $ = (id) => document.getElementById(id);
+      const say = (el, text, kind) => { el.textContent = text; el.className = 'msg' + (kind ? ' is-' + kind : ''); };
+      const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+
+      $('who').textContent = me.email;
+      $('hello').textContent = 'Olá' + (me.name ? ', ' + me.name.split(' ')[0] : '');
+      $('sign-out').addEventListener('click', signOut);
+
+      // account changes need the service key, so they go through our own server function, which checks you are the admin
+      const api = async (body) => {
+        const { data: { session } } = await sb.auth.getSession();
+        const r = await fetch('/api/admin-users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+          body: JSON.stringify(body),
+        });
+        const out = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(out.error || 'Não deu certo. Tente de novo.');
+        return out;
+      };
+
+      const randomPass = () => {
+        const chars = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        const bytes = crypto.getRandomValues(new Uint32Array(12));
+        return Array.from(bytes, (b) => chars[b % chars.length]).join('');
+      };
+
+      // ===== client list =====
+      const render = (rows) => {
+        const list = $('clients');
+        list.replaceChildren();
+        $('n-total').textContent = rows.length;
+        $('n-active').textContent = rows.filter((r) => r.active).length;
+        if (!rows.length) { list.append(el('li', 'clients__empty', 'Nenhum cliente ainda. Crie o primeiro acesso em “Novo cliente”.')); return; }
+
+        rows.forEach((c) => {
+          const li = el('li', 'client');
+          const who = el('div');
+          who.append(el('div', 'client__name', c.name || '(sem nome)'), el('div', 'client__mail', c.email));
+          const badge = el('span', 'badge' + (c.active ? '' : ' is-off'), c.active ? 'Ativo' : 'Desativado');
+
+          const actions = el('div', 'client__actions');
+          const btn = (label, fn, danger) => {
+            const b = el('button', 'btn btn--ghost btn--sm' + (danger ? ' btn--danger' : ''), label);
+            b.type = 'button';
+            b.addEventListener('click', async () => {
+              b.disabled = true;
+              try { await fn(); } catch (err) { say($('list-msg'), err.message, 'error'); }
+              b.disabled = false;
+            });
+            return b;
+          };
+          actions.append(
+            btn('Nova senha', async () => {
+              const password = prompt('Nova senha para ' + c.email + ' (mínimo 8 caracteres):', randomPass());
+              if (!password) return;
+              await api({ action: 'set_password', id: c.id, password });
+              say($('list-msg'), 'Senha de ' + c.email + ' alterada. Envie a nova senha para o cliente.', 'ok');
+            }),
+            btn(c.active ? 'Desativar' : 'Ativar', async () => {
+              await api({ action: 'set_active', id: c.id, active: !c.active });
+              await load();
+            }),
+            btn('Excluir', async () => {
+              if (!confirm('Excluir o acesso de ' + c.email + '? Isso não pode ser desfeito.')) return;
+              await api({ action: 'delete', id: c.id });
+              await load();
+            }, true),
+          );
+
+          li.append(who, el('div', 'client__company', c.company || '—'), badge, actions);
+          list.append(li);
+        });
+      };
+
+      const load = async () => {
+        const { data, error } = await sb.from('profiles').select('*').eq('role', 'client').order('created_at', { ascending: false });
+        if (error) return say($('list-msg'), 'Não foi possível carregar os clientes.', 'error');
+        say($('list-msg'), '');
+        render(data);
+      };
+      await load();
+
+      // ===== new client =====
+      const card = $('new-card');
+      $('open-new').addEventListener('click', () => {
+        card.hidden = !card.hidden;
+        $('open-new').setAttribute('aria-expanded', String(!card.hidden));
+        if (!card.hidden) { if (!$('nc-pass').value) $('nc-pass').value = randomPass(); $('nc-name').focus(); }
+      });
+      $('nc-gen').addEventListener('click', () => { $('nc-pass').value = randomPass(); });
+
+      card.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const body = {
+          action: 'create',
+          name: $('nc-name').value.trim(),
+          company: $('nc-company').value.trim(),
+          email: $('nc-email').value.trim(),
+          password: $('nc-pass').value,
+        };
+        if (!body.name || !body.email) return say($('nc-msg'), 'Preencha nome e e-mail.', 'error');
+        if (body.password.length < 8) return say($('nc-msg'), 'A senha precisa ter pelo menos 8 caracteres.', 'error');
+        const submit = card.querySelector('[type=submit]');
+        submit.disabled = true; say($('nc-msg'), 'Criando…');
+        try {
+          await api(body);
+          say($('nc-msg'), 'Acesso criado. Envie para o cliente: ' + body.email + ' / ' + body.password, 'ok');
+          ['nc-name', 'nc-company', 'nc-email'].forEach((id) => { $(id).value = ''; });
+          $('nc-pass').value = randomPass();
+          await load();
+        } catch (err) { say($('nc-msg'), err.message, 'error'); }
+        submit.disabled = false;
+      });
+    })();
+  </script>
+</body>
+</html>
