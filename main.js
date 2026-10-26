@@ -539,6 +539,8 @@
     };
     ScrollTrigger.addEventListener('refreshInit', measure);
     measure();
+    // clip for the square and the fade around it (which reaches past it): `cut` px taken off from the bottom
+    const mask = (cut) => `inset(-100px -40px ${cut - 80}px -40px)`;
     const steps = ScrollTrigger.create({
       trigger: spacer,
       start: () => `top ${lock.stick + lock.h}px`,
@@ -551,14 +553,24 @@
         const k = Math.min(3, Math.floor(self.progress * 3.5));
         if (k !== scrollStep) { scrollStep = k; goPhoneStep(k); }
       },
-      // when "Design" has had its moment, the square fades away and the steps scroll on by themselves
-      // (dragging the square up along with them stuttered on iPhone); it comes back when scrolling up into the steps
+      // when "Design" has had its moment, a mask closes over the square from the bottom up and the steps scroll on
+      // by themselves (dragging the square up along with them stuttered on iPhone); scrolling back, the mask opens again
       onLeave: () => {
         if (!phone.matches) return;
         if (scrollStep !== 3) { scrollStep = 3; goPhoneStep(3); }
-        gsap.to(pin, { autoAlpha: 0, duration: 0.35, ease: 'power1.out', overwrite: true });
+        gsap.fromTo(pin, { clipPath: mask(0) }, {
+          clipPath: mask(pin.offsetHeight + 80), duration: 0.6, ease: 'power2.inOut', overwrite: true,
+          onComplete: () => gsap.set(pin, { autoAlpha: 0 }),
+        });
       },
-      onEnterBack: () => { if (phone.matches) gsap.to(pin, { autoAlpha: 1, duration: 0.35, ease: 'power1.out', overwrite: true }); },
+      onEnterBack: () => {
+        if (!phone.matches) return;
+        gsap.set(pin, { autoAlpha: 1 });
+        gsap.fromTo(pin, { clipPath: mask(pin.offsetHeight + 80) }, {
+          clipPath: mask(0), duration: 0.6, ease: 'power2.inOut', overwrite: true,
+          onComplete: () => { pin.style.clipPath = ''; },
+        });
+      },
       onLeaveBack: () => { if (phone.matches) { scrollStep = -1; goPhoneStep(-1); } },
     });
 
