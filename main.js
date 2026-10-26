@@ -606,6 +606,18 @@
     });
   })();
 
+  /* ---------- Bento: light parallax, each column drifts at its own pace while the board scrolls by ---------- */
+  if (!reduceMotion) {
+    const drift = window.matchMedia('(min-width: 861px)').matches ? [50, 100, 30, 90, 60] : [16, 36];
+    gsap.utils.toArray('.bento__col').forEach((col, i) => {
+      const d = drift[i % drift.length];
+      gsap.fromTo(col, { y: d }, {
+        y: -d, ease: 'none',
+        scrollTrigger: { trigger: '.bento', start: 'top bottom', end: 'bottom top', scrub: true },
+      });
+    });
+  }
+
   /* ---------- Footer: revealed from behind ---------- */
   // on phones the footer is much taller, so a smaller offset keeps "Quem somos" from hiding behind the section above
   gsap.fromTo('.footer__inner', { yPercent: () => (window.innerWidth > 860 ? -30 : -6) }, {

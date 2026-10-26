@@ -411,13 +411,14 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .bento__col { display: flex; flex-direction: column; gap: clamp(8px, 1vw, 20px); padding-top: var(--off); min-width: 0; }
 .bento__tile { flex: none; aspect-ratio: var(--r); background: #fff; border-radius: 2px; overflow: hidden; }
 /* the last tile of each column runs past the bottom edge, so the board reads as cut off, like a page that goes on */
-.bento__tile:last-child { flex: 1 0 auto; margin-bottom: -24px; }
-.bento__tile img { width: 100%; height: 100%; object-fit: cover; }
+.bento__tile:last-child { flex: 1 0 auto; margin-bottom: -140px; } /* room for the parallax to lift the columns */
+.bento__tile img, .bento__tile video { display: block; width: 100%; height: 100%; object-fit: cover; }
+.bento__tile .is-zoom { transform: scale(1.14); } /* these carry small captions along the top and bottom edges: zoomed in just past them */
 @media (max-width: 860px) {
   .bento__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bento__col:nth-child(n+3) { display: none; } /* phones: just the first two columns, four images */
   /* phones: every tile keeps its own proportions (none stretched), so the board is only as tall as its images */
-  .bento { height: auto; padding-bottom: clamp(12px, 1.5vw, 32px); }
+  .bento { height: auto; padding-bottom: clamp(12px, 1.5vw, 32px); overflow: visible; } /* the parallax nudges the columns past the edges */
   .bento__tile:last-child { flex: none; margin-bottom: 0; }
 }
 
@@ -1158,29 +1159,29 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
       </div>
     </section>
 
-    <!-- BENTO: full-screen board of project images (white placeholders until the images arrive) -->
+    <!-- BENTO: full-screen board of project images -->
     <section class="bento" aria-label="Projetos">
       <div class="bento__grid">
         <div class="bento__col" style="--off:6%">
-          <div class="bento__tile" style="--r:.82"></div>
-          <div class="bento__tile" style="--r:.75"></div>
+          <div class="bento__tile" style="--r:.82"><img class="is-zoom" src="assets/bento-wepsy.webp" alt="Projeto de marca Wepsy" width="720" height="900" loading="lazy" decoding="async" /></div>
+          <div class="bento__tile" style="--r:.75"><img class="is-zoom" src="assets/bento-viventeris.webp" alt="Projeto de marca Viventeris" width="720" height="900" loading="lazy" decoding="async" /></div>
         </div>
         <div class="bento__col" style="--off:47%">
-          <div class="bento__tile" style="--r:.75"></div>
-          <div class="bento__tile" style="--r:1.2"></div>
+          <div class="bento__tile" style="--r:.75"><video class="is-zoom" src="assets/bento-video.mp4" poster="assets/bento-video-poster.webp" autoplay muted loop playsinline preload="metadata" aria-label="Projeto de marca da GANG"></video></div>
+          <div class="bento__tile" style="--r:1.2"><img src="assets/bento-tako.webp" alt="Projeto de marca Takō" width="720" height="900" loading="lazy" decoding="async" /></div>
         </div>
         <div class="bento__col" style="--off:1.6%">
-          <div class="bento__tile" style="--r:.75"></div>
-          <div class="bento__tile" style="--r:1"></div>
-          <div class="bento__tile" style="--r:.75"></div>
+          <div class="bento__tile" style="--r:.75"><img class="is-zoom" src="assets/bento-hello.webp" alt="Projeto de marca Hello! Tech" width="720" height="900" loading="lazy" decoding="async" /></div>
+          <div class="bento__tile" style="--r:1"><img src="assets/bento-demix.webp" alt="Projeto de marca Demix" width="720" height="720" loading="lazy" decoding="async" /></div>
+          <div class="bento__tile" style="--r:.75"><img src="assets/bento-dom.webp" alt="Projeto de marca DOM" width="720" height="900" loading="lazy" decoding="async" /></div>
         </div>
         <div class="bento__col" style="--off:45%">
-          <div class="bento__tile" style="--r:.8"></div>
-          <div class="bento__tile" style="--r:.75"></div>
+          <div class="bento__tile" style="--r:.8"><img src="assets/bento-sal-limao.webp" alt="Projeto de marca Sal &amp; Limão" width="720" height="900" loading="lazy" decoding="async" /></div>
+          <div class="bento__tile" style="--r:.75"><img src="assets/bento-luzee.webp" alt="Projeto de marca Luzee" width="720" height="900" loading="lazy" decoding="async" /></div>
         </div>
         <div class="bento__col" style="--off:7%">
-          <div class="bento__tile" style="--r:.8"></div>
-          <div class="bento__tile" style="--r:.8"></div>
+          <div class="bento__tile" style="--r:.8"><img src="assets/bento-darlan-alves.webp" alt="Projeto de marca Darlan Alves" width="720" height="900" loading="lazy" decoding="async" /></div>
+          <div class="bento__tile" style="--r:.8"><img class="is-zoom" src="assets/bento-aromorie.webp" alt="Projeto de marca Aromorie" width="720" height="900" loading="lazy" decoding="async" /></div>
         </div>
       </div>
     </section>
