@@ -282,8 +282,8 @@
       if (!desktop.matches) return sticky.style.removeProperty('--s2-lift'); // mobile: plain stacked layout
       const vh = window.innerHeight;
       const headBottom = headEl.offsetTop + headEl.offsetHeight;
-      // screen center, but never closer than 64px between the subtitle and the 288px box
-      const centerY = Math.max(vh / 2, headBottom + 64 + 144);
+      // screen center, but never closer than 64px between the subtitle and the 400px box
+      const centerY = Math.max(vh / 2, headBottom + 64 + 200);
       sticky.style.setProperty('--s2-lift', Math.max(0, headBottom + vh - 40 - 2 * centerY) + 'px');
     };
     centerStage();

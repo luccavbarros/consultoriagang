@@ -270,7 +270,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   margin-bottom: var(--s2-lift, 0px);
   width: min(100%, var(--container));
   display: grid;
-  grid-template-columns: 1fr 288px 1fr;
+  grid-template-columns: 1fr 400px 1fr;
   align-items: center;
   column-gap: 32px;
 }
@@ -283,11 +283,23 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .s2__col--right { justify-self: center; width: 100%; max-width: 260px; margin-left: clamp(32px, calc(26vw - 220px), 150px); }
 .s2__desc { left: 0; width: 100%; }
 .s2__box {
-  width: 288px; height: 288px;
+  width: 400px; height: 400px; /* test: dots at 400x400 */
   border-radius: 32px;
   display: flex; align-items: center; justify-content: center;
 }
-.s2__grid { overflow: visible; width: 176px; height: auto; }
+.s2__grid { overflow: visible; width: 400px; height: 400px; }
+@media (min-width: 861px) {
+  .s2__dot { vector-effect: non-scaling-stroke; stroke-width: 1px; } /* a fine 1px outline at any size */
+  /* the side columns are as tall as the dots: the label and the text both hang from their top */
+  .s2__col { height: 400px; }
+  .s2__label { bottom: auto; margin: 0; }
+  .s2__desc { bottom: auto; margin: 0; }
+  /* the text and the label sit at the same distance from the dots on each side: near enough to read as theirs,
+     with room to breathe (about 120px on a 1440px screen, less on narrower ones so the label still fits) */
+  .s2 { --s2-side: clamp(0px, calc(14vw - 124px), 100px); }
+  .s2__col--right { justify-self: start; margin-left: var(--s2-side); }
+  .s2__col--left .s2__label { left: auto; right: var(--s2-side); }
+}
 
 /* ===== Section 03 ===== */
 .s3 { position: relative; height: 340vh; }
