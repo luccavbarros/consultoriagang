@@ -543,12 +543,12 @@
       trigger: spacer,
       start: () => `top ${lock.stick + lock.h}px`,
       end: () => `bottom ${lock.stick + lock.h}px`,
-      // the first three steps share the hold; "Design" opens right as it ends, so it reaches the square
-      // and both move on together instead of holding once more.
+      // each step holds for the same stretch, and "Design" for half of one: a short pause once it is open,
+      // then it and the square move on together.
       // The scroll only takes over again when it reaches another stretch, so a tapped step stays open where it is
       onUpdate: (self) => {
         if (!phone.matches) return;
-        const k = self.progress >= 1 ? 3 : Math.floor(self.progress * 3);
+        const k = Math.min(3, Math.floor(self.progress * 3.5));
         if (k !== scrollStep) { scrollStep = k; goPhoneStep(k); }
       },
       onLeave: () => { if (phone.matches && scrollStep !== 3) { scrollStep = 3; goPhoneStep(3); } },
@@ -572,7 +572,7 @@
         if (phone.matches) {
           // on phones a tap opens that step right where the page is, without scrolling it away;
           // only before the steps have locked in place does it glide down to them
-          if (window.scrollY < steps.start) scrollToY(steps.start + (Math.min(i, 3) / 3) * (steps.end - steps.start) + 4, 1);
+          if (window.scrollY < steps.start) scrollToY(steps.start + (i / 3.5) * (steps.end - steps.start) + 4, 1);
           else goPhoneStep(i);
           return;
         }
