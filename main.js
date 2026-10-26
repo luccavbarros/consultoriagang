@@ -541,16 +541,20 @@
     measure();
     // clip for the square and the fade around it (which reaches past it): `cut` px taken off from the bottom
     const mask = (cut) => `inset(-100px -40px ${cut - 80}px -40px)`;
+    const STEP_SHARE = [1.6, 1, 1, 0.5];
+    const total = STEP_SHARE.reduce((a, b) => a + b, 0);
+    const STEP_FROM = STEP_SHARE.map((_, i) => STEP_SHARE.slice(0, i).reduce((a, b) => a + b, 0) / total);
+    const stepAt = (p) => STEP_FROM.reduce((k, from, i) => (p >= from ? i : k), 0);
     const steps = ScrollTrigger.create({
       trigger: spacer,
       start: () => `top ${lock.stick + lock.h}px`,
       end: () => `bottom ${lock.stick + lock.h}px`,
-      // each step holds for the same stretch, and "Design" for half of one: a short pause once it is open,
-      // then it and the square move on together.
+      // how long each step holds, in shares of the scroll: "Diagnóstico" opens as the steps lock, so it gets the longest
+      // stretch to be read before "Estratégia" takes over; "Design" gets a short one, then the square goes.
       // The scroll only takes over again when it reaches another stretch, so a tapped step stays open where it is
       onUpdate: (self) => {
         if (!phone.matches) return;
-        const k = Math.min(3, Math.floor(self.progress * 3.5));
+        const k = stepAt(self.progress);
         if (k !== scrollStep) { scrollStep = k; goPhoneStep(k); }
       },
       // when "Design" has had its moment, a mask closes over the square from the bottom up and the steps scroll on
@@ -580,7 +584,7 @@
         if (phone.matches) {
           // on phones a tap opens that step right where the page is, without scrolling it away;
           // only before the steps have locked in place does it glide down to them
-          if (window.scrollY < steps.start) scrollToY(steps.start + (i / 3.5) * (steps.end - steps.start) + 4, 1);
+          if (window.scrollY < steps.start) scrollToY(steps.start + STEP_FROM[i] * (steps.end - steps.start) + 4, 1);
           else goPhoneStep(i);
           return;
         }
