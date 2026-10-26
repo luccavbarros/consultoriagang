@@ -6,6 +6,17 @@
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   gsap.registerPlugin(ScrollTrigger);
+  // phones show and hide the address bar while scrolling, which resizes the window: if every one of those resizes re-measured
+  // the page, the pinned and sticky sections would jump (scrolling back up from the end of the page threw it to the bottom).
+  // So on touch screens the page is only re-measured when the width changes (rotation); elsewhere on any resize
+  ScrollTrigger.config({ autoRefreshEvents: 'visibilitychange,DOMContentLoaded,load' });
+  const touchScreen = window.matchMedia('(hover: none), (pointer: coarse)').matches;
+  let refreshW = window.innerWidth;
+  window.addEventListener('resize', () => {
+    if (touchScreen && window.innerWidth === refreshW) return;
+    refreshW = window.innerWidth;
+    ScrollTrigger.refresh();
+  });
 
   /* ---------- Typography: no orphan words on any screen ---------- */
   // 1) connecting words ("o", "e", "de", "que", "sem", "para"...) never end a line: they stick to the next word
