@@ -541,7 +541,7 @@
     measure();
     // clip for the square and the fade around it (which reaches past it): `cut` px taken off from the bottom
     const mask = (cut) => `inset(-100px -40px ${cut - 80}px -40px)`;
-    const STEP_SHARE = [1.6, 1, 1, 0.5];
+    const STEP_SHARE = [1.6, 1.3, 1.3, 0.5];
     const total = STEP_SHARE.reduce((a, b) => a + b, 0);
     const STEP_FROM = STEP_SHARE.map((_, i) => STEP_SHARE.slice(0, i).reduce((a, b) => a + b, 0) / total);
     const stepAt = (p) => STEP_FROM.reduce((k, from, i) => (p >= from ? i : k), 0);
