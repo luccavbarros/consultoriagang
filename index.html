@@ -328,7 +328,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .s4__spacer { display: none; } /* phones only: scroll room for opening the steps one by one */
 .s4__pin { display: contents; } /* only a wrapper on phones, where the square sticks to the top */
 .s4__media { flex: 0 1 736px; min-width: 0; aspect-ratio: 1; border-radius: 16px; overflow: hidden; }
-.s4__stage { border: 1px solid #c9c9c9; border-radius: 32px; display: flex; align-items: center; justify-content: center; }
+.s4__stage { background: var(--lightblack); border-radius: 32px; display: flex; align-items: center; justify-content: center; }
 .s4__art { width: 78%; height: auto; overflow: visible; }
 .s4__art [pathLength] { stroke-dasharray: 1; stroke-dashoffset: 1; }
 .s4-dot { transform-box: fill-box; transform-origin: center; }
@@ -919,15 +919,15 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
           <div class="s2__box">
             <!-- one grid for all 4 steps: filled circles fade out step by step (from the 4 Figma icons) -->
             <svg class="s2__grid" width="127" height="132" viewBox="0 0 127 132" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <circle class="s2__dot" cx="13.75" cy="14.25" r="13.25" fill="#050505" stroke="#050505" stroke-width="1"/>
-              <circle class="s2__dot" cx="63.4" cy="14.25" r="13.25" fill="#050505" stroke="#050505" stroke-width="1"/>
-              <circle class="s2__dot" cx="113.05" cy="14.25" r="13.25" fill="#050505" stroke="#050505" stroke-width="1"/>
-              <circle class="s2__dot" cx="13.75" cy="65.9" r="13.25" fill="#050505" stroke="#050505" stroke-width="1"/>
-              <circle class="s2__dot" cx="63.4" cy="65.9" r="13.25" fill="#050505" stroke="#050505" stroke-width="1"/>
-              <circle class="s2__dot" cx="113.05" cy="65.9" r="13.25" fill="#050505" stroke="#050505" stroke-width="1"/>
-              <circle class="s2__dot" cx="13.75" cy="117.55" r="13.25" fill="#050505" stroke="#050505" stroke-width="1"/>
-              <circle class="s2__dot" cx="63.4" cy="117.55" r="13.25" fill="#050505" stroke="#050505" stroke-width="1"/>
-              <circle class="s2__dot" cx="113.05" cy="117.55" r="13.25" fill="#050505" stroke="#050505" stroke-width="1"/>
+              <circle class="s2__dot" cx="13.75" cy="14.25" r="13.25" fill="#1b1b1b" stroke="#1b1b1b" stroke-width="1"/>
+              <circle class="s2__dot" cx="63.4" cy="14.25" r="13.25" fill="#1b1b1b" stroke="#1b1b1b" stroke-width="1"/>
+              <circle class="s2__dot" cx="113.05" cy="14.25" r="13.25" fill="#1b1b1b" stroke="#1b1b1b" stroke-width="1"/>
+              <circle class="s2__dot" cx="13.75" cy="65.9" r="13.25" fill="#1b1b1b" stroke="#1b1b1b" stroke-width="1"/>
+              <circle class="s2__dot" cx="63.4" cy="65.9" r="13.25" fill="#1b1b1b" stroke="#1b1b1b" stroke-width="1"/>
+              <circle class="s2__dot" cx="113.05" cy="65.9" r="13.25" fill="#1b1b1b" stroke="#1b1b1b" stroke-width="1"/>
+              <circle class="s2__dot" cx="13.75" cy="117.55" r="13.25" fill="#1b1b1b" stroke="#1b1b1b" stroke-width="1"/>
+              <circle class="s2__dot" cx="63.4" cy="117.55" r="13.25" fill="#1b1b1b" stroke="#1b1b1b" stroke-width="1"/>
+              <circle class="s2__dot" cx="113.05" cy="117.55" r="13.25" fill="#1b1b1b" stroke="#1b1b1b" stroke-width="1"/>
             </svg>
           </div>
           <div class="s2__col s2__col--right">
@@ -980,7 +980,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
         <div class="s4__media s4__stage" aria-hidden="true">
           <!-- one symbol per step, driven by the accordion: scattered → direction → connected → one mark -->
           <svg class="s4__art" viewBox="0 0 400 400" fill="none" stroke-linecap="round" stroke-linejoin="round">
-            <g class="s4-lines" stroke="#c9c9c9" stroke-width="1.5">
+            <g class="s4-lines" stroke="#404040" stroke-width="1.5">
               <path d="M130 130H270" pathLength="1"/>
               <path d="M130 200H270" pathLength="1"/>
               <path d="M130 270H270" pathLength="1"/>
@@ -990,10 +990,10 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
               <path d="M130 130L270 270" pathLength="1"/>
               <path d="M270 130L130 270" pathLength="1"/>
             </g>
-            <path class="s4-arrow" d="M84 316L316 84M272 84H316V128" stroke="#050505" stroke-width="1.5" pathLength="1"/>
-            <circle class="s4-ring" cx="200" cy="200" r="104" stroke="#050505" stroke-width="1.5" pathLength="1"/>
-            <circle class="s4-scan" cx="150" cy="150" r="46" stroke="#050505" stroke-width="1.5"/>
-            <g class="s4-dots" fill="#050505">
+            <path class="s4-arrow" d="M84 316L316 84M272 84H316V128" stroke="#f3f3f3" stroke-width="1.5" pathLength="1"/>
+            <circle class="s4-ring" cx="200" cy="200" r="104" stroke="#f3f3f3" stroke-width="1.5" pathLength="1"/>
+            <circle class="s4-scan" cx="150" cy="150" r="46" stroke="#f3f3f3" stroke-width="1.5"/>
+            <g class="s4-dots" fill="#f3f3f3">
               <circle class="s4-dot" cx="200" cy="200" r="12"/>
               <circle class="s4-dot" cx="200" cy="200" r="12"/>
               <circle class="s4-dot" cx="200" cy="200" r="12"/>
@@ -1064,7 +1064,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
                   <feGaussianBlur class="def-blur-amount" stdDeviation="5" />
                 </filter>
               </defs>
-              <circle class="def-circle" cx="41.2308" cy="41.2308" r="30.7308" stroke="#404040" stroke-width="1" filter="url(#def-blur)" />
+              <circle class="def-circle" cx="41.2308" cy="41.2308" r="30.7308" stroke="#1b1b1b" stroke-width="1" filter="url(#def-blur)" />
             </svg>
           </div>
           <div class="card__text">
@@ -1077,8 +1077,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
           <div class="card__art art-clareza">
             <!-- one circle: the outline goes all the way round, then it fills (seen in 360, then defined) -->
             <svg width="64.4615" height="64.4615" viewBox="0 0 64.4615 64.4615" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <circle class="cla-fill" cx="32.2308" cy="32.2308" r="31.2308" fill="#404040" />
-              <circle class="cla-ring" cx="32.2308" cy="32.2308" r="30.7308" stroke="#404040" stroke-width="1" transform="rotate(-90 32.2308 32.2308)" />
+              <circle class="cla-fill" cx="32.2308" cy="32.2308" r="31.2308" fill="#1b1b1b" />
+              <circle class="cla-ring" cx="32.2308" cy="32.2308" r="30.7308" stroke="#1b1b1b" stroke-width="1" transform="rotate(-90 32.2308 32.2308)" />
             </svg>
           </div>
           <div class="card__text">
@@ -1091,11 +1091,11 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
           <div class="card__art art-sintese">
             <svg width="243.953" height="109.047" viewBox="0 0 243.953 109.047" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
               <g class="sin-beam">
-                <path class="sin-big" d="M31.2308 62.4615C48.479 62.4615 62.4615 48.479 62.4615 31.2308C62.4615 13.9825 48.479 0 31.2308 0C13.9825 0 0 13.9825 0 31.2308C0 48.479 13.9825 62.4615 31.2308 62.4615Z" fill="#404040"/>
-                <path d="M3.52136 56.9912L243.453 108.547" stroke-linecap="round" stroke-linejoin="round" stroke="#404040"/>
-                <path class="sin-small" d="M215.196 101.607C219.577 101.607 223.128 98.0558 223.128 93.6753C223.128 89.2948 219.577 85.7437 215.196 85.7437C210.816 85.7437 207.265 89.2948 207.265 93.6753C207.265 98.0558 210.816 101.607 215.196 101.607Z" fill="#404040"/>
+                <path class="sin-big" d="M31.2308 62.4615C48.479 62.4615 62.4615 48.479 62.4615 31.2308C62.4615 13.9825 48.479 0 31.2308 0C13.9825 0 0 13.9825 0 31.2308C0 48.479 13.9825 62.4615 31.2308 62.4615Z" fill="#1b1b1b"/>
+                <path d="M3.52136 56.9912L243.453 108.547" stroke-linecap="round" stroke-linejoin="round" stroke="#1b1b1b"/>
+                <path class="sin-small" d="M215.196 101.607C219.577 101.607 223.128 98.0558 223.128 93.6753C223.128 89.2948 219.577 85.7437 215.196 85.7437C210.816 85.7437 207.265 89.2948 207.265 93.6753C207.265 98.0558 210.816 101.607 215.196 101.607Z" fill="#1b1b1b"/>
               </g>
-              <path class="sin-pivot" d="M122 82.248L108.615 105.547H135.385L122 82.248Z" fill="#404040"/>
+              <path class="sin-pivot" d="M122 82.248L108.615 105.547H135.385L122 82.248Z" fill="#1b1b1b"/>
             </svg>
           </div>
           <div class="card__text">
@@ -1199,7 +1199,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
             <div class="step__desc"><p>Agora precisamos de algumas informações básicas sobre a empresa.</p></div>
           </div>
           <div class="q">
-            <label class="q__label" for="f-empresa"><span>01</span>Qual o nome da empresa que você trabalha?</label>
+            <label class="q__label" for="f-empresa"><span>01</span>Qual o nome da empresa?</label>
             <input class="field" id="f-empresa" name="empresa" type="text" placeholder="Nome da empresa" autocomplete="organization" required />
           </div>
           <div class="q" role="radiogroup" aria-labelledby="l-func">
