@@ -288,8 +288,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   display: flex; align-items: center; justify-content: center;
 }
 .s2__grid { overflow: visible; width: 400px; height: 400px; }
+.s2__dot { vector-effect: non-scaling-stroke; stroke-width: 1px; } /* the empty dots keep a fine 1px outline at any size, desktop and phones */
 @media (min-width: 861px) {
-  .s2__dot { vector-effect: non-scaling-stroke; stroke-width: 1px; } /* a fine 1px outline at any size */
   /* the side columns are as tall as the dots: the label and the text both hang from their top */
   .s2__col { height: 400px; }
   .s2__label { bottom: auto; margin: 0; }
