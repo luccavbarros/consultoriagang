@@ -259,15 +259,7 @@
     const headEl = section.querySelector('.s2__head');
     const desktop = window.matchMedia('(min-width: 861px)');
     const centerStage = () => {
-      if (!desktop.matches) {
-        sticky.style.removeProperty('--s2-lift');
-        // mobile: stretch the label column over the whole gap between subtitle and box,
-        // so each label sits with equal space above and below (net size stays 140px)
-        const sub = headEl.lastElementChild.getBoundingClientRect().bottom;
-        const boxTop = sticky.querySelector('.s2__box').getBoundingClientRect().top;
-        return sticky.style.setProperty('--s2-pull', Math.max(0, boxTop - 24 - 140 - sub) + 'px');
-      }
-      sticky.style.removeProperty('--s2-pull');
+      if (!desktop.matches) return sticky.style.removeProperty('--s2-lift'); // mobile: plain stacked layout
       const vh = window.innerHeight;
       const headBottom = headEl.offsetTop + headEl.offsetHeight;
       // screen center, but never closer than 64px between the subtitle and the 288px box

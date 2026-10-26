@@ -659,7 +659,13 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   .s2__head { gap: 16px; }
   .s2__stage { grid-template-columns: 1fr; grid-template-rows: auto auto auto; row-gap: 24px; align-content: center; justify-items: center; }
   .s2__col { height: 140px; width: 100%; }
-  .s2__col--left { margin-top: calc(-1 * var(--s2-pull, 0px)); height: calc(164px + var(--s2-pull, 0px)); margin-bottom: -24px; }
+  /* the label hangs right under the dots (24px from the last row; the dots fill 60% of the box), so they read as one item */
+  .s2__col--left { margin-top: calc(-0.2 * clamp(150px, calc(100vh - 500px), 208px)); margin-bottom: -24px; height: 104px; }
+  .s2__col--left .s2__label { bottom: auto; margin: 0; }
+  /* each text follows its label by 24px; "O que as pessoas ouvem" has one more line, so its text starts one line lower */
+  .s2__desc { bottom: auto; margin: 0; }
+  .s2__desc:nth-child(3) { top: 40px; }
+  .s2__box { order: -1; } /* phones: title, subtitle, the dots, then each label and its text */
   .s2__col--right { margin-left: 0; max-width: none; height: 60px; }
   .s2__label, .s2__desc { left: 0; right: 0; text-align: center; }
   .s2__col--left .s2__label { left: 0; }
@@ -684,7 +690,11 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
     background: linear-gradient(to bottom, var(--page-bg, var(--white)) calc(100% - 64px), transparent);
     pointer-events: none;
   }
-  .s4__media { position: relative; width: min(100%, 40vh); margin: 0 auto; }
+  /* as wide as the header bar (16px from each edge of the screen), centered even though that's wider than the section's own margins */
+  .s4__media { position: relative; --w: min(846px, calc(100vw - 32px)); width: var(--w); margin: 0 calc((100% - var(--w)) / 2);
+    /* short screens: same width, but lower, so the open step's text below still shows in full */
+    aspect-ratio: auto; height: min(var(--w), calc(100vh - 390px)); min-height: 180px; }
+  .s4__art { width: auto; height: 78%; max-width: 78%; aspect-ratio: 1; }
   /* the steps lock just under the square and open one by one while scrolling (main.js sets the offsets) */
   .s4__content { position: sticky; top: var(--s4-stick, 0px); transition: transform .6s cubic-bezier(.65, 0, .35, 1); }
   .s4__spacer { display: block; height: 200vh; margin-top: -64px; }
