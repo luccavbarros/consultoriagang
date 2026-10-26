@@ -390,6 +390,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   border: 1px solid var(--lightgray);
   border-radius: 20px;
 }
+.card__head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+.card__num { color: #c9c9c9; font-variant-numeric: tabular-nums; }
 .card__art {
   flex: 1;
   display: flex; align-items: center; justify-content: center;
@@ -1088,7 +1090,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
       </div>
       <div class="s5__cards">
         <article class="card">
-          <h3 class="title-sm">Definição</h3>
+          <div class="card__head"><h3 class="title-sm">Definição</h3><span class="title-sm card__num" aria-hidden="true">01</span></div>
           <div class="card__art art-definicao">
             <!-- one circle: starts blurred, comes into focus (the problem gets defined) -->
             <svg width="82.4615" height="82.4615" viewBox="0 0 82.4615 82.4615" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -1106,7 +1108,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
           </div>
         </article>
         <article class="card">
-          <h3 class="title-sm">Clareza</h3>
+          <div class="card__head"><h3 class="title-sm">Clareza</h3><span class="title-sm card__num" aria-hidden="true">02</span></div>
           <div class="card__art art-clareza">
             <!-- one circle: the outline goes all the way round, then it fills (seen in 360, then defined) -->
             <svg width="64.4615" height="64.4615" viewBox="0 0 64.4615 64.4615" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -1120,7 +1122,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
           </div>
         </article>
         <article class="card">
-          <h3 class="title-sm">Síntese</h3>
+          <div class="card__head"><h3 class="title-sm">Síntese</h3><span class="title-sm card__num" aria-hidden="true">03</span></div>
           <div class="card__art art-sintese">
             <svg width="243.953" height="109.047" viewBox="0 0 243.953 109.047" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
               <!-- one ball on a seesaw: big and heavy on the left, it shrinks and rolls across until it rests, small, on the right -->
