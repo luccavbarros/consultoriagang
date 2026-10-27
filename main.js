@@ -349,7 +349,8 @@
   const bgTo = (trigger, start, end, from, to) => {
     const scrollTrigger = { trigger, start, end, scrub: true };
     gsap.fromTo(document.body, { backgroundColor: from }, { backgroundColor: to, ease: 'none', immediateRender: false, scrollTrigger });
-    gsap.fromTo(document.documentElement, { '--page-bg': from }, { '--page-bg': to, ease: 'none', immediateRender: false, scrollTrigger: { ...scrollTrigger } });
+    // set only on the two elements that use it: changing it on <html> made phones restyle the whole page on every scroll frame
+    gsap.fromTo('.s4__pin, .s5__head', { '--page-bg': from }, { '--page-bg': to, ease: 'none', immediateRender: false, scrollTrigger: { ...scrollTrigger } });
   };
   bgTo('.s3', 'top 85%', 'top 15%', '#f3f3f3', '#050505');
   // section 02 has its own background (it covers section 01), so it fades with the page — no visible edge

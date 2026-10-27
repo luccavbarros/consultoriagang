@@ -749,7 +749,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   .s4__content { width: 100%; gap: 32px; }
   .accordion { gap: 16px; padding: 0; }
   /* the square sticks under the header and the text scrolls beneath it, fading out */
-  .s4__pin { display: block; position: sticky; top: 88px; z-index: 2; }
+  .s4__pin { display: block; position: sticky; top: 88px; z-index: 2; will-change: transform; } /* own layer: iPhone moves it without repainting */
   .s4__pin::before, .s5__head::before {
     content: ''; position: absolute; left: calc(-1 * var(--gutter)); right: calc(-1 * var(--gutter)); top: -88px; bottom: -64px;
     /* same color as the page at every moment (it fades black -> white as section 04 comes in), so no edge shows */
