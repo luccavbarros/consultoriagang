@@ -356,6 +356,12 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   min-height: 100vh;
 }
 .s4__spacer { display: none; } /* phones only: scroll room for opening the steps one by one */
+.s4__snap { display: none; position: absolute; left: 0; width: 1px; height: 1px; pointer-events: none; scroll-snap-align: start; scroll-snap-stop: always; }
+@media (max-width: 860px) {
+  /* phones: the scroll settles where "O que fazemos" meets the square (main.js places the point) */
+  html.snap { scroll-snap-type: y proximity; }
+  .s4__snap { display: block; }
+}
 .s4__pin { display: contents; } /* only a wrapper on phones, where the square sticks to the top */
 .s4__media { flex: 0 1 736px; min-width: 0; aspect-ratio: 1; border-radius: 2px; overflow: hidden; }
 .s4__stage { background: var(--lightblack); border-radius: 2px; display: flex; align-items: center; justify-content: center; }

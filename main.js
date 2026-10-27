@@ -587,27 +587,29 @@
     const stepAt = (p) => STEP_FROM.reduce((k, from, i) => (p >= from ? i : k), 0);
     // a light hold when the title "O que fazemos" reaches the square pinned above it, so a quick flick doesn't skip the section:
     // the scroll goes back to that point and pauses for a moment
+    // a light hold when the title "O que fazemos" reaches the square pinned above it, so a quick flick doesn't skip the section.
+    // Touch screens: a native scroll-snap point there (the phone itself slows to it, nothing passes and jumps back);
+    // mouse with Lenis: the scroll is put back on that point and paused for a moment
     let gliding = false; // a tapped step glides past this point: no hold then
-    const HOLD = 0.5;
-    const hold = (y) => {
-      y = Math.ceil(y) + 1;
-      if (lenis) {
-        lenis.scrollTo(y, { immediate: true, force: true });
-        lenis.stop();
-        setTimeout(() => lenis.start(), HOLD * 1000);
-        return;
-      }
-      // the jump back stops the phone's momentum; the finger is then ignored for a moment.
-      // (hiding the page's overflow instead made the pinned square jump on iPhone)
-      window.scrollTo(0, y);
-      holdUntil = performance.now() + HOLD * 1000;
-    };
-    let holdUntil = 0;
-    window.addEventListener('touchmove', (e) => { if (performance.now() < holdUntil && e.cancelable) e.preventDefault(); }, { passive: false });
+    const root = document.documentElement;
+    const snapMark = document.createElement('span');
+    snapMark.className = 's4__snap';
+    snapMark.setAttribute('aria-hidden', 'true');
+    document.querySelector('.s4').append(snapMark);
+    if (!lenis && !reduceMotion) root.classList.add('snap');
     ScrollTrigger.create({
       trigger: '.s4__head',
       start: () => `top ${88 + pin.offsetHeight + 24}px`, // just under the square
-      onEnter: (self) => { if (phone.matches && !gliding && !reduceMotion) hold(self.start); },
+      onRefresh: (self) => {
+        const s4Top = snapMark.parentNode.getBoundingClientRect().top + window.scrollY;
+        snapMark.style.top = self.start - s4Top + 'px';
+      },
+      onEnter: (self) => {
+        if (!lenis || !phone.matches || gliding || reduceMotion) return;
+        lenis.scrollTo(Math.ceil(self.start) + 1, { immediate: true, force: true });
+        lenis.stop();
+        setTimeout(() => lenis.start(), 500);
+      },
     });
     const steps = ScrollTrigger.create({
       trigger: spacer,
@@ -650,7 +652,8 @@
           // only before the steps have locked in place does it glide down to them
           if (window.scrollY < steps.start) {
             gliding = true;
-            setTimeout(() => { gliding = false; }, 1500);
+            root.classList.remove('snap'); // or the glide could be pulled back to the snap point
+            setTimeout(() => { gliding = false; if (!lenis && !reduceMotion) root.classList.add('snap'); }, 1500);
             scrollToY(steps.start + STEP_FROM[i] * (steps.end - steps.start) + 4, 1);
           }
           else goPhoneStep(i);
