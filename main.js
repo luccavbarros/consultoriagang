@@ -122,15 +122,25 @@
   if (document.documentElement.classList.contains('intro')) {
     const bar = document.querySelector('.site-header__bar');
     const rest = bar.querySelectorAll('.site-header__tag, .site-header__actions');
-    const start = bar.offsetWidth;
-    bar.style.width = 'min(846px, 100%)';
-    const full = bar.offsetWidth;
-    gsap.timeline({
-      delay: 1.3, // the logo alone holds for a moment first
-      onComplete: () => { document.documentElement.classList.remove('intro'); gsap.set([bar, ...rest], { clearProps: 'all' }); },
-    })
-      .fromTo(bar, { width: start }, { width: full, duration: 1.1, ease: 'power3.inOut' }, 0)
-      .fromTo(rest, { opacity: 0, filter: 'blur(8px)' }, { opacity: 1, filter: 'blur(0px)', duration: 0.6, ease: 'power2.out', stagger: 0.08 }, 0.75);
+    const done = () => { document.documentElement.classList.remove('intro'); gsap.set([bar, logo, ...rest], { clearProps: 'all' }); };
+    const logo = bar.querySelector('.site-header__logo');
+    const tl = gsap.timeline({ delay: 1.3, onComplete: done }); // the logo alone holds for a moment first
+    if (window.matchMedia('(min-width: 861px)').matches) {
+      // desktop: no bar to open, the header is already full width; the logo glides from the middle to its place
+      // (moved, not resized, so it runs smoothly even while the page is still busy loading; the start is set in the CSS)
+      // measured from its resting place, so it always starts exactly in the middle and only ever moves left
+      gsap.set(logo, { x: 0 });
+      const l = logo.getBoundingClientRect();
+      const fromX = Math.max(0, window.innerWidth / 2 - (l.left + l.width / 2));
+      tl.fromTo(logo, { x: fromX }, { x: 0, duration: 1.5, ease: 'power3.inOut', immediateRender: true }, 0)
+        .fromTo(rest, { opacity: 0, filter: 'blur(8px)' }, { opacity: 1, filter: 'blur(0px)', duration: 0.6, ease: 'power2.out', stagger: 0.08 }, 1.0);
+    } else {
+      const start = bar.offsetWidth;
+      bar.style.width = 'min(846px, 100%)';
+      const full = bar.offsetWidth;
+      tl.fromTo(bar, { width: start }, { width: full, duration: 1.1, ease: 'power3.inOut' }, 0)
+        .fromTo(rest, { opacity: 0, filter: 'blur(8px)' }, { opacity: 1, filter: 'blur(0px)', duration: 0.6, ease: 'power2.out', stagger: 0.08 }, 0.75);
+    }
   }
 
   /* ---------- Hero ---------- */
@@ -597,41 +607,6 @@
     const total = STEP_SHARE.reduce((a, b) => a + b, 0);
     const STEP_FROM = STEP_SHARE.map((_, i) => STEP_SHARE.slice(0, i).reduce((a, b) => a + b, 0) / total);
     const stepAt = (p) => STEP_FROM.reduce((k, from, i) => (p >= from ? i : k), 0);
-    // a light hold when the title "O que fazemos" reaches the square pinned above it, so a quick flick doesn't skip the section:
-    // the scroll goes back to that point and pauses for a moment
-    // a light hold when the title "O que fazemos" reaches the square pinned above it, so a quick flick doesn't skip the section.
-    // Touch screens: a native scroll-snap point there (the phone itself slows to it, nothing passes and jumps back);
-    // mouse with Lenis: the scroll is put back on that point and paused for a moment
-    let gliding = false; // a tapped step glides past this point: no hold then
-    const root = document.documentElement;
-    const snapMark = document.createElement('span');
-    snapMark.className = 's4__snap';
-    snapMark.setAttribute('aria-hidden', 'true');
-    document.querySelector('.s4').append(snapMark);
-    if (!lenis && !reduceMotion) root.classList.add('snap');
-    ScrollTrigger.create({
-      trigger: '.s4__head',
-      start: () => `top ${88 + pin.offsetHeight + 24}px`, // just under the square
-      onRefresh: (self) => {
-        const s4Top = snapMark.parentNode.getBoundingClientRect().top + window.scrollY;
-        snapMark.style.top = self.start - s4Top + 2 + 'px'; // just past the start, so landing on it counts as entering (and lets go)
-      },
-      onEnter: (self) => {
-        // touch: the snap point does its job once, then lets go; left on, the steps opening right below it moved the page
-        // and the phone kept pulling the scroll back to the point, so going down felt stuck
-        if (!lenis) { setTimeout(() => root.classList.remove('snap'), 700); return; }
-        if (!phone.matches || gliding || reduceMotion) return;
-        lenis.scrollTo(Math.ceil(self.start) + 1, { immediate: true, force: true });
-        lenis.stop();
-        setTimeout(() => lenis.start(), 500);
-      },
-    });
-    // and it comes back only once the reader is a full screen above that point again
-    ScrollTrigger.create({
-      trigger: '.s4__head',
-      start: () => `top ${88 + pin.offsetHeight + 24 + window.innerHeight}px`,
-      onLeaveBack: () => { if (!lenis && !reduceMotion && !gliding) root.classList.add('snap'); },
-    });
     const steps = ScrollTrigger.create({
       trigger: spacer,
       start: () => `top ${lock.stick + lock.h}px`,
@@ -672,9 +647,6 @@
           // on phones a tap opens that step right where the page is, without scrolling it away;
           // only before the steps have locked in place does it glide down to them
           if (window.scrollY < steps.start) {
-            gliding = true;
-            root.classList.remove('snap'); // or the glide could be pulled back to the snap point
-            setTimeout(() => { gliding = false; }, 1500); // the snap comes back on its own, from above the section (see above)
             scrollToY(steps.start + STEP_FROM[i] * (steps.end - steps.start) + 4, 1);
           }
           else goPhoneStep(i);

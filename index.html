@@ -164,6 +164,19 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
 .site-header__login { font-size: 14px; line-height: 1; letter-spacing: -0.0063em; color: #fff; text-decoration: none; transition: opacity .3s; }
 .site-header__login:hover { opacity: .6; }
 @media (max-width: 860px) { .site-header__login { display: none; } } /* desktop only */
+/* desktop (test): full width, no bar; everything is light and inverts against what is behind it,
+   so it reads black over the white sections and white over the black ones — the button too (white fill, black text) */
+@media (min-width: 861px) {
+  .site-header { padding: 0 var(--gutter); mix-blend-mode: difference; }
+  .site-header__bar { width: 100%; background: none; border-radius: 0; padding: 9px 0; }
+  .site-header__tag { color: #fff; }
+  .site-header__brand { gap: 182px; } /* the tagline sits well apart from the logo */
+  .site-header .btn--gray { background: #fff; color: #000; }
+  .site-header .btn--gray:hover { background: #d4d4d4; }
+  /* arrival: the logo starts in the middle of the screen (set here, so it is there before the scripts load) and glides left (main.js) */
+  .intro .site-header .site-header__bar { width: 100%; overflow: visible; }
+  .intro .site-header__logo { transform: translateX(calc(50vw - var(--gutter) - 50px)); }
+}
 /* arrival: only the logo on the black bar, the rest appears as it opens (main.js) */
 .intro .site-header__bar { width: 164px; overflow: hidden; }
 .intro .site-header__brand, .intro .site-header__actions { flex: none; }
@@ -359,12 +372,6 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
   min-height: 100vh;
 }
 .s4__spacer { display: none; } /* phones only: scroll room for opening the steps one by one */
-.s4__snap { display: none; position: absolute; left: 0; width: 1px; height: 1px; pointer-events: none; scroll-snap-align: start; scroll-snap-stop: always; }
-@media (max-width: 860px) {
-  /* phones: the scroll settles where "O que fazemos" meets the square (main.js places the point) */
-  html.snap { scroll-snap-type: y proximity; }
-  .s4__snap { display: block; }
-}
 .s4__pin { display: contents; } /* only a wrapper on phones, where the square sticks to the top */
 .s4__media { flex: 0 1 736px; min-width: 0; aspect-ratio: 1; border-radius: 2px; overflow: hidden; }
 .s4__stage { background: var(--lightblack); border-radius: 2px; display: flex; align-items: center; justify-content: center; }
@@ -1493,6 +1500,6 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
   <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js" defer></script>
-  <script src="main.min.js" defer></script> <!-- built from main.js by tools/minify.py -->
+  <script src="main.min.js?v=60" defer></script> <!-- built from main.js by tools/minify.py; bump ?v= when it changes, so no browser keeps an old copy -->
 </body>
 </html>
