@@ -258,7 +258,9 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
   /* desktop: title on the left; on the right, the drawing sits on top of the text, which rests on the bottom (level with the last dot).
      JS sizes the drawing to fill the space above the text, keeping its proportions */
   .s1__panel { display: grid; grid-template-columns: 411px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; column-gap: 192px; row-gap: 48px; align-items: start; }
-  .s1__inner { width: min(100%, 1120px); } /* wider, so the extra room between the columns doesn't squeeze the right one */
+  /* full screen: from the bottom of the header's logo to the same bottom margin as section 02, across the whole width */
+  .s1__sticky { padding: 54px var(--gutter) clamp(40px, 8vh, 80px); }
+  .s1__inner { width: 100%; height: 100%; }
   .s1__left { display: contents; }
   .s1__left .title-xl { grid-column: 1; grid-row: 1 / 3; }
   /* each title follows its dot: slide 1 tops the first dot, slide 2 is centred on the middle one, slide 3 sits on the last one */
@@ -288,6 +290,8 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
   padding: clamp(90px, 11vh, 110px) var(--gutter) 40px;
   overflow: hidden;
 }
+.s2__head .br-wide-q { display: none; } /* the question mark is in the desktop layout only */
+@media (min-width: 861px) { .s2__head .br-wide-q { display: inline; } }
 .s2__head { text-align: center; max-width: 517px; display: flex; flex-direction: column; gap: 32px; }
 .s2__stage {
   position: relative;
@@ -316,15 +320,32 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
 .s2__grid { overflow: visible; width: var(--s2-box, 400px); height: var(--s2-box, 400px); }
 .s2__dot { vector-effect: non-scaling-stroke; stroke-width: 1px; } /* the empty dots keep a fine 1px outline at any size, desktop and phones */
 @media (min-width: 861px) {
-  /* the side columns are as tall as the dots: the label and the text both hang from their top */
-  .s2__col { height: var(--s2-box, 400px); }
-  .s2__label { bottom: auto; margin: 0; }
-  .s2__desc { bottom: auto; margin: 0; }
-  /* the text and the label sit at the same distance from the dots on each side: near enough to read as theirs,
-     with room to breathe (about 120px on a 1440px screen, less on narrower ones so the label still fits) */
-  .s2 { --s2-side: clamp(0px, calc(14vw - 124px), 100px); }
-  .s2__col--right { justify-self: start; margin-left: var(--s2-side); }
-  .s2__col--left .s2__label { left: auto; right: var(--s2-side); }
+  /* desktop (Figma "section 02 NEW DESKTOP"): the question small at the top left, the answer big and grey at the bottom left;
+     on the right, the dots, and beside them the label of each step at the top and its text at the bottom.
+     Everything at the bottom rests on the same line */
+  .s2 { --s2-box: min(413px, 21.5vw, 41vh); }
+  .s2__sticky {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: 1fr auto;
+    align-items: end; column-gap: 48px;
+    /* the top is the bottom of the header's logo (54px), so the question sits halfway between the logo and the answer */
+    padding: 54px var(--gutter) clamp(40px, 8vh, 80px);
+  }
+  .s2__head { display: contents; }
+  .s2__head .title-xl { grid-column: 1; grid-row: 1; align-self: center; text-align: left; font-size: clamp(18px, 1.46vw, 21px); line-height: 1; }
+  .s2__head .text { grid-column: 1; grid-row: 2; max-width: 7.4em; font-size: clamp(44px, 5vw, 72px); font-weight: 500; line-height: 0.9; letter-spacing: -0.018em; color: var(--black); text-align: left; }
+  .s2__stage {
+    grid-column: 2; grid-row: 1 / 3; justify-self: end; width: auto; margin: 0;
+    grid-template-columns: var(--s2-box) 4.7em; grid-template-rows: var(--s2-box);
+    column-gap: clamp(24px, 2.45vw, 47px); align-items: stretch;
+    font-size: clamp(44px, 5vw, 72px); /* the text column is as wide as the longest label */
+  }
+  .s2__col { grid-column: 2; grid-row: 1; justify-self: stretch; height: auto; width: auto; max-width: none; margin: 0; }
+  .s2__box { grid-column: 1; grid-row: 1; border-radius: 0; }
+  /* the dots as big as in the Figma frame (diameter about 70% of the step between them), the grid still filling the box */
+  .s2__dot { r: 17.5px; }
+  .s2__grid { width: 94.6%; height: auto; }
+  .s2__col--left .s2__label { left: 0; right: auto; top: 0; bottom: auto; margin: 0; }
+  .s2__desc { top: auto; bottom: 0; margin: 0; font-size: clamp(17px, 1.46vw, 21px); }
 }
 
 /* ===== Section 03 ===== */
@@ -854,8 +875,6 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
 }
 
 @media (max-height: 760px) and (min-width: 861px) {
-  .s1__inner { transform: scale(.88); }
-  .s2__head .title-xl { font-size: 56px; }
 }
 
 /* touch screens (iPhone Safari): a blur on a large block, or on a drawing that spills outside its own box, can leave stray
@@ -1031,7 +1050,7 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
     <section class="s2" id="s2">
       <div class="s2__sticky">
         <header class="s2__head">
-          <h2 class="title-xl">Por que você<br />precisa de ajuda</h2>
+          <h2 class="title-xl">Por que você<br />precisa de ajuda<span class="br-wide-q">?</span></h2>
           <p class="text">Porque sua marca não está comunicando <br class="br-d" />o que realmente tem a oferecer.</p>
         </header>
         <div class="s2__stage">
@@ -1500,6 +1519,6 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
   <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js" defer></script>
-  <script src="main.min.js?v=60" defer></script> <!-- built from main.js by tools/minify.py; bump ?v= when it changes, so no browser keeps an old copy -->
+  <script src="main.min.js?v=62" defer></script> <!-- built from main.js by tools/minify.py; bump ?v= when it changes, so no browser keeps an old copy -->
 </body>
 </html>

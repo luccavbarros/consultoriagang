@@ -300,28 +300,7 @@
   (() => {
     const section = document.querySelector('.s2');
 
-    // Title stays at the top; the stage below it is centered on the screen (desktop only)
-    const sticky = section.querySelector('.s2__sticky');
-    const headEl = section.querySelector('.s2__head');
-    const desktop = window.matchMedia('(min-width: 861px)');
-    const centerStage = () => {
-      if (!desktop.matches) { // mobile: plain stacked layout
-        sticky.style.removeProperty('--s2-box');
-        return sticky.style.removeProperty('--s2-lift');
-      }
-      const vh = window.innerHeight;
-      const headBottom = headEl.offsetTop + headEl.offsetHeight;
-      // the dots are 400x400, smaller on short screens (notebooks) so they keep 64px from the subtitle and 40px from the bottom
-      const size = Math.round(Math.min(400, Math.max(240, vh - headBottom - 64 - 40)));
-      sticky.style.setProperty('--s2-box', size + 'px');
-      // screen center, but never closer than 64px between the subtitle and the box
-      const centerY = Math.max(vh / 2, headBottom + 64 + size / 2);
-      // (negative on short screens: the stage then reaches into the bottom padding so the 64px above the box hold)
-      sticky.style.setProperty('--s2-lift', headBottom + vh - 40 - 2 * centerY + 'px');
-    };
-    centerStage();
-    window.addEventListener('resize', centerStage);
-
+    const desktop = window.matchMedia('(min-width: 861px)'); // the dots are sized in the CSS on both
     const head = section.querySelectorAll('.s2__head > *');
     const labels = gsap.utils.toArray('.s2__label');
     const descs = gsap.utils.toArray('.s2__desc');
@@ -393,21 +372,33 @@
   (() => {
     const section = document.querySelector('.s3');
 
-    // desktop: title and subtitle start on the left, right over the first column of filled dots (the "Coordenador" icon)
+    // desktop: the title, the subtitle and the first icon's dots all start where "Consultoria de Marca" starts in the header
+    // (pulled left only as far as needed when the drawings would not fit on a narrower screen)
     const headBox = section.querySelector('.s3__head');
     const equation = section.querySelector('.s3__equation');
     const firstIcon = section.querySelector('.s3__icon img');
+    const tag = document.querySelector('.site-header__tag');
+    const ctaBtn = section.querySelector('.s3__cta');
     const wideS3 = window.matchMedia('(min-width: 861px)');
     const alignHead = () => {
-      headBox.style.width = headBox.style.paddingLeft = '';
+      headBox.style.width = headBox.style.paddingLeft = equation.style.marginLeft = equation.style.alignSelf = '';
+      ctaBtn.style.marginLeft = ctaBtn.style.alignSelf = '';
       if (!wideS3.matches) return;
-      const left = (el) => { let x = 0; for (let n = el; n && n !== section; n = n.offsetParent) x += n.offsetLeft; return x; };
-      const eqLeft = left(equation);
-      headBox.style.width = equation.offsetWidth + 'px';
-      headBox.style.paddingLeft = left(firstIcon) - eqLeft + 'px';
+      const pad = parseFloat(getComputedStyle(equation.parentNode).paddingLeft);
+      const iconIn = firstIcon.getBoundingClientRect().left - equation.getBoundingClientRect().left;
+      const x = Math.min(tag.getBoundingClientRect().left, window.innerWidth - pad - equation.offsetWidth + iconIn);
+      headBox.style.width = '100%';
+      headBox.style.paddingLeft = x - pad + 'px';
+      equation.style.alignSelf = 'flex-start';
+      equation.style.marginLeft = x - pad - iconIn + 'px';
+      // the button sits under "Consultor de marca", centered on it
+      const last = equation.lastElementChild.getBoundingClientRect();
+      ctaBtn.style.alignSelf = 'flex-start';
+      ctaBtn.style.marginLeft = last.left + last.width / 2 - ctaBtn.offsetWidth / 2 - pad + 'px';
     };
     alignHead();
     window.addEventListener('resize', alignHead);
+    if (document.fonts) document.fonts.ready.then(alignHead);
     const head = section.querySelectorAll('.s3__head > *');
     const cta = section.querySelector('.s3__cta');
     const seq = section.querySelectorAll('.s3__equation > *');
