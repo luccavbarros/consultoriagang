@@ -200,22 +200,31 @@
     panels.forEach((p) => gsap.set(parts(p), HIDDEN));
     gsap.set(dots, { backgroundColor: '#dadada' });
 
-    // desktop: each drawing fills the space above the text in the right column and keeps its proportions;
+    // desktop: the third drawing fills the middle column (up to 70% of the height) and the other two fit the same box, all keeping their proportions;
     // inline SVGs don't size from their ratio on their own
     const wide = window.matchMedia('(min-width: 861px)');
-    const sizeArts = () => section.querySelectorAll('.s1__art').forEach((svg) => {
-      svg.style.width = '';
-      svg.style.height = '';
-      if (!wide.matches) return svg.removeAttribute('preserveAspectRatio');
-      const vb = svg.viewBox.baseVal;
-      const panel = svg.closest('.s1__panel');
-      const list = panel.querySelector('.s1__list');
-      const cs = getComputedStyle(panel);
-      const h = panel.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - parseFloat(cs.rowGap) - list.offsetHeight;
-      const w = Math.min(h * (vb.width / vb.height), list.offsetWidth);
-      svg.style.width = w + 'px';
-      svg.style.height = w * (vb.height / vb.width) + 'px';
-    });
+    const sizeArts = () => {
+      const arts = [...section.querySelectorAll('.s1__art')];
+      let box = null; // the third drawing's size: the other two fit inside that same box
+      arts.slice().reverse().forEach((svg) => {
+        svg.style.width = '';
+        svg.style.height = '';
+        if (!wide.matches) return svg.removeAttribute('preserveAspectRatio');
+        const vb = svg.viewBox.baseVal;
+        const panel = svg.closest('.s1__panel');
+        const cs = getComputedStyle(panel);
+        const inner = panel.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+        if (!box) {
+          const col = parseFloat(cs.gridTemplateColumns.split(' ')[1]); // the middle column, as laid out
+          const bw = Math.min(inner * 0.7 * (vb.width / vb.height), col * 0.8); // leaves room on its left: it groups with the text
+          box = { w: bw, h: bw * (vb.height / vb.width) };
+        }
+        // the second drawing reads bigger than the others at the same size, so it is drawn smaller
+        const scale = Math.min(box.w / vb.width, box.h / vb.height) * (svg === arts[1] ? 0.8 : 1);
+        svg.style.width = vb.width * scale + 'px';
+        svg.style.height = vb.height * scale + 'px';
+      });
+    };
     sizeArts();
     window.addEventListener('resize', sizeArts);
     if (document.fonts) document.fonts.ready.then(sizeArts);
@@ -238,7 +247,14 @@
       tl.fromTo(p.querySelectorAll('.s1__art path'), { strokeDashoffset: 1 },
         { strokeDashoffset: 0, duration: 0.9, stagger: 0.03, ease: 'power2.inOut' }, at + 0.1);
     };
-    const hide = (p, at) => tl.to(parts(p), { ...GONE, duration: 0.5, stagger: 0.04, ease: 'power2.in' }, at);
+    // desktop: the titles sit at different heights (each follows its dot), so a finished one stays on screen, faded,
+    // while the next one comes in — the left column is never empty and reads as a path. Phones stack them, so they go
+    const hide = (p, at) => {
+      const [title, ...rest] = parts(p);
+      if (!wide.matches) return tl.to(parts(p), { ...GONE, duration: 0.5, stagger: 0.04, ease: 'power2.in' }, at);
+      tl.to(rest, { ...GONE, duration: 0.5, stagger: 0.04, ease: 'power2.in' }, at)
+        .to(title, { opacity: 0.16, duration: 0.8, ease: 'power2.inOut' }, at + 0.3);
+    };
 
     tl.to(dots[0], { backgroundColor: '#050505', scale: 1.15, duration: 0.3 }, 0);
     reveal(panels[0], 0.1);
