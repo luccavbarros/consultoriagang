@@ -126,7 +126,7 @@
     bar.style.width = 'min(846px, 100%)';
     const full = bar.offsetWidth;
     gsap.timeline({
-      delay: 2.3, // the logo alone holds for a moment first
+      delay: 1.3, // the logo alone holds for a moment first
       onComplete: () => { document.documentElement.classList.remove('intro'); gsap.set([bar, ...rest], { clearProps: 'all' }); },
     })
       .fromTo(bar, { width: start }, { width: full, duration: 1.1, ease: 'power3.inOut' }, 0)
