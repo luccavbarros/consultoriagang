@@ -244,7 +244,8 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
 @media (min-width: 861px) {
   /* desktop: title on the left; on the right, the drawing sits on top of the text, which rests on the bottom (level with the last dot).
      JS sizes the drawing to fill the space above the text, keeping its proportions */
-  .s1__panel { display: grid; grid-template-columns: 411px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; row-gap: 48px; align-items: start; }
+  .s1__panel { display: grid; grid-template-columns: 411px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; column-gap: 192px; row-gap: 48px; align-items: start; }
+  .s1__inner { width: min(100%, 1120px); } /* wider, so the extra room between the columns doesn't squeeze the right one */
   .s1__left { display: contents; }
   .s1__left .title-xl { grid-column: 1; grid-row: 1 / 3; }
   /* each title follows its dot: slide 1 tops the first dot, slide 2 is centred on the middle one, slide 3 sits on the last one */
@@ -714,7 +715,7 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
 @media (min-width: 601px) { .br-wide { display: inline; } }
 
 @media (max-width: 1100px) {
-  .s1__panel { gap: 56px; grid-template-columns: 320px minmax(0, 1fr); }
+  .s1__panel { gap: 56px; column-gap: 96px; grid-template-columns: 320px minmax(0, 1fr); }
   .s1__left { width: 320px; }
   .s4 { --s4-gap: 56px; --s4-cw: 400px; }
 }
