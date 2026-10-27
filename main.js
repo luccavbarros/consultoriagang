@@ -597,12 +597,13 @@
         setTimeout(() => lenis.start(), HOLD * 1000);
         return;
       }
-      // stops the phone's momentum right there
-      const roots = [document.documentElement, document.body];
-      roots.forEach((el) => { el.style.overflow = 'hidden'; });
+      // the jump back stops the phone's momentum; the finger is then ignored for a moment.
+      // (hiding the page's overflow instead made the pinned square jump on iPhone)
       window.scrollTo(0, y);
-      setTimeout(() => roots.forEach((el) => { el.style.overflow = ''; }), HOLD * 1000);
+      holdUntil = performance.now() + HOLD * 1000;
     };
+    let holdUntil = 0;
+    window.addEventListener('touchmove', (e) => { if (performance.now() < holdUntil && e.cancelable) e.preventDefault(); }, { passive: false });
     ScrollTrigger.create({
       trigger: '.s4__head',
       start: () => `top ${88 + pin.offsetHeight + 24}px`, // just under the square
