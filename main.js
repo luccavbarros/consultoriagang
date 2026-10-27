@@ -304,7 +304,6 @@
     const head = section.querySelectorAll('.s2__head > *');
     const labels = gsap.utils.toArray('.s2__label');
     const descs = gsap.utils.toArray('.s2__desc');
-    const box = section.querySelector('.s2__box');
     const dots = gsap.utils.toArray('.s2__dot', section);
     const steps = labels.length;
     // filled circles per step (row-major 3x3), taken from the four Figma icons
@@ -316,7 +315,8 @@
     ];
 
     gsap.set([...head, ...labels, ...descs], HIDDEN);
-    gsap.set(box, { autoAlpha: 0, scale: 0.85, filter: 'blur(10px)' });
+    // the dots come in one by one, in a wave from the top-left corner: each grows from nothing with a slight overshoot
+    gsap.set(dots, { autoAlpha: 0, scale: 0, transformOrigin: '50% 50%' });
 
     const tl = gsap.timeline({
       defaults: { ease: 'power2.out' },
@@ -325,7 +325,7 @@
 
     tl.to(head, { ...SHOWN, duration: 0.8, stagger: 0.15 }, 0)
       .to(labels[0], { ...SHOWN, duration: 0.6 }, 1.2)
-      .to(box, { autoAlpha: 1, scale: 1, filter: 'blur(0px)', duration: 0.6 }, 1.8)
+      .to(dots, { autoAlpha: 1, scale: 1, duration: 0.5, ease: 'back.out(2)', stagger: { grid: [3, 3], from: 'start', amount: 0.7 } }, 1.6)
       .to(descs[0], { ...SHOWN, duration: 0.6 }, 2.4);
 
     let t = 3.6;
