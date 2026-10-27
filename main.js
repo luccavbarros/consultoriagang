@@ -585,6 +585,29 @@
     const total = STEP_SHARE.reduce((a, b) => a + b, 0);
     const STEP_FROM = STEP_SHARE.map((_, i) => STEP_SHARE.slice(0, i).reduce((a, b) => a + b, 0) / total);
     const stepAt = (p) => STEP_FROM.reduce((k, from, i) => (p >= from ? i : k), 0);
+    // a light hold when the title "O que fazemos" reaches the square pinned above it, so a quick flick doesn't skip the section:
+    // the scroll goes back to that point and pauses for a moment
+    let gliding = false; // a tapped step glides past this point: no hold then
+    const HOLD = 0.5;
+    const hold = (y) => {
+      y = Math.ceil(y) + 1;
+      if (lenis) {
+        lenis.scrollTo(y, { immediate: true, force: true });
+        lenis.stop();
+        setTimeout(() => lenis.start(), HOLD * 1000);
+        return;
+      }
+      // stops the phone's momentum right there
+      const roots = [document.documentElement, document.body];
+      roots.forEach((el) => { el.style.overflow = 'hidden'; });
+      window.scrollTo(0, y);
+      setTimeout(() => roots.forEach((el) => { el.style.overflow = ''; }), HOLD * 1000);
+    };
+    ScrollTrigger.create({
+      trigger: '.s4__head',
+      start: () => `top ${88 + pin.offsetHeight + 24}px`, // just under the square
+      onEnter: (self) => { if (phone.matches && !gliding && !reduceMotion) hold(self.start); },
+    });
     const steps = ScrollTrigger.create({
       trigger: spacer,
       start: () => `top ${lock.stick + lock.h}px`,
@@ -624,7 +647,11 @@
         if (phone.matches) {
           // on phones a tap opens that step right where the page is, without scrolling it away;
           // only before the steps have locked in place does it glide down to them
-          if (window.scrollY < steps.start) scrollToY(steps.start + STEP_FROM[i] * (steps.end - steps.start) + 4, 1);
+          if (window.scrollY < steps.start) {
+            gliding = true;
+            setTimeout(() => { gliding = false; }, 1500);
+            scrollToY(steps.start + STEP_FROM[i] * (steps.end - steps.start) + 4, 1);
+          }
           else goPhoneStep(i);
           return;
         }
