@@ -240,7 +240,7 @@
     tl.to(fill, { scaleY: 1, duration: 1, ease: 'none' }, 6.1);
     tl.to(dots[2], { backgroundColor: '#050505', scale: 1.15, duration: 0.25 }, 7.05);
     reveal(panels[2], 7.0);
-    tl.to({}, { duration: 4.4 }); // hold the last message long enough to read it
+    tl.to({}, { duration: wide.matches ? 4.4 : 1.2 }); // hold the last message long enough to read it (phones scroll on sooner)
 
     // Idle motion for the arrows, only while the section is on screen
     const arrows = (sel) => gsap.utils.toArray(sel + ' .s1-arrow');
@@ -295,12 +295,19 @@
     const headEl = section.querySelector('.s2__head');
     const desktop = window.matchMedia('(min-width: 861px)');
     const centerStage = () => {
-      if (!desktop.matches) return sticky.style.removeProperty('--s2-lift'); // mobile: plain stacked layout
+      if (!desktop.matches) { // mobile: plain stacked layout
+        sticky.style.removeProperty('--s2-box');
+        return sticky.style.removeProperty('--s2-lift');
+      }
       const vh = window.innerHeight;
       const headBottom = headEl.offsetTop + headEl.offsetHeight;
-      // screen center, but never closer than 64px between the subtitle and the 400px box
-      const centerY = Math.max(vh / 2, headBottom + 64 + 200);
-      sticky.style.setProperty('--s2-lift', Math.max(0, headBottom + vh - 40 - 2 * centerY) + 'px');
+      // the dots are 400x400, smaller on short screens (notebooks) so they keep 64px from the subtitle and 40px from the bottom
+      const size = Math.round(Math.min(400, Math.max(240, vh - headBottom - 64 - 40)));
+      sticky.style.setProperty('--s2-box', size + 'px');
+      // screen center, but never closer than 64px between the subtitle and the box
+      const centerY = Math.max(vh / 2, headBottom + 64 + size / 2);
+      // (negative on short screens: the stage then reaches into the bottom padding so the 64px above the box hold)
+      sticky.style.setProperty('--s2-lift', headBottom + vh - 40 - 2 * centerY + 'px');
     };
     centerStage();
     window.addEventListener('resize', centerStage);
@@ -341,7 +348,8 @@
         .to(descs[i], { ...SHOWN, duration: 0.6 }, t + 1.9);
       t += 3.4;
     }
-    tl.to({}, { duration: 3.5 }); // hold the last step long enough to read it
+    // hold the last step long enough to read it; phones scroll on sooner (the section is shorter there, same pace per step)
+    tl.to({}, { duration: desktop.matches ? 3.5 : 1.2 });
   })();
 
   /* ---------- Page background: white -> black (s3) -> white (s4) ---------- */
@@ -404,7 +412,8 @@
 
     const tl = gsap.timeline({
       defaults: { ease: 'power2.out' },
-      scrollTrigger: { trigger: section, start: 'top 10%', end: 'bottom bottom', scrub: 0.8 },
+      // phones start as section 02 fades out, so the screen is never left empty in between
+      scrollTrigger: { trigger: section, start: wideS3.matches ? 'top 10%' : 'top 45%', end: 'bottom bottom', scrub: 0.8 },
     });
     tl.to(head, { ...SHOWN, duration: 0.8, stagger: 0.2 }, 0);
     seq.forEach((el, i) => tl.to(el, { ...SHOWN, x: 0, duration: 0.6 }, 1.6 + i * 0.7));
@@ -437,9 +446,12 @@
   });
 
   /* ---------- Section 04 ---------- */
-  gsap.fromTo('.s4__media', { autoAlpha: 0, scale: 0.94, filter: 'blur(12px)' }, {
-    autoAlpha: 1, scale: 1, filter: 'blur(0px)', duration: 1.2, ease: 'power3.out',
-    scrollTrigger: { trigger: '.s4', start: 'top 70%', toggleActions: 'play none none reverse' },
+  // phones: the square fades in; desktop: it is masked in from the left (see the pin below)
+  gsap.matchMedia().add('(max-width: 860px)', () => {
+    gsap.fromTo('.s4__media', { autoAlpha: 0, scale: 0.94, filter: 'blur(12px)' }, {
+      autoAlpha: 1, scale: 1, filter: 'blur(0px)', duration: 1.2, ease: 'power3.out',
+      scrollTrigger: { trigger: '.s4', start: 'top 70%', toggleActions: 'play none none reverse' },
+    });
   });
   // Steps: numbered, joined by a line that fills up to the open one; the drawing on the left follows the step
   (() => {
@@ -602,14 +614,23 @@
       start: () => `top ${88 + pin.offsetHeight + 24}px`, // just under the square
       onRefresh: (self) => {
         const s4Top = snapMark.parentNode.getBoundingClientRect().top + window.scrollY;
-        snapMark.style.top = self.start - s4Top + 'px';
+        snapMark.style.top = self.start - s4Top + 2 + 'px'; // just past the start, so landing on it counts as entering (and lets go)
       },
       onEnter: (self) => {
-        if (!lenis || !phone.matches || gliding || reduceMotion) return;
+        // touch: the snap point does its job once, then lets go; left on, the steps opening right below it moved the page
+        // and the phone kept pulling the scroll back to the point, so going down felt stuck
+        if (!lenis) { setTimeout(() => root.classList.remove('snap'), 700); return; }
+        if (!phone.matches || gliding || reduceMotion) return;
         lenis.scrollTo(Math.ceil(self.start) + 1, { immediate: true, force: true });
         lenis.stop();
         setTimeout(() => lenis.start(), 500);
       },
+    });
+    // and it comes back only once the reader is a full screen above that point again
+    ScrollTrigger.create({
+      trigger: '.s4__head',
+      start: () => `top ${88 + pin.offsetHeight + 24 + window.innerHeight}px`,
+      onLeaveBack: () => { if (!lenis && !reduceMotion && !gliding) root.classList.add('snap'); },
     });
     const steps = ScrollTrigger.create({
       trigger: spacer,
@@ -653,7 +674,7 @@
           if (window.scrollY < steps.start) {
             gliding = true;
             root.classList.remove('snap'); // or the glide could be pulled back to the snap point
-            setTimeout(() => { gliding = false; if (!lenis && !reduceMotion) root.classList.add('snap'); }, 1500);
+            setTimeout(() => { gliding = false; }, 1500); // the snap comes back on its own, from above the section (see above)
             scrollToY(steps.start + STEP_FROM[i] * (steps.end - steps.start) + 4, 1);
           }
           else goPhoneStep(i);
@@ -707,6 +728,20 @@
         refreshPriority: 1, // laid out before the triggers further down the page
         onToggle: (self) => setPinned('s4', self.isActive),
       });
+      // the black panel opens from the left as the section comes in, then the drawing fades in
+      const OPEN = 'inset(0% 0% 0% 0%)', SHUT = 'inset(0% 100% 0% 0%)';
+      gsap.fromTo('.s4__media', { clipPath: SHUT }, {
+        clipPath: OPEN, ease: 'power2.inOut',
+        scrollTrigger: { trigger: '.s4', start: 'top 85%', end: 'top 15%', scrub: true },
+      });
+      gsap.fromTo('.s4__art', { autoAlpha: 0, filter: 'blur(10px)' }, {
+        autoAlpha: 1, filter: 'blur(0px)', ease: 'none',
+        scrollTrigger: { trigger: '.s4', start: 'top 35%', end: 'top top', scrub: true },
+      });
+      // on the way to section 05 it closes back to the left, after the drawing and the text fade out
+      gsap.timeline({ scrollTrigger: { trigger: '.s5', start: 'top bottom', end: 'top 30%', scrub: true } })
+        .fromTo(['.s4__art', '.s4__content'], { autoAlpha: 1, filter: 'blur(0px)' }, { autoAlpha: 0, filter: 'blur(10px)', ease: 'none', duration: 0.45, immediateRender: false }, 0)
+        .fromTo('.s4__media', { clipPath: OPEN }, { clipPath: SHUT, ease: 'power2.inOut', duration: 1, immediateRender: false }, 0);
       return () => setPinned('s4', false);
     });
   })();

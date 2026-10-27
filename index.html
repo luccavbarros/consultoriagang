@@ -155,7 +155,10 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 }
 .site-header__actions { display: flex; align-items: center; gap: 18px; }
 .site-header__brand { display: flex; align-items: center; gap: 32px; } /* only the logo is a link, not the text */
-.site-header__logo { display: flex; }
+.site-header__logo { display: flex; min-width: 80px; }
+@media (max-width: 340px) { .site-header .site-header__bar { padding-left: 16px; } .site-header .site-header__actions { gap: 10px; } } /* very narrow phones: room for the logo */
+/* the logo keeps its proportions everywhere: on very narrow screens it gets smaller as a whole instead of squashing */
+img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio: 5 / 1; }
 .site-header__tag { font-size: 12px; line-height: 1.2; letter-spacing: -0.0063em; color: #e5e5e5; white-space: nowrap; }
 @media (max-width: 600px) { .site-header__tag { display: none; } } /* desktop and tablet only */
 .site-header__login { font-size: 14px; line-height: 1; letter-spacing: -0.0063em; color: #fff; text-decoration: none; transition: opacity .3s; }
@@ -279,7 +282,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   margin-bottom: var(--s2-lift, 0px);
   width: min(100%, var(--container));
   display: grid;
-  grid-template-columns: 1fr 400px 1fr;
+  grid-template-columns: 1fr var(--s2-box, 400px) 1fr;
   align-items: center;
   column-gap: 32px;
 }
@@ -292,15 +295,15 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .s2__col--right { justify-self: center; width: 100%; max-width: 260px; margin-left: clamp(32px, calc(26vw - 220px), 150px); }
 .s2__desc { left: 0; width: 100%; }
 .s2__box {
-  width: 400px; height: 400px; /* test: dots at 400x400 */
+  width: var(--s2-box, 400px); height: var(--s2-box, 400px); /* 400x400, smaller on short screens (main.js) */
   border-radius: 32px;
   display: flex; align-items: center; justify-content: center;
 }
-.s2__grid { overflow: visible; width: 400px; height: 400px; }
+.s2__grid { overflow: visible; width: var(--s2-box, 400px); height: var(--s2-box, 400px); }
 .s2__dot { vector-effect: non-scaling-stroke; stroke-width: 1px; } /* the empty dots keep a fine 1px outline at any size, desktop and phones */
 @media (min-width: 861px) {
   /* the side columns are as tall as the dots: the label and the text both hang from their top */
-  .s2__col { height: 400px; }
+  .s2__col { height: var(--s2-box, 400px); }
   .s2__label { bottom: auto; margin: 0; }
   .s2__desc { bottom: auto; margin: 0; }
   /* the text and the label sit at the same distance from the dots on each side: near enough to read as theirs,
@@ -370,10 +373,30 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .s4__content { width: 440px; flex: none; display: flex; flex-direction: column; gap: 64px; }
 .s4__head { display: flex; flex-direction: column; gap: 32px; }
 @media (min-width: 861px) {
-  .s4 { align-items: flex-start; gap: 22px; } /* desktop: the square's top lines up with the title, 22px from the text */
-  .s4__content { align-self: stretch; justify-content: space-between; } /* ...and the steps rest on its bottom */
+  /* desktop: the section is exactly one screen tall; the black block runs to its left, top and bottom edges,
+     its right edge where the square's was (the square was up to 736px, centered with the text 22px to its right).
+     The title sits at the top and the steps rest on the bottom, both with the same padding, so opening a step
+     grows the list upward and it never drops below the screen */
+  .s4 {
+    --s4-gap: 22px; --s4-cw: 440px;
+    /* padding and spacing tighten on shorter screens (notebooks) so the title and the open step always fit */
+    --s4-pad-t: clamp(88px, 11.8vh, 106px); --s4-pad-b: 32px;
+    --s4-sp: clamp(12px, calc(5.3vh - 16px), 32px);
+    --s4-sq: min(736px, calc(100vw - 2 * var(--gutter) - var(--s4-gap) - var(--s4-cw)));
+    justify-content: flex-start; align-items: stretch; gap: var(--s4-gap); padding: 0;
+    height: 100vh; min-height: 0;
+  }
+  .s4__media { flex: none; aspect-ratio: auto; border-radius: 0; width: calc((100% - var(--s4-gap) - var(--s4-cw) + var(--s4-sq)) / 2); }
+  .s4__art { width: min(calc(var(--s4-sq) * .78), calc(100vh - 2 * var(--s4-pad-t))); }
+  .s4__content { width: var(--s4-cw); padding: var(--s4-pad-t) 0 var(--s4-pad-b); justify-content: flex-end; gap: var(--s4-sp); }
+  .s4__head { margin-bottom: auto; gap: var(--s4-sp); }
+  .s4 .accordion { padding-top: 0; gap: var(--s4-sp); }
   .s4 .accordion { padding-bottom: 0; }
   .s4 .acc:last-child .acc__btn { padding-bottom: 0; } /* the last step's text sits right on the square's bottom edge */
+}
+@media (min-width: 861px) and (max-height: 760px) {
+  .s4 .acc__btn { padding-top: 6px; padding-bottom: 6px; }
+  .s4 .acc.is-open .acc__body { padding-top: 14px; }
 }
 .accordion { position: relative; display: flex; flex-direction: column; gap: 32px; padding: 32px 0; }
 /* the steps are joined by a line that fills up to the open one, like the track in section 01 */
@@ -693,8 +716,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 @media (max-width: 1100px) {
   .s1__panel { gap: 56px; grid-template-columns: 320px minmax(0, 1fr); }
   .s1__left { width: 320px; }
-  .s4 { gap: 56px; }
-  .s4__content { width: 400px; }
+  .s4 { --s4-gap: 56px; --s4-cw: 400px; }
 }
 
 @media (max-width: 860px) {
@@ -712,6 +734,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   .hero__sub { margin-top: 40px; }
   .hero__cta { margin-top: 40px; }
 
+  .s1 { height: 440vh; } /* shorter on phones: the last message holds less before section 02 comes (main.js) */
   .s1__sticky { padding-top: 96px; }
   .s1__inner { gap: 24px; height: calc(100vh - 136px); }
   .s1__panel { flex-direction: column; gap: 40px; padding: 0; }
@@ -725,6 +748,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   .s1__list { display: flex; flex-direction: column; justify-content: flex-end; }
   .s1__list li:last-child { padding-bottom: 0; }
 
+  .s2 { height: 648vh; } /* same pace per step as desktop, shorter hold on the last one (main.js) */
   .s2__sticky { padding-top: 110px; }
   .s2__head { gap: 16px; }
   /* the dots grow as big as the screen allows and start right under the subtitle */
