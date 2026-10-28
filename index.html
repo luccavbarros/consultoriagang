@@ -164,6 +164,9 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
 .site-header__login { font-size: 14px; line-height: 1; letter-spacing: -0.0063em; color: #fff; text-decoration: none; transition: opacity .3s; }
 .site-header__login:hover { opacity: .6; }
 @media (max-width: 860px) { .site-header__login { display: none; } } /* desktop only */
+.site-header__lang { font-size: 14px; line-height: 1; letter-spacing: -0.0063em; color: #fff; padding: 4px 0; transition: opacity .3s; } /* switches the whole site to English and back (i18n.js) */
+.site-header__lang:hover { opacity: .6; }
+@media (max-width: 860px) { .site-header__lang { display: none; } } /* desktop only */
 /* desktop (test): full width, no bar; everything is light and inverts against what is behind it,
    so it reads black over the white sections and white over the black ones — the button too (white fill, black text) */
 @media (min-width: 861px) {
@@ -929,6 +932,7 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
         <a class="icon-link" href="https://www.instagram.com/gangconsultoria" target="_blank" rel="noopener" aria-label="Instagram da GANG">
           <img src="assets/instagram.svg" alt="" width="18" height="18" />
         </a>
+        <button class="site-header__lang" type="button" data-no-i18n aria-label="View the site in English">EN-US</button>
         <button class="btn btn--gray btn--sm" data-open-form aria-haspopup="dialog">Estou Interessado</button>
       </div>
     </div>
@@ -1518,6 +1522,7 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
   <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js" defer></script>
-  <script src="main.min.js?v=70" defer></script> <!-- built from main.js by tools/minify.py; bump ?v= when it changes, so no browser keeps an old copy -->
+  <script src="i18n.js?v=2" defer></script> <!-- English version: runs before main.js -->
+  <script src="main.min.js?v=71" defer></script> <!-- built from main.js by tools/minify.py; bump ?v= when it changes, so no browser keeps an old copy -->
 </body>
 </html>

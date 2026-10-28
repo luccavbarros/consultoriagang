@@ -25,7 +25,8 @@
   (() => {
     const NBSP = '\u00a0';
     const WORDS = 'a|o|e|é|à|as|os|ao|aos|de|do|da|dos|das|em|no|na|nos|nas|um|uma|por|com|sem|que|se|ou|mas|nem|para|pela|pelo|como|entre|sobre';
-    const SHORT = new RegExp(`(^|[\\s\\u00a0(])(${WORDS}) (?=\\S)`, 'gi');
+    const WORDS_EN = 'a|an|the|and|or|but|of|to|in|on|at|by|for|with|as|is|it|we|you|your|its|our|no|not|than|that|what|who'; // English version (i18n.js)
+    const shortWords = () => new RegExp(`(^|[\\s\\u00a0(])(${document.documentElement.lang === 'en-US' ? WORDS_EN : WORDS}) (?=\\S)`, 'gi');
     const blocks = [...document.querySelectorAll('.hero__title .line, h2, h3, p, li, label')];
     const ctx = document.createElement('canvas').getContext('2d');
     const original = new Map();
@@ -37,6 +38,7 @@
     };
     // three passes (write text → read sizes → write text) so the browser lays the page out once, not once per block
     const fix = () => {
+      const SHORT = shortWords();
       const all = blocks.map((el) => {
         const nodes = textNodes(el);
         nodes.forEach((n) => {
@@ -73,6 +75,8 @@
     };
     fix();
     if (document.fonts) document.fonts.ready.then(fix);
+    // the language changed (i18n.js): the texts are new, so start again from them
+    document.addEventListener('gang:lang', () => { original.clear(); fix(); });
     let lastW = window.innerWidth;
     window.addEventListener('resize', () => {
       if (window.innerWidth === lastW) return;
@@ -1080,7 +1084,7 @@
       sendMetaEvent('Lead', { name: form.nome.value, email: form.email.value, phone: form.whatsapp.value });
       showStep(LAST_QUESTION_STEP);
     } catch (err) {
-      errorEl.textContent = 'Não foi possível enviar agora. Verifique sua conexão e tente novamente.';
+      errorEl.textContent = window.gangT ? window.gangT('Não foi possível enviar agora. Verifique sua conexão e tente novamente.') : 'Não foi possível enviar agora. Verifique sua conexão e tente novamente.';
       errorEl.hidden = false;
       updateNext();
     } finally {
@@ -1199,7 +1203,7 @@ document.querySelectorAll('[data-copy-email]').forEach((btn) => {
     : copyByField(text));
   btn.addEventListener('click', () => {
     copy(btn.dataset.copyEmail).then(() => {
-      label.textContent = 'Copiado';
+      label.textContent = window.gangT ? window.gangT('Copiado') : 'Copiado';
       tip.classList.add('is-in');
       clearTimeout(timer);
       timer = setTimeout(() => tip.classList.remove('is-in'), 1400);
