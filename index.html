@@ -209,6 +209,13 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
 .hero__sub { max-width: 628px; margin-top: 70px; }
 .hero__cta { margin-top: 56px; }
 .hero__note { margin-top: 16px; font-size: 14px; line-height: 1.4; letter-spacing: -0.0063em; color: #666; } /* #666 keeps small text above 4.5:1 on the light background */
+@media (min-width: 861px) {
+  /* desktop: everything fits one screen, so short notebook screens still show the button (same sizes as before at 1080px tall) */
+  .hero { min-height: 100vh; padding: clamp(88px, 18.5vh, 200px) var(--gutter) clamp(24px, 6vh, 64px); }
+  .hero__title { font-size: clamp(46px, min(7.78vw, 15vh), 112px); }
+  .hero__sub { margin-top: clamp(24px, 6.5vh, 70px); }
+  .hero__cta { margin-top: clamp(20px, 5.2vh, 56px); }
+}
 
 .hero__images { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
 .hero__img {
@@ -217,6 +224,11 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
   width: clamp(62px, 7.55vw, 109px);
   aspect-ratio: 108.7 / 136.15;
   translate: -50% 0;
+}
+@media (min-width: 861px) and (max-height: 900px) {
+  /* short notebook screens: smaller pictures, and ZIVIZ steps aside so it doesn't sit on the title */
+  .hero__img { width: clamp(62px, min(7.55vw, 10vh), 109px); }
+  .hero__img:nth-child(1) { --x: 27% !important; }
 }
 .hero__float { width: 100%; height: 100%; will-change: transform; }
 .hero__float img { width: 100%; height: 100%; object-fit: cover; border-radius: 4.4px; }
@@ -259,7 +271,7 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
 .s1__list li:last-child { border-bottom: 0; color: var(--black); font-weight: 600; letter-spacing: 0; }
 @media (min-width: 861px) {
   /* desktop: three columns — the title on the left, the drawing in the middle, pushed against the text on the right (both centred vertically). JS sizes the drawing to its column, keeping its proportions */
-  .s1__panel { display: grid; grid-template-columns: 411px minmax(0, 1fr) minmax(0, 380px); grid-template-rows: minmax(0, 1fr); column-gap: 64px; align-items: start; }
+  .s1__panel { display: grid; grid-template-columns: clamp(300px, 27vw, 411px) minmax(0, 1fr) clamp(260px, 25vw, 380px); grid-template-rows: minmax(0, 1fr); column-gap: clamp(32px, 3.5vw, 64px); /* side columns give way on notebooks so the drawing keeps its size */ align-items: start; }
   /* full screen: from the bottom of the header's logo to the same bottom margin as section 02, across the whole width */
   .s1__sticky { padding: 54px var(--gutter) clamp(40px, 8vh, 80px); }
   .s1__inner { width: 100%; height: 100%; }
