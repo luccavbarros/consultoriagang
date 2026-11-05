@@ -406,7 +406,11 @@
       if (!wideS3.matches) return;
       const pad = parseFloat(getComputedStyle(equation.parentNode).paddingLeft);
       const iconIn = firstIcon.getBoundingClientRect().left - equation.getBoundingClientRect().left;
-      const x = Math.min(tag.getBoundingClientRect().left, window.innerWidth - pad - equation.offsetWidth + iconIn);
+      // lines up with the header tag; on notebooks that would push the block right of the screen's middle, so it stays centred there
+      const eqBox = equation.getBoundingClientRect();
+      const lastBox = equation.lastElementChild.getBoundingClientRect();
+      const blockW = lastBox.left + lastBox.width / 2 + ctaBtn.offsetWidth / 2 - eqBox.left - iconIn;
+      const x = Math.min(tag.getBoundingClientRect().left, (window.innerWidth - blockW) / 2, window.innerWidth - pad - equation.offsetWidth + iconIn);
       headBox.style.width = '100%';
       headBox.style.paddingLeft = x - pad + 'px';
       equation.style.alignSelf = 'flex-start';
