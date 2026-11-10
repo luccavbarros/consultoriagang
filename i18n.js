@@ -11,7 +11,8 @@
     'Consultoria': 'Brand',
     'de Marca': 'Consulting',
     'Login': 'Login',
-    'Estou interessado': 'I\'m interested',
+    'Agendar conversa': 'Book a call',
+    'Agendar conversa · 30 min': 'Book a 30-min call',
 
     // selected work
     'Trabalhos selecionados': 'Selected work',
