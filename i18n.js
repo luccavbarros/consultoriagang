@@ -1,4 +1,4 @@
-/* GANG — English version of the site (button "EN-US" in the header, desktop)
+/* GANG — English version of the site (button "EN" in the header, desktop)
    The page is written in Portuguese; this swaps each piece of text for its English version and back.
    Each line below is one piece of text exactly as it is in the HTML (pieces split by a line break or a link are separate lines).
    When a Portuguese text changes in index.html, change it here too, or that piece stays in Portuguese in the English version.
@@ -11,7 +11,10 @@
     'Consultoria': 'Brand',
     'de Marca': 'Consulting',
     'Login': 'Login',
-    'Estou Interessado': 'I\'m Interested',
+    'Estou interessado': 'I\'m interested',
+
+    // selected work
+    'Trabalhos selecionados': 'Selected work',
 
     // hero
     'Venda mais.': 'Sell more.',
@@ -116,7 +119,7 @@
     // footer
     'Vamos': 'Let\'s',
     'conversar?': 'talk?',
-    'Prefere Agora?': 'Prefer now?',
+    'Prefere agora?': 'Prefer now?',
     'Chame no WhatsApp': 'Message us on WhatsApp',
     'A GANG é uma consultoria de marca que une estratégia e design para ajudar empresas a vender mais, para mais pessoas e com mais valor.': 'GANG is a brand consultancy that combines strategy and design to help companies sell more, to more people and for more value.',
     'Desenvolvemos marcas claras, reconhecíveis e competitivas.': 'We build clear, recognizable and competitive brands.',
@@ -217,12 +220,18 @@
     'Próxima etapa': 'Next step',
     'Fechar Política de Privacidade': 'Close Privacy Policy',
     'Aviso de cookies': 'Cookie notice',
+    'Case no Instagram': 'Case on Instagram',
+    'Fechar case': 'Close case',
+    'Post do Instagram': 'Instagram post',
 
     // tab title and search description
     'GANG — Consultoria de Marca': 'GANG — Brand Consulting',
   };
-  // "Projeto de marca ZIVIZ" and the like: only the start changes
-  const pattern = [[/^Projeto de marca (.+)$/, 'Brand project for $1'], [/^Brand project for (.+)$/, 'Projeto de marca $1', true]];
+  // "Projeto de marca ZIVIZ", "Ver o case ZIVIZ no Instagram" and the like: only the words around the name change
+  const pattern = [
+    [/^Projeto de marca (.+)$/, 'Brand project for $1'], [/^Brand project for (.+)$/, 'Projeto de marca $1', true],
+    [/^Ver o case (.+) no Instagram$/, 'See the $1 case on Instagram'], [/^See the (.+) case on Instagram$/, 'Ver o case $1 no Instagram', true],
+  ];
 
   const PT = Object.fromEntries(Object.entries(EN).map(([pt, en]) => [en, pt]));
   const KEY = 'gang-lang';
@@ -284,7 +293,7 @@
     if (description) description.content = to === 'en' ? DESCRIPTION_EN : descriptionPT;
     root.lang = to === 'en' ? 'en-US' : 'pt-BR';
     document.querySelectorAll('.site-header__lang').forEach((b) => {
-      b.textContent = to === 'en' ? 'PT-BR' : 'EN-US';
+      b.textContent = to === 'en' ? 'PT' : 'EN';
       b.setAttribute('aria-label', to === 'en' ? 'Ver o site em português' : 'View the site in English');
     });
   };
