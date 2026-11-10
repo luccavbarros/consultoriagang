@@ -664,6 +664,8 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
   opacity: .8; transition: opacity .2s;
 }
 .modal__close:hover { opacity: 1; }
+/* touch screens: no focus ring on the X after a tap (Safari ignores the script's request to skip it) */
+@media (hover: none) { .modal__close:focus { outline: none; } }
 
 .step { display: none; flex-direction: column; gap: 32px; }
 .step.is-active { display: flex; }
@@ -1631,6 +1633,6 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
   <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js" defer></script>
   <script src="i18n.js?v=9" defer></script> <!-- English version: runs before main.js -->
-  <script src="main.min.js?v=151" defer></script> <!-- built from main.js by tools/minify.py; bump ?v= when it changes, so no browser keeps an old copy -->
+  <script src="main.min.js?v=153" defer></script> <!-- built from main.js by tools/minify.py; bump ?v= when it changes, so no browser keeps an old copy -->
 </body>
 </html>

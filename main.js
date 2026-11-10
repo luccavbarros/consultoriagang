@@ -627,7 +627,29 @@
   // the page turns back to white for section 04: phones fade the page itself; on desktop the page stayed white and it is
   // section 03's own black that fades out, after its content has gone
   gsap.matchMedia()
-    .add('(max-width: 860px)', () => bgTo('.s4', 'top 95%', 'top 35%', '#050505', '#f3f3f3'))
+    // phones: the page's colour comes straight from where the scroll is (white, black once the dot has covered the screen,
+    // then fading back to white as section 04 comes in). Set from one place, so a fast scroll down or back up can never
+    // leave a black patch behind (two animations catching up in the wrong order did)
+    .add('(max-width: 860px)', () => {
+      const mix = gsap.utils.interpolate('#050505', '#f3f3f3');
+      const s3 = document.querySelector('.s3');
+      const s4 = document.querySelector('.s4');
+      const at = (el) => el.getBoundingClientRect().top + window.scrollY;
+      let marks = null;
+      const measure = () => {
+        const vh = window.innerHeight;
+        marks = { black: at(s3) - vh * 0.5, from: at(s4) - vh * 0.95, to: at(s4) - vh * 0.35 };
+      };
+      const paint = () => {
+        if (!marks) measure();
+        const y = window.scrollY;
+        const c = y < marks.black ? '#f3f3f3' : y < marks.from ? '#050505' : y < marks.to ? mix((y - marks.from) / (marks.to - marks.from)) : '#f3f3f3';
+        document.body.style.backgroundColor = c;
+        document.querySelectorAll('.s4__pin, .s5__head').forEach((el) => el.style.setProperty('--page-bg', c));
+      };
+      const st = ScrollTrigger.create({ start: 0, end: 'max', onUpdate: paint, onRefresh: () => { measure(); paint(); } });
+      return () => st.kill();
+    })
     .add('(min-width: 861px)', () => {
       gsap.to('.s3__sticky', {
         autoAlpha: 0, filter: 'blur(10px)', ease: 'none',
@@ -910,8 +932,8 @@
         .fromTo(grow, { k: 0 }, { k: 1, duration: 1 - MERGE, ease: 'none', onUpdate: follow, immediateRender: false }, MERGE)
         // covered: what is behind is black now, the dot can go. Desktop: sections 03 and 04 carry their own black, so the page
         // itself stays white (a black page showed as a band in the room section 05 leaves while it holds). Phones fade the page
-        .set(wideS3.matches ? [s2, section] : [document.body, s2], { backgroundColor: BLACK }, 1) // section 03 turns black only once covered
-        .set('.s4__pin, .s5__head', { '--page-bg': BLACK }, 1)
+        // section 03 turns black only once covered (phones: the page itself, set from the scroll position, below)
+        .set(wideS3.matches ? [s2, section] : s2, { backgroundColor: BLACK }, 1)
         .set(trail, { autoAlpha: 0 }, 1);
     }
   })();
@@ -1640,7 +1662,8 @@
     post.style.setProperty('--pr', e.currentTarget.dataset.ratio || 1.25); // the post's picture shape (height / width)
     post.classList.add('is-open');
     post.setAttribute('aria-hidden', 'false');
-    post.querySelector('.modal__close').focus({ preventScroll: true });
+    // the X takes the focus (keyboards close from there), without drawing the focus ring after a tap or a click
+    post.querySelector('.modal__close').focus({ preventScroll: true, focusVisible: e.detail === 0 });
   };
   const closePost = () => {
     post.classList.remove('is-open');
