@@ -753,11 +753,14 @@
       const sumT = sum.top - box.top;
       let cx; let cy; let R;
       if (wide) {
-        cx = W * 0.66; cy = H * 0.48;
-        R = Math.min(W * 0.3, H * 0.36, (cx - subR - 48));
+        // the field sits flush with the right margin (the same gutter as the title on the left)
+        const right = W - (head.left - box.left);
+        cy = H * 0.48;
+        R = Math.min(W * 0.3, H * 0.36, (right - subR - 48) / 2);
         // where the field reaches over the words' column, it must end above them
-        if (cx - R < sum.right - box.left) R = Math.min(R, (sumT - 24 - cy) / 0.9);
+        if (right - 2 * R < sum.right - box.left) R = Math.min(R, (sumT - 24 - cy) / 0.9);
         R = Math.max(R, 80);
+        cx = right - R;
       } else {
         const room = section.querySelector('.s3__room').getBoundingClientRect();
         const top = room.top - box.top + 8;
@@ -771,6 +774,10 @@
         const r = R * Math.sqrt(rand());
         return { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r * 0.9, ph: rand() * 6.28, sp: 0.4 + rand() * 0.7 };
       });
+      if (wide) { // the outermost dot lands exactly on the right margin
+        const shift = (W - (head.left - box.left)) - Math.max(...pts.map((p) => p.x)) - 2;
+        pts.forEach((p) => { p.x += shift; }); cx += shift;
+      }
       // each dot's three nearest neighbours: the links of the connected field
       pairs = [];
       pts.forEach((p, i) => {
