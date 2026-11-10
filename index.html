@@ -238,10 +238,11 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
 /* the section holds the screen while one row of projects slides sideways with the scroll: the one in the middle is big,
    its neighbours get smaller and fainter the further they are (sizes and positions set every frame in main.js).
    The names on the left mark the one in the middle with a line, like a contents list */
-.work { position: relative; z-index: 2; height: 590vh; background: var(--white); } /* about 0.5 screen of scroll per project */
+.work { position: relative; z-index: 2; height: 540vh; background: var(--white); } /* about 0.5 screen of scroll per project */
 .work__sticky { position: sticky; top: 0; height: 100vh; overflow: hidden; }
 .work__head { position: absolute; left: var(--gutter); right: var(--gutter); top: 112px; z-index: 1; display: flex; justify-content: space-between; align-items: baseline; gap: 32px; }
-.work__list { position: absolute; inset: 0; }
+.work__list { position: absolute; inset: 0; cursor: grab; touch-action: pan-y; user-select: none; -webkit-user-select: none; } /* sideways drags are ours, up-and-down stay the page's */
+.work__list.is-dragging { cursor: grabbing; }
 .work__item { position: absolute; left: 0; top: 0; width: 0; height: 0; overflow: hidden; border-radius: 2px; background: #fff; will-change: transform, width, height, opacity; }
 .work__item a { display: block; width: 100%; height: 100%; } /* each picture opens its case (the Instagram post, in a popup) */
 .work__item img { width: 100%; height: 100%; object-fit: cover; }
@@ -259,7 +260,7 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
 .work__count { font-size: 14px; line-height: 1.3; color: var(--ganggrey); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .work__now { color: var(--black); }
 @media (max-width: 860px) {
-  .work { height: 520vh; }
+  .work { height: 475vh; }
   .work__head { top: 104px; }
   .work__names { display: none; } /* phones: the caption under the picture names the project */
 }
@@ -393,44 +394,50 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
 }
 
 /* ===== Section 03 ===== */
-.s3 { position: relative; z-index: 5; height: 270vh; }
+.s3 { position: relative; z-index: 5; height: 270vh; } /* height set again below */
 .s3__sticky {
   position: sticky; top: 0; height: 100vh;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: clamp(32px, 6vh, 80px);
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+  gap: clamp(28px, 5vh, 64px);
   padding: 90px var(--gutter) 40px;
   overflow: hidden;
 }
-.s3__head { width: min(100%, 599px); display: flex; flex-direction: column; align-items: flex-start; gap: 32px; text-align: left; }
+.s3__head { width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 32px; text-align: left; }
 @media (min-width: 861px) { .s3__head { max-width: none; } }
 .s3__title { color: var(--white); }
 /* each line rises from behind its own edge (main.js); the room below keeps the descenders (q, p) inside the mask */
 .s3__title .line { display: block; overflow: hidden; padding-bottom: .12em; margin-bottom: -.12em; }
 .s3__title .line > span { display: block; }
 .s3__sub { color: #9a9a9a; } /* lighter than the grey used on white, so it still reads well on black */
-.s3__equation { --ic: min(232px, 21vh); display: flex; align-items: flex-start; justify-content: center; }
-.s3__item { width: 232px; display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
-.s3__item .title-sm { color: var(--white); }
-.s3__item .small { color: #9a9a9a; max-width: 200px; margin-top: -8px; }
-.s3__item:first-child .small { max-width: 136px; }
-.s3__icon { width: var(--ic); height: var(--ic); display: flex; align-items: center; justify-content: center; }
-.s3__icon--stack { position: relative; }
-.s3__icon img { width: calc(var(--ic) * .667); height: auto; }
-.s3__marca { position: relative; width: calc(var(--ic) * .667); height: auto; overflow: visible; }
-.s3__op {
-  width: 128px; height: var(--ic); display: flex; align-items: center; justify-content: center;
-  font-weight: 500; font-size: clamp(36px, 5vw, 72px); line-height: 1; letter-spacing: -0.018em;
-  color: var(--darkgrey);
+/* "Vision": a field of dots fills the screen and changes with the scroll — only a slice lit (sees a part), all lit but
+   loose (sees the whole), joined into one mark (understands). The words sit small in the corner (main.js draws the field) */
+.s3 { height: 400vh; }
+.s3__sticky { justify-content: flex-start; padding-bottom: clamp(40px, 8vh, 80px); }
+/* desktop: the title starts at the same height as the frame and title of the next section ("O que fazemos") */
+@media (min-width: 861px) { .s3__sticky { padding-top: clamp(88px, 11.8vh, 106px); } }
+.s3__field { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
+.s3__head, .s3__sum, .s3__cta { position: relative; z-index: 1; }
+.s3__sum { margin-top: auto; display: grid; grid-template-columns: 1em auto minmax(0, 1fr); align-items: baseline; column-gap: .35em; row-gap: 10px; font-weight: 500; font-size: clamp(22px, 2vw, 30px); line-height: 1.1; letter-spacing: -0.018em; }
+.s3__row { display: contents; color: var(--darkgrey); }
+.s3__row > .s3__op { grid-column: 1; color: var(--ganggrey); } .s3__row > .s3__who { grid-column: 2; } .s3__row > .s3__what { grid-column: 3; }
+.s3__who { overflow: hidden; padding-bottom: .12em; margin-bottom: -.12em; } /* each name rises from behind its own edge */
+.s3__who > span { display: block; }
+.s3__what { padding-left: .6em; color: var(--ganggrey); font-weight: 400; letter-spacing: -0.0063em; }
+.s3__row.is-on { color: var(--white); }
+.s3__row.is-on .s3__what { color: #b5b5b5; }
+.s3__row, .s3__row .s3__what { transition: color .5s ease; }
+.s3__marca { display: none; } /* the field draws the mark itself */
+.s3__cta { margin-top: 28px; align-self: flex-start; }
+.s3__room { display: none; }
+@media (max-width: 860px) {
+  .s3 { height: 360vh; }
+  .s3__sticky { padding-top: 96px; gap: 16px; }
+  .s3__room { display: block; flex: 1 1 auto; min-height: 130px; }
+  .s3__sum { margin-top: 0; }
+  .s3__cta { margin-top: 8px; align-self: stretch; } /* the full width, inside the margins */
+  .s3__sum { grid-template-columns: .9em minmax(0, 1fr); font-size: min(24px, 6.2vw); row-gap: 4px; }
+  .s3__row > .s3__what { grid-column: 2; padding-left: 0; margin-bottom: 8px; }
 }
-
-/* "=" lights up and a soft glow sits behind the result */
-.s3__glow {
-  position: absolute; left: 50%; top: 50%; translate: -50% -50%;
-  width: 150%; height: 150%; border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(243, 243, 243, .14), rgba(243, 243, 243, 0));
-  pointer-events: none;
-}
-.s3__icon--stack > img { position: relative; }
 
 /* ===== Section 04 ===== */
 .s4 {
@@ -439,13 +446,13 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
   padding: 106px var(--gutter);
   min-height: 100vh;
 }
-.s4__backdrop { display: none; }
 .s4__spacer { display: none; } /* phones only: scroll room for opening the steps one by one */
 .s4__pin { display: contents; } /* only a wrapper on phones, where the square sticks to the top */
 .s4__media { flex: 0 1 736px; min-width: 0; aspect-ratio: 1; border-radius: 2px; overflow: hidden; }
-.s4__stage { background: var(--lightblack); border-radius: 2px; display: flex; align-items: center; justify-content: center; }
+.s4__stage { background: none; border: 1px solid var(--darkgrey); border-radius: 4px; display: flex; align-items: center; justify-content: center; } /* just the outline, see-through inside (it shows the page as it fades from black), the drawing in black */
 .s4__art { width: 78%; height: auto; overflow: visible; }
 .s4__art [pathLength] { stroke-dasharray: 1; stroke-dashoffset: 1; }
+.s4__art, .s4__art * { stroke-width: var(--s4-sw, 1.5); } /* main.js keeps the lines 1px on screen, like the other fine lines on the site */
 .s4-dot { transform-box: fill-box; transform-origin: center; }
 .s4__content { width: 440px; flex: none; display: flex; flex-direction: column; gap: 64px; }
 .s4__head { display: flex; flex-direction: column; gap: 32px; }
@@ -469,18 +476,7 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
   .s4__media { width: calc((100% - var(--s4-gap) - var(--s4-cw) + var(--s4-sq)) / 2 - var(--gutter)); margin: var(--s4-pad-t) 0 var(--s4-pad-b) var(--gutter); border: 1px solid var(--darkgrey); border-radius: 4px; }
   .s4__art { width: min(calc(var(--s4-sq) * .78), calc(100vh - 2 * var(--s4-pad-t))); }
   .s4__content { width: var(--s4-cw); padding: var(--s4-pad-t) 0 var(--s4-pad-b); justify-content: flex-end; gap: var(--s4-sp); }
-  /* the page is still black from section 03 and stays black here: the block is the same black, and the texts and steps turn light */
-  .s4__stage { background: var(--black); }
-  .s4__backdrop { display: block; position: absolute; inset: 0; background: var(--black); }
-  .s4__media, .s4__content { position: relative; z-index: 1; }
-  .s4 .title-xl, .s4 .title-sm { color: var(--white); }
-  .s4 .text { color: #b5b5b5; }
-  .s4 .small { color: #9a9a9a; }
-  .s4 .acc__rail { background: var(--darkgrey); }
-  .s4 .acc__fill { background: var(--white); }
-  .s4 .acc__dot { background: var(--darkgrey); }
-  .s4 .acc.is-done .acc__dot, .s4 .acc.is-open .acc__dot { background: var(--white); }
-  .s4 .acc__btn:hover .acc__dot { background: var(--ganggrey); }
+  /* the page is white here again (it turns from section 03's black as this section comes in): only the framed block is dark */
   .s4__head { margin-bottom: auto; gap: var(--s4-sp); }
   .s4 .accordion { padding-top: 0; gap: var(--s4-sp); }
   .s4 .accordion { padding-bottom: 0; }
@@ -518,7 +514,7 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
 /* ===== Section 05 ===== */
 .s5 {
   position: relative; z-index: 2;
-  display: flex; flex-direction: column; align-items: center; gap: 64px;
+  display: flex; flex-direction: column; align-items: center; gap: clamp(72px, 11vh, 112px); /* room between the title and the three pillars */
   padding: 106px var(--gutter);
   background: var(--white);
 }
@@ -526,7 +522,7 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
 .s5__head .text { width: 408px; }
 .s5__cards { width: min(100%, var(--container)); display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px; }
 /* typographic columns, like the lists in section 01: a fine line on top, the number and name, the moving symbol, then the text */
-.card { display: flex; flex-direction: column; gap: 24px; padding-top: 20px; border-top: 1px solid var(--greybemlight); }
+.card { display: flex; flex-direction: column; gap: 24px; padding-top: 32px; border-top: 1px solid var(--greybemlight); }
 .s5__cards { position: relative; }
 /* the circle that travels from one card to the next (main.js) */
 .s5__traveller { position: absolute; left: 0; top: 0; z-index: 1; border: 1px solid var(--lightblack); border-radius: 50%; pointer-events: none; }
@@ -742,26 +738,32 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
 
 /* case popup: just the Instagram post, with the X above it */
 .modal--post .modal__card { width: min(440px, 100%); padding: 44px 12px 12px; overflow: hidden; }
-/* the pictures are 4:5: the clip is their height plus Instagram's top bar; the frame inside runs taller and its bottom part never shows */
+/* the pictures are 4:5 (--pr, set per post: some are square): the clip is their height plus Instagram's top bar; the frame inside runs taller and its bottom part never shows */
 .modal--post .modal__card { --pw: calc(min(440px, 100vw - 32px) - 24px); }
-.post-clip { height: min(calc(var(--pw) * 1.25 + 53px), calc(100vh - 120px)); height: min(calc(var(--pw) * 1.25 + 53px), calc(100dvh - 120px)); position: relative; overflow: hidden; border-radius: 8px; background: #fff; }
+.post-clip { height: min(calc(var(--pw) * var(--pr, 1.25) + 53px), calc(100vh - 120px)); height: min(calc(var(--pw) * var(--pr, 1.25) + 53px), calc(100dvh - 120px)); position: relative; overflow: hidden; border-radius: 8px; background: #fff; }
 /* never scrolls (a scrollbar showed as a white strip on the right); 1px wider each side and 1px up, so Instagram's own border falls outside the clip */
-.post-frame { display: block; width: calc(100% + 2px); height: calc(var(--pw) * 1.25 + 480px); margin: -1px -1px 0; border: 0; }
+.post-frame { display: block; width: calc(100% + 2px); height: calc(var(--pw) * var(--pr, 1.25) + 480px); margin: -1px -1px 0; border: 0; }
 /* the arrows sit halfway down the picture, about 48px in from each side, and the profile button at the right of the top bar: the panels cover everything else */
-.post-shield { position: absolute; z-index: 1; --arrow-y: calc(53px + var(--pw) * 1.25 / 2); }
+.post-shield { position: absolute; z-index: 1; --arrow-y: calc(53px + var(--pw) * var(--pr, 1.25) / 2); }
 .post-shield--head { left: 0; right: 112px; top: 0; height: 53px; } /* Instagram's top bar, except its "View profile" button on the right, which stays free */
-.post-shield--top { left: 0; right: 0; top: 53px; height: calc(var(--arrow-y) - 85px); }
-.post-shield--mid { left: 48px; right: 48px; top: calc(var(--arrow-y) - 32px); height: 64px; }
+.post-shield--top { left: 0; right: 0; top: 53px; height: calc(var(--arrow-y) - 69px); }
+/* only the arrows' own circles are left free (about 32px around each, 22px in from the sides): on a carousel's first or
+   last picture, where one arrow is gone, there is no strip of photo left to click through to Instagram */
+.post-shield--mid { left: 38px; right: 38px; top: calc(var(--arrow-y) - 16px); height: 32px; }
+.post-shield--edge { display: block; top: calc(var(--arrow-y) - 16px); height: 32px; width: 6px; }
+.post-shield--edge.l { left: 0; } .post-shield--edge.r { right: 0; }
 /* a video post plays from the button in the middle of the picture: for those a hole is left there (the mid panel splits in two) */
 .modal--post.is-video .post-shield--mid { right: calc(50% + 48px); }
-.modal--post.is-video .post-shield--mid2 { display: block; left: calc(50% + 48px); right: 48px; top: calc(var(--arrow-y) - 32px); height: 64px; }
-.modal--post.is-video .post-shield--top { height: calc(var(--arrow-y) - 80px); }
+.modal--post.is-video .post-shield--mid2 { display: block; left: calc(50% + 48px); right: 38px; top: calc(var(--arrow-y) - 16px); height: 32px; }
+.modal--post.is-video .post-shield--top { height: calc(var(--arrow-y) - 133px); }
 .modal--post.is-video .post-shield--bottom { top: calc(var(--arrow-y) + 80px); }
-.modal--post.is-video .post-shield--side { display: block; top: calc(var(--arrow-y) - 80px); height: 160px; }
-.modal--post.is-video .post-shield--side.l { left: 48px; width: calc(50% - 96px); }
-.modal--post.is-video .post-shield--side.r { right: 48px; width: calc(50% - 96px); }
-.post-shield--mid2, .post-shield--side { display: none; }
-.post-shield--bottom { left: 0; right: 0; top: calc(var(--arrow-y) + 32px); bottom: 0; }
+/* around the play button: bands above and below the arrows' line, each side of the middle hole */
+.modal--post.is-video .post-shield--side, .modal--post.is-video .post-shield--side2 { display: block; height: 64px; width: calc(50% - 48px); }
+.modal--post.is-video .post-shield--side { top: calc(var(--arrow-y) - 80px); }
+.modal--post.is-video .post-shield--side2 { top: calc(var(--arrow-y) + 16px); }
+.modal--post.is-video .l { left: 0; } .modal--post.is-video .r { right: 0; }
+.post-shield--mid2, .post-shield--side, .post-shield--side2 { display: none; }
+.post-shield--bottom { left: 0; right: 0; top: calc(var(--arrow-y) + 16px); bottom: 0; }
 
 /* ===== Responsive ===== */
 /* ===== Privacy policy ===== */
@@ -867,8 +869,7 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
   .s1__inner { gap: 24px; height: calc(100vh - 136px); }
   .s1__panel { flex-direction: column; gap: 40px; padding: 0; }
   .s1__left { width: 100%; gap: 36px; }
-  /* as big as the screen allows: the rest of the tallest slide takes about 592px */
-  .s1__art { flex: none; margin-top: 0; height: clamp(72px, calc(100vh - 592px), 200px); width: auto; max-width: 100%; max-height: none; }
+  .s1__art { flex: none; margin-top: 0; max-width: 100%; max-height: none; } /* sized by main.js to fill the empty room */
   .s1__list { padding-top: 0; width: 100%; }
   .s1__list li { padding: 11px 0; }
   /* the topics rest on the bottom, level with the last dot of the rail (the rail stops 32px above the bottom) */
@@ -895,11 +896,6 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
   .s2__box { width: var(--s2-box); height: auto; aspect-ratio: 1; border-radius: 26px; } /* smaller on short phones */
   .s2__grid { width: 72%; height: auto; }
 
-  .s3__equation { width: 100%; }
-  .s3__item { width: auto; flex: 1; min-width: 0; max-width: 120px; gap: 10px; }
-  .s3__equation { --ic: 88px; }
-  .s3__op { width: 16px; font-size: 32px; }
-  .s3__item .small { font-size: min(13px, 3.4vw); }
 
   .s4 { flex-direction: column; align-items: stretch; gap: 64px; padding-top: 96px; padding-bottom: 0; }
   .s4__media { flex: none; width: 100%; }
@@ -1070,32 +1066,30 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
           <ol class="work__names reveal">
             <li><button type="button">Camargo</button></li>
             <li><button type="button">ZIVIZ</button></li>
+            <li><button type="button">Tingo</button></li>
             <li><button type="button">PartFix</button></li>
             <li><button type="button">Moreno &amp; Ferraro</button></li>
             <li><button type="button">Binalis</button></li>
             <li><button type="button">Vynor</button></li>
-            <li><button type="button">Ynect</button></li>
-            <li><button type="button">Tsuyoi</button></li>
-            <li><button type="button">Palomo</button></li>
+            <li><button type="button">Yunect</button></li>
+            <li><button type="button">iBlack</button></li>
             <li><button type="button">Ducase</button></li>
-            <li><button type="button">Tingo</button></li>
           </ol>
         </div>
         <ul class="work__list">
           <li class="work__item"><a href="https://www.instagram.com/p/DIeVFSHgKTd/" target="_blank" rel="noopener" aria-label="Ver o case Camargo no Instagram"><img src="assets/work-camargo.webp?v=2" alt="Projeto de marca Camargo" width="670" height="838" decoding="async" /></a></li>
           <li class="work__item"><a href="https://www.instagram.com/p/DIESx1EgwJ5/" target="_blank" rel="noopener" data-video aria-label="Ver o case ZIVIZ no Instagram"><img src="assets/work-ziviz.webp?v=3" alt="Projeto de marca ZIVIZ" width="670" height="838" decoding="async" /></a></li>
+          <li class="work__item"><a href="https://www.instagram.com/p/DGBIIfPgR4Q/" target="_blank" rel="noopener" aria-label="Ver o case Tingo no Instagram"><img src="assets/work-tingo.webp" alt="Projeto de marca Tingo" width="670" height="838" decoding="async" /></a></li>
           <li class="work__item"><a href="https://www.instagram.com/p/DJMTtBju6YN/" target="_blank" rel="noopener" aria-label="Ver o case PartFix no Instagram"><img src="assets/work-partfix.webp" alt="Projeto de marca PartFix" width="670" height="838" decoding="async" /></a></li>
           <li class="work__item"><a href="https://www.instagram.com/p/DH3lqAKAPY2/" target="_blank" rel="noopener" aria-label="Ver o case Moreno &amp; Ferraro no Instagram"><img src="assets/work-moreno-ferraro.webp?v=2" alt="Projeto de marca Moreno &amp; Ferraro" width="670" height="838" decoding="async" /></a></li>
           <li class="work__item"><a href="https://www.instagram.com/p/DUjSP0IEckc/" target="_blank" rel="noopener" aria-label="Ver o case Binalis no Instagram"><img src="assets/work-binalis.webp?v=3" alt="Projeto de marca Binalis" width="670" height="838" decoding="async" /></a></li>
           <li class="work__item"><a href="https://www.instagram.com/p/DQ4UmX6kS0H/" target="_blank" rel="noopener" data-video aria-label="Ver o case Vynor no Instagram"><img src="assets/work-vynor.webp?v=2" alt="Projeto de marca Vynor" width="670" height="838" decoding="async" /></a></li>
-          <li class="work__item"><a href="https://www.instagram.com/p/C7hTYPRgIUp/" target="_blank" rel="noopener" data-video aria-label="Ver o case Ynect no Instagram"><img src="assets/work-ynect.webp" alt="Projeto de marca Ynect" width="670" height="838" decoding="async" /></a></li>
-          <li class="work__item"><a href="https://www.instagram.com/p/CvKnHFBgrum/" target="_blank" rel="noopener" aria-label="Ver o case Tsuyoi no Instagram"><img src="assets/work-tsuyoi.webp" alt="Projeto de marca Tsuyoi" width="670" height="838" decoding="async" /></a></li>
-          <li class="work__item"><a href="https://www.instagram.com/p/Cvag-Q-PcQj/" target="_blank" rel="noopener" aria-label="Ver o case Palomo no Instagram"><img src="assets/work-palomo.webp" alt="Projeto de marca Palomo" width="670" height="838" decoding="async" /></a></li>
+          <li class="work__item"><a href="https://www.instagram.com/p/C7hTYPRgIUp/" target="_blank" rel="noopener" data-video aria-label="Ver o case Yunect no Instagram"><img src="assets/work-yunect.webp" alt="Projeto de marca Yunect" width="670" height="838" decoding="async" /></a></li>
+          <li class="work__item"><a href="https://www.instagram.com/p/CvKnHFBgrum/" target="_blank" rel="noopener" data-ratio="1" aria-label="Ver o case iBlack no Instagram"><img src="assets/work-iblack.webp" alt="Projeto de marca iBlack" width="670" height="838" decoding="async" /></a></li>
           <li class="work__item"><a href="https://www.instagram.com/p/CwVtlsKvEXD/" target="_blank" rel="noopener" aria-label="Ver o case Ducase no Instagram"><img src="assets/work-ducase.webp" alt="Projeto de marca Ducase" width="670" height="838" decoding="async" /></a></li>
-          <li class="work__item"><a href="https://www.instagram.com/p/DGBIIfPgR4Q/" target="_blank" rel="noopener" aria-label="Ver o case Tingo no Instagram"><img src="assets/work-tingo.webp" alt="Projeto de marca Tingo" width="670" height="838" decoding="async" /></a></li>
         </ul>
         <!-- caption under the project in the middle: its name on the left edge, the count on the right edge -->
-        <div class="work__caption reveal" aria-live="polite"><a class="title-sm work__name" href="https://www.instagram.com/p/DIeVFSHgKTd/" target="_blank" rel="noopener">Camargo</a><p class="work__count"><span class="work__now">01</span> / 11</p></div>
+        <div class="work__caption reveal" aria-live="polite"><a class="title-sm work__name" href="https://www.instagram.com/p/DIeVFSHgKTd/" target="_blank" rel="noopener">Camargo</a><p class="work__count"><span class="work__now">01</span> / 10</p></div>
       </div>
     </section>
 
@@ -1199,34 +1193,23 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
     <!-- SECTION 03 -->
     <section class="s3" id="s3">
       <div class="s3__sticky">
+        <canvas class="s3__field" aria-hidden="true"></canvas> <!-- the field of dots: a part, the whole, understood (main.js) -->
         <div class="s3__head">
           <h2 class="title-xl s3__title"><span class="line"><span>De quem</span></span><span class="line"><span>você precisa</span></span></h2>
           <p class="text s3__sub">De quem conecte todas as peças e faça com que <br class="br-d" />as outras pessoas enxerguem o mesmo que você.</p>
         </div>
-        <div class="s3__equation">
-          <div class="s3__item">
-            <div class="s3__icon"><img src="assets/s3-coordenador.svg" alt="" width="129" height="131" /></div>
-            <h3 class="title-sm">Coordenador</h3>
-            <p class="small">Enxerga sua parte do cenário.</p>
-          </div>
-          <span class="s3__op">+</span>
-          <div class="s3__item">
-            <div class="s3__icon"><img src="assets/s3-consultor.svg" alt="" width="128" height="128" /></div>
-            <h3 class="title-sm">Consultor</h3>
-            <p class="small">Enxerga<br />o cenário completo.</p>
-          </div>
-          <span class="s3__op s3__op--eq">=</span>
-          <div class="s3__item">
-            <div class="s3__icon s3__icon--stack">
-              <span class="s3__glow" aria-hidden="true"></span>
-              <!-- grid and dots in one drawing, so they can never drift apart on any screen -->
-              <svg class="s3__marca" viewBox="0 0 128 128" width="128" height="128" fill="none" aria-hidden="true">
-                <path class="s3__lines" d="M14 14H114 M14 64H114 M14 114H114 M14 14V114 M64 14V114 M114 14V114 M64 64L14 14 M64 64L114 14 M64 64L14 114 M64 64L114 114" stroke="#F3F3F3" stroke-linecap="round" stroke-linejoin="round" />
-                <g fill="#F3F3F3"><circle cx="14" cy="14" r="14"/><circle cx="64" cy="14" r="14"/><circle cx="114" cy="14" r="14"/><circle cx="14" cy="64" r="14"/><circle cx="64" cy="64" r="14"/><circle cx="114" cy="64" r="14"/><circle cx="14" cy="114" r="14"/><circle cx="64" cy="114" r="14"/><circle cx="114" cy="114" r="14"/></g>
-              </svg>
-            </div>
-            <h3 class="title-sm">Consultor de marca</h3>
-            <p class="small">Compreende<br />o cenário completo.</p>
+        <!-- the reasoning as three lines of type: who sees a part, plus who sees the whole, equals who understands the whole -->
+        <div class="s3__room" aria-hidden="true"></div> <!-- phones: the room the field is drawn in, between the subtitle and the words -->
+        <div class="s3__sum">
+          <div class="s3__row"><span class="s3__op" aria-hidden="true"></span><span class="s3__who"><span>Coordenador</span></span><span class="small s3__what">Enxerga sua parte do cenário.</span></div>
+          <div class="s3__row"><span class="s3__op" aria-hidden="true">+</span><span class="s3__who"><span>Consultor</span></span><span class="small s3__what">Enxerga o cenário completo.</span></div>
+          <div class="s3__row s3__row--result"><span class="s3__op" aria-hidden="true">=</span><span class="s3__who"><span>Consultor de marca</span></span>
+            <!-- the grid with every dot joined, drawn as the line lights up -->
+            <svg class="s3__marca" viewBox="0 0 128 128" width="128" height="128" fill="none" aria-hidden="true">
+              <path class="s3__lines" d="M14 14H114 M14 64H114 M14 114H114 M14 14V114 M64 14V114 M114 14V114 M64 64L14 14 M64 64L114 14 M64 64L14 114 M64 64L114 114" stroke="#F3F3F3" stroke-width="5" stroke-linecap="round" pathLength="1" />
+              <g fill="#F3F3F3"><circle cx="14" cy="14" r="14"/><circle cx="64" cy="14" r="14"/><circle cx="114" cy="14" r="14"/><circle cx="14" cy="64" r="14"/><circle cx="64" cy="64" r="14"/><circle cx="114" cy="64" r="14"/><circle cx="14" cy="114" r="14"/><circle cx="64" cy="114" r="14"/><circle cx="114" cy="114" r="14"/></g>
+            </svg>
+            <span class="small s3__what">Compreende o cenário completo.</span>
           </div>
         </div>
         <button class="btn btn--gray s3__cta" data-open-form aria-haspopup="dialog">Estou interessado</button>
@@ -1235,12 +1218,11 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
 
     <!-- SECTION 04 -->
     <section class="s4" id="s4">
-      <div class="s4__backdrop" aria-hidden="true"></div> <!-- desktop: the black of the page, as one piece that can leave to the left -->
       <div class="s4__pin">
         <div class="s4__media s4__stage" aria-hidden="true">
           <!-- one symbol per step, driven by the accordion: scattered → direction → connected → one mark -->
           <svg class="s4__art" viewBox="0 0 400 400" fill="none" stroke-linecap="round" stroke-linejoin="round">
-            <g class="s4-lines" stroke="#404040" stroke-width="1.5">
+            <g class="s4-lines" stroke="#dadada" stroke-width="1.5">
               <path d="M130 130H270" pathLength="1"/>
               <path d="M130 200H270" pathLength="1"/>
               <path d="M130 270H270" pathLength="1"/>
@@ -1250,10 +1232,10 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
               <path d="M130 130L270 270" pathLength="1"/>
               <path d="M270 130L130 270" pathLength="1"/>
             </g>
-            <path class="s4-arrow" d="M84 316L316 84M272 84H316V128" stroke="#f3f3f3" stroke-width="1.5" pathLength="1"/>
-            <circle class="s4-ring" cx="200" cy="200" r="104" stroke="#f3f3f3" stroke-width="1.5" pathLength="1"/>
-            <circle class="s4-scan" cx="150" cy="150" r="46" stroke="#f3f3f3" stroke-width="1.5"/>
-            <g class="s4-dots" fill="#f3f3f3">
+            <path class="s4-arrow" d="M84 316L316 84M272 84H316V128" stroke="#050505" stroke-width="1.5" pathLength="1"/>
+            <circle class="s4-ring" cx="200" cy="200" r="104" stroke="#050505" stroke-width="1.5" pathLength="1"/>
+            <circle class="s4-scan" cx="150" cy="150" r="46" stroke="#050505" stroke-width="1.5"/>
+            <g class="s4-dots" fill="#050505">
               <circle class="s4-dot" cx="200" cy="200" r="12"/>
               <circle class="s4-dot" cx="200" cy="200" r="12"/>
               <circle class="s4-dot" cx="200" cy="200" r="12"/>
@@ -1581,7 +1563,7 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
       <button class="modal__close" data-close-post aria-label="Fechar case"><img src="assets/close.svg" alt="" width="16" height="16" /></button>
       <!-- the frame shows Instagram's top bar and the pictures only: its likes and comment bar below are cut off.
            Invisible panels cover it so a click on the post never takes the visitor away; only the carousel arrows and the "View profile" button are left free -->
-      <div class="post-clip"><iframe class="post-frame" title="Post do Instagram" allowtransparency="true" scrolling="no"></iframe><i class="post-shield post-shield--head"></i><i class="post-shield post-shield--top"></i><i class="post-shield post-shield--mid"></i><i class="post-shield post-shield--bottom"></i><i class="post-shield post-shield--mid2"></i><i class="post-shield post-shield--side l"></i><i class="post-shield post-shield--side r"></i></div>
+      <div class="post-clip"><iframe class="post-frame" title="Post do Instagram" allowtransparency="true" scrolling="no"></iframe><i class="post-shield post-shield--head"></i><i class="post-shield post-shield--top"></i><i class="post-shield post-shield--mid"></i><i class="post-shield post-shield--bottom"></i><i class="post-shield post-shield--edge l"></i><i class="post-shield post-shield--edge r"></i><i class="post-shield post-shield--mid2"></i><i class="post-shield post-shield--side l"></i><i class="post-shield post-shield--side r"></i><i class="post-shield post-shield--side2 l"></i><i class="post-shield post-shield--side2 r"></i></div>
     </div>
   </div>
 
@@ -1648,7 +1630,7 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
   <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js" defer></script>
-  <script src="i18n.js?v=6" defer></script> <!-- English version: runs before main.js -->
-  <script src="main.min.js?v=114" defer></script> <!-- built from main.js by tools/minify.py; bump ?v= when it changes, so no browser keeps an old copy -->
+  <script src="i18n.js?v=7" defer></script> <!-- English version: runs before main.js -->
+  <script src="main.min.js?v=147" defer></script> <!-- built from main.js by tools/minify.py; bump ?v= when it changes, so no browser keeps an old copy -->
 </body>
 </html>

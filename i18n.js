@@ -84,6 +84,8 @@
     'o cenário completo.': 'the whole picture.',
     'Consultor de marca': 'Brand consultant',
     'Compreende': 'Understands',
+    'Enxerga o cenário completo.': 'Sees the whole picture.',
+    'Compreende o cenário completo.': 'Understands the whole picture.',
 
     // section 04
     'O que fazemos': 'What we do',

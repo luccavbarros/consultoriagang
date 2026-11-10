@@ -369,9 +369,41 @@
 
     // desktop: the drawing fills the middle column (up to 70% of the height), square; inline SVGs don't size from their ratio on their own
     const wide = window.matchMedia('(min-width: 861px)');
+    let artY = null; // phones: the drawing's offset for each message
+    let panelOn = 0;
     const sizeArts = () => {
-      art.style.width = art.style.height = '';
-      if (!wide.matches) return;
+      art.style.width = art.style.height = art.style.margin = art.style.translate = '';
+      artY = null;
+      if (!wide.matches) {
+        // phones: as big as the empty room between the title and the topics allows (measured against the longest of the
+        // three lists, as the drawing stays on screen through all three), with the same air above and below it; for each
+        // message it then sits centred between the title and that message's topics
+        const panel = art.closest('.s1__panel');
+        const title = panel.querySelector('.title-xl');
+        const cs = getComputedStyle(panel);
+        const gapL = parseFloat(getComputedStyle(art.parentNode).rowGap || 0);
+        // each message's own title: they can wrap to different numbers of lines
+        const titleBs = [...section.querySelectorAll('.s1__panel .title-xl')].map((t) => t.offsetTop + t.offsetHeight);
+        const titleB = title.offsetTop + title.offsetHeight; // the drawing sits in the flow under the first one
+        const listTops = [...section.querySelectorAll('.s1__list')].map((l) =>
+          panel.clientHeight - parseFloat(cs.paddingBottom) - [...l.children].reduce((h, li) => h + li.offsetHeight, 0));
+        // the arrows don't fill their 240 x 240 box, and each arrangement fills a different part of it: the size and the
+        // centring go by the drawn arrows themselves (with a little room for the heads), not the box
+        const reach = SHAPES.map((sh) => {
+          const ys = sh.flatMap(([, ty, , hy]) => [ty, hy]);
+          return [Math.min(...ys) - 2, Math.max(...ys) + 2];
+        });
+        const tallest = Math.max(...reach.map(([a, b]) => b - a));
+        const AIR = 52;
+        const room = Math.min(...listTops.map((lt, i) => lt - titleBs[i])) - AIR * 2;
+        const size = Math.max(72, Math.min((room * 240) / tallest, panel.clientWidth));
+        art.style.width = art.style.height = size + 'px';
+        const k = size / 240;
+        const top0 = titleB + gapL; // where the box sits in the flow, under the title
+        artY = listTops.map((lt, i) => (titleBs[i] + lt) / 2 - ((reach[i][0] + reach[i][1]) / 2) * k - top0);
+        art.style.translate = `0 ${artY[panelOn]}px`;
+        return;
+      }
       const panel = art.closest('.s1__panel');
       const cs = getComputedStyle(panel);
       const inner = panel.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
@@ -424,6 +456,14 @@
     tl.to(dots[2], { backgroundColor: '#050505', scale: 1.15, duration: 0.25 }, 9.65);
     reveal(panels[2], 9.6);
     tl.to({}, { duration: wide.matches ? 4.4 : 2.6 }); // hold the last message long enough to read it
+    // phones: the drawing glides to the middle of the room each message leaves (their lists differ in length)
+    tl.eventCallback('onUpdate', () => {
+      const t = tl.time();
+      const on = t < 5.4 ? 0 : t < 9.6 ? 1 : 2;
+      if (on === panelOn) return;
+      panelOn = on;
+      if (artY) gsap.to(art, { translate: `0 ${artY[on]}px`, duration: 0.8, ease: 'power2.inOut', overwrite: 'auto' });
+    });
 
     // Section 02 rises over this one with the same background: fade our content out first so no edge is ever seen
     gsap.to('.s1__inner', {
@@ -513,6 +553,12 @@
       const fromSize = () => 16 * (s1Dot.ownerSVGElement.getBoundingClientRect().width / 240); // r 8 in a drawing 240 wide
       const to = () => centerIn(dots[0], sticky);
       const size = () => 2 * parseFloat(getComputedStyle(dots[0]).r) * (grid.getBoundingClientRect().width / 127);
+      const show = (p) => {
+        const on = p > 0 && p < 1;
+        gsap.set(trail, { autoAlpha: on ? 1 : 0 });
+        gsap.set(s1Dot, { autoAlpha: p <= 0 ? 1 : 0 });
+        gsap.set(dots[0], { autoAlpha: p >= 1 ? 1 : 0 });
+      };
       gsap.set(trail, { xPercent: -50, yPercent: -50 });
       gsap.timeline({
         scrollTrigger: {
@@ -521,19 +567,24 @@
           scrub: 0.8, invalidateOnRefresh: true,
           // the scrub runs a little behind the scroll; on a fast scroll out of this stretch the dot goes at once,
           // instead of lingering over the page while the animation catches up
-          onLeaveBack: () => { gsap.set(trail, { autoAlpha: 0 }); gsap.set(s1Dot, { autoAlpha: 1 }); },
-          onLeave: () => { gsap.set(trail, { autoAlpha: 0 }); gsap.set(dots[0], { autoAlpha: 1 }); },
+          onLeaveBack: () => show(0),
+          onLeave: () => show(1),
+        },
+        // which of the three dots shows follows the animation itself (not one-off switches, which a fast scroll back
+        // and forth could leave out of step): section 01's dot before it leaves, the travelling one on the way, the grid's
+        // top-left one once it has landed — never two at once
+        onUpdate() {
+          // the scrub catches up a moment after the scroll: once the page has left this stretch (a fast scroll), the
+          // travelling dot stays hidden even while the animation is still winding back or forward
+          const sc = this.scrollTrigger;
+          show(sc && !sc.isActive ? (sc.progress >= 1 ? 1 : 0) : this.progress());
         },
       })
-        .set(trail, { autoAlpha: 1 }, 0.001)
-        .set(s1Dot, { autoAlpha: 0 }, 0.001) // the travelling dot takes its place, so there are never two
         // sideways steadily, downwards like a fall: together they make a curve
         .fromTo(trail, { x: () => from().x, width: fromSize, height: fromSize, backgroundColor: '#050505' },
           { x: () => to().x, width: size, height: size, backgroundColor: '#1b1b1b', ease: 'power1.inOut', duration: 1, immediateRender: false }, 0)
         .fromTo(trail, { y: () => from().y }, { y: () => to().y, ease: 'power2.in', duration: 1, immediateRender: false }, 0)
-        // it lands: from here on it is the grid's top-left dot
-        .set(trail, { autoAlpha: 0 }, 1)
-        .set(dots[0], { autoAlpha: 1 }, 1);
+        .to({}, { duration: 0.001 }, 1);
     }
   })();
 
@@ -559,8 +610,33 @@
     autoAlpha: 0, filter: 'blur(10px)', ease: 'none',
     scrollTrigger: { trigger: '.s3', start: 'top 95%', end: 'top 40%', scrub: true },
   });
-  // phones: the page fades back to white for section 04. Desktop keeps the black of section 03 through section 04
-  gsap.matchMedia().add('(max-width: 860px)', () => bgTo('.s4', 'top 95%', 'top 35%', '#050505', '#f3f3f3'));
+  // the page turns back to white for section 04: phones fade the page itself; on desktop the page stayed white and it is
+  // section 03's own black that fades out, after its content has gone
+  gsap.matchMedia()
+    .add('(max-width: 860px)', () => bgTo('.s4', 'top 95%', 'top 35%', '#050505', '#f3f3f3'))
+    .add('(min-width: 861px)', () => {
+      gsap.to('.s3__sticky', {
+        autoAlpha: 0, filter: 'blur(10px)', ease: 'none',
+        scrollTrigger: { trigger: '.s4', start: 'top bottom', end: 'top 55%', scrub: true },
+      });
+      // both sections fade together from the moment this one shows, so there is never an edge between them.
+      // Only while this hand-over is under way: before it, section 03's black is the travelling dot's to give (it covers
+      // the screen first), so nothing here may paint it black early
+      const s3el = document.querySelector('.s3');
+      const s4el = document.querySelector('.s4');
+      const mix = gsap.utils.interpolate('#050505', '#f3f3f3');
+      const paint = (k) => {
+        if (k > 0) { s3el.style.backgroundColor = s4el.style.backgroundColor = mix(k); return; }
+        s4el.style.backgroundColor = '';
+        if (s3el.style.backgroundColor && s3el.style.backgroundColor !== 'rgb(5, 5, 5)') s3el.style.backgroundColor = '#050505';
+      };
+      const st = ScrollTrigger.create({
+        trigger: '.s4', start: 'top bottom', end: 'top 35%',
+        onUpdate: (self) => paint(self.progress),
+        onLeaveBack: () => paint(0),
+      });
+      return () => st.kill();
+    });
   // phones: section 03's content fades out while the page turns white, instead of lingering over the new background
   gsap.matchMedia().add('(max-width: 860px)', () => {
     gsap.to('.s3__sticky', {
@@ -573,74 +649,208 @@
   (() => {
     const section = document.querySelector('.s3');
 
-    // desktop: the title, the subtitle and the first icon's dots all start where "Consultoria de Marca" starts in the header
-    // (pulled left only as far as needed when the drawings would not fit on a narrower screen)
-    const headBox = section.querySelector('.s3__head');
-    const equation = section.querySelector('.s3__equation');
-    const firstIcon = section.querySelector('.s3__icon img');
-    const tag = document.querySelector('.site-header__tag');
-    const ctaBtn = section.querySelector('.s3__cta');
     const wideS3 = window.matchMedia('(min-width: 861px)');
-    const alignHead = () => {
-      headBox.style.width = headBox.style.paddingLeft = equation.style.marginLeft = equation.style.alignSelf = '';
-      ctaBtn.style.marginLeft = ctaBtn.style.alignSelf = '';
-      if (!wideS3.matches) return;
-      const pad = parseFloat(getComputedStyle(equation.parentNode).paddingLeft);
-      const iconIn = firstIcon.getBoundingClientRect().left - equation.getBoundingClientRect().left;
-      // lines up with the header tag; on notebooks that would push the block right of the screen's middle, so it stays centred there
-      const eqBox = equation.getBoundingClientRect();
-      const lastBox = equation.lastElementChild.getBoundingClientRect();
-      const blockW = lastBox.left + lastBox.width / 2 + ctaBtn.offsetWidth / 2 - eqBox.left - iconIn;
-      const x = Math.min(tag.getBoundingClientRect().left, (window.innerWidth - blockW) / 2, window.innerWidth - pad - equation.offsetWidth + iconIn);
-      headBox.style.width = '100%';
-      headBox.style.paddingLeft = x - pad + 'px';
-      equation.style.alignSelf = 'flex-start';
-      equation.style.marginLeft = x - pad - iconIn + 'px';
-      // the button sits under "Consultor de marca", centered on it
-      const last = equation.lastElementChild.getBoundingClientRect();
-      ctaBtn.style.alignSelf = 'flex-start';
-      ctaBtn.style.marginLeft = last.left + last.width / 2 - ctaBtn.offsetWidth / 2 - pad + 'px';
-    };
-    alignHead();
-    window.addEventListener('resize', alignHead);
-    if (document.fonts) document.fonts.ready.then(alignHead);
-    const head = section.querySelectorAll('.s3__head > *');
     const cta = section.querySelector('.s3__cta');
-    const seq = section.querySelectorAll('.s3__equation > *');
-    const lines = section.querySelector('.s3__lines');
-    const eq = section.querySelector('.s3__op--eq');
-    const glow = section.querySelector('.s3__glow');
-    const result = seq[seq.length - 1];
-
+    const rows = gsap.utils.toArray('.s3__row', section);
     const titleLines = section.querySelectorAll('.s3__title .line > span');
     const sub = section.querySelector('.s3__sub');
-    gsap.set([sub, ...seq, cta], HIDDEN);
+    const part = (row, sel) => row.querySelector(sel);
+
+    /* --- the field: about 260 dots (150 on phones) in a soft round cloud. One state number, driven by the scroll:
+       0 → 1 the dots appear; at 1 only a narrow beam lights them (it follows the mouse; on phones it sweeps by itself);
+       1 → 2 the beam opens to the whole field and the dots float loose; 2 → 3 they come to rest where they are and lines
+       join each one to its nearest neighbours, spreading out from the middle, until the whole field is connected --- */
+    const field = section.querySelector('.s3__field');
+    const ctx = field.getContext('2d');
+    const state = { m: 0 };
+    let W = 0; let H = 0; let dpr = 1; let pts = []; let pairs = [];
+    let beamX = 0; let mouseX = null; let mouseY = 0;
+    const push = []; // each dot's current nudge away from the mouse, eased
+    const rand = (() => { let a = 7; return () => ((a = (a * 16807) % 2147483647) / 2147483647); })(); // the same cloud every time
+    const build = () => {
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      W = field.clientWidth; H = field.clientHeight;
+      field.width = W * dpr; field.height = H * dpr;
+      const wide = W > 860;
+      // the field keeps clear of the words: it is fitted into the free room, measured from the texts themselves
+      // (phones: between the subtitle and the words at the bottom; desktop: right of the title, above the words)
+      const box = field.getBoundingClientRect();
+      const head = section.querySelector('.s3__head').getBoundingClientRect();
+      const sum = section.querySelector('.s3__sum').getBoundingClientRect();
+      const subR = section.querySelector('.s3__sub').getBoundingClientRect().right - box.left;
+      const headB = head.bottom - box.top;
+      const sumT = sum.top - box.top;
+      let cx; let cy; let R;
+      if (wide) {
+        cx = W * 0.66; cy = H * 0.48;
+        R = Math.min(W * 0.3, H * 0.36, (cx - subR - 48));
+        // where the field reaches over the words' column, it must end above them
+        if (cx - R < sum.right - box.left) R = Math.min(R, (sumT - 24 - cy) / 0.9);
+        R = Math.max(R, 80);
+      } else {
+        const room = section.querySelector('.s3__room').getBoundingClientRect();
+        const top = room.top - box.top + 8;
+        const bottom = room.bottom - box.top - 8;
+        cy = (top + bottom) / 2; cx = W * 0.5;
+        R = Math.max(50, Math.min(W * 0.42, (bottom - top) / 2 / 0.9));
+      }
+      const n = wide ? 260 : 150;
+      pts = Array.from({ length: n }, () => {
+        const a = rand() * Math.PI * 2;
+        const r = R * Math.sqrt(rand());
+        return { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r * 0.9, ph: rand() * 6.28, sp: 0.4 + rand() * 0.7 };
+      });
+      // each dot's three nearest neighbours: the links of the connected field
+      pairs = [];
+      pts.forEach((p, i) => {
+        pts.map((q, j) => [j, Math.hypot(p.x - q.x, p.y - q.y)]).filter(([j]) => j !== i).sort((a, b) => a[1] - b[1]).slice(0, 3)
+          .forEach(([j, d]) => { if (d < R * 0.3 && !pairs.some(([a, b]) => (a === j && b === i))) pairs.push([i, j]); });
+      });
+      // the links grow from the middle of the field outwards: each gets its moment by how far its middle is from the centre
+      pairs.forEach((pr) => {
+        const [i, j] = pr;
+        pr.at = Math.hypot((pts[i].x + pts[j].x) / 2 - cx, (pts[i].y + pts[j].y) / 2 - cy) / R;
+      });
+      beamX = cx - R * 0.5;
+    };
+    const clamp01 = gsap.utils.clamp(0, 1);
+    const inout = gsap.parseEase('sine.inOut');
+    const pos = [];
+    const draw = (time) => {
+      const m = state.m;
+      const appear = clamp01(m);
+      const widen = inout(clamp01(m - 1));
+      const settle = clamp01(m - 2);
+      const rest = inout(clamp01(settle / 0.4)); // the dots come to rest first...
+      const join = clamp01((settle - 0.15) / 0.85); // ...while the links spread out from the middle
+      const goal = mouseX !== null && W > 860 ? mouseX : W * (W > 860 ? 0.66 : 0.5) + Math.sin(time * 0.7) * Math.min(W, H) * (W > 860 ? 0.3 : 0.25);
+      beamX += (goal - beamX) * 0.08;
+      const beamW = Math.max(60, W * 0.07);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      // the mouse: dots close to it are pushed gently away and drift back once it moves on
+      const reach = Math.min(W, H) * 0.12;
+      pts.forEach((p, i) => {
+        const loose = (0.2 + 0.8 * widen) * (1 - rest) * 12;
+        const x = p.x + Math.sin(time * p.sp + p.ph) * loose;
+        const y = p.y + Math.cos(time * p.sp * 0.8 + p.ph) * loose;
+        let gx = 0; let gy = 0;
+        if (mouseX !== null) {
+          const dx = x - mouseX; const dy = y - mouseY; const d = Math.hypot(dx, dy) || 1;
+          const f = Math.max(0, 1 - d / reach) ** 2 * reach * 0.35;
+          gx = (dx / d) * f; gy = (dy / d) * f;
+        }
+        const n = push[i] || (push[i] = [0, 0]);
+        n[0] += (gx - n[0]) * 0.12; n[1] += (gy - n[1]) * 0.12;
+        pos[i] = [x + n[0], y + n[1]];
+      });
+      if (join > 0) {
+        ctx.strokeStyle = `rgba(64,64,64,${appear})`; // the dark grey of the steps' line in the next section (#404040)
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        pairs.forEach((pr) => {
+          const k = clamp01((join * 1.25 - pr.at * 0.95) / 0.3); // how far this link has drawn itself
+          if (k <= 0) return;
+          const [ax, ay] = pos[pr[0]]; const [bx, by] = pos[pr[1]];
+          ctx.moveTo(ax, ay); ctx.lineTo(ax + (bx - ax) * k, ay + (by - ay) * k);
+        });
+        ctx.stroke();
+        // ...and the links around the mouse light up white, showing the connections in that spot
+        if (mouseX !== null) {
+          ctx.lineWidth = 1;
+          pairs.forEach((pr) => {
+            const k = clamp01((join * 1.25 - pr.at * 0.95) / 0.3);
+            if (k <= 0) return;
+            const [ax, ay] = pos[pr[0]]; const [bx, by] = pos[pr[1]];
+            const near = Math.max(0, 1 - Math.hypot((ax + bx) / 2 - mouseX, (ay + by) / 2 - mouseY) / (reach * 1.6));
+            if (near <= 0) return;
+            ctx.strokeStyle = `rgba(243,243,243,${near * appear})`;
+            ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax + (bx - ax) * k, ay + (by - ay) * k); ctx.stroke();
+          });
+        }
+      }
+      pts.forEach((p, i) => {
+        const [x, y] = pos[i];
+        const lit = Math.exp(-(((x - beamX) / beamW) ** 2));
+        const bright = lit + (1 - lit) * widen;
+        const a = appear * (0.1 + 0.9 * bright);
+        if (a < 0.01) return;
+        ctx.fillStyle = `rgba(243,243,243,${a})`;
+        ctx.beginPath(); ctx.arc(x, y, 1.1 + 1.4 * bright, 0, Math.PI * 2); ctx.fill();
+      });
+    };
+    build();
+    window.addEventListener('resize', build);
+    section.addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      const r = field.getBoundingClientRect();
+      mouseX = e.clientX - r.left; mouseY = e.clientY - r.top;
+    });
+    section.addEventListener('pointerleave', () => { mouseX = null; });
+    const tick = () => draw(gsap.ticker.time);
+    if (reduceMotion) { state.m = 3; draw(0); }
+    else {
+      ScrollTrigger.create({
+        trigger: section, start: 'top bottom', end: 'bottom top',
+        onToggle: (self) => (self.isActive ? gsap.ticker.add(tick) : gsap.ticker.remove(tick)),
+      });
+    }
+
+    gsap.set([sub, cta], HIDDEN);
     gsap.set(titleLines, { yPercent: 110 });
-    gsap.set(lines, { autoAlpha: 0, scale: 0.6, svgOrigin: '64 64' }); // grows from the middle dot
-    gsap.set(glow, { autoAlpha: 0, scale: 0.5 });
+    rows.forEach((row) => {
+      gsap.set(part(row, '.s3__who > span'), { yPercent: 110 });
+      gsap.set([part(row, '.s3__op'), part(row, '.s3__what')], { autoAlpha: 0, filter: 'blur(6px)' });
+    });
 
     const tl = gsap.timeline({
       defaults: { ease: 'power2.out' },
       // phones start as section 02 fades out, so the screen is never left empty in between
       scrollTrigger: { trigger: section, start: wideS3.matches ? 'top 10%' : 'top 45%', end: 'bottom bottom', scrub: 0.8 },
     });
-    // after the page turns black the texts come in slowly, one after the other, over a good stretch of scroll (not all at once)
     // the title rises line by line from behind its edge, then the subtitle comes into focus
     tl.to(titleLines, { yPercent: 0, duration: 1.4, stagger: 0.4, ease: 'power3.out' }, 0)
-      .to(sub, { ...SHOWN, duration: 1.4, ease: 'power1.out' }, 0.9);
-    seq.forEach((el, i) => tl.to(el, { ...SHOWN, x: 0, duration: 1.1, ease: 'power1.out' }, 2.4 + i * 0.8));
-    const end = 2.4 + seq.length * 0.8;
-    tl.to(lines, { autoAlpha: 1, scale: 1, svgOrigin: '64 64', duration: 0.6 }, end)
-      // the result gets the weight: "=" turns white with a small pulse, then a glow opens behind the icon
-      .to(eq, { color: '#f3f3f3', duration: 0.5 }, end + 0.2)
-      .to(eq, { scale: 1.15, duration: 0.25, yoyo: true, repeat: 1, ease: 'power1.inOut' }, end + 0.2)
-      // everything before the "=" fades back so only the result stands out
-      .to([...seq].slice(0, -2), { opacity: 0.3, duration: 0.6, ease: 'power1.inOut' }, end + 0.2)
-      .to(glow, { autoAlpha: 1, scale: 1, duration: 0.8, ease: 'power2.out' }, end + 0.4)
-      .to(result, { scale: 1.04, duration: 0.6, ease: 'power2.out' }, end + 0.4)
-      // the call to action closes the reasoning, right after the result
-      .to(cta, { ...SHOWN, duration: 0.6 }, end + 1.1)
-      .to({}, { duration: 0.8 });
+      .to(sub, { ...SHOWN, duration: 1.4, ease: 'power1.out' }, 0.9)
+      // the field: in, then each state over a long stretch of scroll
+      .to(state, { m: 1, duration: 1.4, ease: 'none' }, 1.2)
+      .to(state, { m: 2, duration: 2.2, ease: 'none' }, 4.0)
+      .to(state, { m: 3, duration: 3.2, ease: 'none' }, 7.0);
+    // the words in the corner: each line comes in with its state and is the white one while it lasts
+    const AT = [2.4, 4.8, 7.6];
+    rows.forEach((row, i) => {
+      const at = AT[i];
+      tl.to(part(row, '.s3__op'), { autoAlpha: 1, filter: 'blur(0px)', duration: 0.6 }, at)
+        .to(part(row, '.s3__who > span'), { yPercent: 0, duration: 1, ease: 'power3.out' }, at + 0.1)
+        .to(part(row, '.s3__what'), { autoAlpha: 1, filter: 'blur(0px)', duration: 0.8 }, at + 0.4)
+        .call(() => rows.forEach((r, k) => r.classList.toggle('is-on', k === i)), null, at)
+        .call(() => rows.forEach((r, k) => r.classList.toggle('is-on', k === i - 1)), null, at - 0.01);
+    });
+    // the call to action closes the reasoning, once the field is connected
+    tl.to(cta, { ...SHOWN, duration: 0.6 }, 10.2)
+      .to({}, { duration: 1.2 });
+
+    // a light hold on each step: when the scroll comes to rest near one of them (a part, the whole, connected), the page
+    // settles on it, so a quick scroll doesn't skip a step. Resting far from every step (on the way in or out) is left alone
+    if (!reduceMotion) {
+      const STEPS = [3.7, 6.6, 10.9]; // on the timeline: each step fully shown, its words in
+      const st = tl.scrollTrigger;
+      let timer = null;
+      let settling = false;
+      const settle = () => {
+        if (settling || !st.isActive) return;
+        const y = window.scrollY;
+        const spots = STEPS.map((t) => st.start + (st.end - st.start) * (t / tl.duration()));
+        const near = spots.reduce((a, b) => (Math.abs(b - y) < Math.abs(a - y) ? b : a));
+        const dist = Math.abs(near - y);
+        if (dist < 4 || dist > window.innerHeight * 0.45) return;
+        settling = true;
+        scrollToY(near, Math.min(0.9, 0.35 + dist / window.innerHeight));
+        setTimeout(() => { settling = false; }, 1000);
+      };
+      const onScroll = () => { clearTimeout(timer); timer = setTimeout(settle, 160); };
+      if (lenis) lenis.on('scroll', onScroll);
+      else window.addEventListener('scroll', onScroll, { passive: true });
+    }
 
     // travelling dot, second leg: at the end of section 02 its last two dots meet in the middle and become one; that dot then
     // grows until it covers the whole screen, and that is how the page turns black for this section (the page behind it
@@ -673,11 +883,13 @@
           endTrigger: section, end: wideS3.matches ? 'top 15%' : 'top 50%', // covered just before this section's texts come in
           scrub: 0.8, invalidateOnRefresh: true,
           // scrolling back up fast: the big dot goes at once rather than staying over section 02 while the scrub catches up
-          onLeaveBack: () => { gsap.set(trail, { autoAlpha: 0 }); gsap.set([s2Dots[0], s2Dots[7]], { autoAlpha: 1 }); },
+          onLeaveBack: () => gsap.set(trail, { autoAlpha: 0 }),
         },
       })
         .to([s2Dots[0], s2Dots[7]], { attr: { cx: 63.4, cy: 65.9 }, duration: MERGE, ease: 'power2.inOut' }, 0)
-        .set([s2Dots[0], s2Dots[7]], { autoAlpha: 0 }, MERGE)
+        // only the one that merges in goes; the top-left dot (now in the middle) stays under the growing dot — its showing
+        // is left to the first leg alone, so a fast scroll back can never bring it back early
+        .set(s2Dots[7], { autoAlpha: 0 }, MERGE)
         .set(trail, { autoAlpha: 1 }, MERGE)
         .fromTo(grow, { k: 0 }, { k: 1, duration: 1 - MERGE, ease: 'none', onUpdate: follow, immediateRender: false }, MERGE)
         // covered: what is behind is black now, the dot can go. Desktop: sections 03 and 04 carry their own black, so the page
@@ -749,6 +961,7 @@
         name.textContent = names[i].textContent;
         name.href = items[i].querySelector('a').href; // the caption opens the same post as the picture
         name.toggleAttribute('data-video', items[i].querySelector('a').hasAttribute('data-video'));
+        if (items[i].querySelector('a').dataset.ratio) name.dataset.ratio = items[i].querySelector('a').dataset.ratio; else delete name.dataset.ratio;
         gsap.fromTo(name, { autoAlpha: 0, filter: 'blur(6px)', y: 6 }, { autoAlpha: 1, filter: 'blur(0px)', y: 0, duration: 0.4, ease: 'power2.out', overwrite: true });
       }
     };
@@ -760,6 +973,52 @@
     });
     layout();
     window.addEventListener('resize', layout);
+    // dragging the row sideways (mouse or finger) moves through the projects too: it scrolls the page by the same amount
+    // the scroll would, and on release it settles on the nearest project. Up-and-down swipes stay the page's own scroll
+    const span = () => st.end - st.start;
+    const perPx = () => span() / last / (row.clientWidth * 0.3); // about a third of the width per project
+    const jump = (y) => (lenis ? lenis.scrollTo(y, { immediate: true, force: true }) : window.scrollTo(0, y));
+    let drag = null;
+    row.addEventListener('pointerdown', (e) => {
+      if (e.button) return;
+      drag = { x: e.clientX, y: e.clientY, from: window.scrollY, moved: false, id: e.pointerId, trail: [] };
+    });
+    window.addEventListener('pointermove', (e) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const dx = e.clientX - drag.x;
+      if (!drag.moved) {
+        if (Math.abs(dx) < 6 || Math.abs(dx) < Math.abs(e.clientY - drag.y)) return;
+        drag.moved = true;
+        row.classList.add('is-dragging');
+      }
+      e.preventDefault();
+      // the last moments of the drag give its speed, for the throw on release
+      drag.trail.push([e.clientX, performance.now()]);
+      if (drag.trail.length > 6) drag.trail.shift();
+      jump(gsap.utils.clamp(st.start, st.end, drag.from - dx * perPx()));
+    }, { passive: false });
+    const release = () => {
+      if (!drag) return;
+      if (drag.moved) {
+        // a quick flick keeps going: its speed carries the row on past where the finger let go (a long throw can cross
+        // several projects), then it settles on the nearest one, taking longer the further it travels
+        const [a, b] = [drag.trail[0], drag.trail[drag.trail.length - 1]];
+        const v = a && b && b[1] - a[1] > 0 && performance.now() - b[1] < 120 ? (b[0] - a[0]) / (b[1] - a[1]) : 0; // px per ms
+        const thrown = p - (v * 420 * perPx()) / span() * last;
+        const i = Math.round(gsap.utils.clamp(0, last, thrown));
+        scrollToY(st.start + span() * (i / last), Math.min(1.8, 0.6 + Math.abs(i - p) * 0.18));
+        // a drag is not a click: the picture under the pointer must not open
+        const stop = (ev) => { ev.preventDefault(); ev.stopImmediatePropagation(); };
+        window.addEventListener('click', stop, { capture: true, once: true });
+        setTimeout(() => window.removeEventListener('click', stop, { capture: true }), 50);
+      }
+      row.classList.remove('is-dragging');
+      drag = null;
+    };
+    window.addEventListener('pointerup', release);
+    window.addEventListener('pointercancel', release);
+    row.addEventListener('dragstart', (e) => e.preventDefault()); // no ghost image when dragging a picture
+
     // a name takes the page to its project
     names.forEach((li, i) => li.querySelector('button').addEventListener('click', () => {
       scrollToY(st.start + (st.end - st.start) * (i / last), 1.2);
@@ -790,6 +1049,10 @@
     const list = document.querySelector('.accordion');
     const accs = [...list.querySelectorAll('.acc')];
     const svg = document.querySelector('.s4__art');
+    // the drawing is scaled to its box, which would thicken its lines: they are set so they always come out 1px
+    const thin = () => { if (svg.clientWidth) svg.style.setProperty('--s4-sw', (400 / svg.clientWidth).toFixed(3)); };
+    thin();
+    window.addEventListener('resize', thin);
     const dots = [...svg.querySelectorAll('.s4-dot')];
     const lines = svg.querySelectorAll('.s4-lines path');
     const arrow = svg.querySelector('.s4-arrow');
@@ -1024,21 +1287,22 @@
       });
       // the screen is already black from section 03 and stays black: the block on the left is the same black, so only its
       // drawing and the texts come in. Section 05 brings its own white background
+      // the framed block opens from the left as the section comes in, then the drawing fades in
+      gsap.fromTo('.s4__media', { clipPath: 'inset(-1px 100% -1px -1px)' }, {
+        clipPath: 'inset(-1px 0% -1px -1px)', ease: 'power2.inOut',
+        scrollTrigger: { trigger: '.s4', start: 'top 85%', end: 'top 15%', scrub: true },
+      });
       gsap.fromTo('.s4__art', { autoAlpha: 0, filter: 'blur(10px)' }, {
         autoAlpha: 1, filter: 'blur(0px)', ease: 'none',
         scrollTrigger: { trigger: '.s4', start: 'top 35%', end: 'top top', scrub: true },
       });
-      // on the way to section 05 the whole black leaves to the left, after the drawing and the text fade out: the page behind
-      // has turned white by then, so the black uncovers it as it goes
-      // The black and the framed block are cut by one and the same edge sweeping right to left (each clipped in its own box
-      // to that screen position), so they never leave as two separate pieces
-      const backdrop = document.querySelector('.s4__backdrop');
+      // on the way to section 05 the block closes to the left, after the drawing and the text fade out
+      // the framed block is cut by an edge sweeping right to left across the screen
       const media = document.querySelector('.s4__media');
       const sweep = { x: 1 }; // where the edge is, as a share of the screen width (1 = right edge, nothing cut)
       const cut = () => {
         const W = window.innerWidth;
         const edge = sweep.x * W;
-        backdrop.style.clipPath = sweep.x >= 1 ? '' : `inset(0px ${W - edge}px 0px 0px)`;
         const m = media.getBoundingClientRect();
         const off = Math.min(m.width, Math.max(0, m.right - edge));
         media.style.clipPath = off <= 0 ? '' : `inset(-1px ${off}px -1px -1px)`;
@@ -1150,19 +1414,43 @@
       .set(traveller, { autoAlpha: 0 }, 7.0)
       .set(ball, { autoAlpha: 1 }, 7.0)
       // Síntese: it rolls across, shrinking, as the beam swings the other way
-      .to(ball, { attr: { cx: 233, cy: 73.75, r: 8 }, duration: 2.6, ease: 'power1.out' }, 7.0)
-      .to('.sin-beam', { rotation: 12, svgOrigin: O, duration: 2.6, ease: 'power1.out' }, 7.0)
-      .to({}, { duration: 1.4 })
-      .to(['.sin-beam', '.sin-pivot', ball], { autoAlpha: 0, duration: 0.6, ease: 'power1.in' });
+      // it gets smaller the whole way and is gone exactly as it reaches the end of the beam: the problem is solved
+      // (its centre stays one radius above the beam, so it rolls on it all along)
+      .to(ball, { attr: { cx: 233, cy: 81.75, r: 0 }, duration: 2.9, ease: 'power1.out' }, 7.0)
+      .to('.sin-beam', { rotation: 12, svgOrigin: O, duration: 2.9, ease: 'power1.out' }, 7.0)
+      .to({}, { duration: 1.2 })
+      .to(['.sin-beam', '.sin-pivot'], { autoAlpha: 0, duration: 0.6, ease: 'power1.in' });
 
-    // it runs only while the cards are well on screen, from the start each time they come in from above
-    ScrollTrigger.create({
-      trigger: box, start: 'top 70%', end: 'bottom top',
-      onEnter: () => story.restart(),
-      onEnterBack: () => story.play(),
-      onLeave: () => story.pause(),
-      onLeaveBack: () => story.pause(0),
-    });
+    gsap.matchMedia()
+      // desktop: the cards sit side by side; the story loops while they are well on screen, from the start each time
+      .add('(min-width: 861px)', () => {
+        const st = ScrollTrigger.create({
+          trigger: box, start: 'top 70%', end: 'bottom top',
+          onEnter: () => story.restart(),
+          onEnterBack: () => story.play(),
+          onLeave: () => story.pause(),
+          onLeaveBack: () => story.pause(0),
+        });
+        return () => st.kill();
+      })
+      // phones: the cards are stacked, so the circle only moves on to a card once that card is on screen (not while the
+      // visitor is still reading the one before); it plays through once, from the start whenever the first card comes back
+      .add('(max-width: 860px)', () => {
+        story.repeat(0);
+        const AT = [0, 2.85, 5.65]; // just before each glide to the next card starts on the story
+        let reached = 0;
+        const go = (i) => {
+          reached = Math.max(reached, i);
+          const until = reached < 2 ? AT[reached + 1] : story.duration();
+          if (story.time() < until) story.tweenTo(until, { ease: 'none' });
+        };
+        const sts = cards.map((card, i) => ScrollTrigger.create({
+          trigger: card.querySelector('.card__art'), start: 'center 70%',
+          onEnter: () => { if (i === 0) { reached = 0; story.pause(0); } go(i); },
+          onLeaveBack: () => { if (i === 0) { reached = 0; story.pause(0); } },
+        }));
+        return () => { sts.forEach((t) => t.kill()); story.repeat(-1); };
+      });
     window.addEventListener('resize', measure);
 
     // desktop: the same short hold as section 04
@@ -1297,6 +1585,7 @@
     postFocus = document.activeElement;
     postFrame.src = `https://www.instagram.com/p/${id}/embed/`;
     post.classList.toggle('is-video', e.currentTarget.hasAttribute('data-video'));
+    post.style.setProperty('--pr', e.currentTarget.dataset.ratio || 1.25); // the post's picture shape (height / width)
     post.classList.add('is-open');
     post.setAttribute('aria-hidden', 'false');
     post.querySelector('.modal__close').focus({ preventScroll: true });
