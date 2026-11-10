@@ -225,6 +225,9 @@
     'Aviso de cookies': 'Cookie notice',
     'Case no Instagram': 'Case on Instagram',
     'Fechar case': 'Close case',
+    'Foto anterior': 'Previous picture',
+    'Próxima foto': 'Next picture',
+    'Ver no Instagram ↗': 'See on Instagram ↗',
     'Post do Instagram': 'Instagram post',
 
     // tab title and search description
@@ -233,7 +236,7 @@
   // "Projeto de marca ZIVIZ", "Ver o case ZIVIZ no Instagram" and the like: only the words around the name change
   const pattern = [
     [/^Projeto de marca (.+)$/, 'Brand project for $1'], [/^Brand project for (.+)$/, 'Projeto de marca $1', true],
-    [/^Ver o case (.+) no Instagram$/, 'See the $1 case on Instagram'], [/^See the (.+) case on Instagram$/, 'Ver o case $1 no Instagram', true],
+    [/^Ver o case (.+)$/, 'See the $1 case'], [/^See the (.+) case$/, 'Ver o case $1', true],
   ];
 
   const PT = Object.fromEntries(Object.entries(EN).map(([pt, en]) => [en, pt]));

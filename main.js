@@ -92,6 +92,10 @@
     if (on) pinned.add(key); else pinned.delete(key);
     if (topBlur) topBlur.classList.toggle('is-off', pinned.size > 0);
   };
+  ScrollTrigger.create({
+    trigger: '.work', start: 'bottom bottom', end: 'bottom top',
+    onToggle: (self) => setPinned('work-out', self.isActive),
+  });
   document.querySelectorAll('.s1, .s2, .s3').forEach((sec) => ScrollTrigger.create({
     trigger: sec, start: 'top top', end: 'bottom bottom',
     onToggle: (self) => setPinned(sec, self.isActive),
@@ -120,6 +124,32 @@
   const HIDDEN = { autoAlpha: 0, filter: 'blur(8px)', y: 24 };
   const SHOWN = { autoAlpha: 1, filter: 'blur(0px)', y: 0 };
   const GONE = { autoAlpha: 0, filter: 'blur(8px)', y: -24 };
+
+  // Section titles rise line by line from behind their own edge (one way in for every big title, as in section 03):
+  // their lines are wrapped here, before the sections set up their entrances, and they leave the generic fade
+  const rise = (el, trigger, start) => {
+    const lines = [[]];
+    [...el.childNodes].forEach((n) => (n.nodeName === 'BR' ? lines.push([]) : lines[lines.length - 1].push(n)));
+    el.textContent = '';
+    el.classList.remove('reveal');
+    el.classList.add('rise');
+    const inner = lines.map((nodes) => {
+      const line = document.createElement('span');
+      const span = document.createElement('span');
+      line.className = 'line';
+      nodes.forEach((n) => span.append(n));
+      line.append(span);
+      el.append(line);
+      return span;
+    });
+    if (reduceMotion) return;
+    gsap.fromTo(inner, { yPercent: 110 }, {
+      yPercent: 0, duration: 1.1, ease: 'power3.out', stagger: 0.12,
+      scrollTrigger: { trigger, start, toggleActions: 'play none none reverse' },
+    });
+  };
+  rise(document.querySelector('.s4 .title-xl'), '.s4', 'top 70%');
+  rise(document.querySelector('.s5 .title-xl'), '.s5 .title-xl', 'top 88%');
 
   // where an element's centre sits inside a pinned (sticky) box: while the box is pinned at the top, these are screen coordinates
   const centerIn = (el, box) => {
@@ -158,6 +188,30 @@
     document.addEventListener('pointerout', (e) => {
       const to = e.relatedTarget;
       if (e.target.closest(HOT) && !(to && to.closest && to.closest(HOT))) grow(false);
+    });
+  }
+
+  /* ---------- Progress line along the top ---------- */
+  const progress = document.querySelector('.progress');
+  ScrollTrigger.create({ start: 0, end: 'max', onUpdate: (self) => gsap.set(progress, { scaleX: self.progress }) });
+
+  /* ---------- "Agendar conversa" buttons lean towards the mouse when it comes close (mouse and trackpad only) ---------- */
+  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches && !reduceMotion) {
+    document.querySelectorAll('.btn[data-open-form]').forEach((btn) => {
+      // moved with CSS translate, apart from the transform the buttons' own entrances animate
+      const lean = { x: 0, y: 0 };
+      const put = () => { btn.style.translate = `${lean.x}px ${lean.y}px`; };
+      const toX = gsap.quickTo(lean, 'x', { duration: 0.5, ease: 'power3.out', onUpdate: put });
+      const toY = gsap.quickTo(lean, 'y', { duration: 0.5, ease: 'power3.out', onUpdate: put });
+      window.addEventListener('pointermove', (e) => {
+        const r = btn.getBoundingClientRect();
+        if (!r.width) return;
+        const dx = e.clientX - (r.left + r.width / 2);
+        const dy = e.clientY - (r.top + r.height / 2);
+        const near = Math.max(0, 1 - Math.hypot(dx, dy) / (Math.max(r.width, r.height) * 1.2));
+        toX(dx * 0.18 * near);
+        toY(dy * 0.25 * near);
+      }, { passive: true });
     });
   }
 
@@ -997,9 +1051,8 @@
         now.textContent = String(i + 1).padStart(2, '0');
         // the name changes with a quick blur, like the other texts on the page
         name.textContent = names[i].textContent;
-        name.href = items[i].querySelector('a').href; // the caption opens the same post as the picture
-        name.toggleAttribute('data-video', items[i].querySelector('a').hasAttribute('data-video'));
-        if (items[i].querySelector('a').dataset.ratio) name.dataset.ratio = items[i].querySelector('a').dataset.ratio; else delete name.dataset.ratio;
+        name.href = items[i].querySelector('a').href; // the caption opens the same case as the picture
+        name.dataset.case = items[i].querySelector('a').dataset.case;
         gsap.fromTo(name, { autoAlpha: 0, filter: 'blur(6px)', y: 6 }, { autoAlpha: 1, filter: 'blur(0px)', y: 0, duration: 0.4, ease: 'power2.out', overwrite: true });
       }
     };
@@ -1395,18 +1448,18 @@
   /* ---------- Section 05: cards + animated symbols ---------- */
   (() => {
     const cards = gsap.utils.toArray('.card');
-    const CARD_IN = { autoAlpha: 1, y: 0, filter: 'blur(0px)', duration: 1, ease: 'power3.out' };
+    const CARD_IN = { ...SHOWN, duration: 1, ease: 'power3.out' };
     gsap.matchMedia()
       // desktop: the three cards sit side by side and come in together
       .add('(min-width: 861px)', () => {
-        gsap.fromTo(cards, { autoAlpha: 0, y: 60, filter: 'blur(10px)' }, {
+        gsap.fromTo(cards, HIDDEN, {
           ...CARD_IN, stagger: 0.15,
           scrollTrigger: { trigger: '.s5__cards', start: 'top 85%', toggleActions: 'play none none reverse' },
         });
       })
       // phones: they are stacked, so each one comes in when it reaches the screen
       .add('(max-width: 860px)', () => {
-        cards.forEach((card) => gsap.fromTo(card, { autoAlpha: 0, y: 60, filter: 'blur(10px)' }, {
+        cards.forEach((card) => gsap.fromTo(card, HIDDEN, {
           ...CARD_IN,
           scrollTrigger: { trigger: card, start: 'top 85%', toggleActions: 'play none none reverse' },
         }));
@@ -1646,34 +1699,100 @@
     if ((e.deltaY > 0 && canDown) || (e.deltaY < 0 && canUp)) e.stopPropagation();
   }, { passive: true });
 
-  /* ----- Case popup: a project's Instagram post opens inside the site, so the visitor never leaves it ----- */
-  // the links keep the post's address (a new tab still works with a middle click or without scripts)
-  const post = document.getElementById('post-modal');
-  const postFrame = post.querySelector('.post-frame');
-  let postFocus = null;
-  const openPost = (e) => {
-    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+  /* ----- Case popup: the project's own pictures, a gallery inside the site (the visitor never leaves it) ----- */
+  // pictures live in assets/cases/<case>-01.webp, -02... (taken from the Instagram posts, their labels cropped off)
+  const CASES = {
+    camargo: ['Camargo', 'DIeVFSHgKTd', 10], ziviz: ['ZIVIZ', 'DIESx1EgwJ5', 5], tingo: ['Tingo', 'DGBIIfPgR4Q', 10],
+    partfix: ['PartFix', 'DJMTtBju6YN', 8], 'moreno-ferraro': ['Moreno & Ferraro', 'DH3lqAKAPY2', 6], binalis: ['Binalis', 'DUjSP0IEckc', 8],
+    vynor: ['Vynor', 'DQ4UmX6kS0H', 6], yunect: ['Yunect', 'C7hTYPRgIUp', 9], iblack: ['iBlack', 'CvKnHFBgrum', 3, 0.9],
+    ducase: ['Ducase', 'CwVtlsKvEXD', 3], hello: ['Hello! Tech', 'DHGV692gcqD', 7], wepsy: ['Wepsy', 'DT_RPVZEZYj', 8],
+  };
+  const caseModal = document.getElementById('case-modal');
+  const caseView = caseModal.querySelector('.case-view');
+  const caseTrack = caseModal.querySelector('.case-track');
+  const caseTitle = caseModal.querySelector('#case-title');
+  const caseNow = caseModal.querySelector('.case-count span');
+  const caseCount = caseModal.querySelector('.case-count');
+  const caseIg = caseModal.querySelector('.case-ig');
+  const [casePrev, caseNext] = caseModal.querySelectorAll('.case-arrow');
+  let caseN = 0;
+  let caseAt = 0;
+  let caseFocus = null;
+  const two = (n) => String(n).padStart(2, '0');
+  const showSlide = (i) => {
+    caseAt = gsap.utils.clamp(0, caseN - 1, i);
+    caseTrack.style.transform = `translateX(${-caseAt * 100}%)`;
+    caseNow.textContent = two(caseAt + 1);
+    casePrev.disabled = caseAt === 0;
+    caseNext.disabled = caseAt === caseN - 1;
+  };
+  const openCase = (e) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return; // a new tab still opens the post
+    const data = CASES[e.currentTarget.dataset.case];
+    if (!data) return;
     e.preventDefault();
-    const id = (e.currentTarget.href.match(/\/p\/([^/]+)/) || [])[1];
-    if (!id) return;
-    postFocus = document.activeElement;
-    postFrame.src = `https://www.instagram.com/p/${id}/embed/`;
-    post.classList.toggle('is-video', e.currentTarget.hasAttribute('data-video'));
-    post.style.setProperty('--pr', e.currentTarget.dataset.ratio || 1.25); // the post's picture shape (height / width)
-    post.classList.add('is-open');
-    post.setAttribute('aria-hidden', 'false');
+    const [name, id, n, ratio] = data;
+    const slug = e.currentTarget.dataset.case;
+    caseN = n;
+    caseTitle.textContent = name;
+    caseCount.lastChild.textContent = ` / ${two(n)}`;
+    caseIg.href = `https://www.instagram.com/p/${id}/`;
+    caseView.style.setProperty('--cr', ratio || 1.125);
+    caseTrack.innerHTML = Array.from({ length: n }, (_, k) =>
+      `<img src="assets/cases/${slug}-${two(k + 1)}.webp" alt="${window.gangT ? window.gangT(`Projeto de marca ${name}`) : `Projeto de marca ${name}`}" ${k > 1 ? 'loading="lazy"' : ''} decoding="async" draggable="false" />`).join('');
+    caseTrack.style.transition = 'none';
+    showSlide(0);
+    caseTrack.offsetWidth; // settle at the first picture before the slide transition comes back
+    caseTrack.style.transition = '';
+    caseFocus = document.activeElement;
+    caseModal.classList.add('is-open');
+    caseModal.setAttribute('aria-hidden', 'false');
     // the X takes the focus (keyboards close from there), without drawing the focus ring after a tap or a click
-    post.querySelector('.modal__close').focus({ preventScroll: true, focusVisible: e.detail === 0 });
+    caseModal.querySelector('.modal__close').focus({ preventScroll: true, focusVisible: e.detail === 0 });
   };
-  const closePost = () => {
-    post.classList.remove('is-open');
-    post.setAttribute('aria-hidden', 'true');
-    setTimeout(() => { if (!post.classList.contains('is-open')) postFrame.removeAttribute('src'); }, 600); // after the fade
-    if (postFocus) postFocus.focus({ preventScroll: true });
+  const closeCase = () => {
+    caseModal.classList.remove('is-open');
+    caseModal.setAttribute('aria-hidden', 'true');
+    if (caseFocus) caseFocus.focus({ preventScroll: true });
   };
-  document.querySelectorAll('.work__item a, .work__name, .bento__link').forEach((a) => a.addEventListener('click', openPost));
-  post.querySelectorAll('[data-close-post]').forEach((b) => b.addEventListener('click', closePost));
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && post.classList.contains('is-open')) closePost(); });
+  document.querySelectorAll('[data-case]').forEach((a) => a.addEventListener('click', openCase));
+  caseModal.querySelectorAll('[data-close-case]').forEach((b) => b.addEventListener('click', closeCase));
+  casePrev.addEventListener('click', () => showSlide(caseAt - 1));
+  caseNext.addEventListener('click', () => showSlide(caseAt + 1));
+  document.addEventListener('keydown', (e) => {
+    if (!caseModal.classList.contains('is-open')) return;
+    if (e.key === 'Escape') closeCase();
+    if (e.key === 'ArrowLeft') showSlide(caseAt - 1);
+    if (e.key === 'ArrowRight') showSlide(caseAt + 1);
+  });
+  // dragging (mouse) or swiping (finger) moves to the next or previous picture; the track follows along meanwhile
+  let caseDrag = null;
+  caseView.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('.case-arrow')) return;
+    caseDrag = { x: e.clientX, y: e.clientY, dx: 0, id: e.pointerId, axis: null };
+  });
+  window.addEventListener('pointermove', (e) => {
+    if (!caseDrag || e.pointerId !== caseDrag.id) return;
+    const dx = e.clientX - caseDrag.x;
+    if (!caseDrag.axis) {
+      if (Math.hypot(dx, e.clientY - caseDrag.y) < 6) return;
+      caseDrag.axis = Math.abs(dx) > Math.abs(e.clientY - caseDrag.y) ? 'x' : 'y';
+      if (caseDrag.axis === 'x') caseView.classList.add('is-dragging');
+    }
+    if (caseDrag.axis !== 'x') return;
+    caseDrag.dx = dx;
+    caseTrack.style.transform = `translateX(calc(${-caseAt * 100}% + ${dx}px))`;
+  });
+  const endCaseDrag = () => {
+    if (!caseDrag) return;
+    caseView.classList.remove('is-dragging');
+    const { dx, axis } = caseDrag;
+    caseDrag = null;
+    if (axis !== 'x') return;
+    showSlide(caseAt + (dx < -40 ? 1 : dx > 40 ? -1 : 0));
+  };
+  window.addEventListener('pointerup', endCaseDrag);
+  window.addEventListener('pointercancel', endCaseDrag);
 
   /* ----- Privacy policy popup (same look as the form, can open on top of it) ----- */
   const privacy = document.getElementById('privacy-modal');
