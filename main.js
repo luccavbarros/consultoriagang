@@ -195,26 +195,6 @@
   const progress = document.querySelector('.progress');
   ScrollTrigger.create({ start: 0, end: 'max', onUpdate: (self) => gsap.set(progress, { scaleX: self.progress }) });
 
-  /* ---------- "Agendar conversa" buttons lean towards the mouse when it comes close (mouse and trackpad only) ---------- */
-  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches && !reduceMotion) {
-    document.querySelectorAll('.btn[data-open-form]').forEach((btn) => {
-      // moved with CSS translate, apart from the transform the buttons' own entrances animate
-      const lean = { x: 0, y: 0 };
-      const put = () => { btn.style.translate = `${lean.x}px ${lean.y}px`; };
-      const toX = gsap.quickTo(lean, 'x', { duration: 0.5, ease: 'power3.out', onUpdate: put });
-      const toY = gsap.quickTo(lean, 'y', { duration: 0.5, ease: 'power3.out', onUpdate: put });
-      window.addEventListener('pointermove', (e) => {
-        const r = btn.getBoundingClientRect();
-        if (!r.width) return;
-        const dx = e.clientX - (r.left + r.width / 2);
-        const dy = e.clientY - (r.top + r.height / 2);
-        const near = Math.max(0, 1 - Math.hypot(dx, dy) / (Math.max(r.width, r.height) * 1.2));
-        toX(dx * 0.18 * near);
-        toY(dy * 0.25 * near);
-      }, { passive: true });
-    });
-  }
-
   /* ---------- Header: opens sideways from the logo on arrival ---------- */
   // the page starts with the "intro" class (set in <head>): a black bar just wide enough for the logo
   if (document.documentElement.classList.contains('intro')) {
