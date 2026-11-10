@@ -1040,7 +1040,7 @@
     let touch = null;
     row.addEventListener('touchstart', (e) => {
       const t = e.touches[0];
-      touch = { x: t.clientX, y: t.clientY, from: window.scrollY, axis: null, trail: [] };
+      touch = { x: t.clientX, y: t.clientY, from: window.scrollY, axis: null, at: Math.round(p) };
     }, { passive: true });
     row.addEventListener('touchmove', (e) => {
       if (!touch) return;
@@ -1053,18 +1053,18 @@
       }
       if (touch.axis !== 'x') return;
       if (e.cancelable) e.preventDefault();
-      touch.trail.push([t.clientX, performance.now()]);
-      if (touch.trail.length > 6) touch.trail.shift();
-      jump(gsap.utils.clamp(st.start, st.end, touch.from - dx * perPx()));
+      touch.dx = dx;
+      // the row follows the finger, a project for every ~60% of the width, like a phone carousel
+      jump(gsap.utils.clamp(st.start, st.end, touch.from - (dx * span()) / last / (row.clientWidth * 0.6)));
     }, { passive: false });
     row.addEventListener('touchend', (e) => {
       if (!touch) return;
       if (touch.axis === 'x') {
-        const [a, b] = [touch.trail[0], touch.trail[touch.trail.length - 1]];
-        const v = a && b && b[1] - a[1] > 0 && performance.now() - b[1] < 120 ? (b[0] - a[0]) / (b[1] - a[1]) : 0;
-        const thrown = p - (v * 420 * perPx()) / span() * last;
-        const i = Math.round(gsap.utils.clamp(0, last, thrown));
-        scrollToY(st.start + span() * (i / last), Math.min(1.8, 0.6 + Math.abs(i - p) * 0.18));
+        // one swipe, one project (back or forward); only a very long drag goes further
+        const dx = touch.dx || 0;
+        const steps = Math.abs(dx) < 30 ? 0 : Math.max(1, Math.round(Math.abs(dx) / (row.clientWidth * 0.6)));
+        const i = gsap.utils.clamp(0, last, touch.at + (dx < 0 ? steps : -steps));
+        scrollToY(st.start + span() * (i / last), 0.6);
         if (e.cancelable) e.preventDefault(); // a swipe is not a tap: the picture under the finger must not open
       }
       touch = null;
