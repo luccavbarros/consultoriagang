@@ -755,13 +755,13 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
 .post-shield--edge { display: block; top: calc(var(--arrow-y) - 16px); height: 32px; width: 6px; }
 .post-shield--edge.l { left: 0; } .post-shield--edge.r { right: 0; }
 /* a video post plays from the button in the middle of the picture: for those a hole is left there (the mid panel splits in two) */
-.modal--post.is-video .post-shield--mid { right: calc(50% + 48px); }
-.modal--post.is-video .post-shield--mid2 { display: block; left: calc(50% + 48px); right: 38px; top: calc(var(--arrow-y) - 16px); height: 32px; }
-.modal--post.is-video .post-shield--top { height: calc(var(--arrow-y) - 133px); }
-.modal--post.is-video .post-shield--bottom { top: calc(var(--arrow-y) + 80px); }
-/* around the play button: bands above and below the arrows' line, each side of the middle hole */
-.modal--post.is-video .post-shield--side, .modal--post.is-video .post-shield--side2 { display: block; height: 64px; width: calc(50% - 48px); }
-.modal--post.is-video .post-shield--side { top: calc(var(--arrow-y) - 80px); }
+.modal--post.is-video .post-shield--mid { right: calc(50% + 44px); }
+.modal--post.is-video .post-shield--mid2 { display: block; left: calc(50% + 44px); right: 38px; top: calc(var(--arrow-y) - 16px); height: 32px; }
+.modal--post.is-video .post-shield--top { height: calc(var(--arrow-y) - 97px); }
+.modal--post.is-video .post-shield--bottom { top: calc(var(--arrow-y) + 44px); }
+/* the play button's square (88px, in the middle of the picture) is left free; bands above and below the arrows' line cover the rest */
+.modal--post.is-video .post-shield--side, .modal--post.is-video .post-shield--side2 { display: block; height: 28px; width: calc(50% - 44px); }
+.modal--post.is-video .post-shield--side { top: calc(var(--arrow-y) - 44px); }
 .modal--post.is-video .post-shield--side2 { top: calc(var(--arrow-y) + 16px); }
 .modal--post.is-video .l { left: 0; } .modal--post.is-video .r { right: 0; }
 .post-shield--mid2, .post-shield--side, .post-shield--side2 { display: none; }
@@ -1082,8 +1082,8 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
           <li class="work__item"><a href="https://www.instagram.com/p/DIeVFSHgKTd/" target="_blank" rel="noopener" aria-label="Ver o case Camargo no Instagram"><img src="assets/work-camargo.webp?v=2" alt="Projeto de marca Camargo" width="670" height="838" decoding="async" /></a></li>
           <li class="work__item"><a href="https://www.instagram.com/p/DIESx1EgwJ5/" target="_blank" rel="noopener" data-video aria-label="Ver o case ZIVIZ no Instagram"><img src="assets/work-ziviz.webp?v=3" alt="Projeto de marca ZIVIZ" width="670" height="838" decoding="async" /></a></li>
           <li class="work__item"><a href="https://www.instagram.com/p/DGBIIfPgR4Q/" target="_blank" rel="noopener" aria-label="Ver o case Tingo no Instagram"><img src="assets/work-tingo.webp" alt="Projeto de marca Tingo" width="670" height="838" decoding="async" /></a></li>
-          <li class="work__item"><a href="https://www.instagram.com/p/DJMTtBju6YN/" target="_blank" rel="noopener" aria-label="Ver o case PartFix no Instagram"><img src="assets/work-partfix.webp" alt="Projeto de marca PartFix" width="670" height="838" decoding="async" /></a></li>
-          <li class="work__item"><a href="https://www.instagram.com/p/DH3lqAKAPY2/" target="_blank" rel="noopener" aria-label="Ver o case Moreno &amp; Ferraro no Instagram"><img src="assets/work-moreno-ferraro.webp?v=2" alt="Projeto de marca Moreno &amp; Ferraro" width="670" height="838" decoding="async" /></a></li>
+          <li class="work__item"><a href="https://www.instagram.com/p/DJMTtBju6YN/" target="_blank" rel="noopener" data-video aria-label="Ver o case PartFix no Instagram"><img src="assets/work-partfix.webp" alt="Projeto de marca PartFix" width="670" height="838" decoding="async" /></a></li>
+          <li class="work__item"><a href="https://www.instagram.com/p/DH3lqAKAPY2/" target="_blank" rel="noopener" data-video aria-label="Ver o case Moreno &amp; Ferraro no Instagram"><img src="assets/work-moreno-ferraro.webp?v=2" alt="Projeto de marca Moreno &amp; Ferraro" width="670" height="838" decoding="async" /></a></li>
           <li class="work__item"><a href="https://www.instagram.com/p/DUjSP0IEckc/" target="_blank" rel="noopener" aria-label="Ver o case Binalis no Instagram"><img src="assets/work-binalis.webp?v=3" alt="Projeto de marca Binalis" width="670" height="838" decoding="async" /></a></li>
           <li class="work__item"><a href="https://www.instagram.com/p/DQ4UmX6kS0H/" target="_blank" rel="noopener" data-video aria-label="Ver o case Vynor no Instagram"><img src="assets/work-vynor.webp?v=2" alt="Projeto de marca Vynor" width="670" height="838" decoding="async" /></a></li>
           <li class="work__item"><a href="https://www.instagram.com/p/C7hTYPRgIUp/" target="_blank" rel="noopener" data-video aria-label="Ver o case Yunect no Instagram"><img src="assets/work-yunect.webp" alt="Projeto de marca Yunect" width="670" height="838" decoding="async" /></a></li>
@@ -1354,7 +1354,7 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
     <section class="bento" aria-label="Projetos">
       <div class="bento__grid">
         <div class="bento__col" style="--off:6%">
-          <div class="bento__tile" style="--r:.82"><a class="bento__link" href="https://www.instagram.com/p/DT_RPVZEZYj/" target="_blank" rel="noopener" aria-label="Ver o case Wepsy no Instagram"><img class="is-zoom" src="assets/bento-wepsy.webp" alt="Projeto de marca Wepsy" width="720" height="900" loading="lazy" decoding="async" /></a></div>
+          <div class="bento__tile" style="--r:.82"><a class="bento__link" href="https://www.instagram.com/p/DT_RPVZEZYj/" target="_blank" rel="noopener" data-video aria-label="Ver o case Wepsy no Instagram"><img class="is-zoom" src="assets/bento-wepsy.webp" alt="Projeto de marca Wepsy" width="720" height="900" loading="lazy" decoding="async" /></a></div>
           <div class="bento__tile" style="--r:.75"><img class="is-zoom" src="assets/bento-viventeris.webp" alt="Projeto de marca Viventeris" width="720" height="900" loading="lazy" decoding="async" /></div>
         </div>
         <div class="bento__col" style="--off:47%">
@@ -1362,7 +1362,7 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
           <div class="bento__tile" style="--r:1.2"><img src="assets/bento-tako.webp" alt="Projeto de marca Takō" width="720" height="900" loading="lazy" decoding="async" /></div>
         </div>
         <div class="bento__col" style="--off:1.6%">
-          <div class="bento__tile" style="--r:1"><a class="bento__link" href="https://www.instagram.com/p/DHGV692gcqD/" target="_blank" rel="noopener" aria-label="Ver o case Hello! Tech no Instagram"><img class="is-zoom" src="assets/bento-hello.webp" style="object-position:50% 20%" alt="Projeto de marca Hello! Tech" width="720" height="900" loading="lazy" decoding="async" /></a></div>
+          <div class="bento__tile" style="--r:1"><a class="bento__link" href="https://www.instagram.com/p/DHGV692gcqD/" target="_blank" rel="noopener" data-video aria-label="Ver o case Hello! Tech no Instagram"><img class="is-zoom" src="assets/bento-hello.webp" style="object-position:50% 20%" alt="Projeto de marca Hello! Tech" width="720" height="900" loading="lazy" decoding="async" /></a></div>
           <div class="bento__tile" style="--r:1.25"><img src="assets/bento-demix.webp" style="object-position:50% 30%" alt="Projeto de marca Demix" width="720" height="720" loading="lazy" decoding="async" /></div>
           <div class="bento__tile" style="--r:.75"><img class="is-up" src="assets/bento-dom.webp" alt="Projeto de marca DOM" width="720" height="900" loading="lazy" decoding="async" /></div>
         </div>
