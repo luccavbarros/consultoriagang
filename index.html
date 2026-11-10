@@ -241,7 +241,7 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
 .work { position: relative; z-index: 2; height: 540vh; background: var(--white); } /* about 0.5 screen of scroll per project */
 .work__sticky { position: sticky; top: 0; height: 100vh; overflow: hidden; }
 .work__head { position: absolute; left: var(--gutter); right: var(--gutter); top: 112px; z-index: 1; display: flex; justify-content: space-between; align-items: baseline; gap: 32px; }
-.work__list { position: absolute; inset: 0; cursor: grab; touch-action: pan-y; user-select: none; -webkit-user-select: none; } /* sideways drags are ours, up-and-down stay the page's */
+.work__list { position: absolute; inset: 0; cursor: grab; touch-action: pan-y; user-select: none; -webkit-user-select: none; } /* up-and-down stays the page's own scroll; sideways moves are the row's (main.js) */
 .work__list.is-dragging { cursor: grabbing; }
 .work__item { position: absolute; left: 0; top: 0; width: 0; height: 0; overflow: hidden; border-radius: 2px; background: #fff; will-change: transform, width, height, opacity; }
 .work__item a { display: block; width: 100%; height: 100%; } /* each picture opens its case (the Instagram post, in a popup) */
@@ -432,8 +432,8 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
 @media (max-width: 860px) {
   .s3 { height: 360vh; }
   .s3__sticky { padding-top: 96px; gap: 16px; }
-  .s3__room { display: block; flex: 1 1 auto; min-height: 130px; }
-  .s3__sum { margin-top: 0; }
+  .s3__field, .s3__room { display: none; } /* phones: only the words, no field of dots */
+  .s3__sum { margin-top: 40px; }
   .s3__cta { margin-top: 8px; align-self: stretch; } /* the full width, inside the margins */
   .s3__sum { grid-template-columns: .9em minmax(0, 1fr); font-size: min(24px, 6.2vw); row-gap: 4px; }
   .s3__row > .s3__what { grid-column: 2; padding-left: 0; margin-bottom: 8px; }
@@ -865,8 +865,8 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
   .hero__cta { margin-top: 40px; }
 
   .s1 { height: 440vh; } /* shorter on phones: the last message holds less before section 02 comes (main.js) */
-  .s1__sticky { padding-top: 96px; }
-  .s1__inner { gap: 24px; height: calc(100vh - 136px); }
+  .s1__sticky { padding: 88px var(--gutter) 16px; } /* phones: the title right under the header, the topics close to the bottom */
+  .s1__inner { gap: 24px; height: calc(100vh - 104px); }
   .s1__panel { flex-direction: column; gap: 40px; padding: 0; }
   .s1__left { width: 100%; gap: 36px; }
   .s1__art { flex: none; margin-top: 0; max-width: 100%; max-height: none; } /* sized by main.js to fill the empty room */
@@ -1631,6 +1631,6 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
   <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js" defer></script>
   <script src="i18n.js?v=7" defer></script> <!-- English version: runs before main.js -->
-  <script src="main.min.js?v=147" defer></script> <!-- built from main.js by tools/minify.py; bump ?v= when it changes, so no browser keeps an old copy -->
+  <script src="main.min.js?v=150" defer></script> <!-- built from main.js by tools/minify.py; bump ?v= when it changes, so no browser keeps an old copy -->
 </body>
 </html>

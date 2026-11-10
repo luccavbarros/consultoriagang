@@ -369,10 +369,13 @@
 
     // desktop: the drawing fills the middle column (up to 70% of the height), square; inline SVGs don't size from their ratio on their own
     const wide = window.matchMedia('(min-width: 861px)');
-    let artY = null; // phones: the drawing's offset for each message
+    let artY = null; // phones: the drawing's offset and scale for each message
+    let artS = null;
+    const pose = { y: 0, s: 1 };
     let panelOn = 0;
     const sizeArts = () => {
-      art.style.width = art.style.height = art.style.margin = art.style.translate = '';
+      art.style.width = art.style.height = art.style.margin = art.style.translate = art.style.scale = '';
+      art.style.position = art.style.left = art.style.top = '';
       artY = null;
       if (!wide.matches) {
         // phones: as big as the empty room between the title and the topics allows (measured against the longest of the
@@ -393,15 +396,21 @@
           const ys = sh.flatMap(([, ty, , hy]) => [ty, hy]);
           return [Math.min(...ys) - 2, Math.max(...ys) + 2];
         });
-        const tallest = Math.max(...reach.map(([a, b]) => b - a));
-        const AIR = 52;
-        const room = Math.min(...listTops.map((lt, i) => lt - titleBs[i])) - AIR * 2;
-        const size = Math.max(72, Math.min((room * 240) / tallest, panel.clientWidth));
+        const AIR = 32;
+        // each message gets the biggest drawing its own room allows (it grows and shrinks between them): the box is set for
+        // the biggest, and each message scales it down to fit its own room
+        const fit = listTops.map((lt, i) => Math.min(((lt - titleBs[i] - AIR * 2) * 240) / (reach[i][1] - reach[i][0]), panel.clientWidth));
+        const size = Math.max(72, ...fit);
         art.style.width = art.style.height = size + 'px';
-        const k = size / 240;
-        const top0 = titleB + gapL; // where the box sits in the flow, under the title
-        artY = listTops.map((lt, i) => (titleBs[i] + lt) / 2 - ((reach[i][0] + reach[i][1]) / 2) * k - top0);
-        art.style.translate = `0 ${artY[panelOn]}px`;
+        artS = fit.map((f) => Math.max(72, f) / size);
+        // out of the flow, so the box (sized for the biggest room) never pushes the first message's topics down
+        const top0 = titleB + gapL;
+        Object.assign(art.style, { position: 'absolute', left: '0px', top: top0 + 'px' });
+        // scaled from the box's centre: the drawn arrows' middle is then centre + (their middle - 120) x scale
+        artY = listTops.map((lt, i) => (titleBs[i] + lt) / 2 - (size / 2 + ((reach[i][0] + reach[i][1]) / 2 - 120) * (size / 240) * artS[i]) - top0);
+        pose.y = artY[panelOn]; pose.s = artS[panelOn];
+        art.style.translate = `0 ${pose.y}px`;
+        art.style.scale = pose.s;
         return;
       }
       const panel = art.closest('.s1__panel');
@@ -462,7 +471,12 @@
       const on = t < 5.4 ? 0 : t < 9.6 ? 1 : 2;
       if (on === panelOn) return;
       panelOn = on;
-      if (artY) gsap.to(art, { translate: `0 ${artY[on]}px`, duration: 0.8, ease: 'power2.inOut', overwrite: 'auto' });
+      if (!artY) return;
+      // CSS translate and scale (not GSAP's transform, which the drawing's own fade in and out uses)
+      gsap.to(pose, {
+        y: artY[on], s: artS[on], duration: 0.8, ease: 'power2.inOut', overwrite: 'auto',
+        onUpdate: () => { art.style.translate = `0 ${pose.y}px`; art.style.scale = pose.s; },
+      });
     });
 
     // Section 02 rises over this one with the same background: fade our content out first so no edge is ever seen
@@ -670,6 +684,7 @@
     const build = () => {
       dpr = Math.min(2, window.devicePixelRatio || 1);
       W = field.clientWidth; H = field.clientHeight;
+      if (!W) { pts = []; pairs = []; return; } // phones: no field, only the words
       field.width = W * dpr; field.height = H * dpr;
       const wide = W > 860;
       // the field keeps clear of the words: it is fitted into the free room, measured from the texts themselves
@@ -717,6 +732,7 @@
     const inout = gsap.parseEase('sine.inOut');
     const pos = [];
     const draw = (time) => {
+      if (!W) return; // phones: no field
       const m = state.m;
       const appear = clamp01(m);
       const widen = inout(clamp01(m - 1));
@@ -980,7 +996,7 @@
     const jump = (y) => (lenis ? lenis.scrollTo(y, { immediate: true, force: true }) : window.scrollTo(0, y));
     let drag = null;
     row.addEventListener('pointerdown', (e) => {
-      if (e.button) return;
+      if (e.button || e.pointerType === 'touch') return; // fingers are handled below
       drag = { x: e.clientX, y: e.clientY, from: window.scrollY, moved: false, id: e.pointerId, trail: [] };
     });
     window.addEventListener('pointermove', (e) => {
@@ -1018,6 +1034,42 @@
     window.addEventListener('pointerup', release);
     window.addEventListener('pointercancel', release);
     row.addEventListener('dragstart', (e) => e.preventDefault()); // no ghost image when dragging a picture
+
+    // fingers: the first move decides — sideways, the row is ours (the page doesn't scroll meanwhile); up or down, it's the
+    // page's own scroll as usual. Touch events, not pointer events: phones cancel a pointer as soon as they start panning
+    let touch = null;
+    row.addEventListener('touchstart', (e) => {
+      const t = e.touches[0];
+      touch = { x: t.clientX, y: t.clientY, from: window.scrollY, axis: null, trail: [] };
+    }, { passive: true });
+    row.addEventListener('touchmove', (e) => {
+      if (!touch) return;
+      const t = e.touches[0];
+      const dx = t.clientX - touch.x;
+      const dy = t.clientY - touch.y;
+      if (!touch.axis) {
+        if (Math.hypot(dx, dy) < 8) return;
+        touch.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+      }
+      if (touch.axis !== 'x') return;
+      if (e.cancelable) e.preventDefault();
+      touch.trail.push([t.clientX, performance.now()]);
+      if (touch.trail.length > 6) touch.trail.shift();
+      jump(gsap.utils.clamp(st.start, st.end, touch.from - dx * perPx()));
+    }, { passive: false });
+    row.addEventListener('touchend', (e) => {
+      if (!touch) return;
+      if (touch.axis === 'x') {
+        const [a, b] = [touch.trail[0], touch.trail[touch.trail.length - 1]];
+        const v = a && b && b[1] - a[1] > 0 && performance.now() - b[1] < 120 ? (b[0] - a[0]) / (b[1] - a[1]) : 0;
+        const thrown = p - (v * 420 * perPx()) / span() * last;
+        const i = Math.round(gsap.utils.clamp(0, last, thrown));
+        scrollToY(st.start + span() * (i / last), Math.min(1.8, 0.6 + Math.abs(i - p) * 0.18));
+        if (e.cancelable) e.preventDefault(); // a swipe is not a tap: the picture under the finger must not open
+      }
+      touch = null;
+    });
+    row.addEventListener('touchcancel', () => { touch = null; });
 
     // a name takes the page to its project
     names.forEach((li, i) => li.querySelector('button').addEventListener('click', () => {
