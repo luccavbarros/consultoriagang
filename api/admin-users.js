@@ -7,22 +7,28 @@ const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const sb = (path, init = {}) => fetch(SUPABASE_URL + path, {
   ...init,
-  headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json', ...(init.headers || {}) },
+  // the new secret key (sb_secret_…) goes only in apikey; the legacy service_role key (a JWT) also goes in Authorization
+  headers: { apikey: KEY, ...(/^eyJ/.test(KEY || '') ? { Authorization: 'Bearer ' + KEY } : {}), 'Content-Type': 'application/json', ...(init.headers || {}) },
 });
 
 const fail = (res, status, error) => res.status(status).json({ error });
 const isUuid = (v) => typeof v === 'string' && /^[0-9a-f-]{36}$/i.test(v);
 
 // who is calling: their session token → their user → their profile
+// returns { user } or { error } with the exact reason, so a wrong key on Vercel is easy to spot
 const caller = async (req) => {
   const token = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
-  if (!token) return null;
+  if (!token) return { error: 'Sessão não enviada. Saia e entre de novo.' };
   const u = await fetch(SUPABASE_URL + '/auth/v1/user', { headers: { apikey: KEY, Authorization: 'Bearer ' + token } });
-  if (!u.ok) return null;
+  if (!u.ok) return { error: 'A chave SUPABASE_SERVICE_ROLE_KEY no Vercel não é deste projeto do Supabase (ou a sessão expirou: saia e entre de novo).' };
   const user = await u.json();
   const p = await sb('/rest/v1/profiles?select=role,active&id=eq.' + user.id);
-  const [profile] = p.ok ? await p.json() : [];
-  return profile && profile.role === 'admin' && profile.active ? user : null;
+  if (!p.ok) return { error: 'A chave SUPABASE_SERVICE_ROLE_KEY no Vercel não foi aceita. Use a Secret key do projeto.' };
+  const [profile] = await p.json();
+  if (!profile) return { error: 'A chave no Vercel não é a Secret key: ela não enxerga os perfis. Troque pela Secret key e faça Redeploy.' };
+  if (profile.role !== 'admin') return { error: 'Sem permissão: esta conta não é de consultor.' };
+  if (!profile.active) return { error: 'Sem permissão: esta conta está desativada.' };
+  return { user };
 };
 
 module.exports = async (req, res) => {
@@ -32,8 +38,9 @@ module.exports = async (req, res) => {
   let body = req.body || {};
   if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { return fail(res, 400, 'Pedido inválido.'); } }
 
-  const admin = await caller(req);
-  if (!admin) return fail(res, 403, 'Sem permissão.');
+  const quem = await caller(req);
+  if (quem.error) return fail(res, 403, quem.error);
+  const admin = quem.user;
 
   const { action } = body;
   if (action !== 'create' && (!isUuid(body.id) || body.id === admin.id)) return fail(res, 400, 'Conta inválida.');
