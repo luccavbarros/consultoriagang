@@ -1,0 +1,92 @@
+/* =====================================================================
+   "O que fazemos": o portal do cliente numa janela de navegador, ampliado e cortado dentro do quadrado.
+   Cada passo (Diagnóstico, Estratégia, Narrativa, Design) mostra um detalhe da sua tela.
+   Cliente e números fictícios; o que revelaria o método aparece como linhas neutras.
+   ===================================================================== */
+.s4__art { display: none; } /* o desenho de bolinhas fica guardado (volta tirando esta linha e a janela) */
+.jv-palco { position: absolute; left: 10%; top: 11%; transform-origin: 0 0; transform: scale(var(--jvk, .8)); z-index: 1; }
+.s4__media { position: relative; }
+.jv-palco.is-viva { animation: jv-deriva 24s ease-in-out infinite alternate; }
+@keyframes jv-deriva { from { transform: scale(var(--jvk, .8)) translate(0, 0); } to { transform: scale(calc(var(--jvk, .8) * 1.05)) translate(-12px, -8px); } }
+.jv {
+  --jv-i-grid: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='7' height='7' rx='1.5'/%3E%3Crect x='14' y='3' width='7' height='7' rx='1.5'/%3E%3Crect x='14' y='14' width='7' height='7' rx='1.5'/%3E%3Crect x='3' y='14' width='7' height='7' rx='1.5'/%3E%3C/svg%3E");
+  --jv-i-listcheck: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3 17 2 2 4-4M3 7l2 2 4-4M13 6h8M13 12h8M13 18h8'/%3E%3C/svg%3E");
+  --jv-i-chart: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 3v18h18M18 17V9M13 17V5M8 17v-3'/%3E%3C/svg%3E");
+  --jv-i-cal: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2'/%3E%3Cpath d='M16 2v4M8 2v4M3 10h18'/%3E%3C/svg%3E");
+  --jv-i-flag: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zM4 22v-7'/%3E%3C/svg%3E");
+  --jv-i-compass: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36z'/%3E%3C/svg%3E");
+  --jv-i-palette: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='13.5' cy='6.5' r='1'/%3E%3Ccircle cx='17.5' cy='10.5' r='1'/%3E%3Ccircle cx='8.5' cy='7.5' r='1'/%3E%3Ccircle cx='6.5' cy='12.5' r='1'/%3E%3Cpath d='M12 2a10 10 0 0 0 0 20c1 0 1.7-.8 1.7-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.5-.7-.5-1.1a1.7 1.7 0 0 1 1.7-1.7h2A5.6 5.6 0 0 0 22 10.9C22 6 17.5 2 12 2z'/%3E%3C/svg%3E");
+  --jv-i-search: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E");
+  --jv-i-book: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z'/%3E%3C/svg%3E");
+  --jv-i-msg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3C/svg%3E");
+  --jv-i-target: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E");
+  --jv-i-star: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z'/%3E%3C/svg%3E");
+  --jv-i-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+  --jv-i-trend: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m22 7-8.5 8.5-5-5L2 17'/%3E%3Cpath d='M16 7h6v6'/%3E%3C/svg%3E");
+  --jv-i-person: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3C/svg%3E");
+  width: 1000px; height: 720px; display: grid; grid-template-rows: 38px 1fr; border-radius: 16px; overflow: hidden; background: #0a0a0a;
+  font: 400 14px/1.4 "Inter", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; color: #f3f3f3; text-align: left;
+}
+.jv * { box-sizing: border-box; }
+.jv-barra { display: flex; align-items: center; padding: 0 16px; background: #151515; border-bottom: 1px solid rgba(255,255,255,.06); }
+.jv-luzes { display: flex; gap: 7px; } .jv-luzes i { width: 11px; height: 11px; border-radius: 50%; background: #ff5f57; } .jv-luzes i:nth-child(2) { background: #febc2e; } .jv-luzes i:nth-child(3) { background: #28c840; }
+.jv-app { display: grid; grid-template-columns: 236px 1fr; min-height: 0; }
+.jv-menu { padding: 18px 14px; display: grid; align-content: start; gap: 3px; }
+.jv-logo { width: 62px; height: auto; margin: 4px 10px 18px; }
+.jv-emp { display: flex; align-items: center; gap: 11px; padding: 16px 8px 14px; border-top: 1px solid rgba(255,255,255,.06); }
+.jv-emp b { display: block; font-weight: 600; font-size: 14px; } .jv-emp small { font-size: 12px; color: #6b6b6b; }
+.jv-marca { flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 22%; background: #2f3b33; color: #e9e2d6; font-weight: 700; font-size: 11.5px; letter-spacing: -0.04em; } /* o mesmo logo da tela de identidade visual */
+.jv-grupo { padding: 12px 10px 6px; font-size: 12px; color: #6b6b6b; }
+.jv-link { display: flex; align-items: center; gap: 11px; padding: 8px 10px; border-radius: 9px; color: #cfcfcf; transition: background-color .6s, color .6s; }
+.jv-link.is-on { background: #1c1c1c; color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.07); }
+.jv-ico { flex: none; width: 16px; height: 16px; background: currentColor; -webkit-mask: var(--ico) center / contain no-repeat; mask: var(--ico) center / contain no-repeat; }
+.jv-sk { display: block; height: 9px; border-radius: 5px; background: #2a2a2a; }
+.jv-sk--sub { height: 7px; margin-top: 7px; background: #222; }
+.jv-area { position: relative; margin: 8px 8px 0 0; border-radius: 14px 14px 0 0; background: #141414; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); overflow: hidden; }
+.jv-tela { position: absolute; inset: 0; padding: 28px 32px; opacity: 0; transition: opacity 1s ease; display: grid; align-content: start; gap: 18px; }
+.jv-tela.is-on { opacity: 1; }
+.jv-t { font-size: 21px; font-weight: 600; letter-spacing: -0.02em; } .jv-d { color: #8c8c8c; margin-top: 4px; }
+.jv-card { background: #1c1c1c; border: 1px solid rgba(255,255,255,.07); border-radius: 14px; padding: 18px 20px; display: grid; gap: 14px; }
+.jv-card__t { font-weight: 600; font-size: 15px; }
+.jv-lbl { font-size: 12.5px; color: #8c8c8c; }
+.jv-quad { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: #262626; box-shadow: inset 0 0 0 1px rgba(255,255,255,.11); color: #d6d6d6; }
+.jv-quad .jv-ico { width: 14px; height: 14px; }
+.jv-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 6px; font-size: 12px; color: #cfcfcf; background: #242424; box-shadow: inset 0 0 0 1px rgba(255,255,255,.07); white-space: nowrap; }
+.jv-chip--ac { color: #f0a08f; background: rgba(229,72,42,.14); box-shadow: inset 0 0 0 1px rgba(229,72,42,.3); }
+.jv-chip--ok { color: #4ade80; background: rgba(74,222,128,.12); box-shadow: inset 0 0 0 1px rgba(74,222,128,.25); }
+.jv-head { display: flex; align-items: center; gap: 10px; } .jv-head .jv-chip { margin-left: auto; }
+.jv-dois { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+/* diagnóstico */
+.jv-barra2 { display: grid; grid-template-columns: 130px 1fr 40px; align-items: center; gap: 12px; font-size: 13px; color: #cfcfcf; }
+.jv-trilho { position: relative; height: 9px; border-radius: 99px; background: #262626; } .jv-trilho i { position: absolute; inset: 0 auto 0 0; border-radius: 99px; background: #6b6b6b; }
+.jv-barra2 b { text-align: right; }
+.jv-linha { display: flex; align-items: center; gap: 12px; padding: 10px 0; } .jv-linha + .jv-linha { border-top: 1px solid rgba(255,255,255,.07); }
+.jv-linha > div { flex: 1; }
+/* estratégia */
+.jv-meta__v { display: flex; align-items: baseline; gap: 10px; } .jv-meta__n { font-size: 30px; font-weight: 600; letter-spacing: -0.03em; } .jv-meta__f { color: #8c8c8c; }
+.jv-segs { display: grid; grid-template-columns: repeat(18, 1fr); gap: 3px; } .jv-segs span { height: 5px; border-radius: 2px; background: #2a2a2a; } .jv-segs .ok { background: #f3f3f3; }
+.jv-obj { display: grid; gap: 10px; }
+.jv-obj__n { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+/* narrativa */
+.jv-frase { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; background: #242424; font-size: 13.5px; }
+.jv-frase .jv-sk { flex: 1; }
+.jv-frase--nao { color: #8c8c8c; text-decoration: line-through; text-decoration-color: #6b6b6b; }
+.jv-sim, .jv-nao { flex: none; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; }
+.jv-sim { background: rgba(74,222,128,.15); color: #4ade80; } .jv-nao { background: rgba(248,113,113,.15); color: #f87171; }
+.jv-tom { display: grid; grid-template-columns: 90px 1fr 90px; align-items: center; gap: 10px; font-size: 12.5px; color: #8c8c8c; }
+.jv-tom span:last-child { text-align: right; }
+.jv-tom__t { position: relative; height: 4px; border-radius: 99px; background: #2a2a2a; } .jv-tom__t i { position: absolute; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: #f3f3f3; }
+/* design */
+.jv-cores { display: grid; grid-template-columns: repeat(4, 190px); gap: 10px; }
+/* as cores como na plataforma: a amostra, o nome e os códigos */
+.jv-sw { display: grid; gap: 4px; padding: 8px 8px 12px; border-radius: 12px; background: #171717; border: 1px solid rgba(255,255,255,.07); }
+.jv-sw__chip { display: block; height: 64px; border-radius: 8px; border: 1px solid rgba(255,255,255,.07); margin-bottom: 6px; }
+.jv-sw b { padding: 0 4px; font-size: 14.5px; font-weight: 600; }
+.jv-sw dl { margin: 2px 0 0; padding: 0 4px; display: grid; gap: 3px; font-size: 12.5px; }
+.jv-sw dl div { display: flex; gap: 8px; }
+.jv-sw dt { min-width: 56px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: #8c8c8c; }
+.jv-sw dd { margin: 0; color: #e6e6e6; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.jv-apl { display: flex; align-items: end; gap: 16px; }
+.jv-icone { display: grid; place-items: center; border-radius: 22%; background: #2f3b33; color: #e9e2d6; font-weight: 700; letter-spacing: -0.04em; }
+.jv-aa { font-size: 54px; line-height: 1; font-weight: 500; letter-spacing: -0.03em; color: #e9e2d6; }
+@media (prefers-reduced-motion: reduce) { .jv-palco.is-viva { animation: none; } .jv-tela, .jv-link { transition: none; } }
