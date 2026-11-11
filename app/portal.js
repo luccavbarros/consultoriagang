@@ -528,6 +528,12 @@
     m.addEventListener('click', (e) => e.stopPropagation());
     ancora.after(m); menuAberto = m; const b = m.querySelector('.is-on') || m.querySelector('button'); if (b) b.focus();
   };
+  // o mês na linha da ação só quando informa algo: nas concluídas (meses misturados) e numa pendente de mês anterior
+  const mesNaLinha = (a) => {
+    if (abaAcoes === 'feitas') return U.cap(U.nomeMesCurto(a.mes_previsto));
+    if (abaAcoes === 'mes' && a.mes_previsto && a.mes_previsto < U.ref(new Date()) && a.status !== 'feita') return 'de ' + U.nomeMes(a.mes_previsto);
+    return null;
+  };
   const cartaoAcao = (a) => {
     const o = objetivo[a.objetivo_id];
     const p = prazo(a);
@@ -619,7 +625,7 @@
       check,
       el('div', 'task__main',
         el('p', 'task__title', a.titulo),
-        el('p', 'task__sub', ehNova(a) ? el('span', 'task__novo', 'Novo') : null, ehNova(a) ? ' ' : null, [U.cap(U.nomeMesCurto(a.mes_previsto)), ps.length ? feitos + ' de ' + ps.length + ' passos' : null, a.tamanho ? 'tamanho ' + a.tamanho : null, a.esforco === 'marca' ? 'efeito em 6 a 12 meses' : null, a.observacao ? 'nota do consultor' : null,
+        el('p', 'task__sub', ehNova(a) ? el('span', 'task__novo', 'Novo') : null, ehNova(a) ? ' ' : null, [mesNaLinha(a), ps.length ? feitos + ' de ' + ps.length + ' passos' : null, a.tamanho ? 'tamanho ' + a.tamanho : null, a.esforco === 'marca' ? 'efeito em 6 a 12 meses' : null, a.observacao ? 'nota do consultor' : null,
           a.travada && a.status !== 'feita' ? 'travada: ' + MOTIVOS[a.travada].toLowerCase() : null, a.adiantada_de ? 'adiantada de ' + U.nomeMesCurto(a.adiantada_de).toLowerCase() : null].filter(Boolean).join(' · '))),
       // quem faz: só aparece quando não é só o cliente (GANG, junto com a GANG ou com outra pessoa)
       el('div', 'task__tags', a.responsavel === 'cliente' && !a.responsavel_nome ? null : el('span', 'mtag mtag--who', a.responsavel === 'cliente' ? 'Com ' + a.responsavel_nome : quem(a)), p.text ? el('span', 'mtag mtag--date' + (p.hot ? ' is-hot' : ''), p.text) : null),
