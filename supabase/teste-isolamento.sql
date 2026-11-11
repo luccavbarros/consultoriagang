@@ -13,7 +13,7 @@ create temp table ids as select
   gen_random_uuid() as ea, gen_random_uuid() as eb,
   gen_random_uuid() as ua, gen_random_uuid() as ub, gen_random_uuid() as uoff, gen_random_uuid() as adm,
   gen_random_uuid() as acao_a_cliente, gen_random_uuid() as acao_a_gang, gen_random_uuid() as acao_b,
-  gen_random_uuid() as enc_b;
+  gen_random_uuid() as enc_b, gen_random_uuid() as acao_a_prox, gen_random_uuid() as acao_b_prox;
 grant select on ids to authenticated;
 
 insert into public.empresas (id, nome) select ea, 'TESTE Empresa A' from ids;
@@ -35,6 +35,8 @@ insert into public.planos (empresa_id, consultor_id, meta_faturamento_pct, inici
 insert into public.acoes (id, empresa_id, mes_previsto, titulo, responsavel) select acao_a_cliente, ea, to_char(now(), 'YYYY-MM'), 'A: com o cliente', 'cliente' from ids;
 insert into public.acoes (id, empresa_id, mes_previsto, titulo, responsavel) select acao_a_gang, ea, to_char(now(), 'YYYY-MM'), 'A: com a GANG', 'gang' from ids;
 insert into public.acoes (id, empresa_id, mes_previsto, titulo, responsavel) select acao_b, eb, to_char(now(), 'YYYY-MM'), 'B: segredo', 'cliente' from ids;
+insert into public.acoes (id, empresa_id, mes_previsto, titulo, responsavel) select acao_a_prox, ea, to_char(now() + interval '1 month', 'YYYY-MM'), 'A: do próximo mês', 'cliente' from ids;
+insert into public.acoes (id, empresa_id, mes_previsto, titulo, responsavel) select acao_b_prox, eb, to_char(now() + interval '1 month', 'YYYY-MM'), 'B: do próximo mês', 'cliente' from ids;
 insert into public.numeros_mensais (empresa_id, mes_ref, faturamento) select eb, '2020-01', 99999 from ids;
 insert into public.encontros (id, empresa_id, inicio) select enc_b, eb, now() + interval '10 days' from ids;
 insert into public.pedidos_revisao (empresa_id, tipo_peca, link) select eb, 'Outro', 'https://b.exemplo' from ids;
@@ -71,7 +73,7 @@ begin
   select count(*) into n from public.profiles where id = i.ub;
   insert into resultado (teste, ok) values ('A não vê o perfil do cliente B', n = 0);
   select count(*) into n from public.acoes where empresa_id = i.ea;
-  insert into resultado (teste, ok) values ('A vê as próprias ações', n = 2);
+  insert into resultado (teste, ok) values ('A vê as próprias ações', n = 3);
 
   update public.acoes set titulo = 'invadido' where id = i.acao_b;
   get diagnostics n = row_count;
@@ -147,9 +149,31 @@ begin
   select count(*) into n from public.planos where empresa_id = i.ea and faturamento_base = 1;
   insert into resultado (teste, ok) values ('A não altera o plano direto (só pela função)', n = 0);
 
+  perform public.portal_ver_acao(i.acao_b_prox);
+  perform public.portal_ver_acao(i.acao_a_prox);
+  reset role;
+  select count(*) into n from public.acoes where (id = i.acao_b_prox and vista_em is not null) or (id = i.acao_a_prox and vista_em is null);
+  set role authenticated;
+  insert into resultado (teste, ok) values ('A marca como vista só a própria ação', n = 0);
+
+  begin
+    perform public.portal_adiantar_acao(i.acao_a_prox);
+    ok := false;
+  exception when others then ok := true; end;
+  insert into resultado (teste, ok) values ('A não adianta com ações do mês ainda abertas', ok);
+
   perform public.portal_status_acao(i.acao_a_cliente, 'feita');
   select count(*) into n from public.acoes where id = i.acao_a_cliente and status = 'feita' and concluida_em is not null;
   insert into resultado (teste, ok) values ('A marca a própria ação como feita (grava a data)', n = 1);
+
+  begin
+    perform public.portal_adiantar_acao(i.acao_b_prox);
+    ok := false;
+  exception when others then ok := true; end;
+  insert into resultado (teste, ok) values ('A não adianta uma ação da B', ok);
+  perform public.portal_adiantar_acao(i.acao_a_prox);
+  select count(*) into n from public.acoes where id = i.acao_a_prox and mes_previsto = to_char(now(), 'YYYY-MM') and adiantada_de = to_char(now() + interval '1 month', 'YYYY-MM') and prazo is not null;
+  insert into resultado (teste, ok) values ('A adianta a própria ação do próximo mês (guarda de onde veio)', n = 1);
 
   begin
     perform public.portal_remarcar(i.enc_b, 'teste');
@@ -262,7 +286,7 @@ declare i ids; n int;
 begin
   select * into i from ids;
   select count(*) into n from public.acoes where empresa_id in (i.ea, i.eb);
-  insert into resultado (teste, ok) values ('O consultor vê as duas empresas', n = 3);
+  insert into resultado (teste, ok) values ('O consultor vê as duas empresas', n = 5);
   update public.planos set faturamento_base = 90000, partida_cliente = false where empresa_id = i.ea; -- o consultor assume o valor
 end $$;
 reset role;

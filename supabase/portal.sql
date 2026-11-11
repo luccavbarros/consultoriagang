@@ -1029,3 +1029,48 @@ begin
 end;
 $$;
 grant execute on function public.portal_ponto_partida(numeric, jsonb) to authenticated;
+
+-- ===================== Adiantar uma ação =====================
+-- Quem termina as ações do mês pode puxar uma do mês seguinte. A ação guarda o mês de onde veio (adiantada_de);
+-- o painel do consultor repõe outra ação nesse mês (reposta), para o plano não acabar antes do fim.
+alter table public.acoes add column if not exists adiantada_de text check (adiantada_de ~ '^\d{4}-(0[1-9]|1[0-2])$');
+alter table public.acoes add column if not exists reposta boolean not null default false;
+
+create or replace function public.portal_adiantar_acao(p_acao uuid)
+returns void
+language plpgsql security definer set search_path = public
+as $$
+declare e uuid := public.minha_empresa(); a public.acoes; agora text := to_char(current_date, 'YYYY-MM');
+        prox text := to_char(current_date + interval '1 month', 'YYYY-MM'); fim date := (date_trunc('month', current_date) + interval '1 month - 1 day')::date; n int;
+begin
+  if e is null then raise exception 'Sem permissão.'; end if;
+  select * into a from public.acoes where id = p_acao and empresa_id = e;
+  if a.id is null then raise exception 'Ação não encontrada.'; end if;
+  if a.responsavel = 'gang' or a.status <> 'a_fazer' or a.mes_previsto <> prox then raise exception 'Só dá para adiantar uma ação do próximo mês que ainda não começou.'; end if;
+  -- só quem já terminou as ações do mês (as suas) pode adiantar
+  select count(*) into n from public.acoes where empresa_id = e and responsavel <> 'gang' and status <> 'feita' and mes_previsto <= agora;
+  if n > 0 then raise exception 'Termine as ações deste mês antes de adiantar.'; end if;
+  update public.acoes
+     set mes_previsto = agora, adiantada_de = prox, reposta = false,
+         prazo = greatest(current_date + 1, least(fim, current_date + case a.tamanho when 'G' then 14 when 'M' then 7 else 3 end)),
+         atualizada_por = auth.uid(), atualizada_em = now()
+   where id = a.id;
+end;
+$$;
+grant execute on function public.portal_adiantar_acao(uuid) to authenticated;
+
+-- ===================== Ação nova no plano =====================
+-- criada_em: quando a ação entrou (as que já existiam ficam sem data e não aparecem como novas);
+-- vista_em: quando o cliente abriu a ação pela primeira vez. O portal mostra "Novo" até ele abrir.
+alter table public.acoes add column if not exists criada_em timestamptz;
+alter table public.acoes alter column criada_em set default now();
+alter table public.acoes add column if not exists vista_em timestamptz;
+
+create or replace function public.portal_ver_acao(p_acao uuid)
+returns void
+language sql security definer set search_path = public
+as $$
+  update public.acoes set vista_em = now()
+   where id = p_acao and empresa_id = public.minha_empresa() and vista_em is null;
+$$;
+grant execute on function public.portal_ver_acao(uuid) to authenticated;
