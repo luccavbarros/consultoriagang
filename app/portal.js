@@ -1186,11 +1186,16 @@
     if (p.faturamento_base != null && !(doCliente && partidaEdita)) {
       // já informado: só uma linha, com "Corrigir" enquanto o valor for do cliente
       if (onde !== 'resultados') return null;
-      return el('p', 'partida__linha', el('span', 'partida__lbl', 'Ponto de partida'),
-        el('span', null, U.reais(Number(p.faturamento_base)) + ' por mês' + (doCliente ? ', informado por você' : ', definido pelo consultor')),
-        doCliente ? el('button', { class: 'link', type: 'button', onclick: () => { partidaEdita = true; render(); } }, 'Corrigir') : null);
+      return el('div', 'partida__linha',
+        el('span', { class: 'partida__ico', 'aria-hidden': 'true' }),
+        el('div', 'partida__info', el('p', 'partida__lbl', 'Ponto de partida · ' + (doCliente ? 'informado por você' : 'definido pelo consultor')),
+          Number(p.faturamento_base) === 0 ? el('p', 'partida__v', 'Empresa nova', el('span', null, ' · começando do zero'))
+            : el('p', 'partida__v', U.reais(Number(p.faturamento_base)), el('span', null, ' por mês'))),
+        doCliente ? el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => { partidaEdita = true; render(); } }, 'Corrigir') : null);
     }
     const ano = p.fat_ano_anterior || {};
+    // empresa nova: começa do zero (o campo de valor e os meses do ano anterior não se aplicam)
+    const nova = el('input', { type: 'checkbox', id: 'pp-nova', checked: Number(p.faturamento_base) === 0 });
     const base = el('input', { class: 'field', id: 'pp-base', 'data-moeda': '', inputmode: 'numeric', autocomplete: 'off', placeholder: 'R$ 0,00', value: p.faturamento_base != null ? U.moedaFmt(p.faturamento_base) : null });
     const campos = MESES_ABR.map((m, i) => {
       const k = String(i + 1).padStart(2, '0');
@@ -1203,17 +1208,22 @@
       el('div', 'box__head', el('h2', { class: 'box__title', id: 'pp-t' }, 'Seu ponto de partida'), el('p', 'box__note', 'Leva 1 minuto')),
       el('p', 'box__text', 'A meta do plano é medida a partir daqui. Sem este número, o primeiro mês do plano vira a comparação, e ele já tem o efeito das ações.'),
       el('div', 'partida__base', el('label', { class: 'label', for: 'pp-base' }, 'Quanto a empresa faturou, em média, por mês nos 12 meses antes do plano?'), base,
-        el('p', 'box__note', 'Some o faturamento dos últimos 12 meses e divida por 12. Um valor aproximado já serve.')),
+        el('p', 'box__note', 'Some o faturamento dos últimos 12 meses e divida por 12. Um valor aproximado já serve.'),
+        el('label', 'chk partida__nova', nova, ' A empresa é nova e ainda não fatura')),
       el('details', { class: 'partida__ano', open: temAno }, el('summary', null, 'Sei o faturamento de cada mês dos 12 meses antes do plano (opcional)'),
         el('p', 'box__note', 'Com os meses do ano passado, comparamos dezembro com dezembro, e não com novembro. É o jeito justo de medir quem tem época forte e fraca.'),
         el('div', 'partida__meses', campos)),
       el('div', 'partida__acoes', el('button', { class: 'btn btn--light', type: 'submit' }, 'Salvar ponto de partida'),
         doCliente ? el('button', { class: 'btn btn--ghost', type: 'button', onclick: () => { partidaEdita = false; render(); } }, 'Cancelar') : null, msg));
+    const ajustaNova = () => { base.disabled = nova.checked; f.querySelector('.partida__ano').hidden = nova.checked; if (nova.checked) base.value = ''; };
+    nova.addEventListener('change', ajustaNova); ajustaNova();
     f.addEventListener('submit', async (ev) => {
       ev.preventDefault();
-      const v = U.moedaValor(base);
-      if (!v) { U.say(msg, 'Informe a média mensal de faturamento.', 'error'); base.focus(); return; }
-      const meses = {}; campos.forEach((c) => { const inp = c.querySelector('input'); const x = U.moedaValor(inp); if (x != null) meses[inp.dataset.k] = x; });
+      const v = nova.checked ? 0 : U.moedaValor(base);
+      if (!nova.checked && !v) { U.say(msg, 'Informe a média mensal de faturamento ou marque que a empresa é nova.', 'error'); base.focus(); return; }
+      // o campo enche pela direita (centavos): "85" vira R$ 0,85. Abaixo de R$ 100 quase sempre é engano de digitação
+      if (!nova.checked && v < 100) { U.say(msg, 'Confira o valor: ' + U.moedaFmt(v) + ' por mês? Digite o número inteiro, com os centavos (ex.: 8500000 = R$ 85.000,00).', 'error'); base.focus(); return; }
+      const meses = {}; if (!nova.checked) campos.forEach((c) => { const inp = c.querySelector('input'); const x = U.moedaValor(inp); if (x != null) meses[inp.dataset.k] = x; });
       const btn = f.querySelector('[type=submit]'); btn.disabled = true; U.say(msg, 'Salvando…');
       const { error } = await sb.rpc('portal_ponto_partida', { p_base: v, p_ano: meses });
       btn.disabled = false;
