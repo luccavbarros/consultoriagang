@@ -30,12 +30,15 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
 
   // ----- campos -----
   // f: { k, label, type: text|textarea|date|select|bool|file|formats|color, options: [[v, t]], full, placeholder, folder, accept }
-  const campo = (f, valor, pre) => {
+  // usados: o que já foi adicionado nesta lista (no campo principal), para não aparecer de novo no menu
+  const campo = (f, valor, pre, usados) => {
     const idc = pre + f.k;
     let input;
     if (f.type === 'preset') {
       // lista de respostas prontas com "Outro…"; escolher pode preencher outros campos (f.fill)
-      input = U.combo(idc, (window.GangPresets || {})[f.presets] || [], valor, {
+      const todas = (window.GangPresets || {})[f.presets] || [];
+      const ja = new Set(usados || []);
+      input = U.combo(idc, ja.size ? todas.filter((i) => !ja.has(i.texto) || i.texto === valor) : todas, valor, {
         semGrupos: true, // a fonte de cada resposta pronta fica só por trás
         onPick: (item) => Object.entries(f.fill || {}).forEach(([de, para]) => {
           if (item[de] == null) return;
@@ -157,7 +160,9 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       editando = r;
       const form = el('form', { class: 'card', novalidate: true },
         el('h4', 'title-sm', r ? 'Editar' : 'Adicionar'),
-        el('div', 'new-client', fields.map((f) => campo(f, r ? r[f.k] : null, pre))),
+        el('div', 'new-client', fields.map((f) => campo(f, r ? r[f.k] : null, pre,
+          // só o campo principal (o nome do item) esconde o que já foi adicionado; os de apoio podem se repetir
+          f.type === 'preset' && (f.req || f.k === 'titulo') ? rows.filter((x) => x !== r).map((x) => x[f.k]).filter(Boolean) : null))),
         el('div', 'new-client__foot',
           el('button', { class: 'btn btn--light btn--sm', type: 'submit' }, 'Salvar'),
           el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => { formBox.replaceChildren(addBtn); } }, 'Cancelar'), msg));
