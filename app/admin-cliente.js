@@ -813,7 +813,11 @@
     const r = await sb.from('acoes').insert(novas.map((x) => ({ ...detalheDe(x.titulo), prazo: prz[x.mes + '|' + x.titulo] || null, empresa_id: id, titulo: x.titulo, mes_previsto: x.mes, peso: x.peso, promessa: x.promessa, esforco: x.esforco,
       porque: x.porque, metrica_sucesso: x.metrica, responsavel: 'cliente', status: 'a_fazer', atualizada_por: me.id, atualizada_em: new Date().toISOString() })));
     $('mod-go').disabled = false;
-    if (r.error) return say($('acoes-msg'), 'Não foi possível montar o plano.', 'error');
+    if (r.error) {
+      const m = String(r.error.message || '');
+      const falta = /column|schema cache|does not exist/i.test(m);
+      return say($('acoes-msg'), falta ? 'Não foi possível montar o plano: o banco ainda não tem as novidades. Rode o supabase/portal.sql atualizado no Supabase e tente de novo. (' + m + ')' : 'Não foi possível montar o plano. (' + m + ')', 'error');
+    }
     say($('acoes-msg'), 'Plano montado até o fim do prazo: ' + novas.length + ' ações em ' + nMeses + ' meses. Ajuste mês a mês no Planejar o mês, conforme os resultados.', 'ok');
     await loadAcoes();
   });
