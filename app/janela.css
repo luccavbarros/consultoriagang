@@ -4,7 +4,7 @@
    Cliente e números fictícios; o que revelaria o método aparece como linhas neutras.
    ===================================================================== */
 .s4__art { display: none; } /* o desenho de bolinhas fica guardado (volta tirando esta linha e a janela) */
-.jv-palco { position: absolute; left: 10%; top: 11%; transform-origin: 0 0; transform: scale(var(--jvk, .8)); z-index: 1; }
+.jv-palco { position: absolute; left: 10%; top: 11%; transform-origin: 0 0; transform: scale(var(--jvk, .8)); z-index: 1; will-change: transform; } /* camada própria: o zoom não redesenha a página */
 .s4__media { position: relative; }
 .jv-palco.is-viva { animation: jv-deriva 24s ease-in-out infinite alternate; }
 @keyframes jv-deriva { from { transform: scale(var(--jvk, .8)) translate(0, 0); } to { transform: scale(calc(var(--jvk, .8) * 1.05)) translate(-12px, -8px); } }
