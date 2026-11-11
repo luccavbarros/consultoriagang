@@ -223,6 +223,11 @@
   // sazonalidade e participação de mercado
   for (let k = 1; k <= 12; k += 1) { const mm = String(k).padStart(2, '0'); U.moedaSet($('p-fa-' + mm), (p.fat_ano_anterior || {})[mm] ?? null); }
   $('p-partmerc').value = p.participacao_mercado ?? '';
+  // o cliente informou o ponto de partida pelo portal: o consultor vê de onde veio o número
+  if (p.partida_cliente && p.faturamento_base != null) {
+    $('p-base-d').textContent = 'Informado pelo cliente no portal. Se mudar o valor aqui, ele passa a ser seu e o cliente não altera mais.';
+    $('p-base-d').classList.add('is-cliente');
+  } else if (p.faturamento_base == null) $('p-base-d').textContent = 'Média mensal dos 12 meses antes do plano. Se ficar vazio, o cliente informa no portal.';
   Object.entries(fields).forEach(([f, k]) => {
     const n = $(f);
     if (n && n.tagName === 'SELECT' && !ehCombo(f) && p[k] != null && ![...n.options].some((o) => o.value === String(p[k]))) n.append(el('option', { value: p[k] }, String(p[k])));
@@ -249,6 +254,8 @@
     row.fat_ano_anterior = {};
     for (let k = 1; k <= 12; k += 1) { const mm = String(k).padStart(2, '0'); const v = U.moedaValor($('p-fa-' + mm)); if (v != null) row.fat_ano_anterior[mm] = v; }
     row.participacao_mercado = $('p-partmerc').value === '' ? null : Number($('p-partmerc').value);
+    // mexeu no ponto de partida informado pelo cliente: o valor passa a ser do consultor
+    if (p.partida_cliente && (Number(row.faturamento_base) !== Number(p.faturamento_base) || JSON.stringify(row.fat_ano_anterior) !== JSON.stringify(p.fat_ano_anterior || {}))) row.partida_cliente = false;
     // logo: vai para o balde público "publico" (aparece no menu do cliente)
     let logo = emp.logo_url || null;
     const lf = $('p-logo').files[0];

@@ -956,7 +956,7 @@
     const out = [head(ultimo ? 'Último mês informado: ' + U.nomeMes(ultimo.mes_ref) : 'Estamos chegando lá?', 'Resultados',
       'Vendas mudam em semanas; a percepção da marca, em meses. Por isso medimos os dois, em ritmos diferentes.',
       el('a', { class: 'btn btn--ghost', href: '#relatorio' }, 'Relatório do mês')),
-    veredito(), quando(), parte('Negócio', 'O que o plano já devolveu e o que falta para a meta.'), metaHero(), lado(planoPagou(), simulador())].filter(Boolean);
+    veredito(), quando(), parte('Negócio', 'O que o plano já devolveu e o que falta para a meta.'), pontoPartida('resultados'), metaHero(), lado(planoPagou(), simulador())].filter(Boolean);
 
     // formulário do mês passado (ou a confirmação depois de enviar); fica ao lado do gráfico
     let numBox = null;
@@ -1175,6 +1175,56 @@
     }));
 
   // ===== uma resposta só para "estou mais perto da meta?": quanto falta por mês e quanto do caminho já foi feito =====
+  // ===== ponto de partida: quando o consultor não preencheu, o cliente informa no começo do plano =====
+  // a média mensal dos 12 meses antes do plano vira a base da meta; os meses do ano passado alimentam a sazonalidade
+  const precisaPartida = () => !!D.plano && !soAcesso && !semNumeros && D.plano.faturamento_base == null;
+  let partidaEdita = false;
+  const MESES_ABR = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  const pontoPartida = (onde) => {
+    const p = D.plano; if (!p || soAcesso || semNumeros) return null;
+    const doCliente = p.faturamento_base != null && p.partida_cliente;
+    if (p.faturamento_base != null && !(doCliente && partidaEdita)) {
+      // já informado: só uma linha, com "Corrigir" enquanto o valor for do cliente
+      if (onde !== 'resultados') return null;
+      return el('p', 'partida__linha', el('span', 'partida__lbl', 'Ponto de partida'),
+        el('span', null, U.reais(Number(p.faturamento_base)) + ' por mês' + (doCliente ? ', informado por você' : ', definido pelo consultor')),
+        doCliente ? el('button', { class: 'link', type: 'button', onclick: () => { partidaEdita = true; render(); } }, 'Corrigir') : null);
+    }
+    const ano = p.fat_ano_anterior || {};
+    const base = el('input', { class: 'field', id: 'pp-base', 'data-moeda': '', inputmode: 'numeric', autocomplete: 'off', placeholder: 'R$ 0,00', value: p.faturamento_base != null ? U.moedaFmt(p.faturamento_base) : null });
+    const campos = MESES_ABR.map((m, i) => {
+      const k = String(i + 1).padStart(2, '0');
+      return el('label', 'partida__mes', el('span', null, U.cap(m)),
+        el('input', { class: 'field', 'data-moeda': '', 'data-k': k, inputmode: 'numeric', autocomplete: 'off', placeholder: 'R$ 0,00', 'aria-label': 'Faturamento de ' + U.nomeMes('2000-' + k) + ' no ano antes do plano', value: ano[k] != null ? U.moedaFmt(ano[k]) : null }));
+    });
+    const temAno = Object.keys(ano).length > 0;
+    const msg = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite' });
+    const f = el('form', { class: 'box partida', id: 'ponto-partida', novalidate: true, 'aria-labelledby': 'pp-t' },
+      el('div', 'box__head', el('h2', { class: 'box__title', id: 'pp-t' }, 'Seu ponto de partida'), el('p', 'box__note', 'Leva 1 minuto')),
+      el('p', 'box__text', 'A meta do plano é medida a partir daqui. Sem este número, o primeiro mês do plano vira a comparação, e ele já tem o efeito das ações.'),
+      el('div', 'partida__base', el('label', { class: 'label', for: 'pp-base' }, 'Quanto a empresa faturou, em média, por mês nos 12 meses antes do plano?'), base,
+        el('p', 'box__note', 'Some o faturamento dos últimos 12 meses e divida por 12. Um valor aproximado já serve.')),
+      el('details', { class: 'partida__ano', open: temAno }, el('summary', null, 'Sei o faturamento de cada mês dos 12 meses antes do plano (opcional)'),
+        el('p', 'box__note', 'Com os meses do ano passado, comparamos dezembro com dezembro, e não com novembro. É o jeito justo de medir quem tem época forte e fraca.'),
+        el('div', 'partida__meses', campos)),
+      el('div', 'partida__acoes', el('button', { class: 'btn btn--light', type: 'submit' }, 'Salvar ponto de partida'),
+        doCliente ? el('button', { class: 'btn btn--ghost', type: 'button', onclick: () => { partidaEdita = false; render(); } }, 'Cancelar') : null, msg));
+    f.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const v = U.moedaValor(base);
+      if (!v) { U.say(msg, 'Informe a média mensal de faturamento.', 'error'); base.focus(); return; }
+      const meses = {}; campos.forEach((c) => { const inp = c.querySelector('input'); const x = U.moedaValor(inp); if (x != null) meses[inp.dataset.k] = x; });
+      const btn = f.querySelector('[type=submit]'); btn.disabled = true; U.say(msg, 'Salvando…');
+      const { error } = await sb.rpc('portal_ponto_partida', { p_base: v, p_ano: meses });
+      btn.disabled = false;
+      if (error) return U.say(msg, /consultor/.test(error.message || '') ? 'O consultor já definiu o ponto de partida. Fale com ele para ajustar.' : 'Não foi possível salvar. Tente de novo.', 'error');
+      Object.assign(D.plano, { faturamento_base: v, fat_ano_anterior: meses, partida_cliente: true });
+      partidaEdita = false; render(); indicadores(); anuncia('Ponto de partida salvo.');
+    });
+    return f;
+  };
+  const irPartida = () => setTimeout(() => { const f = document.getElementById('pp-base'); if (f) { f.scrollIntoView({ block: 'center', behavior: 'smooth' }); f.focus({ preventScroll: true }); } }, 450);
+
   const quantoFalta = () => {
     const base = baseFat();
     const meta = D.plano && D.plano.meta_faturamento_pct != null ? Number(D.plano.meta_faturamento_pct) : null;
@@ -2355,6 +2405,7 @@
         el('div', { class: 'goal__segs', role: 'img', 'aria-label': 'Mês ' + mesAgora + ' de ' + dur + ' do plano', style: '--n:' + dur },
           Array.from({ length: dur }, (_, i) => el('span', i < mesAgora - 1 ? 'is-ok' : i === mesAgora - 1 ? 'is-now' : null))),
         el('div', 'goal__ends', el('span', null, U.cap(U.nomeMesCurto(inicioRef)) + ' ' + inicioRef.slice(2, 4)), el('span', null, 'Chegada · ' + U.nomeMesCurto(fimRef) + ' ' + fimRef.slice(2, 4)))) : null)];
+    if (precisaPartida()) out.push(pontoPartida('plano'));
     const bm = bannerMensagem(); if (bm) out.push(bm);
     if (!inicioRef) return out.concat(vazio('A trilha aparece assim que o consultor cadastrar o plano.'));
 
@@ -2375,6 +2426,7 @@
         el('div', 'step-sec__head', el('h2', { class: 'step-sec__t', id: 'start-t' }, 'Como funciona o começo'),
           el('p', 'step-sec__d', 'Mês ' + mesN + ' de ' + dur)),
         el('ol', 'start__list',
+          precisaPartida() || (D.plano && D.plano.partida_cliente) ? passo(!precisaPartida(), 'Informe seu ponto de partida', 'O faturamento médio antes do plano. É a partir dele que a meta é medida.', precisaPartida() ? '#plano' : '#resultados', precisaPartida() ? 'Informar agora' : 'Ver', irPartida) : null,
           passo(true, 'Conheça a sua marca', 'A estratégia, a narrativa e a identidade já estão no menu, em “Sua marca”. Consulte antes de criar qualquer peça.', '#estrategia', 'Ver a estratégia'),
           passo(D.acoes.some((a) => a.status === 'feita' && a.responsavel !== 'gang'), 'Faça a primeira ação', 'Em Ações, a mais importante do mês aparece primeiro.', '#acoes', 'Ver ações'),
           semNumeros ? null : passo(D.numeros.some((x) => x.mes_ref > inicioRef), 'Envie os números de ' + U.nomeMes(prox), 'No começo de ' + U.nomeMes(U.addRef(prox, 1)) + '. Leva 2 minutos.'),
