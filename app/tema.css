@@ -1186,3 +1186,16 @@ details.month:not([open]) > summary { padding-bottom: 0; }
 .start__lk { justify-self: start; display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; font-size: 13px; color: #ececec; text-decoration: none; }
 .start__lk::after { content: "›"; color: var(--ganggrey); transition: transform .15s; }
 .start__lk:hover { color: #fff; } .start__lk:hover::after { transform: translateX(2px); }
+/* Próximos meses: um bloco por mês, que abre e fecha */
+.tasks__mesli + .tasks__mesli { border-top: 1px solid var(--line); }
+.tasks__mes > summary { list-style: none; display: flex; align-items: center; gap: 10px; padding: 14px 20px; cursor: pointer; transition: background-color .15s; }
+.tasks__mes > summary::-webkit-details-marker { display: none; }
+.tasks__mes > summary::before { content: ""; flex: none; width: 12px; height: 12px; background: #8c8c8c; -webkit-mask: var(--i-chev) center / contain no-repeat; mask: var(--i-chev) center / contain no-repeat; transition: transform .2s; }
+.tasks__mes[open] > summary::before { transform: rotate(90deg); }
+.tasks__mes > summary:hover { background: #1f1f1f; }
+.tasks__mes > summary:focus-visible { outline: 2px solid rgba(243, 243, 243, .35); outline-offset: -2px; }
+.tasks__mes-t { font-size: 14px; font-weight: 600; color: #f0f0f0; }
+.tasks__mes-n { font-size: 12.5px; color: var(--ganggrey); padding: 2px 8px; border-radius: 6px; background: #242424; }
+.tasks--mes { padding: 0 0 6px; border-top: 1px solid var(--line); }
+/* "Mensagem ao consultor": mesma largura da busca e dos itens do menu */
+.consultant > .consultant__talk { width: calc(100% + 24px); margin-left: -12px; margin-right: -12px; box-sizing: border-box; }
