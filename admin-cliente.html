@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="app/app.css?v=24" />
   <link rel="stylesheet" href="app/portal.css?v=64" />
-  <link rel="stylesheet" href="app/tema.css?v=84" />
+  <link rel="stylesheet" href="app/tema.css?v=85" />
 </head>
 <body class="portal-body">
   <div class="portal">
@@ -385,12 +385,21 @@
         <button class="btn btn--light btn--sm" id="open-pesq" aria-expanded="false" aria-controls="pesq-form">Nova rodada</button>
       </div>
       <form class="card" id="pesq-form" novalidate hidden>
-        <div class="new-client">
-          <div><label class="label" for="q-titulo">Nome da rodada</label><input class="field" id="q-titulo" maxlength="80" /></div>
-          <div><label class="label" for="q-cat">Categoria (para a pergunta de lembrança)</label><input class="field" id="q-cat" maxlength="80" placeholder="empresa de reformas" /></div>
-          <div><label class="label" for="q-af">Frases para dar nota de 1 a 5 (opcional, uma por linha)</label><textarea class="field" id="q-af" rows="4"></textarea></div>
-          <div><label class="label" for="q-conc">Concorrentes na pergunta de escolha (um por linha)</label><textarea class="field" id="q-conc" rows="4"></textarea></div>
+        <!-- simples para o consultor: o painel já sabe quase tudo; à vista fica só a categoria e o resumo do que será perguntado -->
+        <div class="pq">
+          <div class="pq__cat"><label class="label" for="q-cat">Como o cliente chama o que vocês vendem?</label>
+            <input class="field" id="q-cat" maxlength="80" placeholder="clínica de estética, empresa de reformas…" />
+            <p class="field-hint">Vira a primeira pergunta: “Quando pensa em [categoria], que marcas vêm à cabeça?”</p></div>
+          <div class="pq__resumo"><p class="label">A pesquisa vai perguntar</p><ul class="pq__itens" id="q-resumo"></ul></div>
         </div>
+        <details class="pq__mais">
+          <summary>Ajustar perguntas (opcional)</summary>
+          <div class="new-client">
+            <div><label class="label" for="q-titulo">Nome da rodada</label><input class="field" id="q-titulo" maxlength="80" /></div>
+            <div><label class="label" for="q-conc">Concorrentes na pergunta de escolha (um por linha)</label><textarea class="field" id="q-conc" rows="4"></textarea><p class="field-hint">Vêm do Diagnóstico. Até 8.</p></div>
+            <div class="span-2"><label class="label" for="q-af">Frases para dar nota de 1 a 5 (uma por linha)</label><textarea class="field" id="q-af" rows="3"></textarea><p class="field-hint">Opcional. Notas de frases sobem mais com quem já é cliente; a lembrança mede melhor o crescimento.</p></div>
+          </div>
+        </details>
         <div class="new-client__foot">
           <button class="btn btn--light" type="submit">Abrir a rodada</button>
           <button class="btn btn--ghost btn--sm" type="button" id="q-cancel">Cancelar</button>
@@ -403,7 +412,8 @@
 
       <div class="bloco" id="res-busca">
       <h2 class="title-sm">Participação nas buscas</h2>
-      <p class="small">No Google Trends, compare o nome da marca com os concorrentes e anote a fatia da marca (%). Uma vez por mês.</p>
+      <p class="small">Uma vez por mês: abra a comparação pronta no Google Trends e anote a fatia da marca (%).</p>
+      <p><a class="btn btn--ghost btn--sm" id="b-trends" target="_blank" rel="noopener" href="https://trends.google.com/trends/explore?geo=BR&amp;date=today%2012-m">Abrir a comparação no Google Trends</a></p>
       <form class="inline-add" id="busca-form" novalidate>
         <div class="new-client__pass">
           <input class="field" id="b-mes" type="month" aria-label="Mês" />
@@ -536,6 +546,6 @@
   <script src="app/presets.js?v=38"></script>
   <script src="app/admin-marca.js?v=7"></script>
   <script src="app/saude.js?v=9"></script>
-  <script src="app/admin-cliente.js?v=63"></script>
+  <script src="app/admin-cliente.js?v=65"></script>
 </body>
 </html>
