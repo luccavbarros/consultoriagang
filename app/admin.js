@@ -133,8 +133,82 @@
   const primeiroDoMes = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-01'; };
   $('nc-gen').addEventListener('click', () => { $('nc-pass').value = randomPass(); });
 
+  // ===== o que funciona: o resultado de cada ação da biblioteca em todos os clientes =====
+  // feitas no prazo, travadas (e por quê), adiantadas e o "deu certo?" das ações de venda
+  // (as de marca registram a execução; o efeito delas aparece na pesquisa de marca)
+  let aprDados = null;
+  const aprendizado = async () => {
+    const corpo = $('apr-corpo');
+    if (!aprDados) {
+      const [acs, emps] = await Promise.all([
+        sb.from('acoes').select('titulo, empresa_id, esforco, resultado, status, travada, prazo, concluida_em, mes_previsto, adiantada_de'),
+        sb.from('empresas').select('id, setor'),
+      ]);
+      if (acs.error || emps.error) { corpo.replaceChildren(el('p', 'msg is-error', 'Não foi possível carregar.')); return; }
+      const setorDe = Object.fromEntries((emps.data || []).map((e) => [e.id, e.setor]));
+      aprDados = (acs.data || []).map((a) => ({ ...a, setor: setorDe[a.empresa_id] || null }));
+      $('apr-setor').addEventListener('change', desenhaApr);
+    }
+    desenhaApr();
+  };
+  const MOTIVO = { tempo: 'falta de tempo', verba: 'falta de verba', duvida: 'dúvida', outro: 'outro motivo' };
+  const desenhaApr = () => {
+    const setor = $('apr-setor').value;
+    const hojeRef = new Date().toISOString().slice(0, 7); const hojeISO = new Date().toISOString().slice(0, 10);
+    const lista = aprDados.filter((a) => !setor || a.setor === setor);
+    const P = window.GangPresets || {}; const lib = new Set((P.acoes || []).map((x) => x.texto));
+    const por = {};
+    lista.forEach((a) => {
+      const h = por[a.titulo] || (por[a.titulo] = { t: a.titulo, n: 0, vencidas: 0, feitas: 0, noPrazo: 0, travadas: 0, motivos: {}, adiantadas: 0, aval: 0, pts: 0, marca: a.esforco === 'marca', clientes: new Set() });
+      h.n += 1; h.clientes.add(a.empresa_id);
+      if (a.mes_previsto < hojeRef) h.vencidas += 1;
+      if (a.status === 'feita') { h.feitas += 1; if (!a.prazo || (a.concluida_em && a.concluida_em <= a.prazo)) h.noPrazo += 1; }
+      if (a.travada && a.status !== 'feita') { h.travadas += 1; h.motivos[a.travada] = (h.motivos[a.travada] || 0) + 1; }
+      if (a.adiantada_de) h.adiantadas += 1;
+      if (a.resultado && a.esforco !== 'marca') { h.aval += 1; h.pts += a.resultado === 'sim' ? 1 : a.resultado === 'parcial' ? 0.5 : 0; }
+    });
+    const todos = Object.values(por);
+    const feitas = lista.filter((a) => a.status === 'feita').length;
+    const aval = lista.filter((a) => a.resultado && a.esforco !== 'marca');
+    const certo = aval.reduce((t, a) => t + (a.resultado === 'sim' ? 1 : a.resultado === 'parcial' ? 0.5 : 0), 0);
+    const pct = (a, b) => (b ? Math.round((a / b) * 100) + '%' : '–');
+    $('apr-numeros').replaceChildren(
+      el('div', 'tile', el('span', 'tile__num', String(lista.length)), el('span', 'small', 'Ações nos planos')),
+      el('div', 'tile', el('span', 'tile__num', pct(feitas, lista.filter((a) => a.mes_previsto <= hojeRef).length)), el('span', 'small', 'Feitas, das que já chegaram')),
+      el('div', 'tile', el('span', 'tile__num', pct(certo, aval.length)), el('span', 'small', 'Deram certo, das avaliadas (' + aval.length + ')')));
+    const fmt = (x) => String(Math.round(x * 10) / 10).replace('.', ',');
+    const linha = (h, detalhe, tag) => el('li', 'row', el('div', 'row__main', el('p', 'row__title', h.t), el('p', 'row__text', detalhe)), tag || el('span'));
+    const bloco = (t, d, itens, vazio) => el('section', 'app-section apr__bloco', el('h2', 'title-sm', t), el('p', 'small', d),
+      itens.length ? el('ul', 'rows', itens) : el('p', 'clients__empty', vazio));
+    // funcionam: 5 casos avaliados ou mais, do maior acerto para o menor
+    const comEvid = todos.filter((h) => !h.marca && h.aval >= 5);
+    const funcionam = comEvid.filter((h) => h.pts / h.aval >= 0.66).sort((a, b) => b.pts / b.aval - a.pts / a.aval || b.aval - a.aval).slice(0, 15)
+      .map((h) => linha(h, 'Funcionou em ' + fmt(h.pts) + ' de ' + h.aval + ' · usada por ' + h.clientes.size + (h.clientes.size === 1 ? ' cliente' : ' clientes'), el('span', 'badge is-ok', pct(h.pts, h.aval))));
+    // revisar: funciona pouco, trava muito ou quase ninguém faz quando chega a hora
+    const revisar = todos.map((h) => {
+      const motivos = [];
+      if (!h.marca && h.aval >= 5 && h.pts / h.aval < 0.34) motivos.push('funcionou em só ' + fmt(h.pts) + ' de ' + h.aval);
+      if (h.travadas >= 3) { const m = Object.entries(h.motivos).sort((a, b) => b[1] - a[1])[0]; motivos.push('travou ' + h.travadas + ' vezes, mais por ' + MOTIVO[m[0]]); }
+      if (h.vencidas >= 5 && h.feitas / h.vencidas < 0.4) motivos.push('feita em ' + pct(h.feitas, h.vencidas) + ' dos meses em que caiu');
+      return { h, motivos };
+    }).filter((x) => x.motivos.length).sort((a, b) => b.motivos.length - a.motivos.length || b.h.n - a.h.n).slice(0, 15)
+      .map(({ h, motivos }) => linha(h, U.cap(motivos.join(' · ')) + '. Vale dividir em partes menores, rever os passos ou trocar por outra.', el('span', 'badge is-warn', 'Revisar')));
+    // os clientes puxam: as que mais são adiantadas (fáceis e desejadas)
+    const puxam = todos.filter((h) => h.adiantadas >= 2).sort((a, b) => b.adiantadas - a.adiantadas).slice(0, 10)
+      .map((h) => linha(h, 'Adiantada ' + h.adiantadas + ' vezes · feita no prazo em ' + pct(h.noPrazo, h.feitas) + ' das vezes'));
+    const semEvid = todos.filter((h) => !h.marca && h.aval > 0 && h.aval < 5).length;
+    const usadas = new Set(todos.map((h) => h.t).filter((t) => lib.has(t))); // só as da biblioteca (marcos do plano ficam de fora)
+    const nunca = [...lib].filter((t) => !usadas.has(t)).length;
+    $('apr-corpo').replaceChildren(
+      bloco('Funcionam', 'Ações de venda com pelo menos 5 avaliações e acerto alto. Elas sobem nas sugestões do Planejar o mês.', funcionam, 'Ainda não há ações com 5 avaliações ou mais. As avaliações vêm da pergunta "deu certo?" que o cliente responde depois de cada ação.'),
+      bloco('Revisar', 'Ações que funcionam pouco, travam muito ou ficam sem fazer quando chega o mês delas.', revisar, 'Nenhuma ação para revisar por enquanto.'),
+      bloco('Os clientes puxam', 'As mais adiantadas por quem terminou o mês. Costumam ser rápidas e desejadas.', puxam, 'Nenhuma ação adiantada duas vezes ou mais ainda.'),
+      el('section', 'app-section apr__bloco', el('h2', 'title-sm', 'A biblioteca'),
+        el('p', 'small', (P.acoes || []).length + ' ações na biblioteca · ' + usadas.size + ' já usadas em planos · ' + nunca + ' nunca usadas · ' + semEvid + ' com menos de 5 avaliações (ainda sem evidência).')));
+  };
+
   // ===== telas separadas pelo menu: visão geral, novo cliente, seu perfil =====
-  const ROTULO = { geral: 'Visão geral', novo: 'Novo cliente', perfil: 'Seu perfil' };
+  const ROTULO = { geral: 'Visão geral', novo: 'Novo cliente', aprendizado: 'O que funciona', perfil: 'Seu perfil' };
   const mostraTela = (foco) => {
     let v = location.hash.slice(1); if (!ROTULO[v]) v = 'geral';
     document.querySelectorAll('[data-view]').forEach((n) => {
@@ -144,6 +218,7 @@
     });
     document.querySelectorAll('[data-view-link]').forEach((a) => { if (a.dataset.viewLink === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     $('crumb').textContent = 'Painel / ' + ROTULO[v];
+    if (v === 'aprendizado') aprendizado();
     if (v === 'novo') {
       if (!$('nc-pass').value) $('nc-pass').value = randomPass();
       if (!$('nc-start').value) $('nc-start').value = primeiroDoMes();

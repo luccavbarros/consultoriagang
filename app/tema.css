@@ -1267,3 +1267,11 @@ details.month:not([open]) > summary { padding-bottom: 0; }
 /* ação nova no plano, até o cliente abrir */
 .task__novo { display: inline-flex; align-items: center; height: 18px; padding: 0 7px; margin-right: 2px; border-radius: 5px; font-size: 11px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: #0a0a0a; background: var(--accent, #f15a24); }
 .tasks__mes > summary .task__novo { margin-left: 2px; }
+/* O que funciona (painel do consultor) */
+.apr__filtro { display: flex; align-items: center; gap: 10px; margin: 6px 0 4px; }
+.apr__filtro .label { margin: 0; }
+.apr__filtro .field { width: auto; min-width: 200px; }
+.apr__bloco { margin-top: 28px; }
+.apr__bloco .rows { margin-top: 12px; }
+/* logo do cliente carregado: ocupa o quadrado inteiro, com os cantos arredondados e uma borda fina (sem a moldura branca) */
+.side__logo-dot.tem-img, .cli-logo.tem-img { padding: 0; background-color: transparent; background-size: cover; background-origin: border-box; background-position: center; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1); }

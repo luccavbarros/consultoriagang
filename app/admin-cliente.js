@@ -304,20 +304,37 @@
   let historico = null;
   const carregaHistorico = async () => {
     if (historico) return historico;
-    const { data } = await sb.from('acoes').select('titulo, resultado, esforco').not('resultado', 'is', null);
+    const [{ data }, emps] = await Promise.all([
+      sb.from('acoes').select('titulo, resultado, esforco, empresa_id').not('resultado', 'is', null),
+      sb.from('empresas').select('id, setor'),
+    ]);
+    const setorDe = Object.fromEntries(((emps && emps.data) || []).map((e) => [e.id, e.setor]));
     historico = {};
     // ações de marca registram a execução (o efeito vem na pesquisa): não entram no "funcionou"
-    (data || []).filter((a) => a.esforco !== 'marca').forEach((a) => { const h = historico[a.titulo] || (historico[a.titulo] = { n: 0, pts: 0 }); h.n += 1; h.pts += a.resultado === 'sim' ? 1 : a.resultado === 'parcial' ? 0.5 : 0; });
+    // cada ação guarda o total e o resultado por setor (uma ação pode funcionar no varejo e não em serviços)
+    (data || []).filter((a) => a.esforco !== 'marca').forEach((a) => {
+      const v = a.resultado === 'sim' ? 1 : a.resultado === 'parcial' ? 0.5 : 0;
+      const h = historico[a.titulo] || (historico[a.titulo] = { n: 0, pts: 0, setor: {} });
+      h.n += 1; h.pts += v;
+      const st = setorDe[a.empresa_id];
+      if (st) { const x = h.setor[st] || (h.setor[st] = { n: 0, pts: 0 }); x.n += 1; x.pts += v; }
+    });
     return historico;
   };
-  const selo = (titulo) => {
-    const h = historico && historico[titulo];
-    if (!h || h.n < 5) return null; // com menos de 5 casos é sorte, não evidência
-    const taxa = h.pts / h.n;
-    return el('span', { class: 'aprend ' + (taxa >= 0.66 ? 'is-ok' : taxa >= 0.34 ? 'is-mid' : 'is-no'), title: 'Resultado registrado em outros clientes' },
-      'indicativo: funcionou em ' + String(Math.round(h.pts * 10) / 10).replace('.', ',') + ' de ' + h.n);
+  // a evidência que vale para este cliente: a do setor dele, se já tiver 5 casos; senão, a de todos
+  const evid = (titulo) => {
+    const h = historico && historico[titulo]; if (!h) return null;
+    const st = emp.setor && h.setor && h.setor[emp.setor];
+    if (st && st.n >= 5) return { n: st.n, pts: st.pts, doSetor: true };
+    return h.n >= 5 ? { n: h.n, pts: h.pts, doSetor: false } : null; // com menos de 5 casos é sorte, não evidência
   };
-  const taxaDe = (titulo) => { const h = historico && historico[titulo]; return h && h.n >= 5 ? h.pts / h.n : 0.5; };
+  const selo = (titulo) => {
+    const h = evid(titulo); if (!h) return null;
+    const taxa = h.pts / h.n;
+    return el('span', { class: 'aprend ' + (taxa >= 0.66 ? 'is-ok' : taxa >= 0.34 ? 'is-mid' : 'is-no'), title: h.doSetor ? 'Resultado registrado em clientes do mesmo setor' : 'Resultado registrado em outros clientes' },
+      'indicativo' + (h.doSetor ? ' no setor' : '') + ': funcionou em ' + String(Math.round(h.pts * 10) / 10).replace('.', ',') + ' de ' + h.n);
+  };
+  const taxaDe = (titulo) => { const h = evid(titulo); return h ? h.pts / h.n : 0.5; };
 
   // prazos dentro do mês: essencial primeiro, pré-requisito antes de quem depende dele, pequenas antes das grandes;
   // cada ação recebe uma sexta-feira, espalhando o esforço pelas semanas (nunca antes de 3 dias a partir de hoje)
