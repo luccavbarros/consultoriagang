@@ -284,7 +284,8 @@
   // ===== a ação da biblioteca já entra com passos, tamanho, quando medir e mensagem pronta =====
   const detalheDe = (titulo) => {
     const x = ((window.GangPresets || {}).acoes || []).find((a) => a.texto === titulo);
-    if (!x) return {};
+    // sempre as mesmas colunas: numa gravação em lote, a coluna que falta numa linha vira vazio (e passos não aceita vazio)
+    if (!x) return { passos: [], tamanho: null, ler_em_dias: null, modelo: null };
     return { passos: (x.passos || []).map((t) => ({ t, ok: false })), tamanho: x.tam || null, ler_em_dias: x.ler || null, modelo: x.modelo || null };
   };
   const TAM = (window.GangPresets && window.GangPresets.TAMANHO) || { P: ['P', '', 1], M: ['M', '', 2], G: ['G', '', 4] };
@@ -815,7 +816,7 @@
     $('mod-go').disabled = false;
     if (r.error) {
       const m = String(r.error.message || '');
-      const falta = /column|schema cache|does not exist/i.test(m);
+      const falta = /schema cache|does not exist/i.test(m);
       return say($('acoes-msg'), falta ? 'Não foi possível montar o plano: o banco ainda não tem as novidades. Rode o supabase/portal.sql atualizado no Supabase e tente de novo. (' + m + ')' : 'Não foi possível montar o plano. (' + m + ')', 'error');
     }
     say($('acoes-msg'), 'Plano montado até o fim do prazo: ' + novas.length + ' ações em ' + nMeses + ' meses. Ajuste mês a mês no Planejar o mês, conforme os resultados.', 'ok');
