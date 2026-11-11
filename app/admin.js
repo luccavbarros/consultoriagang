@@ -25,7 +25,7 @@
   U.buscaFonte(() => clientesBusca.map((e) => ({ grupo: 'Clientes', titulo: e.nome, href: 'admin-cliente.html?id=' + e.id })));
   const load = async () => {
     const [emp, planos, perfis, sug, ped, enc, msg] = await Promise.all([
-      sb.from('empresas').select('id, nome, created_at').order('nome'),
+      sb.from('empresas').select('id, nome, created_at, setor').order('nome'),
       sb.from('planos').select('empresa_id, inicio, duracao_meses, status, tipo'),
       sb.from('profiles').select('id, name, email, active, empresa_id').eq('role', 'client'),
       sb.from('sugestoes').select('empresa_id, texto, criada_em, tipo').eq('status', 'nova'),
@@ -98,6 +98,8 @@
 
     // sinais de risco de cada cliente: quem precisa de atenção primeiro
     const saude = window.GangSaude && await window.GangSaude.carregar(sb);
+    // ações que os clientes adiantaram: repõe outras nos meses de onde saíram (o plano não acaba antes do fim)
+    if (saude && window.GangSaude.repor) for (const e of emp.data) { if (saude[e.id]) await window.GangSaude.repor(sb, e.id, saude[e.id].acoes, e.setor); }
     if (saude) {
       const G = window.GangSaude;
       const lista = emp.data.map((e) => ({ e, s: saude[e.id] ? G.sinais(saude[e.id]) : [] })).filter((x) => x.s.length)

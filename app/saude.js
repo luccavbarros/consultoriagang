@@ -179,5 +179,41 @@
     return itens;
   }
 
-  window.GangSaude = { promessa, carregar, sinais, gravidade, fechamento, equilibrio, pautaSugerida, pesquisaPrevista, MESES_PESQUISA, PROM };
+  // ===== repor o que o cliente adiantou =====
+  // o cliente puxou uma ação do mês seguinte: entra outra da biblioteca naquele mês (ou no atual, se ele já passou),
+  // do mesmo tipo de esforço e de tamanho parecido. Assim o plano mantém o volume até o fim. Devolve quantas repôs.
+  async function repor(sb, empresaId, acoes, setor) {
+    const P = window.GangPresets; if (!P || !P.acoes || !acoes) return 0;
+    const pend = acoes.filter((a) => a.adiantada_de && !a.reposta); if (!pend.length) return 0;
+    const pts = (t) => ({ P: 1, M: 2, G: 4 }[t] || 2);
+    const ja = new Set(acoes.map((a) => a.titulo));
+    const doSetor = (x) => !setor || !x.setores || x.setores.includes(setor);
+    const hoje = new Date(); const atual = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0');
+    const prazoNo = (mes, tam) => {
+      const [y, m] = mes.split('-').map(Number);
+      const d = tam === 'G' ? new Date(y, m, 0, 12) : new Date(y, m - 1, tam === 'P' ? 10 : 20, 12);
+      while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() - 1);
+      const amanha = new Date(); amanha.setDate(amanha.getDate() + 1);
+      return (d < amanha ? amanha : d).toLocaleDateString('sv-SE');
+    };
+    let n = 0;
+    for (const a of pend) {
+      const x = P.acoes.filter((y) => !y.manutencao && doSetor(y) && !ja.has(y.texto))
+        .sort((p, q) => ((q.esforco === a.esforco) - (p.esforco === a.esforco)) || (Math.abs(pts(p.tam) - pts(a.tamanho)) - Math.abs(pts(q.tam) - pts(a.tamanho))))[0];
+      if (!x) break; // a biblioteca acabou para este cliente
+      const mes = a.adiantada_de < atual ? atual : a.adiantada_de;
+      const r = await sb.from('acoes').insert({
+        empresa_id: empresaId, titulo: x.texto, mes_previsto: mes, peso: 'ajuda', promessa: x.promessa || null, esforco: x.esforco || null,
+        porque: x.porque || null, metrica_sucesso: x.metrica || null, passos: (x.passos || []).map((t) => ({ t, ok: false })),
+        tamanho: x.tam || null, ler_em_dias: x.ler || null, modelo: x.modelo || null, prazo: prazoNo(mes, x.tam),
+        responsavel: 'cliente', status: 'a_fazer', atualizada_em: new Date().toISOString(),
+      });
+      if (r.error) break;
+      await sb.from('acoes').update({ reposta: true }).eq('id', a.id);
+      ja.add(x.texto); n += 1;
+    }
+    return n;
+  }
+
+  window.GangSaude = { promessa, carregar, repor, sinais, gravidade, fechamento, equilibrio, pautaSugerida, pesquisaPrevista, MESES_PESQUISA, PROM };
 })();

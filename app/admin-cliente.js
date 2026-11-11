@@ -297,9 +297,9 @@
   };
   const TAM = (window.GangPresets && window.GangPresets.TAMANHO) || { P: ['P', '', 1], M: ['M', '', 2], G: ['G', '', 4] };
   const doSetor = (x) => !emp.setor || !x.setores || x.setores.includes(emp.setor);
-  // carga do mês: mais de 4 ações ou mais de 8 pontos (P=1, M=2, G=4) é pesado demais para executar
+  // carga do mês: mais de 5 ações ou mais de 8 pontos (P=1, M=2, G=4) é pesado demais para executar
   const cargaDe = (lista) => ({ n: lista.length, pts: lista.reduce((t, a) => t + ((TAM[a.tamanho || a.tam] || [, , 2])[2]), 0) });
-  const pesado = (c) => c.n > 4 || c.pts > 8;
+  const pesado = (c) => c.n > 5 || c.pts > 8;
   // aprendizado: como cada ação foi em todos os clientes (o consultor vê todos)
   let historico = null;
   const carregaHistorico = async () => {
@@ -426,7 +426,7 @@
     const doMes = todas.filter((a) => a.mes_previsto === mes).concat([...escolhidas.keys()].map((t) => ({ tam: (lib(t) || {}).tam })));
     const carga = cargaDe(doMes);
     box.replaceChildren(...[el('ul', 'plan__acs', itens),
-      pesado(carga) ? el('p', 'insight', el('span', 'insight__lbl', 'Mês pesado'), el('span', null, carga.n + ' ações no mês (' + carga.pts + ' pontos de tamanho). Planos com tarefa demais param no segundo mês: o ideal é até 4 ações e 8 pontos.')) : null,
+      pesado(carga) ? el('p', 'insight', el('span', 'insight__lbl', 'Mês pesado'), el('span', null, carga.n + ' ações no mês (' + carga.pts + ' pontos de tamanho). Planos com tarefa demais param no segundo mês: o ideal é até 5 ações e 8 pontos (ações rápidas pesam menos).')) : null,
       el('p', 'plan__acs-foot', n ? n + (n === 1 ? ' ação entra' : ' ações entram') + ' em ' + U.nomeMes(mes) + ' com os prazos sugeridos (essencial primeiro, pequenas antes das grandes). Dá para mudar cada data em Ações.' + (temEss ? '' : ' Marque uma como essencial.') : 'Marque as ações que entram no mês. Nada é adicionado sem você marcar.')].filter(Boolean));
   };
   $('f-titulo').addEventListener('change', () => { escolhidas.clear(); desenhaSug(); desenhaPlAcoes(); });
@@ -669,6 +669,11 @@
     desenhaEquilibrio();
     let { data, error } = await sb.from('acoes').select('*').eq('empresa_id', id).order('mes_previsto').order('prazo', { nullsFirst: false }).order('ordem');
     if (error) return say($('acoes-msg'), 'Não foi possível carregar as ações.', 'error');
+    // o cliente adiantou ações: repõe outras nos meses de onde saíram, antes de mostrar
+    if (window.GangSaude && window.GangSaude.repor && data.some((a) => a.adiantada_de && !a.reposta)) {
+      const n = await window.GangSaude.repor(sb, id, data, emp.setor);
+      if (n) { say($('acoes-msg'), 'O cliente adiantou ' + (n === 1 ? '1 ação' : n + ' ações') + '. ' + (n === 1 ? 'Outra entrou' : 'Outras entraram') + ' no lugar, para o plano seguir completo até o fim.', 'ok'); return loadAcoes(); }
+    }
     acoes = data; desenhaFiltro();
     const box = $('acoes-list');
     if (!data.length) return box.replaceChildren(el('p', 'clients__empty', 'Nenhuma ação ainda. Crie a primeira em “Nova ação”.'));
@@ -743,11 +748,14 @@
     const doModelo = m.acoes.map(([mes, peso, promessa, esforco, titulo, porque, metrica]) => ({ mes: U.addRef(ini, Math.round((mes - 1) * (dur - 1) / 17)), peso, promessa, esforco, titulo, porque, metrica }));
     const ja = (t) => acoes.some((a) => a.titulo === t) || novas.some((x) => x.titulo === t);
     const novas = [];
-    const LIM = 4;
-    const carga = (mm) => acoes.filter((a) => a.mes_previsto === mm).length + novas.filter((x) => x.mes === mm).length;
+    // carga do mês em pontos (P=1, M=2, G=4): 7 pontos ou 5 ações. Um mês de ações rápidas recebe mais; um mês com uma ação grande, menos
+    const LIM = 7; const LIM_N = 5;
+    const ptsT = (t) => (TAM[(libDe(t) || {}).tam] || [, , 2])[2];
+    const carga = (mm) => acoes.filter((a) => a.mes_previsto === mm).reduce((t, a) => t + (TAM[a.tamanho] || [, , 2])[2], 0) + novas.filter((x) => x.mes === mm).reduce((t, x) => t + ptsT(x.titulo), 0);
+    const nMes = (mm) => acoes.filter((a) => a.mes_previsto === mm).length + novas.filter((x) => x.mes === mm).length;
     const idx = (mm) => Math.max(0, meses.indexOf(mm));
     // o primeiro mês com espaço a partir de "desde" (se nenhum tiver, o mais leve)
-    const vaga = (desde) => meses.slice(desde).find((mm) => carga(mm) < LIM) || meses.slice(desde).reduce((a, b) => (carga(b) < carga(a) ? b : a), meses[Math.min(desde, meses.length - 1)]);
+    const vaga = (desde, t) => meses.slice(desde).find((mm) => carga(mm) + (t ? ptsT(t) : 2) <= LIM && nMes(mm) < LIM_N) || meses.slice(desde).reduce((a, b) => (carga(b) < carga(a) ? b : a), meses[Math.min(desde, meses.length - 1)]);
     const libDe = (t) => (P.acoes || []).find((a) => a.texto === t) || { texto: t };
     const daLib = (t, peso) => { const x = libDe(t); return { peso, promessa: x.promessa || null, esforco: x.esforco || null, titulo: t, porque: x.porque || null, metrica: x.metrica || null }; };
     const marco = (t) => /^(Revisão|Chegada|Segunda rodada da pesquisa|Pesquisa de marca de)/.test(t);
@@ -757,19 +765,19 @@
     (P.FUNDACAO || []).forEach((t) => {
       if (acoes.some((a) => a.titulo === t) || !doSetor(libDe(t))) return;
       const doMod = doModelo.find((x) => x.titulo === t);
-      novas.push({ ...(doMod || daLib(t, 'essencial')), mes: vaga(0) });
+      novas.push({ ...(doMod || daLib(t, 'essencial')), mes: vaga(0, t) });
     });
     // 3. o que ficou para trás no modelo: essenciais primeiro, a partir do mês atual
     doModelo.filter((x) => nRef(x.mes) < nRef(de) && !marco(x.titulo)).sort((a, b) => (b.peso === 'essencial') - (a.peso === 'essencial'))
-      .forEach((x) => { if (!ja(x.titulo)) novas.push({ ...x, mes: vaga(0) }); });
+      .forEach((x) => { if (!ja(x.titulo)) novas.push({ ...x, mes: vaga(0, x.titulo) }); });
     // 4. presença: prova e avaliações, a partir do 3º mês
     (P.PRESENCA || []).forEach((t) => {
       if (ja(t) || !doSetor(libDe(t))) return;
       const doMod = doModelo.find((x) => x.titulo === t);
-      novas.push({ ...(doMod || daLib(t, 'ajuda')), mes: vaga(Math.min(2, meses.length - 1)) });
+      novas.push({ ...(doMod || daLib(t, 'ajuda')), mes: vaga(Math.min(2, meses.length - 1), t) });
     });
     // 5. o resto do modelo no mês proporcional; se o mês lotou, vai para o próximo com espaço
-    doModelo.filter((x) => nRef(x.mes) >= nRef(de) && !marco(x.titulo)).forEach((x) => { if (!ja(x.titulo)) novas.push({ ...x, mes: vaga(idx(x.mes)) }); });
+    doModelo.filter((x) => nRef(x.mes) >= nRef(de) && !marco(x.titulo)).forEach((x) => { if (!ja(x.titulo)) novas.push({ ...x, mes: vaga(idx(x.mes), x.titulo) }); });
     // continuidade: ações da biblioteca do setor, sem manutenção, alternando marca e venda e os temas
     const pool = (P.acoes || []).filter((x) => !x.manutencao && doSetor(x) && x.tam !== 'G' || (!x.manutencao && doSetor(x) && x.esforco === 'marca'))
       .filter((x, k, arr) => arr.findIndex((y) => y.texto === x.texto) === k)
@@ -780,6 +788,8 @@
       const add = (x, peso) => novas.push({ mes, peso, promessa: x.promessa || null, esforco: x.esforco || null, titulo: x.texto, porque: x.porque || null, metrica: x.metrica || null });
       if (!doMes().some((a) => a.esforco === 'marca')) { const x = pega((y) => y.esforco === 'marca'); if (x) add(x, 'ajuda'); }
       while (doMes().length < 2) { const x = pega((y) => y.esforco === 'venda') || pega(() => true); if (!x) break; add(x, 'ajuda'); }
+      // mês leve (só ações rápidas): completa até uns 5 pontos com ações que caibam, para o cliente não ficar parado no resto do mês
+      while (carga(mes) < 5 && nMes(mes) < LIM_N) { const cabe = LIM - carga(mes); const x = pega((y) => (TAM[y.tam] || [, , 2])[2] <= cabe && (TAM[y.tam] || [, , 2])[2] >= 2) || pega((y) => (TAM[y.tam] || [, , 2])[2] <= cabe); if (!x) break; add(x, 'ajuda'); }
       // um essencial por mês: a primeira ação nova do mês vira a essencial, se ainda não houver
       if (!doMes().some((a) => a.peso === 'essencial')) { const x = novas.find((y) => y.mes === mes); if (x) x.peso = 'essencial'; }
     });

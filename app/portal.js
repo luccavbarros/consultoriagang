@@ -434,7 +434,8 @@
         const ess = acs.filter((a) => a.peso === 'essencial').length;
         const det = el('details', { class: 'tasks__mes', open: mesesProxAbertos.has(m) },
           el('summary', null, el('span', 'tasks__mes-t', U.cap(U.nomeMes(m)) + ' ' + m.slice(0, 4)),
-            el('span', 'tasks__mes-n', acs.length + (acs.length === 1 ? ' ação' : ' ações') + (ess ? ' · ' + ess + (ess === 1 ? ' essencial' : ' essenciais') : ''))),
+            el('span', 'tasks__mes-n', acs.length + (acs.length === 1 ? ' ação' : ' ações') + (ess ? ' · ' + ess + (ess === 1 ? ' essencial' : ' essenciais') : '')),
+            acs.some(ehNova) ? el('span', 'task__novo', acs.filter(ehNova).length > 1 ? acs.filter(ehNova).length + ' novas' : 'Nova') : null),
           el('ul', 'tasks tasks--mes', acs.map((a) => cartaoAcao(a))));
         // um mês aberto por vez: abrir um fecha o outro
         det.addEventListener('toggle', () => {
@@ -452,10 +453,32 @@
       lista.append(card);
     });
     const pend = doGrupo.filter((x) => x.status !== 'feita').length;
+    // terminou o mês? pode adiantar uma ação do próximo (o consultor repõe outra lá, e o plano não acaba antes do fim)
+    const proxRef = U.addRef(hoje, 1);
+    const minhasAbertas = D.acoes.filter((a) => comCliente(a) && a.status !== 'feita' && a.mes_previsto <= hoje).length;
+    const podeAdiantar = abaAcoes === 'mes' && !minhasAbertas && D.acoes.some((a) => comCliente(a) && a.mes_previsto === hoje && a.status === 'feita')
+      ? D.acoes.filter((a) => comCliente(a) && a.mes_previsto === proxRef && a.status === 'a_fazer')
+        .sort((a, b) => (TAM_PTS[a.tamanho] || 2) - (TAM_PTS[b.tamanho] || 2)).slice(0, 3) : [];
+    const adiantar = podeAdiantar.length ? el('section', { class: 'adiantar', 'aria-labelledby': 'adi-t' },
+      el('div', 'adiantar__head', el('span', { class: 'adiantar__ico', 'aria-hidden': 'true' }),
+        el('div', null, el('h2', { class: 'adiantar__t', id: 'adi-t' }, 'Você terminou as ações de ' + U.nomeMes(hoje) + '.'),
+          el('p', 'adiantar__d', 'Quer adiantar uma de ' + U.nomeMes(proxRef) + '? O plano continua completo até o fim.'))),
+      el('ul', 'adiantar__lista', podeAdiantar.map((a) => el('li', 'adiantar__item',
+        el('div', 'adiantar__info', el('p', 'adiantar__nome', a.titulo), el('p', 'adiantar__meta', [a.tamanho ? TAM_TXT[a.tamanho] : null, a.peso === 'essencial' ? 'essencial' : null].filter(Boolean).join(' · '))),
+        el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: async (e) => {
+          e.currentTarget.disabled = true;
+          const { error } = await sb.rpc('portal_adiantar_acao', { p_acao: a.id });
+          if (error) { e.currentTarget.disabled = false; return anuncia(/Termine/.test(error.message || '') ? 'Termine as ações deste mês antes de adiantar.' : 'Não foi possível adiantar agora.'); }
+          a.adiantada_de = a.mes_previsto; a.mes_previsto = hoje; a.atualizada_em = new Date().toISOString();
+          const dias = { G: 14, M: 7 }[a.tamanho] || 3; const d = new Date(); d.setDate(d.getDate() + dias);
+          const fimMes = new Date(d.getFullYear(), new Date().getMonth() + 1, 0); a.prazo = (d > fimMes ? fimMes : d).toLocaleDateString('sv-SE');
+          abertas.clear(); abertas.add(a.id); render(); indicadores(); anuncia('“' + a.titulo + '” agora é deste mês.');
+        } }, 'Adiantar'))))) : null;
     out.push(el('div', 'actions-wrap', tabs, el('section', { class: 'box tasks-box', 'aria-label': nomes[abaAcoes] },
       el('div', 'tasks__head', el('p', 'tasks__t', nomes[abaAcoes]), el('span', 'tasks__count', abaAcoes === 'feitas' ? doGrupo.length + (doGrupo.length === 1 ? ' concluída' : ' concluídas') : (doGrupo.length - pend) + ' de ' + doGrupo.length + ' feitas'),
         el('span', 'tasks__hint', 'Clique numa tarefa para ver o porquê')),
       lista)));
+    if (adiantar) out.push(adiantar);
 
     if (revAberta) out.splice(1, 0, formRevisao());
     const pcs = suasPecas(); if (pcs) out.push(pcs);
@@ -465,6 +488,19 @@
 
   // ===== cada ação é uma tarefa de checklist: marcar, mudar o status e abrir os detalhes =====
   const abertas = new Set();
+  // "Novo": ação que o consultor colocou depois da montagem inicial do plano, até o cliente abrir
+  // (a primeira leva, criada de uma vez, é o plano; ações antigas sem data não contam)
+  // aceita "2026-11-11T18:59:25.106133+00:00" e "2026-11-11 15:59:25.106133-03:00"
+  const momento = (t) => Date.parse(String(t || '').replace(' ', 'T').replace(/(\.\d{3})\d+/, '$1'));
+  const primeiraLeva = (() => {
+    if (D.acoes.some((a) => !a.criada_em)) return null;
+    const ts = D.acoes.map((a) => momento(a.criada_em)).filter(Number.isFinite);
+    return ts.length ? Math.min(...ts) + 3600000 : null;
+  })();
+  const ehNova = (a) => !!a.criada_em && !a.vista_em && !a.adiantada_de && (primeiraLeva == null || momento(a.criada_em) > primeiraLeva);
+  const marcaVista = (a) => { if (!ehNova(a)) return; a.vista_em = new Date().toISOString(); sb.rpc('portal_ver_acao', { p_acao: a.id }); };
+  const TAM_PTS = { P: 1, M: 2, G: 4 };
+  const TAM_TXT = { P: 'rápida, até 1 hora', M: 'até 1 dia', G: 'uma semana ou mais' };
   let menuAberto = null;
   const fechaMenu = () => { if (menuAberto) { menuAberto.remove(); menuAberto = null; } };
   document.addEventListener('click', fechaMenu);
@@ -526,13 +562,23 @@
       if (error) { ps[i].ok = antes; render(); return anuncia('Não foi possível salvar o passo.'); }
       if (ok && ps.every((x) => x.ok) && a.status !== 'feita') anuncia('Todos os passos feitos. Marque a ação como feita quando terminar.');
     };
+    // ação grande (G): cada passo ganha uma data, repartida entre o começo do mês e o prazo (progresso toda semana, sem ficar parada)
+    const datasPassos = (() => {
+      if (a.tamanho !== 'G' || !a.prazo || ps.length < 2 || a.status === 'feita') return [];
+      const ini = new Date(a.mes_previsto + '-01T12:00:00'); const fim = new Date(a.prazo + 'T12:00:00');
+      const comeco = a.adiantada_de && a.atualizada_em ? new Date(a.atualizada_em) : ini;
+      const total = Math.max(1, (fim - comeco) / 86400000);
+      return ps.map((_, i) => { const d = new Date(comeco); d.setDate(d.getDate() + Math.round(total * (i + 1) / ps.length)); return d.toLocaleDateString('sv-SE'); });
+    })();
     const passos = ps.length ? el('div', 'passos',
       el('div', 'passos__head', el('p', 'passos__t', 'Passo a passo'), el('span', 'passos__n', feitos + ' de ' + ps.length),
         el('span', 'passos__bar', el('span', { style: 'width:' + Math.round(feitos / ps.length * 100) + '%' }))),
       el('ul', 'passos__list', ps.map((x, i) => {
         const cb = el('input', { type: 'checkbox', checked: !!x.ok, disabled: !editavel, 'aria-label': x.t });
         cb.addEventListener('change', () => marcaPasso(i, cb.checked));
-        return el('li', x.ok ? 'is-ok' : null, el('label', null, cb, el('span', null, x.t)));
+        const ate = datasPassos[i];
+        return el('li', x.ok ? 'is-ok' : null, el('label', null, cb, el('span', null, x.t)),
+          ate && !x.ok ? el('span', 'passos__ate' + (ate < new Date().toLocaleDateString('sv-SE') ? ' is-hot' : ''), 'até ' + U.dia(ate)) : null);
       }))) : null;
     const copiaModelo = a.modelo ? el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: async (e) => {
       try { await navigator.clipboard.writeText(a.modelo); e.currentTarget.textContent = 'Copiada ✓'; } catch (err) { /* sem permissão: o texto está visível */ }
@@ -565,7 +611,7 @@
     // uma ação aberta por vez: abrir uma fecha a outra (sem amontoado de detalhes na tela)
     const alterna = () => {
       if (!temDetalhe) return;
-      const abrir = !abertas.has(a.id); abertas.clear(); if (abrir) abertas.add(a.id); render();
+      const abrir = !abertas.has(a.id); abertas.clear(); if (abrir) { abertas.add(a.id); marcaVista(a); } render();
       if (abrir) requestAnimationFrame(() => { const n = document.querySelector('.task[data-id="' + a.id + '"]'); if (n && n.getBoundingClientRect().top < 70) n.scrollIntoView({ block: 'start', behavior: 'smooth' }); });
     };
     const linha = el('div', { class: 'task__row', role: temDetalhe ? 'button' : null, tabindex: temDetalhe ? '0' : null, 'aria-expanded': temDetalhe ? String(aberta) : null,
@@ -573,8 +619,8 @@
       check,
       el('div', 'task__main',
         el('p', 'task__title', a.titulo),
-        el('p', 'task__sub', [U.cap(U.nomeMesCurto(a.mes_previsto)), ps.length ? feitos + ' de ' + ps.length + ' passos' : null, a.tamanho ? 'tamanho ' + a.tamanho : null, a.esforco === 'marca' ? 'efeito em 6 a 12 meses' : null, a.observacao ? 'nota do consultor' : null,
-          a.travada && a.status !== 'feita' ? 'travada: ' + MOTIVOS[a.travada].toLowerCase() : null].filter(Boolean).join(' · '))),
+        el('p', 'task__sub', ehNova(a) ? el('span', 'task__novo', 'Novo') : null, ehNova(a) ? ' ' : null, [U.cap(U.nomeMesCurto(a.mes_previsto)), ps.length ? feitos + ' de ' + ps.length + ' passos' : null, a.tamanho ? 'tamanho ' + a.tamanho : null, a.esforco === 'marca' ? 'efeito em 6 a 12 meses' : null, a.observacao ? 'nota do consultor' : null,
+          a.travada && a.status !== 'feita' ? 'travada: ' + MOTIVOS[a.travada].toLowerCase() : null, a.adiantada_de ? 'adiantada de ' + U.nomeMesCurto(a.adiantada_de).toLowerCase() : null].filter(Boolean).join(' · '))),
       el('div', 'task__tags', el('span', 'mtag mtag--who', quem(a)), p.text ? el('span', 'mtag mtag--date' + (p.hot ? ' is-hot' : ''), p.text) : null),
       el('div', 'task__st', status),
       temDetalhe ? el('span', { class: 'task__chev' + (aberta ? ' is-open' : ''), 'aria-hidden': 'true' }) : el('span', 'task__chev is-none'));
