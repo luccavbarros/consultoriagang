@@ -428,7 +428,7 @@
       const porMes = {}; doGrupo.forEach((a) => { (porMes[a.mes_previsto] = porMes[a.mes_previsto] || []).push(a); });
       const ms = Object.keys(porMes).sort();
       if (!mesesProxAbertos) mesesProxAbertos = new Set(ms.slice(0, 1));
-      const alvoMes = alvo && (doGrupo.find((x) => x.id === alvo) || {}).mes_previsto; if (alvoMes) mesesProxAbertos.add(alvoMes);
+      const alvoMes = alvo && (doGrupo.find((x) => x.id === alvo) || {}).mes_previsto; if (alvoMes) mesesProxAbertos = new Set([alvoMes]);
       ms.forEach((m) => {
         const acs = porMes[m].sort((a, b) => (PESO[b.peso] || PESO.ajuda)[1] - (PESO[a.peso] || PESO.ajuda)[1] || (a.prazo || '9999').localeCompare(b.prazo || '9999'));
         const ess = acs.filter((a) => a.peso === 'essencial').length;
@@ -436,7 +436,14 @@
           el('summary', null, el('span', 'tasks__mes-t', U.cap(U.nomeMes(m)) + ' ' + m.slice(0, 4)),
             el('span', 'tasks__mes-n', acs.length + (acs.length === 1 ? ' ação' : ' ações') + (ess ? ' · ' + ess + (ess === 1 ? ' essencial' : ' essenciais') : ''))),
           el('ul', 'tasks tasks--mes', acs.map((a) => cartaoAcao(a))));
-        det.addEventListener('toggle', () => { if (det.open) mesesProxAbertos.add(m); else mesesProxAbertos.delete(m); });
+        // um mês aberto por vez: abrir um fecha o outro
+        det.addEventListener('toggle', () => {
+          if (det.open) {
+            mesesProxAbertos = new Set([m]);
+            lista.querySelectorAll('.tasks__mes[open]').forEach((o) => { if (o !== det) o.open = false; });
+            if (det.getBoundingClientRect().top < 70) det.scrollIntoView({ block: 'start', behavior: 'smooth' });
+          } else mesesProxAbertos.delete(m);
+        });
         lista.append(el('li', 'tasks__mesli', det));
       });
     } else doGrupo.forEach((a) => {
