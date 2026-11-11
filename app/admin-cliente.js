@@ -1021,19 +1021,42 @@
       sb.from('impressoes').select('marca_nome, eh_cliente').eq('empresa_id', id).order('ordem'),
       sb.from('pesquisas').select('categoria').eq('empresa_id', id).order('criada_em', { ascending: false }).limit(1),
     ]);
-    const o = (obj || [])[0];
+    const o = (obj || [])[0]; void o;
     $('q-titulo').value = 'Rodada de ' + U.mesAno(new Date());
     $('q-cat').value = (q0 && q0[0] && q0[0].categoria) || '';
-    $('q-af').value = ''; // na visão do How Brands Grow, o que mede é lembrança nas situações e reconhecimento dos ativos
+    $('q-af').value = ''; // o que mede o crescimento é a lembrança nas situações e o reconhecimento dos ativos
     $('q-conc').value = (imp || []).filter((x) => !x.eh_cliente).map((x) => x.marca_nome).join('\n');
+    pesqForm.querySelector('.pq__mais').open = false;
     say($('q-msg'), ''); $('q-cat').focus();
+    resumoPesq();
   };
+  // o resumo do que a rodada vai perguntar: o que já está cadastrado em Estratégia, Identidade e Diagnóstico
+  const resumoPesq = async () => {
+    const [{ data: sits }, { data: atv }] = await Promise.all([
+      sb.from('situacoes').select('id').eq('empresa_id', id),
+      sb.from('ativos').select('id').eq('empresa_id', id),
+    ]);
+    const conc = linhasDe($('q-conc').value).slice(0, 8); const af = linhasDe($('q-af').value);
+    const cat = $('q-cat').value.trim();
+    const item = (ok, texto, falta, aba) => el('li', 'pq__item' + (ok ? ' is-ok' : ' is-falta'), el('span', 'pq__ico', ok ? '✓' : '!'),
+      el('span', null, texto, !ok && aba ? [' ', el('a', { class: 'link', href: '#' + aba }, falta)] : null));
+    const ns = (sits || []).length, na = (atv || []).length;
+    $('q-resumo').replaceChildren(
+      item(!!cat, cat ? 'Que marcas vêm à cabeça quando pensam em ' + cat : 'Que marcas vêm à cabeça na categoria (falta escrever a categoria)'),
+      item(ns > 0, ns ? 'Em quais de ' + ns + (ns === 1 ? ' situação de compra' : ' situações de compra') + ' lembram da marca' : 'Nenhuma situação de compra cadastrada:', 'cadastrar em Estratégia', 'estrategia'),
+      item(na > 0, na ? 'Se reconhecem ' + na + (na === 1 ? ' ativo da marca' : ' ativos da marca') + ' sem o nome' : 'Nenhum ativo distintivo cadastrado:', 'cadastrar em Identidade', 'identidade'),
+      item(true, conc.length ? 'Qual escolheriam entre a marca e ' + conc.length + (conc.length === 1 ? ' concorrente' : ' concorrentes') : 'Qual escolheriam (sem concorrentes, só a marca)'),
+      af.length ? item(true, af.length + (af.length === 1 ? ' frase para dar nota' : ' frases para dar nota')) : null,
+      item(true, 'Se já são clientes, para separar quem compra de quem ainda não compra'));
+  };
+  ['q-cat', 'q-conc', 'q-af'].forEach((k) => $(k).addEventListener('input', () => { clearTimeout(resumoPesq.t); resumoPesq.t = setTimeout(resumoPesq, 250); }));
   $('open-pesq').addEventListener('click', () => (pesqForm.hidden ? abrePesq() : toggle(pesqForm, $('open-pesq'), false)));
   $('q-cancel').addEventListener('click', () => toggle(pesqForm, $('open-pesq'), false));
   pesqForm.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     const af = linhasDe($('q-af').value); const conc = linhasDe($('q-conc').value);
-    if (!val('q-titulo') || !val('q-cat')) return say($('q-msg'), 'Preencha o nome da rodada e a categoria.', 'error');
+    if (!val('q-cat')) { $('q-cat').focus(); return say($('q-msg'), 'Escreva como o cliente chama o que vocês vendem.', 'error'); }
+    if (!val('q-titulo')) $('q-titulo').value = 'Rodada de ' + U.mesAno(new Date());
     if (af.length > 6) return say($('q-msg'), 'Use no máximo 6 frases.', 'error');
     const [{ data: sits }, { data: atv }] = await Promise.all([
       sb.from('situacoes').select('id, texto').eq('empresa_id', id).order('ordem'),
@@ -1099,6 +1122,11 @@
   loadDisp();
 
   const loadBuscas = async () => {
+    // a comparação já montada no Google Trends: a marca e até 4 concorrentes do Diagnóstico, Brasil, últimos 12 meses
+    sb.from('impressoes').select('marca_nome, eh_cliente').eq('empresa_id', id).order('ordem').then(({ data: imp }) => {
+      const termos = [emp.nome].concat((imp || []).filter((x) => !x.eh_cliente).map((x) => x.marca_nome)).filter(Boolean).slice(0, 5);
+      $('b-trends').href = 'https://trends.google.com/trends/explore?geo=BR&date=today%2012-m&q=' + termos.map((t) => encodeURIComponent(t)).join(',');
+    });
     const { data } = await sb.from('buscas').select('*').eq('empresa_id', id).order('mes_ref', { ascending: false });
     $('buscas').replaceChildren(...((data || []).length ? data.map((b) => el('li', 'row',
       el('div', 'row__main', el('p', 'row__title', MESES(b.mes_ref) + ': ' + Number(b.marca_pct).toLocaleString('pt-BR') + '%')),
