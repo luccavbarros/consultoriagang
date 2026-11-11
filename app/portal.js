@@ -621,7 +621,8 @@
         el('p', 'task__title', a.titulo),
         el('p', 'task__sub', ehNova(a) ? el('span', 'task__novo', 'Novo') : null, ehNova(a) ? ' ' : null, [U.cap(U.nomeMesCurto(a.mes_previsto)), ps.length ? feitos + ' de ' + ps.length + ' passos' : null, a.tamanho ? 'tamanho ' + a.tamanho : null, a.esforco === 'marca' ? 'efeito em 6 a 12 meses' : null, a.observacao ? 'nota do consultor' : null,
           a.travada && a.status !== 'feita' ? 'travada: ' + MOTIVOS[a.travada].toLowerCase() : null, a.adiantada_de ? 'adiantada de ' + U.nomeMesCurto(a.adiantada_de).toLowerCase() : null].filter(Boolean).join(' · '))),
-      el('div', 'task__tags', el('span', 'mtag mtag--who', quem(a)), p.text ? el('span', 'mtag mtag--date' + (p.hot ? ' is-hot' : ''), p.text) : null),
+      // quem faz: só aparece quando não é só o cliente (GANG, junto com a GANG ou com outra pessoa)
+      el('div', 'task__tags', a.responsavel === 'cliente' && !a.responsavel_nome ? null : el('span', 'mtag mtag--who', a.responsavel === 'cliente' ? 'Com ' + a.responsavel_nome : quem(a)), p.text ? el('span', 'mtag mtag--date' + (p.hot ? ' is-hot' : ''), p.text) : null),
       el('div', 'task__st', status),
       temDetalhe ? el('span', { class: 'task__chev' + (aberta ? ' is-open' : ''), 'aria-hidden': 'true' }) : el('span', 'task__chev is-none'));
     return el('li', { class: 'task' + (a.status === 'feita' ? ' is-feita' : '') + (aberta ? ' is-aberta' : ''), 'data-id': a.id }, linha, corpo);
@@ -2475,7 +2476,6 @@
 
     // os primeiros meses: o que acontece agora e quando os resultados começam a aparecer
     if (mesN <= 2) {
-      const prox = U.addRef(inicioRef, 1); const veredito = U.addRef(inicioRef, 3);
       const passo = (ok, t, d, href, lk, ir) => el('li', ok ? 'is-on' : null, el('span', { class: 'start__ico', 'aria-hidden': 'true' }, ok ? '✓' : ''),
         el('div', 'start__body', el('p', 'start__t', t), el('p', 'start__d', d)), href ? el('a', { class: 'start__lk', href, onclick: ir || null }, lk) : null);
       out.push(el('section', { class: 'start', 'aria-labelledby': 'start-t' },
@@ -2485,7 +2485,6 @@
           precisaPartida() || (D.plano && D.plano.partida_cliente) ? passo(!precisaPartida(), 'Informe seu ponto de partida', 'O faturamento médio antes do plano. É a partir dele que a meta é medida.', precisaPartida() ? '#plano' : '#resultados', precisaPartida() ? 'Informar agora' : 'Ver', irPartida) : null,
           passo(true, 'Conheça a sua marca', 'A estratégia, a narrativa e a identidade já estão no menu, em “Sua marca”. Consulte antes de criar qualquer peça.', '#estrategia', 'Ver a estratégia'),
           passo(D.acoes.some((a) => a.status === 'feita' && a.responsavel !== 'gang'), 'Faça a primeira ação', 'Em Ações, a mais importante do mês aparece primeiro.', '#acoes', 'Ver ações'),
-          semNumeros ? null : passo(D.numeros.some((x) => x.mes_ref > inicioRef), 'Envie os números de ' + U.nomeMes(prox), 'No começo de ' + U.nomeMes(U.addRef(prox, 1)) + '. Leva 2 minutos.'),
           (() => {
             // o convite só existe quando o consultor abre a pesquisa; até lá, o passo avisa e não leva a lugar nenhum
             const abertaP = D.pesquisas.some((x) => x.aberta);
@@ -2498,8 +2497,7 @@
             return abertaP
               ? passo(D.respostas.length > 0, 'Convide clientes para a pesquisa de partida', 'É ela que mostra como a marca é vista hoje, para comparar depois. A mensagem já vem pronta.', '#resultados', 'Ver o convite', vaiConvite)
               : passo(false, 'Convide clientes para a pesquisa de partida', 'É ela que mostra como a marca é vista hoje. Assim que o consultor abrir a pesquisa, o convite pronto aparece aqui.');
-          })(),
-          passo(false, 'O primeiro veredito', 'Com 3 meses de números, em ' + U.nomeMes(veredito) + ', dá para dizer se o plano está pagando.'))));
+          })())));
     }
 
     const meses = []; for (let k = 0, r = inicioRef; k < dur; k += 1, r = U.addRef(r, 1)) meses.push(r);
