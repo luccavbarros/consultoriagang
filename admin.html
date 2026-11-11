@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="app/app.css?v=24" />
   <link rel="stylesheet" href="app/portal.css?v=64" />
-  <link rel="stylesheet" href="app/tema.css?v=75" />
+  <link rel="stylesheet" href="app/tema.css?v=77" />
 </head>
 <body class="portal-body">
   <div class="portal">
@@ -29,6 +29,7 @@
         <ul aria-labelledby="g1">
           <li><a class="side__link" href="#geral" data-view-link="geral" aria-current="page"><span>Visão geral</span><span class="side__ind is-hot" id="side-pend" hidden></span></a></li>
           <li><a class="side__link" href="#novo" id="side-new" data-view-link="novo"><span>Novo cliente</span></a></li>
+          <li><a class="side__link" href="#aprendizado" data-view-link="aprendizado"><span>O que funciona</span></a></li>
           <li><a class="side__link" href="#perfil" data-view-link="perfil"><span>Seu perfil</span></a></li>
         </ul>
         <p class="side__group" id="g2">Clientes</p>
@@ -124,6 +125,17 @@
       </form>
     </section>
 
+    <!-- o que funciona: o resultado das ações da biblioteca em todos os clientes (admin.js) -->
+    <section class="app-section" aria-labelledby="t-apr" id="aprendizado" data-view="aprendizado" hidden>
+      <h1 class="title-xl" id="t-apr">O que funciona</h1>
+      <p class="small">O resultado das ações da biblioteca em todos os clientes.
+Com menos de 5 casos é sorte, não evidência.</p>
+      <div class="apr__filtro"><label class="label" for="apr-setor">Setor</label>
+        <select class="field field--sm" id="apr-setor"><option value="">Todos</option><option value="servicos">Serviços</option><option value="varejo">Varejo e lojas</option><option value="b2b">Indústria e B2B</option></select></div>
+      <div class="cards" id="apr-numeros"></div>
+      <div id="apr-corpo"><p class="msg">Carregando…</p></div>
+    </section>
+
     <section class="app-section" aria-labelledby="t-me" id="perfil" data-view="perfil" hidden>
       <h1 class="title-xl" id="t-me">Seu perfil</h1>
       <form class="card" id="me-card" novalidate>
@@ -152,9 +164,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script src="app/config.js"></script>
   <script src="app/auth.js?v=2"></script>
-  <script src="app/ui.js?v=20"></script>
-  <script src="app/presets.js?v=33"></script>
+  <script src="app/ui.js?v=21"></script>
+  <script src="app/presets.js?v=36"></script>
   <script src="app/saude.js?v=9"></script>
-  <script src="app/admin.js?v=17"></script>
+  <script src="app/admin.js?v=19"></script>
 </body>
 </html>
