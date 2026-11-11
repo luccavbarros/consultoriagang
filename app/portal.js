@@ -365,6 +365,7 @@
 
   // ===== Ações =====
   let abaAcoes = 'mes';
+  let mesesProxAbertos = null; // meses abertos na aba Próximos meses
   let revAberta = false;
   let abreAcao = null; // vindo do calendário: abre esta ação já expandida
   const telaAcoes = () => {
@@ -422,7 +423,23 @@
     const doGrupo = grupos[abaAcoes];
     if (!doGrupo.length) lista.append(el('li', 'tasks__empty', { mes: 'Nenhuma ação pendente neste mês.', proximos: 'Nenhuma ação prevista para os próximos meses.', feitas: 'Nenhuma ação concluída ainda.' }[abaAcoes]));
     const primeira = abaAcoes === 'mes' ? doGrupo.find((a) => a.responsavel !== 'gang') : null;
-    doGrupo.forEach((a) => {
+    if (abaAcoes === 'proximos') {
+      // próximos meses: um bloco por mês, fechado; o próximo mês já vem aberto (sem lista gigante)
+      const porMes = {}; doGrupo.forEach((a) => { (porMes[a.mes_previsto] = porMes[a.mes_previsto] || []).push(a); });
+      const ms = Object.keys(porMes).sort();
+      if (!mesesProxAbertos) mesesProxAbertos = new Set(ms.slice(0, 1));
+      const alvoMes = alvo && (doGrupo.find((x) => x.id === alvo) || {}).mes_previsto; if (alvoMes) mesesProxAbertos.add(alvoMes);
+      ms.forEach((m) => {
+        const acs = porMes[m].sort((a, b) => (PESO[b.peso] || PESO.ajuda)[1] - (PESO[a.peso] || PESO.ajuda)[1] || (a.prazo || '9999').localeCompare(b.prazo || '9999'));
+        const ess = acs.filter((a) => a.peso === 'essencial').length;
+        const det = el('details', { class: 'tasks__mes', open: mesesProxAbertos.has(m) },
+          el('summary', null, el('span', 'tasks__mes-t', U.cap(U.nomeMes(m)) + ' ' + m.slice(0, 4)),
+            el('span', 'tasks__mes-n', acs.length + (acs.length === 1 ? ' ação' : ' ações') + (ess ? ' · ' + ess + (ess === 1 ? ' essencial' : ' essenciais') : ''))),
+          el('ul', 'tasks tasks--mes', acs.map((a) => cartaoAcao(a))));
+        det.addEventListener('toggle', () => { if (det.open) mesesProxAbertos.add(m); else mesesProxAbertos.delete(m); });
+        lista.append(el('li', 'tasks__mesli', det));
+      });
+    } else doGrupo.forEach((a) => {
       const card = cartaoAcao(a);
       if (a === primeira) { card.classList.add('is-prioridade'); card.querySelector('.task__sub').prepend(el('span', 'task__flag', 'Faça agora'), ' '); }
       lista.append(card);
