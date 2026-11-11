@@ -1275,3 +1275,7 @@ details.month:not([open]) > summary { padding-bottom: 0; }
 .apr__bloco .rows { margin-top: 12px; }
 /* logo do cliente carregado: ocupa o quadrado inteiro, com os cantos arredondados e uma borda fina (sem a moldura branca) */
 .side__logo-dot.tem-img, .cli-logo.tem-img { padding: 0; background-color: transparent; background-size: cover; background-origin: border-box; background-position: center; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1); }
+/* selos com cor: "Faça agora" no laranja da GANG (urgência), "Novo" em azul (informação) */
+.task__flag { color: #fff; background: #E5482A; }
+.task__novo { color: #fff; background: #3b82f6; }
+.tasks__mes > summary .task__novo { color: #fff; background: #3b82f6; }

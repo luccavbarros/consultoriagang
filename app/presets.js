@@ -552,6 +552,99 @@
     {"grupo": "Maister · Managing the Professional Service Firm", "texto": "Fazer uma revisão de resultados a cada trimestre com cada cliente grande", "esforco": "venda", "promessa": "vendas", "porque": "Clientes grandes saem quando deixam de ver o valor. Rever os resultados com regularidade mostra o que foi entregue e abre espaço para novos projetos.", "metrica": "Revisões feitas com todos os clientes grandes", "tema": "relacao"}
   );
 
+  // ===== Biblioteca ampliada (3ª parte): vendas, decisão de compra, experiência, marca, mídia local, canais e medição do crescimento =====
+  window.GangPresets.acoes.push(
+    {"grupo": "Dixon & McKenna · The JOLT Effect", "texto": "Listar as 5 objeções mais comuns e escrever uma resposta curta e honesta para cada uma", "esforco": "venda", "promessa": "vendas", "porque": "As mesmas dúvidas travam quase todas as vendas. Quem tem a resposta pronta e verdadeira passa segurança e não perde a venda no improviso.", "metrica": "Menos vendas perdidas pelas mesmas objeções", "tema": "venda"},
+    {"grupo": "Rackham · Rethinking the Sales Force", "texto": "Ouvir uma conversa de venda por semana e anotar uma coisa para melhorar", "esforco": "venda", "promessa": "vendas", "porque": "Quem vende raramente se ouve. Rever conversas reais mostra onde o cliente esfriou e o que funcionou, e melhora a próxima.", "metrica": "Uma melhoria aplicada por semana nas conversas de venda", "tema": "venda"},
+    {"grupo": "Baker · The Business of Expertise", "texto": "Escrever o perfil do cliente ideal e os sinais de quem não é cliente para a empresa", "esforco": "venda", "promessa": "valor", "porque": "Atender qualquer um dilui a especialidade e derruba o preço. Saber dizer não aos clientes errados abre espaço para os certos.", "metrica": "Mais vendas para clientes com o perfil ideal", "tema": "posicionamento"},
+    {"grupo": "Burgess · Executive Engagement Strategies", "texto": "Pedir uma conversa por ano com o dono ou o diretor de cada cliente B2B importante", "esforco": "venda", "promessa": "vendas", "porque": "Quem decide a continuidade e os novos projetos raramente é quem atende no dia a dia. Falar com essa pessoa protege o cliente e abre novas vendas.", "metrica": "Conversas anuais feitas com os decisores dos clientes principais", "tema": "relacao"},
+    {"grupo": "Block · Flawless Consulting", "texto": "Combinar por escrito, no início, o que a empresa faz, o que o cliente faz e como os dois vão saber que deu certo", "esforco": "venda", "promessa": "valor", "porque": "Boa parte da insatisfação nasce de expectativas diferentes, e não do trabalho. Combinar antes evita frustração e protege a indicação no final.", "metrica": "Todo projeto novo começa com o combinado por escrito", "tema": "experiencia"},
+    {"grupo": "Shotton · The Choice Factory", "texto": "Admitir na comunicação uma limitação honesta da empresa, ao lado do que ela faz de melhor", "esforco": "marca", "promessa": "valor", "porque": "Quem só fala de qualidades parece estar vendendo. Admitir uma limitação pequena e verdadeira torna o resto da mensagem mais crível.", "metrica": "Mais confiança percebida nas pesquisas e nos comentários", "tema": "conteudo"},
+    {"grupo": "Shotton · A ilusão da escolha", "texto": "Pedir ao cliente novo um primeiro passo bem pequeno antes do compromisso maior", "esforco": "venda", "promessa": "vendas", "porque": "Um primeiro passo fácil faz a pessoa se ver como cliente, e os passos seguintes ficam mais naturais. Pedir tudo de uma vez assusta.", "metrica": "Mais pessoas avançam do primeiro contato para a compra", "tema": "venda"},
+    {"grupo": "Sutherland · Alquimia", "texto": "Mostrar o trabalho que o cliente não vê: o cuidado e as etapas por trás do resultado", "esforco": "marca", "promessa": "valor", "porque": "As pessoas valorizam mais o que percebem que deu trabalho. Mostrar os bastidores justifica o preço e aumenta a satisfação com o mesmo serviço.", "metrica": "Clientes citam o cuidado e o processo nos comentários", "tema": "conteudo"},
+    {"grupo": "Shotton · The Choice Factory", "texto": "Trocar avisos que reforçam o erro (\"muitos clientes esquecem…\") por mensagens sobre o que a maioria faz certo", "esforco": "venda", "promessa": "vendas", "porque": "Dizer que muita gente faz algo errado acaba ensinando que isso é normal. Mostrar o comportamento certo da maioria funciona melhor.", "metrica": "Mais clientes fazem o que a mensagem pede", "tema": "experiencia"},
+    {"grupo": "Shotton · A ilusão da escolha", "texto": "Mostrar o preço em parcelas pequenas do dia ou do uso, quando fizer sentido", "esforco": "venda", "promessa": "vendas", "porque": "O mesmo valor parece menor quando dividido no tempo em que é usado. Isso ajuda quem compara o preço cheio com o próprio orçamento.", "metrica": "Mais vendas fechadas com o mesmo preço", "tema": "preco"},
+    {"grupo": "Sutherland · Alquimia", "texto": "Usar preço redondo nos serviços premium e reservar os quebrados para as ofertas", "esforco": "venda", "promessa": "valor", "porque": "Preço quebrado sinaliza promoção; preço redondo sinaliza qualidade e decisão pensada. Em serviços de alto valor, o redondo combina mais com a marca.", "metrica": "Preço médio mantido sem perda de fechamento", "tema": "preco"},
+    {"grupo": "Zeithaml · Marketing de serviços", "texto": "Revisar o ambiente onde o cliente espera e é atendido: limpeza, luz, som, conforto e a marca à vista", "esforco": "marca", "promessa": "valor", "porque": "Em serviços, o cliente julga a qualidade pelo que vê ao redor, porque o serviço em si é difícil de avaliar. O ambiente fala pela marca.", "metrica": "Comentários positivos sobre o ambiente", "tema": "experiencia"},
+    {"grupo": "Halvorson · Content Design", "texto": "Revisar o site com uma regra: cada página com um objetivo e uma chamada principal", "esforco": "venda", "promessa": "vendas", "porque": "Páginas que tentam dizer tudo confundem e não levam a lugar nenhum. Um objetivo por página deixa claro o próximo passo.", "metrica": "Mais contatos por visita", "tema": "conteudo"},
+    {"grupo": "Krug · Rocket Surgery Made Easy", "texto": "Mostrar a página inicial por 5 segundos a 5 pessoas e perguntar o que a empresa faz", "esforco": "marca", "promessa": "pessoas", "porque": "O visitante decide em segundos se ficou no lugar certo. Se em 5 segundos não dá para entender, a mensagem principal precisa mudar.", "metrica": "4 de 5 pessoas entendem o que a empresa faz", "tema": "medicao"},
+    {"grupo": "Kalbag & Pickering · Accessibility for Everyone", "texto": "Colocar legenda em todos os vídeos da marca", "esforco": "marca", "promessa": "pessoas", "porque": "Muita gente assiste a vídeos sem som, e parte do público depende da legenda. Com legenda, a mensagem chega a todos.", "metrica": "Todos os vídeos publicados com legenda", "tema": "conteudo"},
+    {"grupo": "Wirtz · Services Marketing", "texto": "Descobrir de quanto em quanto tempo o cliente volta a comprar e lembrá-lo perto da data", "esforco": "venda", "promessa": "vendas", "porque": "Cada serviço ou produto tem um ritmo natural de recompra. Lembrar na hora certa traz o cliente de volta antes que ele procure outro.", "metrica": "Mais recompras no prazo esperado", "tema": "relacao"},
+    {"grupo": "Keller · Strategic Brand Management", "texto": "Fazer uma ação com outra marca respeitada pelo mesmo público", "esforco": "marca", "promessa": "pessoas", "porque": "Uma marca empresta parte da sua imagem à outra quando aparecem juntas. Uma parceria bem escolhida apresenta a empresa a um público que já confia na parceira.", "metrica": "Clientes novos vindos da base da marca parceira", "tema": "anuncio"},
+    {"grupo": "Aaker · Brand Relevance", "texto": "Antes de lançar algo com o nome da marca, conferir se combina com o que a marca representa", "esforco": "marca", "promessa": "valor", "porque": "Uma extensão que não combina confunde e enfraquece a marca principal. Uma que combina aproveita a confiança que já existe.", "metrica": "Lançamentos que reforçam a marca principal", "tema": "posicionamento"},
+    {"grupo": "Romaniuk · Ativos distintivos", "texto": "Ao atualizar a identidade, manter os elementos que as pessoas já reconhecem", "esforco": "marca", "promessa": "pessoas", "porque": "Trocar tudo de uma vez joga fora anos de memória. Atualizar por cima do que já é reconhecido moderniza sem fazer a marca recomeçar.", "metrica": "Reconhecimento da marca mantido após a atualização", "tema": "presenca"},
+    {"grupo": "Malone & Fiske · The Human Brand", "texto": "Mostrar cuidado com as pessoas, e não só competência: gestos, histórias e respostas humanas", "esforco": "marca", "promessa": "valor", "porque": "As pessoas julgam empresas como julgam pessoas: primeiro se têm boas intenções, depois se são capazes. Só competência parece fria.", "metrica": "Clientes descrevem a marca com palavras de cuidado", "tema": "conteudo"},
+    {"grupo": "Miller · Brand New Name", "texto": "Testar o nome da marca ou do serviço: é fácil de dizer, de escrever e de achar na busca?", "esforco": "marca", "promessa": "pessoas", "porque": "Um nome difícil de falar ou de escrever atrapalha a indicação e a busca. Quem ouve precisa conseguir encontrar a empresa depois.", "metrica": "8 de 10 pessoas escrevem o nome certo depois de ouvir", "tema": "medicao"},
+    {"grupo": "Greenwald & Kahn · Competition Demystified", "texto": "Concentrar a presença numa região ou num nicho onde a empresa possa ser a mais lembrada", "esforco": "marca", "promessa": "pessoas", "porque": "Ser grande em um lugar pequeno vale mais do que ser pequeno em todo lugar. A concentração faz cada real de comunicação render mais.", "metrica": "Participação maior na região ou no nicho escolhido", "tema": "posicionamento"},
+    {"grupo": "Chernatony · From Brand Vision to Brand Evaluation", "texto": "Escrever com cada área o que ela faz, no dia a dia, para cumprir a promessa da marca", "esforco": "marca", "promessa": "valor", "porque": "A promessa só vira realidade quando cada área sabe o seu papel nela. Sem isso, a marca fica no site e não chega ao cliente.", "metrica": "Cada área com 3 comportamentos ligados à promessa", "tema": "equipe"},
+    {"grupo": "Binet & Field · Mídia em foco", "texto": "Usar o melhor conteúdo da marca como anúncio para quem ainda não segue a empresa", "esforco": "marca", "promessa": "pessoas", "porque": "O conteúdo orgânico chega quase só a quem já conhece a marca. Investir no que já provou funcionar leva a marca a novas pessoas.", "metrica": "Alcance entre quem ainda não conhece a marca", "tema": "anuncio"},
+    {"grupo": "Sharp · Marketing: Theory, Evidence, Practice", "texto": "Anunciar perto de onde o cliente compra: mídia de rua, rádio local ou ponto de venda", "esforco": "marca", "promessa": "pessoas", "porque": "Ser lembrada perto do momento e do lugar da compra aumenta a chance de ser escolhida. A mídia local alcança quem passa por ali todo dia.", "metrica": "Mais clientes citam a mídia local como lembrança", "tema": "anuncio"},
+    {"grupo": "Sharp · How Brands Grow", "texto": "Garantir que quem procura o nome da marca encontre a empresa em primeiro lugar", "esforco": "venda", "promessa": "vendas", "porque": "Quem procura pelo nome já quer comprar. Se um concorrente ou um site errado aparece antes, a venda vai embora no último passo.", "metrica": "Empresa em primeiro na busca pelo próprio nome", "tema": "distribuicao"},
+    {"grupo": "Schultz & Doerr · Professional Services Marketing", "texto": "Publicar uma vez por mês uma opinião forte da empresa sobre um tema do setor", "esforco": "marca", "promessa": "valor", "porque": "Especialistas são escolhidos pelo que pensam, e não só pelo que fazem. Uma opinião clara e repetida posiciona a empresa como referência.", "metrica": "Convites, menções e contatos vindos das opiniões publicadas", "tema": "conteudo"},
+    {"grupo": "Chernatony · From Brand Vision to Brand Evaluation", "texto": "Inscrever a empresa em prêmios, rankings ou certificações respeitados no setor", "esforco": "marca", "promessa": "valor", "porque": "Reconhecimento de terceiros vale mais do que a empresa falar bem de si. Um selo respeitado reduz o risco percebido de quem não conhece a marca.", "metrica": "Um reconhecimento conquistado e usado na comunicação", "tema": "conteudo"},
+    {"grupo": "Romaniuk · Ativos distintivos", "texto": "Montar o catálogo no WhatsApp Business com fotos, preços e descrição de cada serviço ou produto", "esforco": "venda", "promessa": "vendas", "porque": "O cliente quer ver as opções sem precisar perguntar tudo. O catálogo encurta a conversa e leva mais gente até o pedido.", "metrica": "Mais pedidos feitos direto pelo catálogo", "tema": "distribuicao"},
+    {"grupo": "Underhill · Vamos às compras", "texto": "Fazer degustação, demonstração ou teste no ponto de venda", "esforco": "venda", "promessa": "pessoas", "porque": "Experimentar tira o risco da primeira compra e mostra a qualidade melhor do que qualquer anúncio.", "metrica": "Vendas feitas para quem experimentou", "tema": "venda"},
+    {"grupo": "Underhill · Vamos às compras", "texto": "Colocar os ativos da marca no balcão, no caixa e na entrega, onde o cliente está decidindo", "esforco": "marca", "promessa": "pessoas", "porque": "O momento da compra é quando a marca mais influencia. Ser vista ali reforça a escolha e a lembrança da próxima vez.", "metrica": "Ativos da marca presentes em todos os pontos de decisão", "tema": "presenca"},
+    {"grupo": "Pinci & Glaser · The Referral Code", "texto": "Criar um programa de indicação com benefício para quem indica e para quem chega", "esforco": "venda", "promessa": "pessoas", "porque": "Muita gente indicaria, mas esquece ou não sabe como. Um programa simples, com vantagem para os dois lados, transforma a intenção em indicação.", "metrica": "Clientes novos vindos do programa de indicação", "tema": "relacao"},
+    {"grupo": "Berman & Knight · Financial Intelligence", "texto": "Calcular quantas vendas uma campanha precisa trazer para se pagar, antes de lançar", "esforco": "venda", "promessa": "vendas", "porque": "Sem esse número, não dá para saber se a campanha valeu a pena. Com ele, a meta fica clara e a decisão de continuar fica fácil.", "metrica": "Toda campanha com ponto de equilíbrio calculado", "tema": "medicao"},
+    {"grupo": "Snijders · Eat Your Greens", "texto": "Separar o que aumentou por causa da marca do que aumentou por causa de preço, época ou promoção", "esforco": "venda", "promessa": "vendas", "porque": "Nem todo crescimento vem da comunicação. Separar as causas evita creditar à marca o que veio da época, ou cortar o que estava funcionando.", "metrica": "Leitura dos resultados com as causas separadas", "tema": "medicao"},
+    {"grupo": "Ambler · Marketing and the Bottom Line", "texto": "Acompanhar a cada trimestre 3 números de saúde da marca, além das vendas", "esforco": "marca", "promessa": "pessoas", "porque": "Vendas mostram o passado; lembrança, preferência e preço mostram o futuro. Acompanhar os dois evita cortar a marca quando as vendas oscilam.", "metrica": "Três indicadores de marca medidos todo trimestre", "tema": "medicao"},
+    {"grupo": "Hubbard · How to Measure Anything", "texto": "Antes de decidir algo grande, listar o que falta saber e medir só o que pode mudar a decisão", "esforco": "venda", "promessa": "vendas", "porque": "Muita medição não muda nenhuma decisão. Focar no que pode mudar a escolha economiza tempo e dinheiro.", "metrica": "Decisões grandes tomadas com a dúvida principal medida", "tema": "medicao"},
+    {"grupo": "Palmatier & Sridhar · Marketing Strategy", "texto": "Revisar a cada semestre como os clientes mudaram: o que compram, por qual canal e por quê", "esforco": "marca", "promessa": "valor", "porque": "Os clientes mudam com o tempo, e a estratégia que funcionava pode parar de funcionar. Rever com regularidade evita apostar no passado.", "metrica": "Mudanças dos clientes registradas e ações ajustadas", "tema": "medicao"},
+    {"grupo": "Lehmann & Winer · Marketing Driven Revenue Growth", "texto": "Separar o crescimento em três fontes: clientes novos, clientes que voltam e quanto cada um gasta", "esforco": "venda", "promessa": "vendas", "porque": "Crescer pode vir de mais clientes, mais compras ou compras maiores. Separar as fontes mostra onde está a maior oportunidade.", "metrica": "Plano do trimestre focado na fonte com mais espaço", "tema": "medicao"}
+  );
+
+  // ===== Biblioteca ampliada (4ª parte): estratégia, negociação, escrita, recompra, preço e decisões com dados =====
+  window.GangPresets.acoes.push(
+    {"grupo": "Levitt · Miopia de Marketing", "texto": "Descrever o negócio pela necessidade que ele resolve, e não pelo produto que vende", "esforco": "marca", "promessa": "valor", "porque": "Empresas que se definem pelo produto deixam de ver novos concorrentes e novas oportunidades. Pensar na necessidade amplia o que a marca pode oferecer.", "metrica": "Frase do negócio escrita pela necessidade do cliente", "tema": "posicionamento"},
+    {"grupo": "Escalas · Imagine-se no produto", "texto": "Mostrar o produto ou serviço em uso do ponto de vista de quem compra: a mão, o lugar, o momento dele", "esforco": "marca", "promessa": "pessoas", "porque": "Imagens que ajudam a pessoa a se imaginar usando aumentam a vontade de comprar. Ver de fora é diferente de se ver dentro da cena.", "metrica": "Mais respostas nas peças com a cena em primeira pessoa", "tema": "anuncio"},
+    {"grupo": "Sierra · Badass", "texto": "Ensinar o cliente a ficar melhor naquilo que ele quer fazer com o produto ou serviço", "esforco": "venda", "promessa": "vendas", "porque": "As pessoas não amam o produto, amam o que conseguem fazer com ele. Quem ajuda o cliente a ficar bom fica na cabeça dele e é indicado.", "metrica": "Clientes usam o conteúdo e citam o que aprenderam", "tema": "relacao"},
+    {"grupo": "Perri · Escaping the Build Trap", "texto": "Antes de criar um serviço novo, abrir uma lista de espera e ver quantos se inscrevem", "esforco": "venda", "promessa": "valor", "porque": "Dizer que compraria é fácil; deixar o contato é um sinal mais forte de interesse. A lista mostra a demanda antes de investir.", "metrica": "Número de inscritos antes do lançamento", "tema": "medicao"},
+    {"grupo": "McCracken · Chief Culture Officer", "texto": "Escolher com cuidado as pessoas, os lugares e as situações que aparecem nas peças da marca", "esforco": "marca", "promessa": "valor", "porque": "O significado de quem aparece ao lado da marca passa para ela. Rostos, cenários e situações dizem quem a marca é antes do texto.", "metrica": "Peças com pessoas e cenários coerentes com a marca", "tema": "anuncio"},
+    {"grupo": "Christensen · O dilema da inovação", "texto": "Observar concorrentes mais simples e mais baratos que estão crescendo e decidir como responder", "esforco": "marca", "promessa": "valor", "porque": "Os concorrentes que mais ameaçam costumam começar pequenos e baratos, atendendo quem a empresa ignora. Notar cedo dá tempo de reagir.", "metrica": "Ameaças mapeadas e resposta decidida no semestre", "tema": "posicionamento"},
+    {"grupo": "Mintzberg · Safári de Estratégia", "texto": "Anotar o que deu certo sem ter sido planejado e decidir se vira parte da estratégia", "esforco": "marca", "promessa": "valor", "porque": "Parte da melhor estratégia nasce da prática, e não do plano. Quem registra os acertos inesperados aprende com o próprio mercado.", "metrica": "Acertos inesperados registrados e incorporados", "tema": "medicao"},
+    {"grupo": "Fisher, Ury & Patton · Como chegar ao sim", "texto": "Na negociação, perguntar o motivo por trás de cada pedido do cliente antes de responder", "esforco": "venda", "promessa": "valor", "porque": "Pedidos são posições; por trás deles há interesses que podem ser atendidos de outros jeitos. Entender o motivo evita ceder no preço à toa.", "metrica": "Negociações fechadas atendendo ao interesse, sem desconto", "tema": "venda"},
+    {"grupo": "Lencioni · Getting Naked", "texto": "Dar uma recomendação útil já na primeira conversa, antes de fechar qualquer coisa", "esforco": "venda", "promessa": "vendas", "porque": "Mostrar o valor na prática convence mais do que prometer. Quem ajuda antes de vender ganha confiança e costuma ser escolhido.", "metrica": "Mais primeiras conversas que viram proposta", "tema": "venda"},
+    {"grupo": "Hart · Wordcraft", "texto": "Ler em voz alta os textos principais da marca e cortar frases longas e palavras difíceis", "esforco": "marca", "promessa": "valor", "porque": "Texto que trava na leitura em voz alta trava também na cabeça do cliente. Frases curtas e palavras comuns são lidas e lembradas.", "metrica": "Textos principais com frases curtas e sem jargão", "tema": "conteudo"},
+    {"grupo": "Simmons · We, Me, Them & It", "texto": "Reescrever os textos para falar com o cliente (\"você\"), e não sobre a empresa (\"nós\")", "esforco": "marca", "promessa": "valor", "porque": "Texto centrado na empresa afasta; texto que fala da vida do cliente aproxima. Contar quantas vezes aparece \"nós\" mostra o desequilíbrio.", "metrica": "Textos principais com mais \"você\" do que \"nós\"", "tema": "conteudo"},
+    {"grupo": "Kall · Brand Metrics", "texto": "Medir em que etapa as pessoas se perdem: conhecem, consideram, compram e voltam", "esforco": "venda", "promessa": "vendas", "porque": "Saber onde o cliente se perde mostra onde investir. Pouca gente conhecendo pede alcance; muita gente conhecendo e pouca comprando pede outra coisa.", "metrica": "Etapa com maior perda identificada e atacada", "tema": "medicao"},
+    {"grupo": "Esteves · Menos achismo, mais dados", "texto": "Manter um diário de testes: o que foi tentado, o que se esperava e o que aconteceu", "esforco": "venda", "promessa": "vendas", "porque": "Sem registro, a empresa repete os mesmos testes e esquece o que aprendeu. O diário transforma tentativas em conhecimento.", "metrica": "Testes registrados e consultados no planejamento", "tema": "medicao"},
+    {"grupo": "Rackham · Rethinking the Sales Force", "texto": "Medir quantos orçamentos viram venda e quanto tempo leva para fechar", "esforco": "venda", "promessa": "vendas", "porque": "Com esses dois números, fica claro se o problema é ter poucos contatos ou converter mal. Cada um pede uma ação diferente.", "metrica": "Taxa de conversão e prazo médio conhecidos todo mês", "tema": "medicao"},
+    {"grupo": "Wirtz · Services Marketing", "texto": "Permitir agendar ou pedir online a qualquer hora do dia", "esforco": "venda", "promessa": "pessoas", "porque": "Muita gente decide fora do horário comercial. Se não dá para agendar na hora, a vontade passa ou vai para quem permite.", "metrica": "Pedidos e agendamentos feitos fora do horário", "tema": "distribuicao"},
+    {"grupo": "Wirtz · Services Marketing", "texto": "Montar um conselho com 5 clientes que se reúne a cada semestre para opinar", "esforco": "marca", "promessa": "valor", "porque": "Clientes ouvidos com regularidade apontam problemas cedo e se sentem parte da marca. Viram defensores e indicam mais.", "metrica": "Duas reuniões por ano com ideias aplicadas", "tema": "relacao"},
+    {"grupo": "Lehmann & Winer · Marketing Driven Revenue Growth", "texto": "Oferecer o próximo serviço lógico logo depois que o cliente tem um resultado", "esforco": "venda", "promessa": "vendas", "porque": "O momento mais fácil de vender de novo é logo depois de uma entrega bem-sucedida. A oferta certa nessa hora parece ajuda, e não pressão.", "metrica": "Vendas de um segundo serviço para clientes atuais", "tema": "venda"},
+    {"grupo": "Kholmatova · Design Systems", "texto": "Reunir os arquivos da marca numa pasta única com as versões finais e acesso para toda a equipe", "esforco": "marca", "promessa": "pessoas", "porque": "Quando cada um usa uma versão antiga do logo ou das cores, a marca se fragmenta. Uma fonte única garante que todos usem o certo.", "metrica": "Equipe e fornecedores usando só os arquivos oficiais", "tema": "presenca"},
+    {"grupo": "Weber · Brand Seduction", "texto": "Criar uma marca sensorial no espaço: um cheiro, uma música ou um material que seja sempre o mesmo", "esforco": "marca", "promessa": "pessoas", "porque": "Sensações ficam na memória sem esforço e ligam o momento à marca. Repetidas sempre iguais, viram um ativo da marca.", "metrica": "Clientes reconhecem o ambiente pelos sentidos", "tema": "experiencia"},
+    {"grupo": "Fournier · Strong Brands, Strong Relationships", "texto": "Lembrar com o cliente os marcos da relação: um ano de parceria, um resultado alcançado", "esforco": "marca", "promessa": "valor", "porque": "Relações se fortalecem com momentos celebrados juntos. Lembrar um marco mostra que a empresa acompanha a história do cliente.", "metrica": "Clientes respondem e comentam os marcos lembrados", "tema": "relacao"},
+    {"grupo": "Ries & Trout · Posicionamento", "texto": "Escolher a palavra que a marca quer ocupar na cabeça do cliente e repeti-la em tudo", "esforco": "marca", "promessa": "valor", "porque": "A memória guarda poucas associações por marca. Repetir sempre a mesma palavra faz dela o atalho para lembrar a empresa.", "metrica": "Clientes usam a palavra escolhida para descrever a marca", "tema": "posicionamento"},
+    {"grupo": "Wirtz · Services Marketing", "texto": "Levar o serviço até o cliente: atendimento em casa, na empresa dele ou online", "esforco": "venda", "promessa": "pessoas", "porque": "Ir até o cliente amplia o alcance para quem não pode ou não quer se deslocar. É outra forma de ser fácil de comprar.", "metrica": "Vendas vindas do atendimento fora do espaço próprio", "tema": "distribuicao"},
+    {"grupo": "Pink · Saber vender é da natureza humana", "texto": "Preparar 3 histórias curtas de clientes para contar nas conversas de venda", "esforco": "venda", "promessa": "vendas", "porque": "Histórias são lembradas e convencem mais do que argumentos. Ter as histórias certas na ponta da língua ajuda o cliente a se ver no resultado.", "metrica": "Histórias usadas nas conversas e citadas pelos clientes", "tema": "venda"},
+    {"grupo": "Anderson · TED Talks", "texto": "Escolher um porta-voz da marca e treiná-lo para entrevistas, eventos e vídeos", "esforco": "marca", "promessa": "pessoas", "porque": "Uma pessoa reconhecível dá rosto à marca e facilita convites e imprensa. Treinada, ela comunica a mensagem sempre do mesmo jeito.", "metrica": "Aparições do porta-voz em mídia e eventos", "tema": "equipe"},
+    {"grupo": "Wirtz · Services Marketing", "texto": "Oferecer uma condição melhor nos horários e dias de pouco movimento", "esforco": "venda", "promessa": "vendas", "porque": "Horário vazio é receita perdida. Uma vantagem nos períodos fracos distribui a procura e aumenta o faturamento sem baixar o preço do pico.", "metrica": "Ocupação maior nos horários fracos", "tema": "preco"},
+    {"grupo": "Simon · Confessions of the Pricing Man", "texto": "Cobrar mais pelo atendimento urgente ou fora do horário", "esforco": "venda", "promessa": "valor", "porque": "Quem precisa com urgência valoriza mais e aceita pagar por isso. Cobrar a urgência à parte aumenta a margem e protege a agenda.", "metrica": "Receita extra com atendimentos urgentes", "tema": "preco"},
+    {"grupo": "Nagle · Estratégia e tática de preços", "texto": "Separar do preço principal os extras que hoje saem de graça e cobrar por eles", "esforco": "venda", "promessa": "valor", "porque": "Extras dados de graça ensinam que não têm valor. Separar o que é básico do que é adicional aumenta a margem e deixa o preço de entrada competitivo.", "metrica": "Receita vinda dos extras cobrados à parte", "tema": "preco"}
+  );
+
+  // ===== Biblioteca ampliada (5ª parte): vieses de decisão, auditoria, relação com o cliente e retorno por canal =====
+  window.GangPresets.acoes.push(
+    {"grupo": "Shotton · The Choice Factory", "texto": "Ordenar listas de benefícios com o mais forte primeiro e o segundo mais forte por último", "esforco": "marca", "promessa": "valor", "porque": "As pessoas lembram mais do começo e do fim de uma lista. O meio é onde os argumentos se perdem.", "metrica": "Clientes citam os benefícios principais ao descrever a empresa", "tema": "conteudo"},
+    {"grupo": "Shotton · The Choice Factory", "texto": "Pedir a alguém de fora que explique o serviço com as próprias palavras e reescrever a comunicação a partir disso", "esforco": "marca", "promessa": "valor", "porque": "Quem conhece demais o próprio negócio esquece o que o cliente não sabe. A explicação de alguém de fora mostra as palavras que o público entende.", "metrica": "Comunicação reescrita com as palavras de quem é de fora", "tema": "conteudo"},
+    {"grupo": "Shotton · The Choice Factory", "texto": "Personalizar as mensagens aos clientes com o nome e um detalhe da história de cada um", "esforco": "venda", "promessa": "vendas", "porque": "As pessoas prestam atenção quando algo fala delas. Mensagens com nome e contexto recebem mais resposta do que mensagens genéricas.", "metrica": "Taxa de resposta maior nas mensagens personalizadas", "tema": "relacao"},
+    {"grupo": "Shotton · The Choice Factory", "texto": "Oferecer um brinde ou um extra em vez de baixar o preço", "esforco": "venda", "promessa": "valor", "porque": "Algo grátis chama mais atenção do que o mesmo valor em desconto, e não ensina o cliente a esperar preço menor.", "metrica": "Vendas fechadas sem desconto no preço", "tema": "preco"},
+    {"grupo": "Shotton · The Choice Factory", "texto": "Anunciar em conteúdos e lugares ligados ao momento em que o cliente pensa no assunto", "esforco": "marca", "promessa": "pessoas", "porque": "O mesmo anúncio funciona melhor quando aparece num contexto que combina com ele. O ambiente prepara a pessoa para a mensagem.", "metrica": "Resposta maior nos anúncios em contexto relacionado", "tema": "anuncio"},
+    {"grupo": "Shotton · A ilusão da escolha", "texto": "Dar aos clientes um nome de grupo que eles tenham orgulho de ter, como \"cliente fundador\" ou \"membro\"", "esforco": "marca", "promessa": "valor", "porque": "Quando a pessoa se vê como parte de um grupo, passa a agir de acordo com ele. Um rótulo positivo aumenta a lealdade e a indicação.", "metrica": "Clientes usam o nome do grupo e indicam mais", "tema": "relacao"},
+    {"grupo": "Shotton · The Choice Factory", "texto": "Antes de aprovar o plano ou a campanha, pedir a alguém que defenda o contrário", "esforco": "marca", "promessa": "valor", "porque": "Quem criou a ideia procura motivos para confirmar que ela funciona. Alguém do contra encontra os furos antes que custem dinheiro.", "metrica": "Riscos encontrados antes de cada lançamento", "tema": "medicao"},
+    {"grupo": "Paper · Anatomia de uma auditoria estratégica de marca", "texto": "Fazer uma vez por ano a auditoria da marca: tudo o que ela diz e faz, comparado com o que os clientes percebem", "esforco": "marca", "promessa": "valor", "porque": "A marca muda aos poucos sem ninguém perceber. Uma revisão anual completa mostra o que se afastou da estratégia e o que precisa voltar.", "metrica": "Relatório anual com 3 correções feitas", "tema": "medicao"},
+    {"grupo": "Paper · Redefinindo a relevância da marca", "texto": "Dizer sempre o que a empresa é junto com o nome: \"Lume, clínica de estética\"", "esforco": "marca", "promessa": "pessoas", "porque": "Para ser lembrada na hora certa, a marca precisa estar ligada à categoria na memória. O nome sozinho não ensina o que a empresa faz.", "metrica": "Pessoas que ouvem o nome sabem o que a empresa faz", "tema": "presenca"},
+    {"grupo": "Reichheld · O único número que você precisa para crescer", "texto": "Ligar em até 48 horas para quem deu nota baixa na pesquisa e resolver o motivo", "esforco": "venda", "promessa": "vendas", "porque": "Clientes insatisfeitos falam mal e vão embora em silêncio. Resolver rápido recupera parte deles e mostra o que precisa mudar.", "metrica": "Clientes de nota baixa contatados e problemas resolvidos", "tema": "relacao"},
+    {"grupo": "Minto · O Princípio da Pirâmide", "texto": "Começar todo relatório e e-mail importante ao cliente pela conclusão, em uma frase", "esforco": "venda", "promessa": "valor", "porque": "O cliente tem pouco tempo e lê o começo. A conclusão primeiro mostra o valor do trabalho e facilita a decisão.", "metrica": "Relatórios e e-mails abrindo pela conclusão", "tema": "relacao"},
+    {"grupo": "Aaker · Brand Relevance", "texto": "Medir quanto a mais o cliente aceita pagar pela marca em comparação com a média do mercado", "esforco": "marca", "promessa": "valor", "porque": "O preço a mais que a marca sustenta é uma das melhores medidas da força dela. Se esse valor cresce, a marca está ficando mais forte.", "metrica": "Diferença de preço contra a média medida a cada semestre", "tema": "medicao"},
+    {"grupo": "Benun · The Creative Professional’s Guide to Money", "texto": "Calcular quais clientes dão lucro e quais dão prejuízo, contando o tempo gasto com cada um", "esforco": "venda", "promessa": "valor", "porque": "Alguns clientes faturam bem e consomem tanto tempo que dão prejuízo. Saber disso mostra quem atrair mais e o que renegociar.", "metrica": "Clientes classificados por lucro, não só por faturamento", "tema": "preco"},
+    {"grupo": "Binet & Field · Marketing na era da responsabilidade", "texto": "Antes de falar de uma causa ou propósito, conferir se a empresa já pratica o que vai dizer", "esforco": "marca", "promessa": "valor", "porque": "Falar de uma causa sem praticar gera desconfiança e pode virar crise. A prática vem antes da comunicação.", "metrica": "Toda causa comunicada com provas de prática", "tema": "posicionamento"},
+    {"grupo": "Johnson · Designing with the Mind in Mind", "texto": "Deixar o botão de contato ou de compra sempre visível no celular, em todas as páginas", "esforco": "venda", "promessa": "vendas", "porque": "No celular, quem precisa rolar para achar o contato desiste. Um botão sempre à vista encurta o caminho até o pedido.", "metrica": "Mais contatos vindos do celular", "tema": "experiencia"},
+    {"grupo": "Jeffery · Data-Driven Marketing", "texto": "Comparar o retorno de cada canal a cada trimestre e passar verba do pior para o melhor", "esforco": "venda", "promessa": "vendas", "porque": "A verba costuma ficar onde sempre esteve, e não onde rende mais. Rever com números a cada trimestre faz o mesmo dinheiro trazer mais clientes.", "metrica": "Verba redistribuída com base no retorno de cada canal", "tema": "medicao"}
+  );
+
   // tema de cada ação: organiza a biblioteca e o menu do título por tipo de atividade
   window.GangPresets.temas = { presenca: 'Identidade e presença', posicionamento: 'Posicionamento', conteudo: 'Conteúdo e site', anuncio: 'Anúncios e campanhas',
     venda: 'Vendas e propostas', preco: 'Preço e ofertas', relacao: 'Relacionamento e indicação', experiencia: 'Experiência do cliente', distribuicao: 'Onde comprar e canais', equipe: 'Equipe', medicao: 'Medição e pesquisa' };
@@ -631,6 +724,25 @@
   window.GangPresets.modelos.tecnologia.acoes.push(...[[7, "ajuda", "Avisar o cliente que está usando pouco o serviço e oferecer ajuda antes que ele cancele"]].map(daBiblioteca));
   window.GangPresets.modelos.loja_online.acoes.push(...[[6, "ajuda", "Anunciar de novo para quem visitou o site ou falou com a empresa e não comprou"]].map(daBiblioteca));
   window.GangPresets.modelos.beleza.acoes.push(...[[6, "ajuda", "Agradecer por escrito cada indicação recebida e contar o que aconteceu com ela"]].map(daBiblioteca));
+  window.GangPresets.modelos.servicos.acoes.push(...[[6, "ajuda", "Combinar por escrito, no início, o que a empresa faz, o que o cliente faz e como os dois vão saber que deu certo"], [8, "ajuda", "Listar as 5 objeções mais comuns e escrever uma resposta curta e honesta para cada uma"]].map(daBiblioteca));
+  window.GangPresets.modelos.varejo.acoes.push(...[[5, "ajuda", "Montar o catálogo no WhatsApp Business com fotos, preços e descrição de cada serviço ou produto"], [10, "ajuda", "Fazer degustação, demonstração ou teste no ponto de venda"]].map(daBiblioteca));
+  window.GangPresets.modelos.b2b.acoes.push(...[[6, "ajuda", "Pedir uma conversa por ano com o dono ou o diretor de cada cliente B2B importante"], [12, "ajuda", "Publicar uma vez por mês uma opinião forte da empresa sobre um tema do setor"]].map(daBiblioteca));
+  window.GangPresets.modelos.saude.acoes.push(...[[5, "ajuda", "Revisar o ambiente onde o cliente espera e é atendido: limpeza, luz, som, conforto e a marca à vista"]].map(daBiblioteca));
+  window.GangPresets.modelos.alimentacao.acoes.push(...[[4, "ajuda", "Montar o catálogo no WhatsApp Business com fotos, preços e descrição de cada serviço ou produto"], [9, "ajuda", "Fazer degustação, demonstração ou teste no ponto de venda"]].map(daBiblioteca));
+  window.GangPresets.modelos.loja_online.acoes.push(...[[3, "ajuda", "Garantir que quem procura o nome da marca encontre a empresa em primeiro lugar"]].map(daBiblioteca));
+  window.GangPresets.modelos.educacao.acoes.push(...[[6, "ajuda", "Criar um programa de indicação com benefício para quem indica e para quem chega"]].map(daBiblioteca));
+  window.GangPresets.modelos.beleza.acoes.push(...[[5, "ajuda", "Descobrir de quanto em quanto tempo o cliente volta a comprar e lembrá-lo perto da data"]].map(daBiblioteca));
+  window.GangPresets.modelos.tecnologia.acoes.push(...[[5, "ajuda", "Listar as 5 objeções mais comuns e escrever uma resposta curta e honesta para cada uma"]].map(daBiblioteca));
+  window.GangPresets.modelos.servicos.acoes.push(...[[9, "ajuda", "Oferecer o próximo serviço lógico logo depois que o cliente tem um resultado"]].map(daBiblioteca));
+  window.GangPresets.modelos.saude.acoes.push(...[[4, "ajuda", "Permitir agendar ou pedir online a qualquer hora do dia"], [10, "ajuda", "Oferecer uma condição melhor nos horários e dias de pouco movimento"]].map(daBiblioteca));
+  window.GangPresets.modelos.beleza.acoes.push(...[[3, "ajuda", "Permitir agendar ou pedir online a qualquer hora do dia"], [9, "ajuda", "Oferecer o próximo serviço lógico logo depois que o cliente tem um resultado"]].map(daBiblioteca));
+  window.GangPresets.modelos.varejo.acoes.push(...[[7, "ajuda", "Criar uma marca sensorial no espaço: um cheiro, uma música ou um material que seja sempre o mesmo"]].map(daBiblioteca));
+  window.GangPresets.modelos.b2b.acoes.push(...[[9, "ajuda", "Montar um conselho com 5 clientes que se reúne a cada semestre para opinar"]].map(daBiblioteca));
+  window.GangPresets.modelos.tecnologia.acoes.push(...[[6, "ajuda", "Ensinar o cliente a ficar melhor naquilo que ele quer fazer com o produto ou serviço"]].map(daBiblioteca));
+  window.GangPresets.modelos.educacao.acoes.push(...[[8, "ajuda", "Ensinar o cliente a ficar melhor naquilo que ele quer fazer com o produto ou serviço"]].map(daBiblioteca));
+  window.GangPresets.modelos.servicos.acoes.push(...[[12, "ajuda", "Fazer uma vez por ano a auditoria da marca: tudo o que ela diz e faz, comparado com o que os clientes percebem"]].map(daBiblioteca));
+  window.GangPresets.modelos.loja_online.acoes.push(...[[2, "ajuda", "Deixar o botão de contato ou de compra sempre visível no celular, em todas as páginas"]].map(daBiblioteca));
+  window.GangPresets.modelos.b2b.acoes.push(...[[14, "ajuda", "Calcular quais clientes dão lucro e quais dão prejuízo, contando o tempo gasto com cada um"]].map(daBiblioteca));
   const P0 = window.GangPresets;
   // toda medida de sucesso começa com letra maiúscula
   const maiuscula = (t) => (t ? t.charAt(0).toUpperCase() + t.slice(1) : t);
@@ -698,6 +810,30 @@
     "Cuidar dos detalhes da identidade em todo lugar.": { promessa: "pessoas", acoes: ["Testar o logo bem pequeno, como ícone de celular, carimbo e bordado, e criar uma versão reduzida se precisar", "Conferir o contraste das cores da marca em textos e botões para que todos consigam ler", "Limitar a marca a 2 fontes e definir tamanhos fixos para títulos e textos", "Escrever o glossário da marca: as palavras que a marca usa e as que evita"] },
     "Proteger a reputação da marca.": { promessa: "valor", acoes: ["Combinar como responder a uma crise: quem fala, o que diz e em quanto tempo", "Acompanhar uma vez por semana o que falam da marca na internet", "Responder todas as avaliações atuais, inclusive as negativas, e definir quem responde as novas"] },
     "Lucrar mais com o que já se vende.": { promessa: "valor", acoes: ["Calcular a margem de cada serviço ou produto e concentrar a comunicação nos mais lucrativos", "Revisar o portfólio: separar o que traz clientes, o que dá lucro e o que só ocupa espaço", "Oferecer formas de pagamento que facilitem a compra sem baixar o preço: parcelas, assinatura ou entrada menor", "Calcular quanto custa conquistar um cliente e quanto ele deixa ao longo do tempo"] },
+  });
+
+  // focos novos (3ª parte)
+  window.GangPresets.focos.push({"grupo": "Vendas", "texto": "Vender melhor nas conversas."}, {"grupo": "Marca", "texto": "Ganhar confiança de quem ainda não conhece a marca."}, {"grupo": "Mídia", "texto": "Ser lembrada perto do momento da compra."}, {"grupo": "Medição", "texto": "Saber de onde vem o crescimento."});
+  Object.assign(window.GangPresets.modelosFoco, {
+    "Vender melhor nas conversas.": { promessa: "vendas", acoes: ["Listar as 5 objeções mais comuns e escrever uma resposta curta e honesta para cada uma", "Ouvir uma conversa de venda por semana e anotar uma coisa para melhorar", "Pedir ao cliente novo um primeiro passo bem pequeno antes do compromisso maior", "Escrever o perfil do cliente ideal e os sinais de quem não é cliente para a empresa"] },
+    "Ganhar confiança de quem ainda não conhece a marca.": { promessa: "pessoas", acoes: ["Admitir na comunicação uma limitação honesta da empresa, ao lado do que ela faz de melhor", "Mostrar o trabalho que o cliente não vê: o cuidado e as etapas por trás do resultado", "Inscrever a empresa em prêmios, rankings ou certificações respeitados no setor", "Fazer uma ação com outra marca respeitada pelo mesmo público"] },
+    "Ser lembrada perto do momento da compra.": { promessa: "pessoas", acoes: ["Anunciar perto de onde o cliente compra: mídia de rua, rádio local ou ponto de venda", "Garantir que quem procura o nome da marca encontre a empresa em primeiro lugar", "Colocar os ativos da marca no balcão, no caixa e na entrega, onde o cliente está decidindo", "Usar o melhor conteúdo da marca como anúncio para quem ainda não segue a empresa"] },
+    "Saber de onde vem o crescimento.": { promessa: "vendas", acoes: ["Separar o crescimento em três fontes: clientes novos, clientes que voltam e quanto cada um gasta", "Separar o que aumentou por causa da marca do que aumentou por causa de preço, época ou promoção", "Calcular quantas vendas uma campanha precisa trazer para se pagar, antes de lançar", "Acompanhar a cada trimestre 3 números de saúde da marca, além das vendas"] },
+  });
+
+  // focos novos (4ª parte)
+  window.GangPresets.focos.push({"grupo": "Vendas", "texto": "Fazer cada cliente comprar mais vezes e mais coisas."}, {"grupo": "Medição", "texto": "Decidir com dados, e não com achismo."}, {"grupo": "Preço", "texto": "Cobrar melhor pelo que já se entrega."});
+  Object.assign(window.GangPresets.modelosFoco, {
+    "Fazer cada cliente comprar mais vezes e mais coisas.": { promessa: "vendas", acoes: ["Oferecer o próximo serviço lógico logo depois que o cliente tem um resultado", "Descobrir de quanto em quanto tempo o cliente volta a comprar e lembrá-lo perto da data", "Ensinar o cliente a ficar melhor naquilo que ele quer fazer com o produto ou serviço", "Lembrar com o cliente os marcos da relação: um ano de parceria, um resultado alcançado"] },
+    "Decidir com dados, e não com achismo.": { promessa: "vendas", acoes: ["Medir em que etapa as pessoas se perdem: conhecem, consideram, compram e voltam", "Medir quantos orçamentos viram venda e quanto tempo leva para fechar", "Manter um diário de testes: o que foi tentado, o que se esperava e o que aconteceu", "Anotar o que deu certo sem ter sido planejado e decidir se vira parte da estratégia"] },
+    "Cobrar melhor pelo que já se entrega.": { promessa: "valor", acoes: ["Separar do preço principal os extras que hoje saem de graça e cobrar por eles", "Cobrar mais pelo atendimento urgente ou fora do horário", "Oferecer uma condição melhor nos horários e dias de pouco movimento", "Mostrar o preço em parcelas pequenas do dia ou do uso, quando fizer sentido"] },
+  });
+
+  // focos novos (5ª parte)
+  window.GangPresets.focos.push({"grupo": "Comunicação", "texto": "Escrever para o cliente entender e lembrar."}, {"grupo": "Serviço", "texto": "Transformar clientes insatisfeitos em clientes que ficam."});
+  Object.assign(window.GangPresets.modelosFoco, {
+    "Escrever para o cliente entender e lembrar.": { promessa: "valor", acoes: ["Pedir a alguém de fora que explique o serviço com as próprias palavras e reescrever a comunicação a partir disso", "Ordenar listas de benefícios com o mais forte primeiro e o segundo mais forte por último", "Dizer sempre o que a empresa é junto com o nome: \"Lume, clínica de estética\"", "Reescrever os textos para falar com o cliente (\"você\"), e não sobre a empresa (\"nós\")"] },
+    "Transformar clientes insatisfeitos em clientes que ficam.": { promessa: "vendas", acoes: ["Ligar em até 48 horas para quem deu nota baixa na pesquisa e resolver o motivo", "Criar uma regra para reclamações: responder no mesmo dia e resolver em até 48 horas", "Dar à equipe um valor ou uma solução que ela pode usar na hora para resolver uma reclamação, sem pedir autorização", "Personalizar as mensagens aos clientes com o nome e um detalhe da história de cada um"] },
   });
 
   // ===== Detalhes de cada ação: passos, tamanho (P/M/G), quando medir (dias), setores, o que vem antes e mensagem pronta =====
@@ -3070,6 +3206,883 @@
     ]
    }
   });
+  Object.assign(window.GangPresets.detalhes, {
+   "Listar as 5 objeções mais comuns e escrever uma resposta curta e honesta para cada uma": {
+    "tam": "P",
+    "ler": 60,
+    "passos": [
+     "Anotar as objeções das últimas 20 conversas",
+     "Escolher as 5 mais repetidas",
+     "Escrever uma resposta curta para cada",
+     "Treinar com quem vende"
+    ]
+   },
+   "Ouvir uma conversa de venda por semana e anotar uma coisa para melhorar": {
+    "tam": "P",
+    "ler": 90,
+    "passos": [
+     "Pedir autorização para gravar ou anotar a conversa",
+     "Ouvir com quem vendeu",
+     "Anotar um acerto e uma melhoria",
+     "Testar a melhoria na semana seguinte"
+    ]
+   },
+   "Escrever o perfil do cliente ideal e os sinais de quem não é cliente para a empresa": {
+    "tam": "P",
+    "ler": 90,
+    "passos": [
+     "Listar os 5 melhores clientes que a empresa já teve",
+     "Anotar o que eles têm em comum",
+     "Listar os sinais de quem dá problema",
+     "Usar a lista para escolher onde investir"
+    ]
+   },
+   "Pedir uma conversa por ano com o dono ou o diretor de cada cliente B2B importante": {
+    "tam": "P",
+    "ler": 365,
+    "passos": [
+     "Listar os clientes que mais faturam",
+     "Identificar quem decide em cada um",
+     "Preparar uma pauta sobre o negócio deles",
+     "Marcar a conversa e registrar próximos passos"
+    ],
+    "setores": [
+     "b2b",
+     "servicos"
+    ]
+   },
+   "Combinar por escrito, no início, o que a empresa faz, o que o cliente faz e como os dois vão saber que deu certo": {
+    "tam": "P",
+    "ler": 90,
+    "passos": [
+     "Listar o que a empresa entrega",
+     "Listar o que depende do cliente",
+     "Escrever como o resultado será medido",
+     "Revisar com o cliente e guardar"
+    ],
+    "setores": [
+     "servicos",
+     "b2b"
+    ]
+   },
+   "Admitir na comunicação uma limitação honesta da empresa, ao lado do que ela faz de melhor": {
+    "tam": "P",
+    "ler": 90,
+    "passos": [
+     "Escolher uma limitação real e pequena",
+     "Mostrar por que ela existe",
+     "Ligar a limitação a uma qualidade",
+     "Usar no site e na proposta"
+    ]
+   },
+   "Pedir ao cliente novo um primeiro passo bem pequeno antes do compromisso maior": {
+    "tam": "P",
+    "ler": 60,
+    "passos": [
+     "Listar o caminho até a compra",
+     "Escolher um primeiro passo de 5 minutos",
+     "Oferecer esse passo em todos os contatos",
+     "Medir quantos seguem adiante"
+    ]
+   },
+   "Mostrar o trabalho que o cliente não vê: o cuidado e as etapas por trás do resultado": {
+    "tam": "M",
+    "ler": 90,
+    "passos": [
+     "Listar as etapas que o cliente não vê",
+     "Escolher as 3 mais impressionantes",
+     "Mostrar em fotos, vídeos ou no relatório",
+     "Incluir no site e na entrega"
+    ]
+   },
+   "Trocar avisos que reforçam o erro (\"muitos clientes esquecem…\") por mensagens sobre o que a maioria faz certo": {
+    "tam": "P",
+    "ler": 60,
+    "passos": [
+     "Listar avisos e lembretes atuais",
+     "Marcar os que citam o erro de muitos",
+     "Reescrever pelo que a maioria faz",
+     "Comparar a resposta antes e depois"
+    ]
+   },
+   "Mostrar o preço em parcelas pequenas do dia ou do uso, quando fizer sentido": {
+    "tam": "P",
+    "ler": 60,
+    "passos": [
+     "Calcular o valor por dia, mês ou uso",
+     "Escolher a forma mais fácil de entender",
+     "Mostrar junto ao preço cheio",
+     "Comparar o fechamento antes e depois"
+    ]
+   },
+   "Usar preço redondo nos serviços premium e reservar os quebrados para as ofertas": {
+    "tam": "P",
+    "ler": 90,
+    "passos": [
+     "Separar serviços premium e ofertas",
+     "Arredondar os preços premium",
+     "Manter os quebrados só nas ofertas",
+     "Acompanhar fechamento e ticket"
+    ]
+   },
+   "Revisar o ambiente onde o cliente espera e é atendido: limpeza, luz, som, conforto e a marca à vista": {
+    "tam": "M",
+    "ler": 60,
+    "passos": [
+     "Sentar no lugar do cliente por 15 minutos",
+     "Anotar o que incomoda e o que falta",
+     "Corrigir os 3 pontos mais visíveis",
+     "Colocar os ativos da marca no espaço"
+    ],
+    "setores": [
+     "servicos",
+     "varejo"
+    ]
+   },
+   "Revisar o site com uma regra: cada página com um objetivo e uma chamada principal": {
+    "tam": "M",
+    "ler": 60,
+    "passos": [
+     "Listar as páginas do site",
+     "Escrever o objetivo de cada uma",
+     "Deixar uma chamada principal por página",
+     "Cortar o que não ajuda no objetivo"
+    ]
+   },
+   "Mostrar a página inicial por 5 segundos a 5 pessoas e perguntar o que a empresa faz": {
+    "tam": "P",
+    "ler": 30,
+    "passos": [
+     "Mostrar a página por 5 segundos",
+     "Perguntar o que a empresa faz e para quem",
+     "Anotar as respostas",
+     "Ajustar o título e a imagem principal"
+    ]
+   },
+   "Colocar legenda em todos os vídeos da marca": {
+    "tam": "P",
+    "ler": 30,
+    "passos": [
+     "Listar os vídeos publicados",
+     "Gerar e revisar as legendas",
+     "Usar a fonte e as cores da marca",
+     "Legendar todos os vídeos novos"
+    ]
+   },
+   "Descobrir de quanto em quanto tempo o cliente volta a comprar e lembrá-lo perto da data": {
+    "tam": "M",
+    "ler": 90,
+    "passos": [
+     "Ver o intervalo médio entre compras",
+     "Separar clientes perto da data",
+     "Escrever um lembrete útil",
+     "Enviar e medir quem volta"
+    ],
+    "modelo": "Oi, [nome]! Já faz [tempo] desde o seu último [serviço]. Normalmente é a hora de [motivo]. Quer que eu veja um horário para você?"
+   },
+   "Fazer uma ação com outra marca respeitada pelo mesmo público": {
+    "tam": "M",
+    "ler": 90,
+    "passos": [
+     "Listar marcas que o seu cliente já admira",
+     "Escolher uma que combine e não concorra",
+     "Criar uma ação útil para os dois públicos",
+     "Medir os contatos de cada lado"
+    ]
+   },
+   "Antes de lançar algo com o nome da marca, conferir se combina com o que a marca representa": {
+    "tam": "P",
+    "ler": 90,
+    "passos": [
+     "Escrever o que a marca representa hoje",
+     "Comparar o lançamento com isso",
+     "Perguntar a 5 clientes se faz sentido",
+     "Decidir o nome com base nas respostas"
+    ]
+   },
+   "Ao atualizar a identidade, manter os elementos que as pessoas já reconhecem": {
+    "tam": "P",
+    "ler": 180,
+    "passos": [
+     "Listar os elementos que as pessoas reconhecem",
+     "Decidir o que fica e o que muda",
+     "Atualizar mantendo os reconhecidos",
+     "Testar o reconhecimento antes de lançar"
+    ]
+   },
+   "Mostrar cuidado com as pessoas, e não só competência: gestos, histórias e respostas humanas": {
+    "tam": "M",
+    "ler": 90,
+    "passos": [
+     "Listar gestos de cuidado que já acontecem",
+     "Contar 3 deles em histórias reais",
+     "Revisar respostas para soar humano",
+     "Perguntar aos clientes como descrevem a marca"
+    ]
+   },
+   "Testar o nome da marca ou do serviço: é fácil de dizer, de escrever e de achar na busca?": {
+    "tam": "P",
+    "ler": 30,
+    "passos": [
+     "Falar o nome para 10 pessoas",
+     "Pedir que escrevam como entenderam",
+     "Buscar o nome no Google e nos mapas",
+     "Ajustar grafia ou criar atalhos de busca"
+    ]
+   },
+   "Concentrar a presença numa região ou num nicho onde a empresa possa ser a mais lembrada": {
+    "tam": "M",
+    "ler": 180,
+    "passos": [
+     "Ver onde estão os melhores clientes",
+     "Escolher a região ou o nicho principal",
+     "Concentrar ali a verba e a presença",
+     "Medir a participação nesse recorte"
+    ]
+   },
+   "Escrever com cada área o que ela faz, no dia a dia, para cumprir a promessa da marca": {
+    "tam": "M",
+    "ler": 90,
+    "passos": [
+     "Explicar a promessa a cada área",
+     "Pedir 3 comportamentos de cada uma",
+     "Escrever e combinar com todos",
+     "Revisar no encontro do mês"
+    ]
+   },
+   "Usar o melhor conteúdo da marca como anúncio para quem ainda não segue a empresa": {
+    "tam": "P",
+    "ler": 60,
+    "passos": [
+     "Escolher os 3 conteúdos com mais resposta",
+     "Ajustar para os primeiros segundos",
+     "Anunciar para quem não segue a marca",
+     "Medir alcance e novos contatos"
+    ]
+   },
+   "Anunciar perto de onde o cliente compra: mídia de rua, rádio local ou ponto de venda": {
+    "tam": "M",
+    "ler": 90,
+    "passos": [
+     "Mapear onde o cliente passa antes de comprar",
+     "Escolher um meio local com bom alcance",
+     "Criar a peça com os ativos da marca",
+     "Perguntar aos novos clientes se viram"
+    ],
+    "setores": [
+     "varejo",
+     "servicos"
+    ]
+   },
+   "Garantir que quem procura o nome da marca encontre a empresa em primeiro lugar": {
+    "tam": "P",
+    "ler": 30,
+    "passos": [
+     "Buscar o nome da marca no Google e nos mapas",
+     "Ver quem aparece antes",
+     "Corrigir perfil, site e cadastros",
+     "Anunciar no próprio nome se for preciso"
+    ]
+   },
+   "Publicar uma vez por mês uma opinião forte da empresa sobre um tema do setor": {
+    "tam": "M",
+    "ler": 180,
+    "passos": [
+     "Listar temas em que a empresa discorda do comum",
+     "Escolher um por mês",
+     "Escrever com argumentos e exemplos",
+     "Publicar e levar para a imprensa do setor"
+    ],
+    "setores": [
+     "servicos",
+     "b2b"
+    ]
+   },
+   "Inscrever a empresa em prêmios, rankings ou certificações respeitados no setor": {
+    "tam": "M",
+    "ler": 180,
+    "passos": [
+     "Listar prêmios e certificações respeitados",
+     "Escolher os que a empresa pode ganhar",
+     "Preparar a inscrição com provas",
+     "Usar o resultado no site e na proposta"
+    ]
+   },
+   "Montar o catálogo no WhatsApp Business com fotos, preços e descrição de cada serviço ou produto": {
+    "tam": "P",
+    "ler": 60,
+    "passos": [
+     "Listar os itens mais procurados",
+     "Fotografar no padrão da marca",
+     "Cadastrar com preço e descrição",
+     "Usar o link do catálogo nas respostas"
+    ],
+    "setores": [
+     "varejo",
+     "servicos"
+    ]
+   },
+   "Fazer degustação, demonstração ou teste no ponto de venda": {
+    "tam": "M",
+    "ler": 60,
+    "passos": [
+     "Escolher o item mais fácil de experimentar",
+     "Definir dia, hora e quem conduz",
+     "Preparar o espaço com a marca",
+     "Contar quantos experimentaram e compraram"
+    ],
+    "setores": [
+     "varejo"
+    ]
+   },
+   "Colocar os ativos da marca no balcão, no caixa e na entrega, onde o cliente está decidindo": {
+    "tam": "P",
+    "ler": 60,
+    "passos": [
+     "Listar onde o cliente decide e paga",
+     "Ver o que aparece ali hoje",
+     "Colocar cor, símbolo e frase da marca",
+     "Conferir a aplicação uma vez por mês"
+    ],
+    "setores": [
+     "varejo"
+    ]
+   },
+   "Criar um programa de indicação com benefício para quem indica e para quem chega": {
+    "tam": "M",
+    "ler": 90,
+    "passos": [
+     "Definir o benefício de quem indica e de quem chega",
+     "Criar um jeito simples de indicar",
+     "Avisar os clientes satisfeitos",
+     "Medir indicações e vendas"
+    ],
+    "modelo": "Oi, [nome]! Se você conhece alguém que precisa de [serviço], é só me passar o contato. Quem chega por você ganha [benefício] e você ganha [benefício]. Obrigado pela confiança!"
+   },
+   "Calcular quantas vendas uma campanha precisa trazer para se pagar, antes de lançar": {
+    "tam": "P",
+    "ler": 60,
+    "passos": [
+     "Somar o custo total da campanha",
+     "Ver a margem de cada venda",
+     "Dividir custo pela margem",
+     "Comparar com as vendas que vieram"
+    ]
+   },
+   "Separar o que aumentou por causa da marca do que aumentou por causa de preço, época ou promoção": {
+    "tam": "M",
+    "ler": 180,
+    "passos": [
+     "Listar o que mudou no período",
+     "Comparar com o mesmo período do ano anterior",
+     "Separar efeitos de preço e promoção",
+     "Anotar o que sobra para a marca"
+    ]
+   },
+   "Acompanhar a cada trimestre 3 números de saúde da marca, além das vendas": {
+    "tam": "M",
+    "ler": 365,
+    "passos": [
+     "Escolher lembrança, preferência e preço médio",
+     "Definir como medir cada um",
+     "Medir a cada trimestre",
+     "Comparar com as vendas no encontro"
+    ]
+   },
+   "Antes de decidir algo grande, listar o que falta saber e medir só o que pode mudar a decisão": {
+    "tam": "P",
+    "ler": 90,
+    "passos": [
+     "Escrever a decisão a tomar",
+     "Listar as dúvidas que podem mudar a escolha",
+     "Escolher a mais importante",
+     "Medir de forma simples antes de decidir"
+    ]
+   },
+   "Revisar a cada semestre como os clientes mudaram: o que compram, por qual canal e por quê": {
+    "tam": "M",
+    "ler": 180,
+    "passos": [
+     "Comparar vendas por produto e canal",
+     "Ouvir 5 clientes sobre o que mudou",
+     "Anotar as 3 mudanças principais",
+     "Ajustar o plano do semestre"
+    ]
+   },
+   "Separar o crescimento em três fontes: clientes novos, clientes que voltam e quanto cada um gasta": {
+    "tam": "P",
+    "ler": 90,
+    "passos": [
+     "Contar clientes novos do período",
+     "Contar quantos voltaram",
+     "Calcular o ticket médio",
+     "Escolher a fonte com mais espaço"
+    ]
+   }
+  });
+  Object.assign(window.GangPresets.detalhes, {
+   "Descrever o negócio pela necessidade que ele resolve, e não pelo produto que vende": {
+    "tam": "P",
+    "ler": 90,
+    "passos": [
+     "Escrever o que a empresa vende hoje",
+     "Perguntar: que necessidade isso resolve?",
+     "Reescrever a frase do negócio por essa necessidade",
+     "Listar novas ofertas que a frase permite"
+    ]
+   },
+   "Mostrar o produto ou serviço em uso do ponto de vista de quem compra: a mão, o lugar, o momento dele": {
+    "tam": "M",
+    "ler": 60,
+    "passos": [
+     "Escolher o momento de uso mais desejado",
+     "Fotografar ou filmar do ponto de vista do cliente",
+     "Usar em anúncios e no site",
+     "Comparar com as peças antigas"
+    ]
+   },
+   "Ensinar o cliente a ficar melhor naquilo que ele quer fazer com o produto ou serviço": {
+    "tam": "M",
+    "ler": 90,
+    "passos": [
+     "Listar o que o cliente quer conseguir fazer",
+     "Escolher 3 dicas que fazem diferença",
+     "Entregar em vídeo, guia ou conversa",
+     "Perguntar o resultado depois de um mês"
+    ]
+   },
+   "Antes de criar um serviço novo, abrir uma lista de espera e ver quantos se inscrevem": {
+    "tam": "P",
+    "ler": 60,
+    "passos": [
+     "Descrever a oferta em uma página",
+     "Abrir a lista de espera",
+     "Divulgar para clientes e redes",
+     "Decidir o lançamento pelo número de inscritos"
+    ]
+   },
+   "Escolher com cuidado as pessoas, os lugares e as situações que aparecem nas peças da marca": {
+    "tam": "P",
+    "ler": 90,
+    "passos": [
+     "Descrever quem a marca quer parecer",
+     "Listar pessoas e lugares que combinam",
+     "Revisar as fotos atuais",
+     "Trocar o que passa a ideia errada"
+    ]
+   },
+   "Observar concorrentes mais simples e mais baratos que estão crescendo e decidir como responder": {
+    "tam": "P",
+    "ler": 180,
+    "passos": [
+     "Listar concorrentes novos e mais baratos",
+     "Ver quais clientes eles atraem",
+     "Decidir: ignorar, competir ou criar versão própria",
+     "Rever a decisão no semestre"
+    ]
+   },
+   "Anotar o que deu certo sem ter sido planejado e decidir se vira parte da estratégia": {
+    "tam": "P",
+    "ler": 180,
+    "passos": [
+     "Revisar os resultados dos últimos meses",
+     "Marcar o que funcionou sem ser planejado",
+     "Entender por que funcionou",
+     "Decidir se entra no plano"
+    ]
+   },
+   "Na negociação, perguntar o motivo por trás de cada pedido do cliente antes de responder": {
+    "tam": "P",
+    "ler": 90,
+    "passos": [
+     "Anotar cada pedido feito na negociação",
+     "Perguntar o que ele resolve para o cliente",
+     "Propor outro jeito de atender ao motivo",
+     "Registrar o que foi combinado"
+    ]
+   },
+   "Dar uma recomendação útil já na primeira conversa, antes de fechar qualquer coisa": {
+    "tam": "P",
+    "ler": 60,
+    "passos": [
+     "Preparar 3 recomendações rápidas por tipo de cliente",
+     "Dar uma delas na primeira conversa",
+     "Não condicionar a ajuda à compra",
+     "Medir quantas conversas avançam"
+    ]
+   },
+   "Ler em voz alta os textos principais da marca e cortar frases longas e palavras difíceis": {
+    "tam": "P",
+    "ler": 30,
+    "passos": [
+     "Escolher site, proposta e apresentação",
+     "Ler cada texto em voz alta",
+     "Cortar o que travar ou soar difícil",
+     "Pedir que alguém de fora leia"
+    ]
+   },
+   "Reescrever os textos para falar com o cliente (\"você\"), e não sobre a empresa (\"nós\")": {
+    "tam": "P",
+    "ler": 30,
+    "passos": [
+     "Contar \"nós\" e \"você\" na página inicial",
+     "Reescrever as frases sobre a empresa",
+     "Começar pelo que o cliente ganha",
+     "Aplicar no site e na proposta"
+    ]
+   },
+   "Medir em que etapa as pessoas se perdem: conhecem, consideram, compram e voltam": {
+    "tam": "M",
+    "ler": 180,
+    "passos": [
+     "Estimar quantos conhecem a marca",
+     "Medir quantos pedem orçamento",
+     "Medir quantos compram e voltam",
+     "Atacar a etapa com maior perda"
+    ]
+   },
+   "Manter um diário de testes: o que foi tentado, o que se esperava e o que aconteceu": {
+    "tam": "P",
+    "ler": 180,
+    "passos": [
+     "Criar uma planilha simples de testes",
+     "Registrar hipótese e métrica antes",
+     "Anotar o resultado depois",
+     "Rever o diário a cada trimestre"
+    ]
+   },
+   "Medir quantos orçamentos viram venda e quanto tempo leva para fechar": {
+    "tam": "P",
+    "ler": 90,
+    "passos": [
+     "Listar os orçamentos do mês",
+     "Marcar quais viraram venda",
+     "Calcular a taxa e o prazo médio",
+     "Acompanhar mês a mês"
+    ]
+   },
+   "Permitir agendar ou pedir online a qualquer hora do dia": {
+    "tam": "M",
+    "ler": 60,
+    "passos": [
+     "Escolher uma ferramenta de agenda ou pedido",
+     "Configurar com os horários reais",
+     "Colocar o link em todos os canais",
+     "Contar os pedidos fora do horário"
+    ],
+    "setores": [
+     "servicos",
+     "varejo"
+    ]
+   },
+   "Montar um conselho com 5 clientes que se reúne a cada semestre para opinar": {
+    "tam": "M",
+    "ler": 180,
+    "passos": [
+     "Convidar 5 clientes de perfis diferentes",
+     "Preparar 3 perguntas por reunião",
+     "Registrar e aplicar uma ideia",
+     "Contar a eles o que mudou"
+    ],
+    "setores": [
+     "servicos",
+     "b2b"
+    ]
+   },
+   "Oferecer o próximo serviço lógico logo depois que o cliente tem um resultado": {
+    "tam": "P",
+    "ler": 60,
+    "passos": [
+     "Mapear qual serviço costuma vir depois de cada um",
+     "Definir o momento certo de oferecer",
+     "Escrever a oferta ligada ao resultado",
+     "Medir quantos compram o segundo"
+    ],
+    "modelo": "Oi, [nome]! Que bom que [resultado]. Muitos clientes, depois disso, fazem [próximo serviço] para [benefício]. Quer que eu te mostre como seria no seu caso?"
+   },
+   "Reunir os arquivos da marca numa pasta única com as versões finais e acesso para toda a equipe": {
+    "tam": "P",
+    "ler": 30,
+    "passos": [
+     "Juntar logos, cores, fontes e modelos",
+     "Apagar as versões antigas",
+     "Organizar por tipo de uso",
+     "Enviar o link à equipe e aos fornecedores"
+    ]
+   },
+   "Criar uma marca sensorial no espaço: um cheiro, uma música ou um material que seja sempre o mesmo": {
+    "tam": "M",
+    "ler": 90,
+    "passos": [
+     "Escolher um sentido para trabalhar",
+     "Definir o cheiro, som ou material",
+     "Aplicar em todos os pontos físicos",
+     "Manter sem trocar por um ano"
+    ],
+    "setores": [
+     "varejo",
+     "servicos"
+    ]
+   },
+   "Lembrar com o cliente os marcos da relação: um ano de parceria, um resultado alcançado": {
+    "tam": "P",
+    "ler": 180,
+    "passos": [
+     "Registrar a data de início de cada cliente",
+     "Definir os marcos que vale celebrar",
+     "Escrever uma mensagem para cada marco",
+     "Enviar perto da data"
+    ],
+    "modelo": "Oi, [nome]! Hoje faz [tempo] que a gente trabalha junto. Nesse tempo, [resultado ou lembrança]. Obrigado pela confiança!"
+   },
+   "Escolher a palavra que a marca quer ocupar na cabeça do cliente e repeti-la em tudo": {
+    "tam": "P",
+    "ler": 180,
+    "passos": [
+     "Listar palavras que o cliente associa à categoria",
+     "Escolher uma que a marca possa ter",
+     "Usar em título, site e atendimento",
+     "Medir na pesquisa se ela aparece"
+    ]
+   },
+   "Levar o serviço até o cliente: atendimento em casa, na empresa dele ou online": {
+    "tam": "G",
+    "ler": 90,
+    "passos": [
+     "Ver quais serviços podem ser feitos fora",
+     "Definir preço e logística",
+     "Testar com 5 clientes",
+     "Divulgar se funcionar"
+    ],
+    "setores": [
+     "servicos"
+    ]
+   },
+   "Preparar 3 histórias curtas de clientes para contar nas conversas de venda": {
+    "tam": "P",
+    "ler": 60,
+    "passos": [
+     "Escolher 3 clientes com perfis diferentes",
+     "Escrever problema, virada e resultado",
+     "Ensaiar contar em 1 minuto",
+     "Usar conforme o perfil de quem ouve"
+    ]
+   },
+   "Escolher um porta-voz da marca e treiná-lo para entrevistas, eventos e vídeos": {
+    "tam": "M",
+    "ler": 180,
+    "passos": [
+     "Escolher quem fala bem e representa a marca",
+     "Escrever as 3 mensagens principais",
+     "Treinar com gravações",
+     "Buscar as primeiras oportunidades"
+    ]
+   },
+   "Oferecer uma condição melhor nos horários e dias de pouco movimento": {
+    "tam": "P",
+    "ler": 60,
+    "passos": [
+     "Ver os horários e dias mais vazios",
+     "Definir uma vantagem só para eles",
+     "Divulgar para quem tem horário flexível",
+     "Comparar a ocupação"
+    ],
+    "setores": [
+     "servicos",
+     "varejo"
+    ]
+   },
+   "Cobrar mais pelo atendimento urgente ou fora do horário": {
+    "tam": "P",
+    "ler": 90,
+    "passos": [
+     "Definir o que é urgente ou fora do horário",
+     "Escolher o acréscimo",
+     "Deixar a regra clara na tabela",
+     "Acompanhar quantos pedem"
+    ],
+    "setores": [
+     "servicos"
+    ]
+   },
+   "Separar do preço principal os extras que hoje saem de graça e cobrar por eles": {
+    "tam": "M",
+    "ler": 90,
+    "passos": [
+     "Listar tudo o que é entregue hoje",
+     "Separar o essencial dos extras",
+     "Dar preço a cada extra",
+     "Apresentar na próxima tabela"
+    ]
+   }
+  });
+  Object.assign(window.GangPresets.detalhes, {
+   "Ordenar listas de benefícios com o mais forte primeiro e o segundo mais forte por último": {
+    "tam": "P",
+    "ler": 30,
+    "passos": [
+     "Listar os benefícios usados no site e na proposta",
+     "Escolher os 2 mais fortes",
+     "Colocar um no início e outro no fim",
+     "Cortar os fracos do meio"
+    ]
+   },
+   "Pedir a alguém de fora que explique o serviço com as próprias palavras e reescrever a comunicação a partir disso": {
+    "tam": "P",
+    "ler": 30,
+    "passos": [
+     "Explicar o serviço a 3 pessoas de fora",
+     "Pedir que cada uma explique de volta",
+     "Anotar as palavras que usaram",
+     "Reescrever o site com essas palavras"
+    ]
+   },
+   "Personalizar as mensagens aos clientes com o nome e um detalhe da história de cada um": {
+    "tam": "P",
+    "ler": 60,
+    "passos": [
+     "Registrar um detalhe de cada cliente na ficha",
+     "Usar nome e detalhe nas mensagens",
+     "Comparar com mensagens genéricas",
+     "Manter o que responder melhor"
+    ]
+   },
+   "Oferecer um brinde ou um extra em vez de baixar o preço": {
+    "tam": "P",
+    "ler": 60,
+    "passos": [
+     "Escolher um extra que custa pouco e vale muito",
+     "Oferecer no lugar do desconto",
+     "Deixar claro o valor do extra",
+     "Comparar o fechamento e a margem"
+    ]
+   },
+   "Anunciar em conteúdos e lugares ligados ao momento em que o cliente pensa no assunto": {
+    "tam": "P",
+    "ler": 60,
+    "passos": [
+     "Listar conteúdos e lugares ligados ao tema",
+     "Escolher onde o anúncio vai aparecer",
+     "Comparar com anúncios sem contexto",
+     "Concentrar a verba onde render mais"
+    ]
+   },
+   "Dar aos clientes um nome de grupo que eles tenham orgulho de ter, como \"cliente fundador\" ou \"membro\"": {
+    "tam": "P",
+    "ler": 90,
+    "passos": [
+     "Escolher um nome de grupo que dê orgulho",
+     "Dar a ele um sinal visível (cartão, selo)",
+     "Usar o nome nas mensagens",
+     "Medir indicações do grupo"
+    ]
+   },
+   "Antes de aprovar o plano ou a campanha, pedir a alguém que defenda o contrário": {
+    "tam": "P",
+    "ler": 60,
+    "passos": [
+     "Escolher uma pessoa para fazer o papel do contra",
+     "Apresentar o plano a ela",
+     "Anotar as objeções",
+     "Ajustar o que fizer sentido"
+    ]
+   },
+   "Fazer uma vez por ano a auditoria da marca: tudo o que ela diz e faz, comparado com o que os clientes percebem": {
+    "tam": "G",
+    "ler": 365,
+    "passos": [
+     "Juntar peças, site, atendimento e proposta",
+     "Comparar com a estratégia da marca",
+     "Comparar com a pesquisa com clientes",
+     "Escolher 3 correções para o ano"
+    ]
+   },
+   "Dizer sempre o que a empresa é junto com o nome: \"Lume, clínica de estética\"": {
+    "tam": "P",
+    "ler": 90,
+    "passos": [
+     "Escrever uma frase curta com nome e categoria",
+     "Usar no perfil, assinatura e anúncios",
+     "Usar ao atender o telefone e o WhatsApp",
+     "Testar com quem não conhece a marca"
+    ]
+   },
+   "Ligar em até 48 horas para quem deu nota baixa na pesquisa e resolver o motivo": {
+    "tam": "P",
+    "ler": 60,
+    "passos": [
+     "Marcar as notas de 0 a 6 da pesquisa",
+     "Ligar em até 48 horas",
+     "Ouvir e resolver o motivo",
+     "Registrar o problema para não repetir"
+    ],
+    "modelo": "Oi, [nome]! Vi sua resposta na nossa pesquisa e queria entender melhor o que não foi bom. Podemos conversar 10 minutos? Quero resolver isso com você."
+   },
+   "Começar todo relatório e e-mail importante ao cliente pela conclusão, em uma frase": {
+    "tam": "P",
+    "ler": 30,
+    "passos": [
+     "Escrever a conclusão em uma frase",
+     "Colocar no início do texto",
+     "Organizar os argumentos logo abaixo",
+     "Cortar o que não sustenta a conclusão"
+    ]
+   },
+   "Medir quanto a mais o cliente aceita pagar pela marca em comparação com a média do mercado": {
+    "tam": "M",
+    "ler": 180,
+    "passos": [
+     "Levantar o preço médio do mercado",
+     "Comparar com o preço da empresa",
+     "Ver se a taxa de fechamento se mantém",
+     "Acompanhar a diferença a cada semestre"
+    ]
+   },
+   "Calcular quais clientes dão lucro e quais dão prejuízo, contando o tempo gasto com cada um": {
+    "tam": "M",
+    "ler": 180,
+    "passos": [
+     "Anotar o tempo gasto com cada cliente",
+     "Calcular o custo desse tempo",
+     "Comparar com o que cada um paga",
+     "Decidir o que renegociar ou atrair"
+    ],
+    "setores": [
+     "servicos",
+     "b2b"
+    ]
+   },
+   "Antes de falar de uma causa ou propósito, conferir se a empresa já pratica o que vai dizer": {
+    "tam": "P",
+    "ler": 180,
+    "passos": [
+     "Listar as causas que a marca quer defender",
+     "Anotar o que a empresa já faz por cada uma",
+     "Comunicar só as que têm prova",
+     "Planejar a prática das outras"
+    ]
+   },
+   "Deixar o botão de contato ou de compra sempre visível no celular, em todas as páginas": {
+    "tam": "P",
+    "ler": 30,
+    "passos": [
+     "Abrir o site no celular",
+     "Ver onde fica o contato em cada página",
+     "Fixar um botão de contato na tela",
+     "Comparar os contatos antes e depois"
+    ]
+   },
+   "Comparar o retorno de cada canal a cada trimestre e passar verba do pior para o melhor": {
+    "tam": "P",
+    "ler": 90,
+    "passos": [
+     "Somar gasto e clientes de cada canal",
+     "Calcular o custo por cliente de cada um",
+     "Tirar parte da verba do pior",
+     "Colocar no melhor e medir de novo"
+    ]
+   }
+  });
   window.GangPresets.acoes.forEach((x) => { const d = window.GangPresets.detalhes[x.texto]; if (d) Object.assign(x, d); });
   window.GangPresets.SETORES = { servicos: 'Serviços', varejo: 'Varejo e lojas', b2b: 'Indústria e B2B' };
   window.GangPresets.TAMANHO = { P: ['P', 'até 1 hora', 1], M: ['M', 'até 1 dia', 2], G: ['G', 'uma semana ou mais', 4] };
@@ -3118,6 +4131,9 @@
   ];
   window.GangPresets.MANUTENCAO.push("Reativar quem não compra há mais de 6 meses com uma mensagem útil e um motivo para voltar", "Marcar o próximo atendimento antes de o cliente ir embora");
   window.GangPresets.MANUTENCAO.push("Agradecer por escrito cada indicação recebida e contar o que aconteceu com ela", "Acompanhar de perto o cliente nas 2 primeiras semanas, quando o risco de desistência é maior", "Avisar o cliente que está usando pouco o serviço e oferecer ajuda antes que ele cancele", "Fazer uma revisão de resultados a cada trimestre com cada cliente grande");
+  window.GangPresets.MANUTENCAO.push("Descobrir de quanto em quanto tempo o cliente volta a comprar e lembrá-lo perto da data", "Pedir uma conversa por ano com o dono ou o diretor de cada cliente B2B importante");
+  window.GangPresets.MANUTENCAO.push("Lembrar com o cliente os marcos da relação: um ano de parceria, um resultado alcançado", "Ensinar o cliente a ficar melhor naquilo que ele quer fazer com o produto ou serviço", "Montar um conselho com 5 clientes que se reúne a cada semestre para opinar");
+  window.GangPresets.MANUTENCAO.push("Ligar em até 48 horas para quem deu nota baixa na pesquisa e resolver o motivo", "Começar todo relatório e e-mail importante ao cliente pela conclusão, em uma frase");
   window.GangPresets.acoes.forEach((x) => { if (window.GangPresets.MANUTENCAO.includes(x.texto)) x.manutencao = true; });
   ['Cuidar do pós-venda: o cliente que volta e indica.', 'Entregar a promessa em cada atendimento.', 'Trazer de volta quem já comprou.'].forEach((f) => { if (window.GangPresets.modelosFoco[f]) window.GangPresets.modelosFoco[f].manutencao = true; });
 
@@ -3135,4 +4151,56 @@
     "Coletar e publicar depoimentos com nomes e números reais",
     "Pedir avaliação no Google aos clientes satisfeitos recentes e deixar o link pronto para os próximos"
   ];
+  // ===== Diagnóstico, estratégia e narrativa ampliados: causas, situações de compra, condições, vereditos e tom de voz =====
+  (() => {
+    const P = window.GangPresets;
+    P.causas.push(...g("Lembrança", ["Pouca gente lembra da marca quando precisa do serviço", "A marca é lembrada só por quem já é cliente", "A marca não está ligada às situações em que o cliente compra", "A comunicação fala do produto, e não do momento em que ele é usado"]), ...g("Ativos e identidade", ["Cada peça usa cores e estilos diferentes", "O logo e as cores mudaram várias vezes nos últimos anos", "O nome é difícil de dizer, escrever ou achar na busca", "A marca não tem um elemento próprio que as pessoas reconheçam"]), ...g("Fácil de comprar", ["A empresa é difícil de achar no Google e nos mapas", "O cliente demora para conseguir resposta ou orçamento", "Poucos canais de venda: o cliente precisa ir até a empresa", "Horários e formas de pagamento limitados"]), ...g("Valor e preço", ["Descontos frequentes ensinaram o cliente a esperar promoção", "O preço aparece antes do valor", "Faltam provas do resultado: casos, números e depoimentos", "A empresa tenta atender todo tipo de cliente"]), ...g("Experiência", ["O atendimento muda muito de pessoa para pessoa", "A promessa da venda não é cumprida na entrega", "Não há pós-venda: o cliente some depois da compra", "Reclamações demoram para ser resolvidas"]), ...g("Investimento", ["O investimento em comunicação é menor do que o tamanho da marca pede", "Só há anúncios de oferta, nada que construa a marca", "Ninguém mede de onde vêm os clientes"]));
+    P.motivadores.push(...g("Por que compram", ["Indicação de alguém de confiança", "Rapidez para resolver", "Clareza no preço e no que está incluído", "Experiência boa da última vez", "Formas de pagamento", "Horário e disponibilidade", "Segurança de que vai dar certo"]));
+    P.discriminadores.push(...g("O que diferencia", ["Atendimento feito por especialista", "Garantia por escrito", "Prazo menor que a média", "Acompanhamento depois da compra", "Estrutura ou tecnologia própria", "Item ou serviço exclusivo", "Mais avaliações e provas públicas", "Presença em mais lugares e canais"]));
+    P.notam.push(...g("Como a marca é vista hoje", ["Avaliações boas no Google", "Atendimento difícil de conseguir", "Promoções o tempo todo", "Marca nova, pouco conhecida"]));
+    P.acreditam.push(...g("Como a marca é vista hoje", ["Caro, mas vale o preço", "Bom, mas difícil de contratar", "Tradicional e confiável", "Moderna, mas pouco testada"]));
+    P.sentem.push(...g("Como a marca é vista hoje", ["Indiferença", "Admiração", "Pressão na hora da venda", "Acolhimento"]));
+    P.notar.push(...g("O que a comunicação busca", ["os resultados dos clientes", "o atendimento rápido", "o preço claro", "a marca na hora da compra"]));
+    P.acreditar.push(...g("O que a comunicação busca", ["no atendimento", "no prazo", "no preço justo pelo que entrega", "na segurança da escolha"]));
+    P.sentir.push(...g("O que a comunicação busca", ["alívio", "cuidado", "admiração", "pertencimento"]));
+    P.situacoes.push(...g("Serviços", ["Preciso resolver antes de uma data importante", "Já tentei resolver sozinho e não deu", "Mudou a lei, a regra ou o prazo", "Vou crescer e preciso de ajuda"]), ...g("Varejo e alimentação", ["Estou passando perto e quero algo agora", "Vou receber visitas", "Quero comemorar algo", "Estou com pressa e quero algo prático", "Fim de semana em família"]), ...g("Saúde e beleza", ["Tenho um evento chegando", "Senti um incômodo", "Quero cuidar de mim", "Mudou a estação do ano"]), ...g("Empresas", ["O fornecedor atual falhou", "Começou o planejamento do ano", "Chegou verba nova", "Vou contratar ou trocar a equipe", "Uma auditoria ou fiscalização vai acontecer"]));
+    P.prioridades.push(...g("Onde jogar", ["Clientes que compram com frequência", "Um nicho em que a empresa já tem casos de sucesso", "Clientes que chegam por indicação", "Os canais que já trazem mais clientes"]));
+    P.deixados.push(...g("O que deixar", ["Clientes que exigem muito e pagam pouco", "Serviços que a equipe não entrega bem", "Canais caros sem retorno medido", "Projetos fora da especialidade"]));
+    P.condicoes.push(...g("Clientes", ["Existe um grupo grande o bastante de clientes com essa necessidade", "Os clientes percebem a diferença e conseguem explicá-la", "O cliente decide por mais do que o preço"]), ...g("Concorrência", ["Nenhum concorrente forte ocupa essa posição", "Os concorrentes não conseguem responder só baixando o preço"]), ...g("Empresa", ["A empresa tem margem para investir em marca todo mês", "A equipe consegue manter o padrão de atendimento", "A empresa atende mais clientes sem perder qualidade"]), ...g("Canais", ["O cliente compra pelos canais onde a marca está"]));
+    P.verificacoes.push(...g("Como verificar", ["Lembrança espontânea na pesquisa", "Clientes novos por mês", "Recompra dos clientes", "Origem dos clientes (\"como nos conheceu?\")", "Desconto médio do mês"]));
+    P.naoFazer.push(...g("Atalhos que custam caro", ["Copiar a comunicação do concorrente", "Mudar de posicionamento a cada estação", "Responder a uma crise com silêncio", "Prometer prazo que não dá para cumprir", "Medir o sucesso por curtidas", "Dar desconto para fechar no fim do mês"]));
+    P.pauta.push(...g("Outros temas", ["Ações travadas e como destravar", "O que o cliente adiantou e o que entrou no lugar", "Avaliações e comentários novos sobre a marca"]));
+    P.respostasPeca.push(...g("Ajustes comuns", ["Uma ideia por peça: tire o que sobra.", "Coloque legenda no vídeo.", "Mostre a pessoa usando, do ponto de vista dela.", "Troque adjetivos por um fato ou um número."]));
+    P.objetivos.push(...g("Marca e vendas", [{"texto": "faturamento em 18 meses, com mais clientes novos e mais recompra", "nivel": "negocio"}, {"texto": "margem em 12 meses, vendendo com menos desconto", "nivel": "negocio"}, {"texto": "clientes novos por mês em 12 meses", "nivel": "negocio"}]), ...g("Lembrança e presença", [{"texto": "Ser a primeira marca lembrada da categoria na região", "nivel": "marca"}, {"texto": "Ser conhecida pela especialidade, e não pelo preço", "nivel": "marca"}, {"texto": "Ficar fácil de encontrar e de comprar em todos os canais", "nivel": "marca"}]), ...g("Identidade", [{"texto": "Uma mensagem central repetida em todos os pontos de contato", "nivel": "comunicacao"}]));
+    P.destaques.push(...g('Marca e vendas', ['+15%', '+25%', '+40%']));
+    P.vereditos.push(...g("No rumo", ["A recompra subiu: quem compra está voltando mais vezes.", "Mais pessoas chegaram por canais novos: a marca está mais fácil de encontrar."]));
+    P.vereditos.push(...g("Atenção", ["Muita gente pede orçamento, mas poucos fecham: o problema está na conversa de venda, não na marca.", "Os clientes novos vêm quase todos de um canal só: dependemos demais dele.", "As ações travaram por falta de tempo: o próximo mês terá menos ações e mais simples."]));
+    P.vereditos.push(...g("Ajuste", ["Os clientes não estão voltando: o pós-venda vira prioridade.", "A equipe não está aplicando a mensagem central: vamos treinar de novo."]));
+    P.notasVendas.push(...g("Venda mais", ["Os pedidos de orçamento continuaram, mas fechamos menos: vamos rever as objeções e a proposta.", "Um cliente grande saiu e pesou no mês; a base de clientes novos segue crescendo."]));
+    P.notasPessoas.push(...g("Para mais pessoas", ["Os clientes novos vieram quase todos de um canal; vamos abrir um segundo canal.", "A marca apareceu menos no período de pico; o calendário do próximo ano já prevê isso."]));
+    P.notasValor.push(...g("Com mais valor", ["Os extras que saíam de graça entraram na tabela; o ticket deve subir nos próximos meses.", "Clientes novos começam pelo serviço menor; a oferta do próximo serviço já está no plano."]));
+    P.tom.push(...g("Identidade", [{"texto": "Calma", "descricao": "Sem pressa, transmite controle"}, {"texto": "Alegre", "descricao": "Leve e otimista"}, {"texto": "Exigente", "descricao": "Alto padrão, atenção ao detalhe"}, {"texto": "Didática", "descricao": "Ensina e explica o porquê"}, {"texto": "Irreverente", "descricao": "Humor com propósito"}]));
+    P.tomDiz.push(...g("Didática e paciente", ["Vamos por partes: primeiro, o mais importante.", "Se ficar alguma dúvida, a gente explica de novo.", "Fazemos assim por um motivo: ele evita retrabalho para você."]), ...g("Cuidadosa e exclusiva", ["Atendemos poucos clientes por vez, para cuidar de cada um.", "Cada detalhe é conferido antes de chegar até você."]));
+    P.tomNuncaDiz.push(...g("Fria e burocrática", ["Conforme política da empresa, não é possível.", "Isso não é com este setor."]), ...g("Culpa o cliente", ["Você deveria ter avisado antes.", "Isso não é problema nosso."]));
+    // os menus do painel agrupam pelo rótulo: nenhum nome de autor aparece, só o tema (as ações já usam o tema)
+    const ROT = { 'Sharp & Romaniuk': 'Lembrança e presença', 'Binet & Field': 'Marca e vendas', JWT: 'Planejamento', 'Roger Martin': 'Escolhas estratégicas', Kapferer: 'Identidade', 'Ehrenberg-Bass': 'Crescimento', Berry: 'Serviço' };
+    Object.entries(P).forEach(([k, v]) => {
+      if (k === 'acoes' || !Array.isArray(v)) return;
+      v.forEach((x) => { if (x && typeof x === 'object' && x.grupo) { if (ROT[x.grupo]) x.grupo = ROT[x.grupo]; else if (x.grupo.includes('·')) x.grupo = 'Outras da biblioteca'; } });
+    });
+    // listas que eram de um grupo só: os itens de antes ficam em "Mais comuns", ao lado dos grupos novos
+    ['causas', 'situacoes', 'motivadores', 'discriminadores', 'notam', 'acreditam', 'sentem', 'notar', 'acreditar', 'sentir', 'prioridades', 'deixados', 'condicoes', 'verificacoes', 'tom']
+      .forEach((k) => (P[k] || []).forEach((x) => { if (Object.values(ROT).includes(x.grupo)) x.grupo = 'Mais comuns'; }));
+  })();
+  // ===== Métricas, pontos de contato e ativos ampliados (métricas de marketing, ativos distintivos e guias de identidade) =====
+  (() => {
+    const P = window.GangPresets;
+    P.metricas.push(...g("Clientes", [{"texto": "Recompra (clientes que voltaram a comprar)", "nivel": "negocio", "frequencia": "semestral"}, {"texto": "Valor do cliente ao longo do tempo", "nivel": "negocio", "frequencia": "semestral"}, {"texto": "Nota de recomendação (0 a 10)", "nivel": "marca", "frequencia": "semestral"}, {"texto": "Avaliações no Google (nota e quantidade)", "nivel": "marca", "frequencia": "mensal"}]), ...g("Vendas", [{"texto": "Taxa de fechamento dos orçamentos", "nivel": "negocio", "frequencia": "mensal"}, {"texto": "Tempo de resposta aos contatos", "nivel": "marketing", "frequencia": "mensal"}, {"texto": "Custo por cliente novo", "nivel": "marketing", "frequencia": "mensal"}]), ...g("Preço", [{"texto": "Desconto médio concedido", "nivel": "negocio", "frequencia": "mensal"}, {"texto": "Preço acima da média do mercado", "nivel": "marca", "frequencia": "semestral"}, {"texto": "Margem por serviço ou produto", "nivel": "negocio", "frequencia": "semestral"}]));
+    P.pontosContato.push(...g("Pontos de contato", ["Sinalização e placas", "Ambiente e sala de espera", "Balcão e caixa", "Sacola e embalagem de entrega", "Cardápio ou catálogo", "Apresentação comercial", "Proposta", "Nota fiscal, boleto e recibo", "Mensagens automáticas", "Crachá da equipe", "LinkedIn da empresa e dos sócios", "Aplicativos de entrega e marketplaces", "Vídeos e reels"]));
+    P.nomesAtivo.push(...g("Ativos", ["Logotipo (o nome desenhado)", "Mascote", "Embalagem", "Forma do produto", "Ilustração própria", "Estilo de foto", "Fonte própria", "Jingle", "Cheiro do ambiente"]));
+    P.nomesCor.push(...g("Cores", ["Terciária", "Texto", "Neutra", "Alerta"]));
+    P.usosFonte.push(...g("Usos", ["Legendas e textos pequenos", "Sinalização e fachada", "Botões e chamadas"]));
+    P.comQuem.push(...g("Equipe do cliente", ["Financeiro", "Operação", "Recepção", "Designer", "Fotógrafo ou videomaker"]));
+    ['pontosContato', 'nomesAtivo', 'nomesCor', 'usosFonte', 'metricas'].forEach((k) => P[k].forEach((x) => { if (['Identidade', 'Lembrança e presença', 'Marca e vendas', 'Planejamento'].includes(x.grupo) && k !== 'metricas') x.grupo = 'Mais comuns'; }));
+  })();
 })();
