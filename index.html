@@ -27,6 +27,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400&family=Inter:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
   <noscript><link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400&family=Inter:wght@400;500&display=swap" rel="stylesheet" /></noscript>
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+  <link rel="stylesheet" href="app/janela.css?v=5" />
   <link rel="preconnect" href="https://unpkg.com" />
   <!-- styles inline: the page paints without waiting for a second file -->
   <style>
@@ -1242,6 +1243,96 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
               <circle class="s4-dot" cx="200" cy="200" r="12"/>
             </g>
           </svg>
+          <!-- a janela do portal do cliente (fictício): um detalhe de cada passo, trocado pelo passo aberto ao lado (script logo abaixo da seção) -->
+          <div class="jv-palco">
+            <div class="jv">
+              <div class="jv-barra"><span class="jv-luzes"><i></i><i></i><i></i></span></div>
+              <div class="jv-app">
+                <div class="jv-menu">
+                  <img class="jv-logo" src="assets/logo.svg" alt="" width="62" height="12" />
+                  <div class="jv-emp"><span class="jv-marca">lume</span><div><b>Clínica Lume</b><small>Mês 1 de 18 do plano</small></div></div>
+                  <div class="jv-grupo">Acompanhamento</div>
+                  <div class="jv-link" style="--ico: var(--jv-i-flag)"><span class="jv-ico"></span><span>Plano</span></div>
+                  <div class="jv-link" style="--ico: var(--jv-i-listcheck)"><span class="jv-ico"></span><span>Ações</span></div>
+                  <div class="jv-link" style="--ico: var(--jv-i-chart)"><span class="jv-ico"></span><span>Resultados</span></div>
+                  <div class="jv-grupo">Sua marca</div>
+                  <div class="jv-link" data-passo="0" style="--ico: var(--jv-i-search)"><span class="jv-ico"></span><span>Diagnóstico</span></div>
+                  <div class="jv-link" data-passo="1" style="--ico: var(--jv-i-compass)"><span class="jv-ico"></span><span>Estratégia</span></div>
+                  <div class="jv-link" data-passo="2" style="--ico: var(--jv-i-book)"><span class="jv-ico"></span><span>Narrativa</span></div>
+                  <div class="jv-link" data-passo="3" style="--ico: var(--jv-i-palette)"><span class="jv-ico"></span><span>Identidade visual</span></div>
+                </div>
+                <div class="jv-area">
+                  <div class="jv-tela">
+                    <div><div class="jv-t">Diagnóstico</div><div class="jv-d">Como a marca é vista hoje, e onde crescer.</div></div>
+                    <div class="jv-dois">
+                      <div class="jv-card">
+                        <div class="jv-head"><span class="jv-quad" style="--ico: var(--jv-i-chart)"><span class="jv-ico"></span></span><span class="jv-card__t">Como a marca é lembrada</span></div>
+                        <div class="jv-barra2"><span>Lembram da marca</span><span class="jv-trilho"><i style="width:18%"></i></span><b>18%</b></div>
+                        <div class="jv-barra2"><span class="jv-sk" style="width:80%"></span><span class="jv-trilho"><i style="width:31%"></i></span><b>31%</b></div>
+                        <div class="jv-barra2"><span class="jv-sk" style="width:64%"></span><span class="jv-trilho"><i style="width:12%"></i></span><b>12%</b></div>
+                        <span class="jv-lbl">Pesquisa de partida · 74 respostas</span>
+                      </div>
+                      <div class="jv-card">
+                        <div class="jv-card__t">Onde crescer</div>
+                        <div>
+                          <div class="jv-linha"><div><span class="jv-sk" style="width:78%"></span><span class="jv-sk jv-sk--sub" style="width:46%"></span></div><span class="jv-chip jv-chip--ac">Oportunidade</span></div>
+                          <div class="jv-linha"><div><span class="jv-sk" style="width:66%"></span><span class="jv-sk jv-sk--sub" style="width:38%"></span></div><span class="jv-chip jv-chip--ac">Oportunidade</span></div>
+                          <div class="jv-linha"><div><span class="jv-sk" style="width:72%"></span><span class="jv-sk jv-sk--sub" style="width:52%"></span></div><span class="jv-chip">A corrigir</span></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="jv-tela">
+                    <div><div class="jv-t">Estratégia</div><div class="jv-d">Aonde a marca vai e os caminhos para chegar lá.</div></div>
+                    <div class="jv-card">
+                      <div class="jv-head"><span class="jv-quad" style="--ico: var(--jv-i-target)"><span class="jv-ico"></span></span><span class="jv-lbl">Meta do plano</span><span class="jv-chip">18 meses</span></div>
+                      <div class="jv-meta__v"><span class="jv-meta__n">+30%</span><span class="jv-meta__f">faturamento em 18 meses</span></div>
+                      <div class="jv-segs"><span class="ok"></span><span class="ok"></span><span class="ok"></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+                    </div>
+                    <div class="jv-dois" style="grid-template-columns:repeat(3,1fr)">
+                      <div class="jv-card jv-obj"><span class="jv-chip jv-chip--ok" style="justify-self:start">Vender mais</span><span class="jv-obj__n">+30%</span><span class="jv-sk" style="width:70%"></span></div>
+                      <div class="jv-card jv-obj"><span class="jv-chip jv-chip--ok" style="justify-self:start">Mais pessoas</span><span class="jv-obj__n">2×</span><span class="jv-sk" style="width:60%"></span></div>
+                      <div class="jv-card jv-obj"><span class="jv-chip jv-chip--ok" style="justify-self:start">Mais valor</span><span class="jv-obj__n">+15%</span><span class="jv-sk" style="width:76%"></span></div>
+                    </div>
+                  </div>
+                  <div class="jv-tela">
+                    <div><div class="jv-t">Narrativa</div><div class="jv-d">O que dizer e o tom de voz certo.</div></div>
+                    <div class="jv-dois">
+                      <div class="jv-card">
+                        <div class="jv-card__t">A marca diz</div>
+                        <div class="jv-frase"><span class="jv-sim">✓</span><span>Você sabe o preço antes de começar.</span></div>
+                        <div class="jv-frase"><span class="jv-sim">✓</span><span class="jv-sk" style="width:70%"></span></div>
+                        <div class="jv-frase"><span class="jv-sim">✓</span><span class="jv-sk" style="width:56%"></span></div>
+                      </div>
+                      <div class="jv-card">
+                        <div class="jv-card__t">Nunca diz</div>
+                        <div class="jv-frase jv-frase--nao"><span class="jv-nao">✕</span><span>O menor preço da região!</span></div>
+                        <div class="jv-frase"><span class="jv-nao">✕</span><span class="jv-sk" style="width:62%"></span></div>
+                        <div class="jv-frase"><span class="jv-nao">✕</span><span class="jv-sk" style="width:48%"></span></div>
+                      </div>
+                    </div>
+                    <div class="jv-card">
+                      <div class="jv-card__t">Tom de voz</div>
+                      <div class="jv-tom"><span>Próxima</span><span class="jv-tom__t"><i style="left:28%"></i></span><span>Formal</span></div>
+                      <div class="jv-tom"><span>Segura</span><span class="jv-tom__t"><i style="left:22%"></i></span><span>Ousada</span></div>
+                    </div>
+                  </div>
+                  <div class="jv-tela">
+                    <div><div class="jv-t">Identidade visual</div><div class="jv-d">Os elementos que tornam a marca fácil de reconhecer.</div></div>
+                    <div class="jv-card">
+                      <div class="jv-card__t">Cores</div>
+                      <div class="jv-cores"><div class="jv-sw"><span class="jv-sw__chip" style="background:#2F3B33"></span><b>Primária</b><dl><div><dt>HEX</dt><dd>#2F3B33</dd></div><div><dt>RGB</dt><dd>47, 59, 51</dd></div><div><dt>CMYK</dt><dd>20 0 14 77</dd></div><div><dt>Pantone</dt><dd>5605 C</dd></div></dl></div><div class="jv-sw"><span class="jv-sw__chip" style="background:#E9E2D6"></span><b>Fundo</b><dl><div><dt>HEX</dt><dd>#E9E2D6</dd></div><div><dt>RGB</dt><dd>233, 226, 214</dd></div><div><dt>CMYK</dt><dd>0 3 8 9</dd></div><div><dt>Pantone</dt><dd>Warm Gray 1 C</dd></div></dl></div><div class="jv-sw"><span class="jv-sw__chip" style="background:#C8693A"></span><b>Destaque</b><dl><div><dt>HEX</dt><dd>#C8693A</dd></div><div><dt>RGB</dt><dd>200, 105, 58</dd></div><div><dt>CMYK</dt><dd>0 48 71 22</dd></div><div><dt>Pantone</dt><dd>7585 C</dd></div></dl></div><div class="jv-sw"><span class="jv-sw__chip" style="background:#111111"></span><b>Texto</b><dl><div><dt>HEX</dt><dd>#111111</dd></div><div><dt>RGB</dt><dd>17, 17, 17</dd></div><div><dt>CMYK</dt><dd>0 0 0 93</dd></div><div><dt>Pantone</dt><dd>Black 6 C</dd></div></dl></div></div>
+                    </div>
+                    <div class="jv-dois">
+                      <div class="jv-card"><div class="jv-card__t">Logo em todos os tamanhos</div>
+                        <div class="jv-apl"><span class="jv-icone" style="width:76px;height:76px;font-size:26px">lume</span><span class="jv-icone" style="width:44px;height:44px;font-size:15px">lume</span><span class="jv-icone" style="width:26px;height:26px;font-size:9px">l</span></div></div>
+                      <div class="jv-card"><div class="jv-card__t">Tipografia</div><div class="jv-aa">Aa</div><span class="jv-sk" style="width:60%"></span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="s4__content">
@@ -1633,6 +1724,28 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
   <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js" defer></script>
+  <script>
+    // "O que fazemos": a janela mostra a tela do passo aberto (o acordeão é controlado pelo main.js; aqui só observamos)
+    (() => {
+      const media = document.querySelector('.s4__media'); const palco = document.querySelector('.jv-palco');
+      if (!media || !palco) return;
+      const telas = [...palco.querySelectorAll('.jv-tela')]; const links = [...palco.querySelectorAll('.jv-link[data-passo]')];
+      const accs = [...document.querySelectorAll('.s4 .acc')];
+      const mostra = () => {
+        let i = accs.findIndex((a) => a.classList.contains('is-open')); if (i < 0) i = 0;
+        telas.forEach((t, k) => t.classList.toggle('is-on', k === i));
+        links.forEach((l) => l.classList.toggle('is-on', +l.dataset.passo === i));
+      };
+      accs.forEach((a) => new MutationObserver(mostra).observe(a, { attributes: true, attributeFilter: ['class'] }));
+      mostra();
+      // a janela é maior que o quadrado (fica cortada, como um zoom): a escala segue o tamanho do quadrado
+      const celular = window.matchMedia('(max-width: 860px)');
+      const escala = () => { palco.style.setProperty('--jvk', (media.clientWidth / 1000 * (celular.matches ? 1.8 : 1.32)).toFixed(4)); };
+      celular.addEventListener('change', escala);
+      new ResizeObserver(escala).observe(media); escala();
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) palco.classList.add('is-viva');
+    })();
+  </script>
   <script src="i18n.js?v=10" defer></script> <!-- English version: runs before main.js -->
   <script src="main.min.js?v=159" defer></script> <!-- built from main.js by tools/minify.py; bump ?v= when it changes, so no browser keeps an old copy -->
 </body>
