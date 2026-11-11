@@ -496,8 +496,13 @@
     const o = objetivo[a.objetivo_id];
     const p = prazo(a);
     // o porquê da ação: o objetivo que ela serve, o momento de compra que ela mira e como saberemos que deu certo
+    // toda ação mostra a intenção: o objetivo cadastrado ou, sem ele, o resultado do plano que ela move
+    const OBJ_PROM = { vendas: 'Fazer quem já conhece a marca comprar mais e voltar', pessoas: 'Trazer mais pessoas para a marca', valor: 'Vender com mais valor, sem depender de desconto' };
+    const kProm = U.promessaDe(a);
+    const objTxt = U.cap(a.serve_para || (o ? o.titulo : '')) || (a.esforco === 'marca' && !a.promessa ? 'Fazer a marca ser lembrada na hora da compra' : OBJ_PROM[kProm]);
     const porque = [
-      ['Objetivo', U.cap(a.serve_para || (o ? o.titulo : '')) || null, o ? NIVEL[o.nivel] : null],
+      ['Objetivo', objTxt, o ? NIVEL[o.nivel] : U.PROMESSAS[kProm] || null],
+      ['Por que funciona', a.porque ? U.cap(a.porque) : null, null],
       ['Momento de compra', situacaoDe(a) ? 'Lembrarem da marca quando “' + situacaoDe(a) + '”' : null, null],
       ['Sucesso se', a.metrica_sucesso ? U.cap(a.metrica_sucesso) : null, null],
     ].filter(([, v]) => v);
@@ -549,9 +554,11 @@
         caixa);
     })() : null;
     const temDetalhe = porque.length || a.observacao || a.status === 'feita' || ps.length || a.modelo;
-    const corpo = temDetalhe && aberta ? el('div', 'task__body', passos, modelo,
+    // primeiro a intenção (objetivo, por que funciona, sucesso), depois o como (passos e mensagem pronta)
+    const corpo = temDetalhe && aberta ? el('div', 'task__body',
       porque.length ? el('dl', { class: 'why', 'aria-label': 'Por que esta ação' }, porque.map(([k, v, tag]) => el('div', 'why__item',
         el('dt', null, k, tag ? el('span', 'why__tag', tag) : null), el('dd', null, v)))) : null,
+      passos, modelo,
       a.observacao ? el('div', 'action__obs', D.consultor ? avatar(D.consultor) : null,
         el('div', null, el('p', 'action__obs-lbl', 'Observação ' + (D.consultor && D.consultor.nome ? 'de ' + D.consultor.nome.split(' ')[0] : 'do consultor')), el('p', 'action__obs-txt', a.observacao))) : null,
       a.status === 'feita' ? blocoResultado(a) : null, ajuda) : null;
