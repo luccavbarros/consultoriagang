@@ -40,7 +40,7 @@
               <div class="tela">
                 <div class="ui-card ui-meta">
                   <div class="ui-meta__head"><span class="ui-quad" style="--ico: var(--i-target)"><span class="ui-ico"></span></span><span class="ui-lbl">Meta do plano</span><span class="ui-chip">Mês 9 de 18</span></div>
-                  <div class="ui-meta__v"><span class="ui-meta__n">+40%</span><span class="ui-meta__f">faturamento em 18 meses</span></div>
+                  <div class="ui-meta__v"><span class="ui-meta__n">+30%</span><span class="ui-meta__f">faturamento em 18 meses</span></div>
                   <div class="ui-segs"><span class="ok"></span><span class="ok"></span><span class="ok"></span><span class="ok"></span><span class="ok"></span><span class="ok"></span><span class="ok"></span><span class="ok"></span><span class="now"></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
                   <div class="ui-ends"><span>Mar 26</span><span>Chegada · ago 27</span></div>
                 </div>
@@ -57,14 +57,14 @@
                 <div class="tela__h"><div class="tela__t">Resultados</div><div class="tela__d">O que o plano já devolveu e o que falta para a meta.</div></div>
                 <div style="display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start">
                   <div class="ui-card ui-graf">
-                    <div class="ui-graf__head"><div><div class="ui-graf__t">Faturamento mês a mês</div><div class="ui-graf__sub">Meta: +40% em 18 meses</div></div><div class="ui-abas"><span class="is-on">Faturamento</span><span>Clientes</span></div></div>
+                    <div class="ui-graf__head"><div><div class="ui-graf__t">Faturamento mês a mês</div><div class="ui-graf__sub">Meta: +30% em 18 meses</div></div><div class="ui-abas"><span class="is-on">Faturamento</span><span>Clientes</span></div></div>
                     <div class="ui-leg"><span><i></i>Realizado</span><span><i class="trac"></i>Esperado</span></div>
                     <svg id="graf" viewBox="0 0 470 236" width="470" height="236"></svg>
                   </div>
                   <div class="ui-card ui-pagou">
                     <div class="ui-graf__t">O plano pagou?</div>
                     <div><span class="ui-chip ui-chip--ok">Pagou</span></div>
-                    <div class="ui-pagou__v">+R$ 31.200</div>
+                    <div class="ui-pagou__v">+R$ 19.100</div>
                     <div class="ui-lbl">por mês, contra o ponto de partida</div>
                   </div>
                 </div>
@@ -172,21 +172,21 @@ e a senha que a GANG enviou para você.</p>
       // gráfico de faturamento (fictício), igual ao da plataforma: realizado contra o esperado, em % sobre o ponto de partida
       const g = document.getElementById('graf');
       if (g) {
-        const W = 470, L = 46, R = 420, T = 14, B = 206, max = 40;
-        const real = [0, 3.1, 5.4, 9.8, 12.6, 17.9, 21.4, 26.8, 31.2];
+        const W = 470, L = 46, R = 420, T = 14, B = 206, max = 30, meta = 30;
+        const real = [0, 1.8, 3.9, 6.2, 8.1, 10.9, 13.2, 16.4, 19.1];
         const x = (i) => L + (i * (R - L)) / 17; const y = (v) => B - (v / max) * (B - T);
         const ns = 'http://www.w3.org/2000/svg'; const mk = (t, a, txt) => { const e = document.createElementNS(ns, t); Object.entries(a).forEach(([k, v]) => e.setAttribute(k, v)); if (txt) e.textContent = txt; return e; };
-        [0, 10, 20, 30, 40].forEach((v) => {
+        [0, 10, 20, 30].forEach((v) => {
           g.append(mk('line', { x1: L, x2: R, y1: y(v), y2: y(v), stroke: '#2e2e2e', 'stroke-dasharray': v ? '3 4' : '' }));
           g.append(mk('text', { x: L - 10, y: y(v) + 4, 'text-anchor': 'end' }, v ? '+' + v + '%' : '0%'));
         });
         [['Mar 26', 0], ['Jul', 4], ['Nov', 8], ['Mar', 12], ['Ago 27', 17]].forEach(([t, i]) => g.append(mk('text', { x: x(i), y: B + 24, 'text-anchor': 'middle' }, t)));
-        g.append(mk('line', { x1: x(0), y1: y(0), x2: x(17), y2: y(max), stroke: '#737373', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }));
+        g.append(mk('line', { x1: x(0), y1: y(0), x2: x(17), y2: y(meta), stroke: '#737373', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }));
         const d = real.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ');
         g.append(mk('path', { d, fill: 'none', stroke: '#E5482A', 'stroke-width': 2.6, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
         const n = real.length - 1;
         g.append(mk('circle', { cx: x(n), cy: y(real[n]), r: 4.5, fill: '#E5482A', stroke: '#1c1c1c', 'stroke-width': 2 }));
-        g.append(mk('text', { x: x(n) + 10, y: y(real[n]) - 8, class: 'fim' }, '+31%'));
+        g.append(mk('text', { x: x(n) + 10, y: y(real[n]) - 8, class: 'fim' }, '+19%'));
       }
 
       const telas = [...document.querySelectorAll('.tela')];
