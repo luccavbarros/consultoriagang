@@ -482,7 +482,7 @@
 
     if (revAberta) out.splice(1, 0, formRevisao());
     const pcs = suasPecas(); if (pcs) out.push(pcs);
-    if (D.descartadas.length) out.push(el('p', 'box__note', 'O que decidimos não fazer está na ', el('a', { class: 'link', href: '#estrategia' }, 'Estratégia'), ', em “Deixamos de lado”.'));
+    if (D.descartadas.length) out.push(el('p', 'box__note nota-linha', 'O que decidimos não fazer está na ', el('a', { class: 'link', href: '#estrategia' }, 'Estratégia'), ', em “Deixamos de lado”.'));
     return out;
   };
 

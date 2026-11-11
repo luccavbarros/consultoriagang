@@ -1279,3 +1279,4 @@ details.month:not([open]) > summary { padding-bottom: 0; }
 .task__flag, .task__novo { font-weight: 500; text-transform: none; letter-spacing: 0; }
 .task__flag { color: #f0846c; background: rgba(229, 72, 42, .14); box-shadow: inset 0 0 0 1px rgba(229, 72, 42, .35); }
 .task__novo, .tasks__mes > summary .task__novo { color: var(--info); background: var(--info-bg); box-shadow: inset 0 0 0 1px rgba(96, 165, 250, .3); }
+.pmain p.nota-linha { max-width: none; } /* nota curta: numa linha só, sem a largura de leitura */
