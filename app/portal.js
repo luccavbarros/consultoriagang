@@ -401,7 +401,7 @@
     const alvo = abreAcao; abreAcao = null;
     if (alvo) {
       const k = Object.keys(grupos).find((g) => grupos[g].some((x) => x.id === alvo));
-      if (k) { abaAcoes = k; abertas.add(alvo); }
+      if (k) { abaAcoes = k; abertas.clear(); abertas.add(alvo); }
       requestAnimationFrame(() => requestAnimationFrame(() => {
         const t = document.querySelector('.task[data-id="' + alvo + '"]');
         if (t) { t.scrollIntoView({ block: 'center', behavior: 'smooth' }); t.classList.add('is-destaque'); setTimeout(() => t.classList.remove('is-destaque'), 2200); }
@@ -531,7 +531,12 @@
       a.observacao ? el('div', 'action__obs', D.consultor ? avatar(D.consultor) : null,
         el('div', null, el('p', 'action__obs-lbl', 'Observação ' + (D.consultor && D.consultor.nome ? 'de ' + D.consultor.nome.split(' ')[0] : 'do consultor')), el('p', 'action__obs-txt', a.observacao))) : null,
       a.status === 'feita' ? blocoResultado(a) : null, ajuda) : null;
-    const alterna = () => { if (!temDetalhe) return; if (abertas.has(a.id)) abertas.delete(a.id); else abertas.add(a.id); render(); };
+    // uma ação aberta por vez: abrir uma fecha a outra (sem amontoado de detalhes na tela)
+    const alterna = () => {
+      if (!temDetalhe) return;
+      const abrir = !abertas.has(a.id); abertas.clear(); if (abrir) abertas.add(a.id); render();
+      if (abrir) requestAnimationFrame(() => { const n = document.querySelector('.task[data-id="' + a.id + '"]'); if (n && n.getBoundingClientRect().top < 70) n.scrollIntoView({ block: 'start', behavior: 'smooth' }); });
+    };
     const linha = el('div', { class: 'task__row', role: temDetalhe ? 'button' : null, tabindex: temDetalhe ? '0' : null, 'aria-expanded': temDetalhe ? String(aberta) : null,
       onclick: alterna, onkeydown: (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); alterna(); } } },
       check,
@@ -2323,8 +2328,8 @@
     // os primeiros meses: o que acontece agora e quando os resultados começam a aparecer
     if (mesN <= 2) {
       const prox = U.addRef(inicioRef, 1); const veredito = U.addRef(inicioRef, 3);
-      const passo = (ok, t, d, href, lk) => el('li', ok ? 'is-on' : null, el('span', { class: 'start__ico', 'aria-hidden': 'true' }, ok ? '✓' : ''),
-        el('div', null, el('p', 'start__t', t), el('p', 'start__d', d, href ? [' ', el('a', { class: 'link', href }, lk)] : null)));
+      const passo = (ok, t, d, href, lk, ir) => el('li', ok ? 'is-on' : null, el('span', { class: 'start__ico', 'aria-hidden': 'true' }, ok ? '✓' : ''),
+        el('div', 'start__body', el('p', 'start__t', t), el('p', 'start__d', d)), href ? el('a', { class: 'start__lk', href, onclick: ir || null }, lk) : null);
       out.push(el('section', { class: 'start', 'aria-labelledby': 'start-t' },
         el('div', 'step-sec__head', el('h2', { class: 'step-sec__t', id: 'start-t' }, 'Como funciona o começo'),
           el('p', 'step-sec__d', 'Mês ' + mesN + ' de ' + dur)),
@@ -2332,7 +2337,19 @@
           passo(true, 'Conheça a sua marca', 'A estratégia, a narrativa e a identidade já estão no menu, em “Sua marca”. Consulte antes de criar qualquer peça.', '#estrategia', 'Ver a estratégia'),
           passo(D.acoes.some((a) => a.status === 'feita' && a.responsavel !== 'gang'), 'Faça a primeira ação', 'Em Ações, a mais importante do mês aparece primeiro.', '#acoes', 'Ver ações'),
           semNumeros ? null : passo(D.numeros.some((x) => x.mes_ref > inicioRef), 'Envie os números de ' + U.nomeMes(prox), 'No começo de ' + U.nomeMes(U.addRef(prox, 1)) + '. Leva 2 minutos.'),
-          passo(D.respostas.length > 0, 'Convide clientes para a pesquisa de partida', 'É ela que mostra como a marca é vista hoje, para comparar depois.', '#resultados', 'Ver o convite'),
+          (() => {
+            // o convite só existe quando o consultor abre a pesquisa; até lá, o passo avisa e não leva a lugar nenhum
+            const abertaP = D.pesquisas.some((x) => x.aberta);
+            const vaiConvite = () => setTimeout(() => {
+              const sh = document.querySelector('.share'); if (!sh) return;
+              const det = sh.querySelector('.share__edit'); if (det) det.open = true;
+              sh.scrollIntoView({ block: 'center', behavior: 'smooth' });
+              const t = document.getElementById('convite'); if (t) t.focus({ preventScroll: true });
+            }, 450);
+            return abertaP
+              ? passo(D.respostas.length > 0, 'Convide clientes para a pesquisa de partida', 'É ela que mostra como a marca é vista hoje, para comparar depois. A mensagem já vem pronta.', '#resultados', 'Ver o convite', vaiConvite)
+              : passo(false, 'Convide clientes para a pesquisa de partida', 'É ela que mostra como a marca é vista hoje. Assim que o consultor abrir a pesquisa, o convite pronto aparece aqui.');
+          })(),
           passo(false, 'O primeiro veredito', 'Com 3 meses de números, em ' + U.nomeMes(veredito) + ', dá para dizer se o plano está pagando.'))));
     }
 
@@ -2351,15 +2368,16 @@
     };
     const ests = meses.map(estado);
     // as 5 estrelas do mês: o que o cliente faz para o mês ser "5 estrelas"
+    // só acende o que foi feito de verdade: sem tarefa, sem encontro ou sem ação para avaliar, a estrela fica apagada
     const agoraISO = new Date().toISOString();
     const estrelas = (e) => [
-      ['Essenciais feitas', !e.alvo.length ? 'Nada previsto para o mês' : 'Fazer as ' + (e.essenciais ? 'essenciais' : 'ações') + ' do mês (' + e.feitas + ' de ' + e.alvo.length + ' feitas)', e.fase !== 'futuro' && (!e.alvo.length || e.feitas === e.alvo.length)],
+      ['Essenciais feitas', !e.alvo.length ? 'Nada previsto para o mês' : 'Fazer as ' + (e.essenciais ? 'essenciais' : 'ações') + ' do mês (' + e.feitas + ' de ' + e.alvo.length + ' feitas)', e.fase !== 'futuro' && e.alvo.length > 0 && e.feitas === e.alvo.length],
       semNumeros ? ['Números do mês', 'Combinado com o consultor', e.fase !== 'futuro'] : ['Números enviados', 'Enviar faturamento e clientes do mês', D.numeros.some((x) => x.mes_ref === e.r)],
       (() => { const enc = D.encontros.filter((x) => x.inicio.slice(0, 7) === e.r);
         return enc.length ? ['Presença no encontro', 'Participar do encontro do mês', enc.some((x) => x.status === 'realizado' || (x.status === 'agendado' && x.inicio < agoraISO))]
-          : ['Presença no encontro', 'Sem encontro neste mês', e.fase !== 'futuro']; })(),
+          : ['Presença no encontro', 'Sem encontro marcado neste mês', false]; })(),
       (() => { const fe = e.acs.filter((a) => a.status === 'feita' && a.responsavel !== 'gang');
-        return ['Ações avaliadas', fe.length ? 'Responder a pergunta de cada ação feita' : 'Nenhuma ação feita para avaliar', e.fase !== 'futuro' && fe.every((a) => a.resultado)]; })(),
+        return ['Ações avaliadas', fe.length ? 'Responder a pergunta de cada ação feita' : 'Nenhuma ação feita para avaliar', e.fase !== 'futuro' && fe.length > 0 && fe.every((a) => a.resultado)]; })(),
       ['Ouviu um cliente', 'Registrar o que um cliente disse ou receber respostas da pesquisa', (D.vozes || []).some((x) => x.mes_ref === e.r) || (D.respostas || []).some((x) => (x.criada_em || '').slice(0, 7) === e.r)],
     ];
     const nEstrelas = (e) => estrelas(e).filter((x) => x[2]).length;

@@ -1181,3 +1181,8 @@ details.month:not([open]) > summary { padding-bottom: 0; }
 
 /* lista vazia: respiro dos dois lados (dentro das caixas o texto não encosta na borda) */
 .clients__empty { padding: 28px 20px; font-size: 14px; text-align: left; }
+/* "Como funciona o começo": o link fica sozinho embaixo do card, não no meio do texto */
+.start__list li { grid-template-rows: auto 1fr auto; }
+.start__lk { justify-self: start; display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; font-size: 13px; color: #ececec; text-decoration: none; }
+.start__lk::after { content: "›"; color: var(--ganggrey); transition: transform .15s; }
+.start__lk:hover { color: #fff; } .start__lk:hover::after { transform: translateX(2px); }
