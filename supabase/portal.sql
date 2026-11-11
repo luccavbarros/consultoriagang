@@ -1018,7 +1018,8 @@ begin
   select * into pl from public.planos where empresa_id = e;
   if pl.empresa_id is null then raise exception 'O plano ainda não foi cadastrado.'; end if;
   if pl.faturamento_base is not null and not pl.partida_cliente then raise exception 'O ponto de partida já foi definido pelo consultor.'; end if;
-  if p_base is null or p_base <= 0 or p_base > 10000000000 then raise exception 'Informe um faturamento mensal válido.'; end if;
+  -- 0 = empresa nova, ainda sem faturamento (marcado de propósito no portal); fora isso, a partir de R$ 100
+  if p_base is null or (p_base <> 0 and p_base < 100) or p_base > 10000000000 then raise exception 'Informe um faturamento mensal válido.'; end if;
   for k, v in select * from jsonb_each(coalesce(p_ano, '{}'::jsonb)) loop
     if k !~ '^(0[1-9]|1[0-2])$' then raise exception 'Mês inválido.'; end if;
     if jsonb_typeof(v) <> 'number' or (v #>> '{}')::numeric < 0 or (v #>> '{}')::numeric > 10000000000 then raise exception 'Valor inválido.'; end if;
