@@ -1001,3 +1001,30 @@ begin
   values (e, auth.uid(), p_tipo, left(nullif(trim(coalesce(p_titulo, '')), ''), 200), nullif(p_arquivo, ''), nullif(p_link, ''), left(coalesce(p_pergunta, ''), 4000));
 end;
 $$;
+
+-- ===================== Ponto de partida informado pelo cliente =====================
+-- Quando o consultor não preencheu o faturamento de partida, o cliente informa no mês 1:
+-- a média mensal dos 12 meses antes do plano e, se souber, cada mês do ano anterior (sazonalidade).
+-- O cliente pode corrigir enquanto o valor for dele; quando o consultor ajusta no painel, o valor passa a ser do consultor.
+alter table public.planos add column if not exists partida_cliente boolean not null default false;
+
+create or replace function public.portal_ponto_partida(p_base numeric, p_ano jsonb default '{}'::jsonb)
+returns void
+language plpgsql security definer set search_path = public
+as $$
+declare e uuid := public.minha_empresa(); pl public.planos; k text; v jsonb; ano jsonb := '{}'::jsonb;
+begin
+  if e is null then raise exception 'Sem permissão.'; end if;
+  select * into pl from public.planos where empresa_id = e;
+  if pl.empresa_id is null then raise exception 'O plano ainda não foi cadastrado.'; end if;
+  if pl.faturamento_base is not null and not pl.partida_cliente then raise exception 'O ponto de partida já foi definido pelo consultor.'; end if;
+  if p_base is null or p_base <= 0 or p_base > 10000000000 then raise exception 'Informe um faturamento mensal válido.'; end if;
+  for k, v in select * from jsonb_each(coalesce(p_ano, '{}'::jsonb)) loop
+    if k !~ '^(0[1-9]|1[0-2])$' then raise exception 'Mês inválido.'; end if;
+    if jsonb_typeof(v) <> 'number' or (v #>> '{}')::numeric < 0 or (v #>> '{}')::numeric > 10000000000 then raise exception 'Valor inválido.'; end if;
+    ano := ano || jsonb_build_object(k, v);
+  end loop;
+  update public.planos set faturamento_base = round(p_base, 2), fat_ano_anterior = ano, partida_cliente = true where empresa_id = e;
+end;
+$$;
+grant execute on function public.portal_ponto_partida(numeric, jsonb) to authenticated;

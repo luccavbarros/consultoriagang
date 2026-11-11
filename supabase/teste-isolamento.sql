@@ -138,6 +138,15 @@ begin
   select count(*) into n from public.sugestoes where empresa_id = i.ea and tipo = 'duvida' and acao_id = i.acao_a_cliente;
   insert into resultado (teste, ok) values ('A leva a própria dúvida para o encontro', n = 1);
 
+  perform public.portal_ponto_partida(80000, '{"12": 95000}'::jsonb);
+  select count(*) into n from public.planos where empresa_id = i.ea and faturamento_base = 80000 and partida_cliente and fat_ano_anterior ->> '12' = '95000';
+  insert into resultado (teste, ok) values ('A informa o próprio ponto de partida', n = 1);
+  select count(*) into n from public.planos where empresa_id = i.eb and faturamento_base is not null;
+  insert into resultado (teste, ok) values ('O ponto de partida de A não muda o plano da B', n = 0);
+  update public.planos set faturamento_base = 1 where empresa_id = i.ea;
+  select count(*) into n from public.planos where empresa_id = i.ea and faturamento_base = 1;
+  insert into resultado (teste, ok) values ('A não altera o plano direto (só pela função)', n = 0);
+
   perform public.portal_status_acao(i.acao_a_cliente, 'feita');
   select count(*) into n from public.acoes where id = i.acao_a_cliente and status = 'feita' and concluida_em is not null;
   insert into resultado (teste, ok) values ('A marca a própria ação como feita (grava a data)', n = 1);
@@ -254,6 +263,21 @@ begin
   select * into i from ids;
   select count(*) into n from public.acoes where empresa_id in (i.ea, i.eb);
   insert into resultado (teste, ok) values ('O consultor vê as duas empresas', n = 3);
+  update public.planos set faturamento_base = 90000, partida_cliente = false where empresa_id = i.ea; -- o consultor assume o valor
+end $$;
+reset role;
+-- de volta como A: o valor agora é do consultor e não pode ser trocado pelo cliente
+select set_config('request.jwt.claim.sub', (select ua::text from ids), false),
+       set_config('request.jwt.claims', json_build_object('sub', (select ua from ids), 'role', 'authenticated')::text, false);
+set role authenticated;
+do $$
+declare ok boolean;
+begin
+  begin
+    perform public.portal_ponto_partida(1, '{}'::jsonb);
+    ok := false;
+  exception when others then ok := true; end;
+  insert into resultado (teste, ok) values ('A não muda o ponto de partida definido pelo consultor', ok);
 end $$;
 reset role;
 select set_config('request.jwt.claim.sub', '', false), set_config('request.jwt.claims', '', false);
