@@ -71,6 +71,7 @@
     if (!node) return;
     node.style.backgroundImage = foto ? 'url("' + encodeURI(foto) + '")' : '';
     node.textContent = foto ? '' : iniciais(nome);
+    node.classList.toggle('tem-img', !!foto); // com imagem, ela ocupa o quadrado todo (sem moldura branca em volta)
   };
 
   // ===== lista de respostas prontas com "Outro…" (o consultor escolhe; só escreve quando nada serve) =====

@@ -25,7 +25,7 @@
   U.buscaFonte(() => clientesBusca.map((e) => ({ grupo: 'Clientes', titulo: e.nome, href: 'admin-cliente.html?id=' + e.id })));
   const load = async () => {
     const [emp, planos, perfis, sug, ped, enc, msg] = await Promise.all([
-      sb.from('empresas').select('id, nome, created_at, setor').order('nome'),
+      sb.from('empresas').select('id, nome, created_at, setor, logo_url').order('nome'),
       sb.from('planos').select('empresa_id, inicio, duracao_meses, status, tipo'),
       sb.from('profiles').select('id, name, email, active, empresa_id').eq('role', 'client'),
       sb.from('sugestoes').select('empresa_id, texto, criada_em, tipo').eq('status', 'nova'),
