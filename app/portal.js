@@ -498,7 +498,7 @@
     return ts.length ? Math.min(...ts) + 3600000 : null;
   })();
   const ehNova = (a) => !!a.criada_em && !a.vista_em && !a.adiantada_de && (primeiraLeva == null || momento(a.criada_em) > primeiraLeva);
-  const marcaVista = (a) => { if (!ehNova(a)) return; a.vista_em = new Date().toISOString(); sb.rpc('portal_ver_acao', { p_acao: a.id }); };
+  const vistaAcao = (a) => { if (!ehNova(a)) return; a.vista_em = new Date().toISOString(); sb.rpc('portal_ver_acao', { p_acao: a.id }).then(() => {}); }; // o .then envia o pedido (sem ele, nada sai)
   const TAM_PTS = { P: 1, M: 2, G: 4 };
   const TAM_TXT = { P: 'rápida, até 1 hora', M: 'até 1 dia', G: 'uma semana ou mais' };
   let menuAberto = null;
@@ -611,7 +611,7 @@
     // uma ação aberta por vez: abrir uma fecha a outra (sem amontoado de detalhes na tela)
     const alterna = () => {
       if (!temDetalhe) return;
-      const abrir = !abertas.has(a.id); abertas.clear(); if (abrir) { abertas.add(a.id); marcaVista(a); } render();
+      const abrir = !abertas.has(a.id); abertas.clear(); if (abrir) { abertas.add(a.id); vistaAcao(a); } render();
       if (abrir) requestAnimationFrame(() => { const n = document.querySelector('.task[data-id="' + a.id + '"]'); if (n && n.getBoundingClientRect().top < 70) n.scrollIntoView({ block: 'start', behavior: 'smooth' }); });
     };
     const linha = el('div', { class: 'task__row', role: temDetalhe ? 'button' : null, tabindex: temDetalhe ? '0' : null, 'aria-expanded': temDetalhe ? String(aberta) : null,
