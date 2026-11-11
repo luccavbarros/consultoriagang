@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Cliente — Painel GANG</title>
+  <link rel="icon" href="assets/favicon-maleta.png" type="image/png" sizes="32x32" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="app/app.css?v=24" />
+  <link rel="stylesheet" href="app/portal.css?v=64" />
+  <link rel="stylesheet" href="app/tema.css?v=64" />
+</head>
+<body class="portal-body">
+  <div class="portal">
+    <aside class="side" aria-label="Menu do painel">
+      <div class="side__top">
+        <div class="side__company">
+          <div class="side__id">
+            <span class="side__logo-dot" id="company-logo" aria-hidden="true"></span>
+            <div class="side__company">
+              <p class="side__name" id="name">…</p>
+              <p class="side__plan" id="sub">Cliente</p>
+            </div>
+          </div>
+        </div>
+        <button class="side__toggle btn btn--ghost btn--sm" id="menu-btn" aria-expanded="false" aria-controls="side-nav">Menu</button>
+      </div>
+
+      <nav class="side__nav" id="side-nav" aria-label="Partes do cliente">
+        <p class="side__group" id="g1">Rotina do mês</p>
+        <ul aria-labelledby="g1">
+          <li><a class="side__link" href="#fechamento" data-tab="fechamento"><span>Fechamento do mês</span><span class="side__ind" id="fech-count"></span></a></li>
+          <li><a class="side__link" href="#mensagens" data-tab="mensagens"><span>Mensagens</span><span class="side__ind is-hot" id="msg-count" hidden></span></a></li>
+          <li><a class="side__link" href="#acoes" data-tab="acoes"><span>Ações</span><span class="side__ind is-hot" id="sug-count" hidden></span></a></li>
+          <li><a class="side__link" href="#resultados" data-tab="resultados"><span>Resultados</span></a></li>
+          <li><a class="side__link" href="#foco" data-tab="foco"><span>Planejar o mês</span></a></li>
+          <li><a class="side__link" href="#encontros" data-tab="encontros"><span>Encontros</span><span class="side__ind is-hot" id="enc-count" hidden></span></a></li>
+          <li><a class="side__link" href="#pecas" data-tab="pecas"><span>Peças</span><span class="side__ind is-hot" id="pec-count" hidden></span></a></li>
+        </ul>
+        <p class="side__group" id="g2">Base da marca</p>
+        <ul aria-labelledby="g2">
+          <li><a class="side__link" href="#diagnostico" data-tab="diagnostico"><span>Diagnóstico</span></a></li>
+          <li><a class="side__link" href="#estrategia" data-tab="estrategia"><span>Estratégia</span></a></li>
+          <li><a class="side__link" href="#plataforma" data-tab="plataforma"><span>Narrativa</span></a></li>
+          <li><a class="side__link" href="#identidade" data-tab="identidade"><span>Identidade visual</span></a></li>
+        </ul>
+        <p class="side__group" id="g3">Conta</p>
+        <ul aria-labelledby="g3">
+          <li><a class="side__link" href="#plano" data-tab="plano"><span>Plano</span></a></li>
+          <li><a class="side__link" href="#acessos" data-tab="acessos"><span>Acessos</span></a></li>
+        </ul>
+
+        <div class="side__foot">
+          <div class="side__me"><a class="side__who side__who--link" href="admin.html#perfil" title="Seu perfil"><span class="consultant__ini side__avatar" id="me-dot" aria-hidden="true"></span><span id="who"></span></a><button class="side__out" type="button" id="sign-out" aria-label="Sair" title="Sair"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 20H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3"/><path d="M15 16l4-4-4-4"/><path d="M19 12H9"/></svg></button></div>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="pmain admin-main" id="app" tabindex="-1">
+      <p class="crumb" id="crumb"></p>
+      <h1 class="screen__title admin-title" id="pane-title"></h1>
+      <div class="raiox" id="raiox" aria-label="Resumo do cliente"></div>
+
+    <!-- ===== Fechamento do mês ===== -->
+    <section class="app-section" id="pane-fechamento" role="tabpanel" hidden>
+      <p class="small">O ciclo do mês, em 6 passos: onde estamos, o que o cliente fez, o que ele precisa saber e o que vem a seguir. Quando tudo estiver verde, o mês está fechado.</p>
+      <div class="etapas" id="fech-etapas" aria-label="Os 6 passos do mês"></div>
+      <ol class="fech" id="fech-lista"></ol>
+      <div id="fech-sinais"></div>
+    </section>
+
+    <!-- ===== Mensagens ===== -->
+    <section class="app-section" id="pane-mensagens" role="tabpanel" hidden>
+      <p class="small">A conversa com o cliente. Você pode escrever a qualquer momento, não só responder: a mensagem aparece em destaque no portal dele até ser lida.</p>
+      <div class="chat chat--panel" id="adm-chat" role="log" aria-live="polite"></div>
+      <form class="chat__form" id="adm-chat-form" novalidate>
+        <label class="label" for="adm-chat-txt">Escrever para o cliente</label>
+        <textarea class="field" id="adm-chat-txt" rows="3" maxlength="4000"></textarea>
+        <div class="new-client__foot">
+          <button class="btn btn--light" type="submit">Enviar mensagem</button>
+          <p class="msg" id="adm-chat-msg" role="status" aria-live="polite"></p>
+        </div>
+      </form>
+    </section>
+
+    <!-- ===== Plano ===== -->
+    <section class="app-section" id="pane-plano" role="tabpanel" aria-labelledby="tab-plano" hidden>
+      <form class="card" id="plan-form" novalidate>
+        <fieldset class="fset">
+          <legend class="fset__title">Empresa</legend>
+          <div class="new-client">
+            <div class="full"><label class="label" for="p-nome">Nome da empresa</label><input class="field" id="p-nome" autocomplete="off" required /></div>
+            <div class="full">
+              <label class="label" for="p-logo">Logo do cliente (aparece no círculo do menu; PNG ou SVG, até 5 MB)</label>
+              <div class="logo-field">
+                <span class="side__logo-dot side__logo-dot--lg" id="p-logo-view" aria-hidden="true"></span>
+                <div class="filefield">
+                  <input class="field field--file" id="p-logo" type="file" accept="image/png,image/svg+xml,image/jpeg,image/webp" />
+                  <label id="p-logo-rm-wrap" hidden><input type="checkbox" id="p-logo-rm" /> remover o logo e usar as iniciais</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+        <fieldset class="fset">
+          <legend class="fset__title">Plano</legend>
+          <div class="new-client new-client--4">
+            <div><label class="label" for="p-inicio">Início</label><input class="field" id="p-inicio" type="date" required /></div>
+            <div><label class="label" for="p-duracao">Duração (meses)</label><select class="field" id="p-duracao" data-num><option value="6">6 meses</option><option value="12">12 meses</option><option value="18">18 meses</option><option value="24">24 meses</option><option value="36">36 meses</option></select></div>
+            <div>
+              <label class="label" for="p-status">Situação</label>
+              <select class="field" id="p-status"><option value="ativo">Ativo</option><option value="pausado">Pausado</option><option value="encerrado">Encerrado</option></select>
+            </div>
+            <div>
+              <label class="label" for="p-tipo">Tipo de plano</label>
+              <select class="field" id="p-tipo"><option value="consultoria">Consultoria mensal</option><option value="acesso">Só acesso à marca (sem consultoria)</option></select>
+            </div>
+            <div>
+              <label class="label" for="p-setor">Setor (filtra as ações sugeridas)</label>
+              <select class="field" id="p-setor"><option value="">Não definido</option><option value="servicos">Serviços</option><option value="varejo">Varejo e lojas</option><option value="b2b">Indústria e B2B</option></select>
+            </div>
+            <div><label class="label" for="p-consultor">Consultor</label><select class="field" id="p-consultor"></select></div>
+            <div><label class="label" for="p-meta">Meta de faturamento (%)</label><select class="field" id="p-meta" data-num><option value="">Sem meta</option><option value="10">+10%</option><option value="15">+15%</option><option value="20">+20%</option><option value="25">+25%</option><option value="30">+30%</option><option value="40">+40%</option><option value="50">+50%</option><option value="100">+100% (dobrar)</option></select></div>
+            <div><label class="label" for="p-base">Faturamento de partida</label><input class="field" id="p-base" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" aria-describedby="p-base-d" /><p class="field-hint" id="p-base-d">Média mensal dos 12 meses antes do plano</p></div>
+            <div><label class="label" for="p-esforco">Divisão do esforço (Binet & Field)</label><select class="field" id="p-esforco" data-num><option value="40">40% marca · 60% vendas</option><option value="50">50% · 50%</option><option value="60">60% marca · 40% vendas (padrão)</option><option value="70">70% marca · 30% vendas</option></select></div>
+            <div><label class="label" for="p-revis">Revisões de peça por mês</label><input class="field" id="p-revis" type="number" min="0" max="50" step="1" placeholder="2" /></div>
+            <div><label class="label" for="p-dias">Dias em que responde mensagens</label><input class="field" id="p-dias" maxlength="60" placeholder="terças e quintas" /></div>
+            <div><label class="label" for="p-prazo">Resposta de revisão (dias úteis)</label><select class="field" id="p-prazo" data-num><option value="1">1 dia útil</option><option value="2">2 dias úteis</option><option value="3">3 dias úteis</option><option value="5">5 dias úteis</option></select></div>
+          </div>
+        </fieldset>
+        <fieldset class="fset">
+          <legend class="fset__title">Consultoria</legend>
+          <div class="new-client">
+            <div class="full"><label class="label" for="p-inclui">O que o plano inclui</label><div data-combo="planoInclui" data-id="p-inclui"></div></div>
+            <div><label class="label" for="p-fatura">Próxima fatura (vazio = não mostra)</label><input class="field" id="p-fatura" type="date" /></div>
+            <div><label class="label" for="p-mensal">Mensalidade</label><input class="field" id="p-mensal" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" aria-describedby="p-mensal-d" /><p class="field-hint" id="p-mensal-d">Mostra ao cliente quanto o plano devolveu</p></div>
+            <div class="full"><details class="plan__mais"><summary>Faturamento mês a mês do ano anterior <span class="plan__mais-sub">deixa o “O plano pagou?” justo com a época do ano</span></summary>
+              <div class="new-client new-client--4 sazonal"><div><label class="label" for="p-fa-01">Jan</label><input class="field" id="p-fa-01" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-02">Fev</label><input class="field" id="p-fa-02" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-03">Mar</label><input class="field" id="p-fa-03" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-04">Abr</label><input class="field" id="p-fa-04" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-05">Mai</label><input class="field" id="p-fa-05" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-06">Jun</label><input class="field" id="p-fa-06" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-07">Jul</label><input class="field" id="p-fa-07" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-08">Ago</label><input class="field" id="p-fa-08" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-09">Set</label><input class="field" id="p-fa-09" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-10">Out</label><input class="field" id="p-fa-10" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-11">Nov</label><input class="field" id="p-fa-11" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-12">Dez</label><input class="field" id="p-fa-12" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div></div></details></div>
+            <div><label class="label" for="p-partmerc">Participação de mercado estimada (%)</label><input class="field" id="p-partmerc" type="number" min="0" max="100" step="any" placeholder="Ex.: 10" /></div>
+            <div class="full"><label class="chk"><input type="checkbox" id="p-semnum" /> O cliente combinou não enviar os números do mês (o painel e o portal param de cobrar e de avisar)</label></div>
+          </div>
+        </fieldset>
+        <div class="new-client__foot">
+          <button class="btn btn--light" type="submit">Salvar</button>
+          <p class="msg" id="plan-msg" role="status" aria-live="polite"></p>
+        </div>
+      </form>
+
+      <div class="danger-zone">
+        <div>
+          <h2 class="title-sm">Excluir cliente</h2>
+          <p class="small">Apaga a empresa e tudo o que foi cadastrado para ela. Os acessos ficam, sem empresa.</p>
+        </div>
+        <button class="btn btn--ghost btn--sm btn--danger" type="button" id="del-empresa">Excluir cliente</button>
+      </div>
+    </section>
+
+    <!-- ===== Foco do mês ===== -->
+    <section class="app-section" id="pane-foco" role="tabpanel" aria-labelledby="tab-foco" hidden>
+      <div class="split">
+      <form class="card plan" id="foco-form" novalidate>
+        <input type="hidden" id="f-id" />
+        <div class="plan__top">
+          <div><h2 class="title-sm" id="foco-form-t">Novo mês</h2>
+          <p class="small">Veredito do que passou, foco do mês e as ações que levam ao foco.</p></div>
+          <div class="plan__mes"><label class="label" for="f-mes">Mês</label><input class="field" id="f-mes" type="month" required /></div>
+        </div>
+
+        <ol class="plan__steps">
+          <li class="plan__step">
+            <span class="plan__n" aria-hidden="true">1</span>
+            <div class="plan__body">
+              <h3 class="plan__t">Veredito <span class="plan__ref" id="pl-ver-ref"></span></h3>
+              <div class="plan__nums" id="pl-nums"></div>
+              <label class="label" for="f-veredito">Estamos mais perto da meta? (aparece no topo de Resultados)</label>
+              <div data-combo="vereditos" data-id="f-veredito" data-grupos data-max="300" data-vazio="Escolha ou escreva o veredito…"></div>
+              <details class="plan__mais" id="pl-notas">
+                <summary>Por que os números caíram? <span class="plan__mais-sub" id="pl-notas-sub">aparece ao lado do número que caiu</span></summary>
+                <div class="new-client">
+                  <div class="full" id="pl-nv-w"><label class="label" for="f-nv">Venda mais</label><div data-combo="notasVendas" data-id="f-nv" data-max="300" data-vazio="Não caiu / sem explicação"></div></div>
+                  <div class="full" id="pl-np-w"><label class="label" for="f-np">Para mais pessoas</label><div data-combo="notasPessoas" data-id="f-np" data-max="300" data-vazio="Não caiu / sem explicação"></div></div>
+                  <div class="full" id="pl-nval-w"><label class="label" for="f-nval">Com mais valor</label><div data-combo="notasValor" data-id="f-nval" data-max="300" data-vazio="Não caiu / sem explicação"></div></div>
+                </div>
+              </details>
+            </div>
+          </li>
+          <li class="plan__step">
+            <span class="plan__n" aria-hidden="true">2</span>
+            <div class="plan__body">
+              <h3 class="plan__t">Foco <span class="plan__ref" id="pl-foco-ref"></span></h3>
+              <div class="plan__sug" id="pl-sug"></div>
+              <label class="label" for="f-titulo">Foco do mês (aparece no Plano do cliente)</label>
+              <div data-combo="focos" data-id="f-titulo" data-semgrupos></div>
+              <label class="label" for="f-texto">Orientação</label>
+              <textarea class="field" id="f-texto" rows="3" maxlength="2000" placeholder="O que o cliente precisa saber para seguir o foco"></textarea>
+            </div>
+          </li>
+          <li class="plan__step">
+            <span class="plan__n" aria-hidden="true">3</span>
+            <div class="plan__body">
+              <h3 class="plan__t">Ações para o foco <span class="plan__ref" id="pl-ac-ref"></span></h3>
+              <div id="pl-acoes"></div>
+            </div>
+          </li>
+        </ol>
+
+        <div class="new-client__foot plan__foot">
+          <button class="btn btn--light" type="submit" id="f-save">Publicar o mês</button>
+          <button class="btn btn--ghost btn--sm" type="button" id="f-cancel" hidden>Cancelar edição</button>
+          <p class="msg" id="f-msg" role="status" aria-live="polite"></p>
+        </div>
+      </form>
+      <div class="split__side"><h2 class="title-sm">Publicados</h2>
+      <ul class="rows rows--compact" id="focos"></ul></div>
+      </div>
+    </section>
+
+    <!-- ===== Ações ===== -->
+    <section class="app-section" id="pane-acoes" role="tabpanel" aria-labelledby="tab-acoes" hidden>
+      <section class="equil" id="equil" aria-labelledby="equil-t" hidden></section>
+
+      <div id="sug-sec" hidden>
+        <h2 class="title-sm">Sugestões do cliente</h2>
+        <ul class="rows" id="sugs"></ul>
+      </div>
+
+      <div class="app-section__head">
+        <h2 class="title-sm">Plano de ações</h2>
+        <div class="head-btns"><div class="filtro" id="acoes-filtro"></div>
+        <button class="btn btn--light btn--sm" id="open-acao" aria-expanded="false" aria-controls="acao-form">Nova ação</button></div>
+      </div>
+
+      <form class="card" id="acao-form" novalidate hidden>
+        <h3 class="title-sm" id="acao-form-t">Nova ação</h3>
+        <input type="hidden" id="x-id" /><input type="hidden" id="x-sug" />
+        <div class="new-client new-client--4">
+          <div class="span-3"><label class="label" for="x-titulo">Ação (escolher uma pronta preenche os outros campos; você muda o que quiser)</label><div data-combo="acoes" data-id="x-titulo"></div></div>
+          <div><label class="label" for="x-mes">Mês previsto</label><input class="field" id="x-mes" type="month" required /></div>
+          <div><label class="label" for="x-prazo">Prazo (dia)</label><input class="field" id="x-prazo" type="date" /></div>
+                    <div class="span-2"><label class="label" for="x-metrica">Sucesso se</label><div data-combo="metricasSucesso" data-id="x-metrica"></div></div>
+          <div><label class="label" for="x-obj">Objetivo</label><select class="field" id="x-obj"></select></div>
+          <div><label class="label" for="x-causa">Ataca qual causa do diagnóstico</label><select class="field" id="x-causa"></select></div>
+          <div class="span-2"><label class="label" for="x-sit">Para lembrarem da marca quando…</label><select class="field" id="x-sit"></select></div>
+          <div>
+            <label class="label" for="x-resp">Com quem está</label>
+            <select class="field" id="x-resp"><option value="cliente">Cliente</option><option value="ambos">Cliente e GANG</option><option value="gang">GANG</option></select>
+          </div>
+          <div><label class="label" for="x-com">Junto com (opcional)</label><div data-combo="comQuem" data-id="x-com" data-vazio="Ninguém"></div></div>
+          <div>
+            <label class="label" for="x-status">Andamento</label>
+            <select class="field" id="x-status"><option value="a_fazer">A fazer</option><option value="em_andamento">Em andamento</option><option value="feita">Feita</option></select>
+          </div>
+          <div>
+            <label class="label" for="x-peso">Peso para o objetivo</label>
+            <select class="field" id="x-peso"><option value="essencial">Essencial (sem ela o objetivo não vem)</option><option value="ajuda" selected>Ajuda</option><option value="reforco">Reforço</option></select>
+          </div>
+          <div>
+            <label class="label" for="x-promessa">Move qual parte da promessa</label>
+            <select class="field" id="x-promessa"><option value="">Deduzir pela ação</option><option value="vendas">Venda mais</option><option value="pessoas">Para mais pessoas</option><option value="valor">Com mais valor</option></select>
+          </div>
+          <div class="span-3"><label class="label" for="x-porque">Por quê (aparece no Plano do cliente)</label><input class="field" id="x-porque" maxlength="300" placeholder="Escolher uma ação pronta já preenche; ajuste se quiser" /></div>
+          <div class="span-3"><label class="label" for="x-obs">Observação para o cliente (opcional, aparece na ação dele)</label><textarea class="field" id="x-obs" rows="3" maxlength="1000" placeholder="Ex.: comece pelos clientes atendidos este ano; o modelo da mensagem está na pasta de arquivos."></textarea></div>
+          <div>
+            <label class="label" for="x-esforco">Esforço</label>
+            <select class="field" id="x-esforco"><option value="">—</option><option value="marca">Marca (longo prazo)</option><option value="venda">Venda (curto prazo)</option></select>
+          </div>
+          <div class="so-feita">
+            <label class="label" for="x-resultado">Funcionou?</label>
+            <select class="field" id="x-resultado"><option value="">Ainda não sabemos</option><option value="sim">Sim</option><option value="parcial">Em parte</option><option value="nao">Não</option></select>
+          </div>
+          <div class="span-2 so-feita"><label class="label" for="x-aprendizado">O que aprendemos</label><input class="field" id="x-aprendizado" maxlength="1000" /></div>
+        </div>
+        <div class="new-client__foot">
+          <button class="btn btn--light" type="submit">Salvar ação</button>
+          <button class="btn btn--ghost btn--sm" type="button" id="x-cancel">Cancelar</button>
+          <p class="msg" id="x-msg" role="status" aria-live="polite"></p>
+        </div>
+      </form>
+
+      <div class="duo">
+      <details class="lib" id="acoes-modelo">
+        <summary><span class="title-sm">Montar o plano a partir de um modelo</span><span class="small">Distribui as ações essenciais do método pelos meses do plano, já com peso, porquê e o que mede o sucesso. Depois é só ajustar.</span></summary>
+        <div class="lib__ctl">
+          <div><label class="label" for="mod-setor">Setor do cliente</label><select class="field" id="mod-setor"></select></div>
+          <div class="lib__go"><button class="btn btn--light btn--sm" type="button" id="mod-go">Montar o plano</button></div>
+        </div>
+        <ul class="lib__list" id="mod-list"></ul>
+      </details>
+
+      <details class="lib" id="acoes-lib">
+        <summary><span class="title-sm">Biblioteca de ações comprovadas</span><span class="small">Ações com eficácia comprovada, cada uma com o porquê e o que mede o sucesso. Escolha o mês e adicione ao plano com um clique.</span></summary>
+        <div class="lib__ctl">
+          <div><label class="label" for="lib-mes">Adicionar no mês</label><input class="field" id="lib-mes" type="month" /></div>
+          <div>
+            <label class="label" for="lib-filtro">Mostrar</label>
+            <select class="field" id="lib-filtro"><option value="">Todas</option><option value="marca">Esforço de marca</option><option value="venda">Esforço de venda</option></select>
+          </div>
+          <div>
+            <label class="label" for="lib-tema">Tipo de atividade</label>
+            <select class="field" id="lib-tema"><option value="">Todos</option></select>
+          </div>
+        </div>
+        <ul class="lib__list" id="lib-list"></ul>
+      </details>
+      </div>
+
+      <p class="msg" id="acoes-msg" role="status" aria-live="polite"></p>
+      <div id="acoes-list"></div>
+
+      <div class="app-section">
+        <h2 class="title-sm">O que decidimos não fazer</h2>
+        <ul class="rows" id="descs"></ul>
+        <form class="inline-add" id="desc-form">
+          <label class="label" for="d-texto">Adicionar</label>
+          <div class="new-client__pass">
+            <div data-combo="naoFazer" data-id="d-texto"></div>
+            <button class="btn btn--ghost btn--sm" type="submit">Adicionar</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ===== Resultados ===== -->
+    <section class="app-section" id="pane-resultados" role="tabpanel" aria-labelledby="tab-resultados" hidden>
+      <nav class="subnav" aria-label="Partes de Resultados"><a href="#res-num">Números</a><a href="#res-pesq">Pesquisa de marca</a><a href="#res-met">Métricas</a><a href="#res-busca">Buscas</a><a href="#res-voz">Clientes disseram</a></nav>
+      <div class="bloco" id="res-num">
+      <h2 class="title-sm">Números enviados</h2>
+      <p class="small">O cliente envia todo mês pelo portal. Você também pode lançar ou corrigir aqui.</p>
+      <div class="table-wrap"><table class="table" id="nums"></table></div>
+      <form class="card" id="num-form" novalidate>
+        <h3 class="title-sm">Lançar ou corrigir números</h3>
+        <div class="new-client new-client--4">
+          <div><label class="label" for="n-mes">Mês</label><input class="field" id="n-mes" type="month" required /></div>
+          <div><label class="label" for="n-fat">Faturamento (R$)</label><input class="field" id="n-fat" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" required /></div>
+          <div><label class="label" for="n-leads">Leads</label><input class="field" id="n-leads" type="number" min="0" step="1" /></div>
+          <div><label class="label" for="n-tot">Clientes atendidos</label><input class="field" id="n-tot" type="number" min="0" step="1" /></div>
+          <div><label class="label" for="n-cli">Desses, novos</label><input class="field" id="n-cli" type="number" min="0" step="1" /></div>
+          <div><label class="label" for="n-prop">Propostas enviadas</label><input class="field" id="n-prop" type="number" min="0" step="1" /></div>
+          <div><label class="label" for="n-fech">Fechadas</label><input class="field" id="n-fech" type="number" min="0" step="1" /></div>
+          <div><label class="label" for="n-sd">Sem desconto</label><input class="field" id="n-sd" type="number" min="0" step="1" /></div>
+        </div>
+        <div class="new-client__foot">
+          <button class="btn btn--light" type="submit">Salvar números</button>
+          <p class="msg" id="num-msg" role="status" aria-live="polite"></p>
+        </div>
+      </form>
+      </div>
+
+      <div class="grade3">
+      <div class="bloco" id="res-met">
+      <div class="app-section__head">
+        <h2 class="title-sm">Uma métrica por objetivo</h2>
+        <button class="btn btn--light btn--sm" id="open-met" aria-expanded="false" aria-controls="met-form">Nova métrica</button>
+      </div>
+      <form class="card" id="met-form" novalidate hidden>
+        <input type="hidden" id="m-id" />
+        <div class="new-client new-client--4">
+          <div>
+            <label class="label" for="m-nivel">Nível</label>
+            <select class="field" id="m-nivel"><option value="negocio">Negócio</option><option value="marketing">Marketing</option><option value="marca">Marca</option></select>
+          </div>
+          <div class="span-3"><label class="label" for="m-nome">Métrica (escolher já sugere nível e frequência)</label><div data-combo="metricas" data-id="m-nome"></div></div>
+          <div>
+            <label class="label" for="m-freq">Medimos</label>
+            <select class="field" id="m-freq"><option value="mensal">Todo mês</option><option value="semestral">A cada 6 meses</option><option value="anual">Todo ano</option></select>
+          </div>
+          <div><label class="label" for="m-valor">Valor atual</label><input class="field" id="m-valor" maxlength="60" placeholder="R$ 8.400" /></div>
+          <div><label class="label" for="m-prox">Próxima medição</label><input class="field" id="m-prox" type="date" /></div>
+        </div>
+        <div class="new-client__foot">
+          <button class="btn btn--light" type="submit">Salvar métrica</button>
+          <button class="btn btn--ghost btn--sm" type="button" id="m-cancel">Cancelar</button>
+          <p class="msg" id="m-msg" role="status" aria-live="polite"></p>
+        </div>
+      </form>
+      <ul class="rows rows--compact" id="mets"></ul>
+      </div>
+
+      <div class="bloco" id="res-pesq">
+      <div class="app-section__head">
+        <div><h2 class="title-sm">Pesquisa de marca</h2><p class="small">Um link anônimo que o cliente manda para os clientes dele. Mede em quais situações de compra a marca é lembrada e se os ativos distintivos são reconhecidos. Faça uma rodada no início e repita a cada 6 meses.</p></div>
+        <button class="btn btn--light btn--sm" id="open-pesq" aria-expanded="false" aria-controls="pesq-form">Nova rodada</button>
+      </div>
+      <form class="card" id="pesq-form" novalidate hidden>
+        <div class="new-client">
+          <div><label class="label" for="q-titulo">Nome da rodada</label><input class="field" id="q-titulo" maxlength="80" /></div>
+          <div><label class="label" for="q-cat">Categoria (para a pergunta de lembrança)</label><input class="field" id="q-cat" maxlength="80" placeholder="empresa de reformas" /></div>
+          <div><label class="label" for="q-af">Frases para dar nota de 1 a 5 (opcional, uma por linha)</label><textarea class="field" id="q-af" rows="4"></textarea></div>
+          <div><label class="label" for="q-conc">Concorrentes na pergunta de escolha (um por linha)</label><textarea class="field" id="q-conc" rows="4"></textarea></div>
+        </div>
+        <div class="new-client__foot">
+          <button class="btn btn--light" type="submit">Abrir a rodada</button>
+          <button class="btn btn--ghost btn--sm" type="button" id="q-cancel">Cancelar</button>
+          <p class="msg" id="q-msg" role="status" aria-live="polite"></p>
+        </div>
+      </form>
+      <p class="pesq-cal" id="pesq-cal"></p>
+      <ul class="rows" id="pesqs"></ul>
+      </div>
+
+      <div class="bloco" id="res-busca">
+      <h2 class="title-sm">Participação nas buscas</h2>
+      <p class="small">No Google Trends, compare o nome da marca com os concorrentes e anote a fatia da marca (%). Uma vez por mês.</p>
+      <form class="inline-add" id="busca-form" novalidate>
+        <div class="new-client__pass">
+          <input class="field" id="b-mes" type="month" aria-label="Mês" />
+          <input class="field" id="b-pct" type="number" min="0" max="100" step="any" placeholder="%" aria-label="Participação da marca (%)" />
+          <button class="btn btn--ghost btn--sm" type="submit">Salvar</button>
+        </div>
+        <p class="msg" id="b-msg" role="status" aria-live="polite"></p>
+      </form>
+      <ul class="rows rows--compact" id="buscas"></ul>
+      </div>
+
+      <div class="bloco" id="res-disp">
+      <h2 class="title-sm">Fácil de encontrar e de comprar</h2>
+      <p class="small">A cada 6 meses, confira cada item como se fosse um cliente. A nota aparece em Resultados, ao lado de como a marca é vista.</p>
+      <form class="card disp" id="disp-form" novalidate>
+        <div class="disp__itens" id="disp-itens"></div>
+        <div class="new-client__foot"><div class="disp__mes"><input class="field" id="disp-mes" type="month" aria-label="Mês da verificação" /></div><button class="btn btn--light btn--sm" type="submit">Salvar verificação</button><p class="msg" id="disp-msg" role="status" aria-live="polite"></p></div>
+      </form>
+      <ul class="rows rows--compact" id="disps"></ul>
+      </div>
+
+      <div class="bloco" id="res-voz">
+      <h2 class="title-sm">O que os clientes disseram</h2>
+      <p class="small">Frases que o cliente registra no portal, mês a mês.</p>
+      <ul class="rows rows--compact" id="vozes-adm"></ul>
+      </div>
+      </div>
+    </section>
+
+    <!-- ===== Encontros ===== -->
+    <section class="app-section" id="pane-encontros" role="tabpanel" aria-labelledby="tab-encontros" hidden>
+      <div id="pauta-cli-sec" class="bloco" hidden>
+        <h2 class="title-sm">Para o próximo encontro</h2>
+        <p class="small">O que o cliente trouxe: dúvidas, ações travadas e ideias. Já entram na pauta sugerida.</p>
+        <ul class="rows" id="pauta-cli"></ul>
+      </div>
+      <div id="rem-sec" hidden>
+        <h2 class="title-sm">Pedidos para remarcar</h2>
+        <ul class="rows" id="rems"></ul>
+      </div>
+      <div class="app-section__head">
+        <h2 class="title-sm">Encontros</h2>
+        <button class="btn btn--light btn--sm" id="open-enc" aria-expanded="false" aria-controls="enc-form">Agendar encontro</button>
+      </div>
+      <form class="card" id="enc-form" novalidate hidden>
+        <h3 class="title-sm" id="enc-form-t">Agendar encontro</h3>
+        <input type="hidden" id="e-id" />
+        <div class="new-client new-client--4">
+          <div>
+            <label class="label" for="e-tipo">Tipo</label>
+            <select class="field" id="e-tipo"><option value="mensal">Revisão mensal</option><option value="semestral">Revisão semestral</option><option value="anual">Revisão anual</option><option value="entrega">Entrega do plano</option></select>
+          </div>
+          <div><label class="label" for="e-data">Data</label><input class="field" id="e-data" type="date" required /></div>
+          <div><label class="label" for="e-hora">Hora</label><input class="field" id="e-hora" type="time" value="10:00" required /></div>
+          <div><label class="label" for="e-dur">Duração (min)</label><select class="field" id="e-dur"><option value="30">30 min</option><option value="60">1 hora</option><option value="90">1h30</option><option value="120">2 horas</option></select></div>
+          <div class="span-3"><label class="label" for="e-local">Local ou link da videochamada</label><input class="field" id="e-local" maxlength="300" placeholder="https://meet.google.com/…" /></div>
+          <div>
+            <label class="label" for="e-status">Situação</label>
+            <select class="field" id="e-status"><option value="agendado">Agendado</option><option value="realizado">Realizado</option><option value="remarcar_solicitado">Remarcação pedida</option></select>
+          </div>
+          <div class="span-2"><div class="pauta__head"><p class="label">Pauta</p><button class="btn btn--ghost btn--sm" type="button" id="e-sugerir">Sugerir pauta com os dados do cliente</button></div><div data-multi="pauta" data-id="e-pauta"></div><p class="msg" id="e-sug-msg" role="status" aria-live="polite"></p></div>
+          <div class="span-2"><label class="label" for="e-dec">Decisões (um item por linha)</label><textarea class="field" id="e-dec" rows="4"></textarea></div>
+        </div>
+        <div class="new-client__foot">
+          <button class="btn btn--light" type="submit">Salvar encontro</button>
+          <button class="btn btn--ghost btn--sm" type="button" id="e-cancel">Cancelar</button>
+          <p class="msg" id="e-msg" role="status" aria-live="polite"></p>
+        </div>
+      </form>
+      <p class="msg" id="enc-msg" role="status" aria-live="polite"></p>
+      <ul class="rows" id="encs"></ul>
+    </section>
+
+    <!-- ===== Peças ===== -->
+    <section class="app-section" id="pane-pecas" role="tabpanel" aria-labelledby="tab-pecas" hidden>
+      <h2 class="title-sm">Pedidos de revisão</h2>
+      <p class="small">Responda com “Ajustar” ou “Aprovado”. O cliente vê a resposta em Consultoria e o ajuste aparece no Início dele.</p>
+      <ul class="rows" id="peds"></ul>
+    </section>
+
+    <!-- ===== Sua marca (preenchidas por app/admin-marca.js) ===== -->
+    <section class="app-section" id="pane-diagnostico" role="tabpanel" aria-labelledby="tab-diagnostico" hidden></section>
+    <section class="app-section" id="pane-estrategia" role="tabpanel" aria-labelledby="tab-estrategia" hidden></section>
+    <section class="app-section" id="pane-plataforma" role="tabpanel" aria-labelledby="tab-plataforma" hidden></section>
+    <section class="app-section" id="pane-identidade" role="tabpanel" aria-labelledby="tab-identidade" hidden></section>
+
+    <!-- ===== Acessos ===== -->
+    <section class="app-section" id="pane-acessos" role="tabpanel" aria-labelledby="tab-acessos" hidden>
+      <div class="app-section__head">
+        <h2 class="title-sm">Quem acessa o portal</h2>
+        <button class="btn btn--light btn--sm" id="open-acc" aria-expanded="false" aria-controls="acc-card">Novo acesso</button>
+      </div>
+
+      <form class="card" id="acc-card" novalidate hidden>
+        <div class="new-client">
+          <div><label class="label" for="a-name">Nome</label><input class="field" id="a-name" autocomplete="off" required /></div>
+          <div><label class="label" for="a-email">E-mail de acesso</label><input class="field" id="a-email" type="email" autocomplete="off" required /></div>
+          <div class="full">
+            <label class="label" for="a-pass">Senha inicial (mínimo 8 caracteres)</label>
+            <div class="new-client__pass">
+              <input class="field" id="a-pass" type="text" autocomplete="off" minlength="8" required />
+              <button class="btn btn--ghost btn--sm" type="button" id="a-gen">Gerar</button>
+            </div>
+          </div>
+        </div>
+        <div class="new-client__foot">
+          <button class="btn btn--light" type="submit">Criar acesso</button>
+          <p class="msg" id="a-msg" role="status" aria-live="polite"></p>
+        </div>
+      </form>
+
+      <p class="msg" id="acc-msg" role="status" aria-live="polite"></p>
+      <ul class="clients" id="accs"></ul>
+
+      <form class="link-acc" id="link-form" hidden>
+        <label class="label" for="link-sel">Vincular acesso existente</label>
+        <div class="new-client__pass">
+          <select class="field" id="link-sel"></select>
+          <button class="btn btn--ghost btn--sm" type="submit">Vincular</button>
+        </div>
+      </form>
+    </section>
+  </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="app/config.js"></script>
+  <script src="app/auth.js?v=2"></script>
+  <script src="app/ui.js?v=20"></script>
+  <script src="app/presets.js?v=31"></script>
+  <script src="app/admin-marca.js?v=7"></script>
+  <script src="app/saude.js?v=8"></script>
+  <script src="app/admin-cliente.js?v=56"></script>
+</body>
+</html>

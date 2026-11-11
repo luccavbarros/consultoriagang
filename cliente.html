@@ -4,51 +4,77 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
-  <title>Minha área — GANG</title>
+  <title>Sua marca — GANG</title>
   <link rel="icon" href="assets/favicon-maleta.png" type="image/png" sizes="32x32" />
-  <link rel="stylesheet" href="app/app.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="app/app.css?v=24" />
+  <link rel="stylesheet" href="app/portal.css?v=64" />
+  <link rel="stylesheet" href="app/tema.css?v=64" />
 </head>
-<body>
-  <header class="app-header">
-    <div class="app-header__bar">
-      <div class="app-header__brand">
-        <a href="/" aria-label="GANG — site"><img src="assets/logo.svg" alt="GANG" width="100" height="20" /></a>
-        <span class="app-header__tag" id="company">Área do cliente</span>
+<body class="portal-body">
+  <div class="portal" id="app">
+    <aside class="side" aria-label="Menu do portal">
+      <a class="side__brand" href="/" aria-label="GANG — ir para o site"><img src="assets/logo.svg" alt="GANG" width="64" height="13" /></a>
+      <div class="side__top">
+        <div class="side__id">
+          <span class="side__logo-dot" id="company-logo" aria-hidden="true"></span>
+          <div class="side__company">
+            <p class="side__name" id="company">…</p>
+            <p class="side__plan" id="plan-line"></p>
+          </div>
+        </div>
+        <button class="side__toggle btn btn--ghost btn--sm" id="menu-btn" aria-expanded="false" aria-controls="side-nav">Menu</button>
       </div>
-      <div class="app-header__actions">
-        <span class="app-header__who" id="who"></span>
-        <button class="btn btn--ghost btn--sm" id="sign-out">Sair</button>
-      </div>
-    </div>
-  </header>
 
-  <main class="app-main" id="app">
-    <section class="app-section">
-      <h1 class="title-xl" id="hello">Olá</h1>
-      <p class="small">Esta é a sua área na GANG.</p>
-    </section>
+      <nav class="side__nav" id="side-nav">
+        <p class="side__group" id="g1">Acompanhamento</p>
+        <ul aria-labelledby="g1">
+          <li><a class="side__link" href="#plano" data-route="plano"><span>Plano</span><span class="side__ind" data-ind="plano"></span></a></li>
+          <li><a class="side__link" href="#inicio" data-route="inicio"><span>Visão geral</span><span class="side__ind" data-ind="inicio"></span></a></li>
+          <li><a class="side__link" href="#acoes" data-route="acoes"><span>Ações</span><span class="side__ind" data-ind="acoes"></span></a></li>
+          <li><a class="side__link" href="#resultados" data-route="resultados"><span>Resultados</span><span class="side__ind" data-ind="resultados"></span></a></li>
+          <li><a class="side__link" href="#consultoria" data-route="consultoria"><span>Encontros e prazos</span><span class="side__ind" data-ind="consultoria"></span></a></li>
+        </ul>
+        <p class="side__group" id="g2">Sua marca</p>
+        <ul aria-labelledby="g2">
+          <li><a class="side__link" href="#diagnostico" data-route="diagnostico"><span>Diagnóstico</span><span class="side__ind" data-ind="diagnostico"></span></a></li>
+          <li><a class="side__link" href="#estrategia" data-route="estrategia"><span>Estratégia</span></a></li>
+          <li><a class="side__link" href="#plataforma" data-route="plataforma"><span>Narrativa</span></a></li>
+          <li><a class="side__link" href="#identidade" data-route="identidade"><span>Identidade visual</span></a></li>
+        </ul>
 
-    <section class="app-section" aria-labelledby="t-tools">
-      <h2 class="title-sm" id="t-tools">Suas funções</h2>
-      <p class="app-note">Em breve, as funções da sua área aparecem aqui.</p>
-    </section>
-  </main>
+        <div class="side__foot">
+          <div class="consultant" id="consultant" hidden>
+            <div class="consultant__who">
+              <span class="consultant__ini" id="c-ini" aria-hidden="true"></span>
+              <div>
+                <p class="consultant__name" id="c-name"></p>
+                <p class="consultant__role">Seu consultor · GANG</p>
+              </div>
+            </div>
+            <button class="btn btn--ghost consultant__talk" type="button" id="c-talk">Mensagem ao consultor <span class="talk__badge" id="c-unread" hidden></span></button>
+            <p class="consultant__dias" id="c-dias"></p>
+          </div>
+          <div class="side__me">
+            <button class="side__who side__who--btn" type="button" id="me-foto-btn" title="Trocar sua foto"><span class="consultant__ini side__avatar" id="me-dot" aria-hidden="true"></span><span id="me-name"></span></button>
+            <button class="side__out" type="button" id="sign-out" aria-label="Sair" title="Sair"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 20H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3"/><path d="M15 16l4-4-4-4"/><path d="M19 12H9"/></svg></button>
+          </div>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="pmain" id="main" tabindex="-1">
+      <p class="crumb" id="crumb"></p>
+      <div id="screen"></div>
+    </main>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script src="app/config.js"></script>
-  <script src="app/auth.js"></script>
-  <script>
-    (async () => {
-      const { sb, guard, signOut, notConfigured } = window.GangAuth;
-      if (!sb) return notConfigured(document.getElementById('app'));
-      const me = await guard('client');
-      if (!me) return;
-
-      document.getElementById('who').textContent = me.email;
-      document.getElementById('hello').textContent = 'Olá' + (me.name ? ', ' + me.name.split(' ')[0] : '');
-      if (me.company) document.getElementById('company').textContent = me.company;
-      document.getElementById('sign-out').addEventListener('click', signOut);
-    })();
-  </script>
+  <script src="app/auth.js?v=2"></script>
+  <script src="app/ui.js?v=20"></script>
+  <script src="app/portal.js?v=82"></script>
 </body>
 </html>

@@ -6,192 +6,154 @@
   <meta name="robots" content="noindex, nofollow" />
   <title>Painel — GANG</title>
   <link rel="icon" href="assets/favicon-maleta.png" type="image/png" sizes="32x32" />
-  <link rel="stylesheet" href="app/app.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="app/app.css?v=24" />
+  <link rel="stylesheet" href="app/portal.css?v=64" />
+  <link rel="stylesheet" href="app/tema.css?v=64" />
 </head>
-<body>
-  <header class="app-header">
-    <div class="app-header__bar">
-      <div class="app-header__brand">
-        <a href="/" aria-label="GANG — site"><img src="assets/logo.svg" alt="GANG" width="100" height="20" /></a>
-        <span class="app-header__tag">Painel</span>
+<body class="portal-body">
+  <div class="portal">
+    <aside class="side" aria-label="Menu do painel">
+      <div class="side__top">
+        <div class="side__company">
+          <a href="/" aria-label="GANG — site"><img class="side__logo" src="assets/logo.svg" alt="GANG" width="100" height="20" /></a>
+          <p class="side__plan">Painel do consultor</p>
+        </div>
+        <button class="side__toggle btn btn--ghost btn--sm" id="menu-btn" aria-expanded="false" aria-controls="side-nav">Menu</button>
       </div>
-      <div class="app-header__actions">
-        <span class="app-header__who" id="who"></span>
-        <button class="btn btn--ghost btn--sm" id="sign-out">Sair</button>
-      </div>
-    </div>
-  </header>
 
-  <main class="app-main" id="app">
-    <section class="app-section">
+      <nav class="side__nav" id="side-nav" aria-label="Menu do painel">
+        <p class="side__group" id="g1">Painel</p>
+        <ul aria-labelledby="g1">
+          <li><a class="side__link" href="#geral" data-view-link="geral" aria-current="page"><span>Visão geral</span><span class="side__ind is-hot" id="side-pend" hidden></span></a></li>
+          <li><a class="side__link" href="#novo" id="side-new" data-view-link="novo"><span>Novo cliente</span></a></li>
+          <li><a class="side__link" href="#perfil" data-view-link="perfil"><span>Seu perfil</span></a></li>
+        </ul>
+        <p class="side__group" id="g2">Clientes</p>
+        <ul aria-labelledby="g2" id="side-clients"></ul>
+
+        <div class="side__foot">
+          <div class="side__me"><a class="side__who side__who--link" href="#perfil" title="Seu perfil"><span class="consultant__ini side__avatar" id="me-dot" aria-hidden="true"></span><span id="who"></span></a><button class="side__out" type="button" id="sign-out" aria-label="Sair" title="Sair"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 20H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3"/><path d="M15 16l4-4-4-4"/><path d="M19 12H9"/></svg></button></div>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="pmain admin-main" id="app" tabindex="-1">
+      <p class="crumb" id="crumb">Painel / Visão geral</p>
+
+    <section class="app-section" data-view="geral">
       <h1 class="title-xl" id="hello">Olá</h1>
       <div class="cards">
         <div class="tile"><span class="tile__num" id="n-total">–</span><span class="small">Clientes</span></div>
-        <div class="tile"><span class="tile__num" id="n-active">–</span><span class="small">Com acesso ativo</span></div>
+        <div class="tile"><span class="tile__num" id="n-active">–</span><span class="small">Planos ativos</span></div>
+        <a class="tile tile--link" href="#msgs-sec" id="tile-pend" hidden><span class="tile__num" id="n-pend">–</span><span class="small">Pedidos e mensagens esperando você · ver</span></a>
       </div>
     </section>
 
-    <section class="app-section" aria-labelledby="t-clients">
+    <section class="app-section" data-view="geral" aria-labelledby="t-risco" id="risco-sec" hidden>
+      <div class="app-section__head"><h2 class="title-sm" id="t-risco">Precisa de você</h2><p class="small">Clientes com sinal de risco, do mais urgente ao menos.</p></div>
+      <ul class="risk" id="risco"></ul>
+    </section>
+
+    <section class="app-section" data-view="geral" aria-labelledby="t-msgs" id="msgs-sec" hidden>
+      <h2 class="title-sm" id="t-msgs">Esperando você</h2>
+      <p class="small">Só o que tem prazo: peças em revisão, pedidos para remarcar e mensagens.</p>
+      <ul class="rows" id="msgs"></ul>
+    </section>
+
+    <section class="app-section" data-view="geral" aria-labelledby="t-enc" id="encontro-sec" hidden>
+      <h2 class="title-sm" id="t-enc">Para o próximo encontro</h2>
+      <p class="small">Dúvidas e ideias dos clientes. Não pedem resposta agora: entram na pauta.</p>
+      <ul class="rows" id="encontro-lista"></ul>
+    </section>
+
+    <section class="app-section" data-view="geral" aria-labelledby="t-clients">
       <div class="app-section__head">
         <h2 class="title-sm" id="t-clients">Clientes</h2>
-        <button class="btn btn--light btn--sm" id="open-new" aria-expanded="false" aria-controls="new-card">Novo cliente</button>
       </div>
 
-      <form class="card" id="new-card" novalidate hidden>
-        <h3 class="title-sm">Novo cliente</h3>
-        <div class="new-client">
-          <div><label class="label" for="nc-name">Nome</label><input class="field" id="nc-name" autocomplete="off" required /></div>
-          <div><label class="label" for="nc-company">Empresa</label><input class="field" id="nc-company" autocomplete="off" /></div>
-          <div class="full"><label class="label" for="nc-email">E-mail de acesso</label><input class="field" id="nc-email" type="email" autocomplete="off" required /></div>
-          <div class="full">
-            <label class="label" for="nc-pass">Senha inicial (mínimo 8 caracteres)</label>
-            <div class="new-client__pass">
-              <input class="field" id="nc-pass" type="text" autocomplete="off" minlength="8" required />
-              <button class="btn btn--ghost btn--sm" type="button" id="nc-gen">Gerar</button>
-            </div>
-          </div>
-        </div>
-        <div class="new-client__foot">
-          <button class="btn btn--light" type="submit">Criar acesso</button>
-          <p class="msg" id="nc-msg" role="status" aria-live="polite"></p>
-        </div>
-      </form>
 
       <p class="msg" id="list-msg" role="status" aria-live="polite"></p>
       <ul class="clients" id="clients"></ul>
     </section>
 
-    <section class="app-section" aria-labelledby="t-tools">
-      <h2 class="title-sm" id="t-tools">Suas funções</h2>
-      <p class="app-note">Espaço reservado para as funções do seu painel.</p>
+    <section class="app-section" data-view="geral" aria-labelledby="t-loose" id="loose-sec" hidden>
+      <h2 class="title-sm" id="t-loose">Acessos sem empresa</h2>
+      <p class="small">Contas criadas antes do portal. Abra uma empresa e use “Vincular acesso existente” para ligá-las.</p>
+      <ul class="clients" id="loose"></ul>
+    </section>
+
+    <section class="app-section" aria-labelledby="t-novo" id="novo" data-view="novo" hidden>
+      <h1 class="title-xl" id="t-novo">Novo cliente</h1>
+      <form class="card" id="new-card" novalidate>
+        <p class="small">Cria a empresa, o plano e o acesso do cliente. O resto (estratégia, marca, ações) você preenche na página da empresa.</p>
+        <fieldset class="fset">
+          <legend class="fset__title">Empresa e acesso</legend>
+          <div class="new-client">
+            <div class="full"><label class="label" for="nc-company">Empresa</label><input class="field" id="nc-company" autocomplete="off" required /></div>
+            <div><label class="label" for="nc-name">Nome de quem acessa</label><input class="field" id="nc-name" autocomplete="off" required /></div>
+            <div><label class="label" for="nc-email">E-mail de acesso</label><input class="field" id="nc-email" type="email" autocomplete="off" required /></div>
+            <div class="full">
+              <label class="label" for="nc-pass">Senha inicial (mínimo 8 caracteres)</label>
+              <div class="new-client__pass">
+                <input class="field" id="nc-pass" type="text" autocomplete="off" minlength="8" required />
+                <button class="btn btn--ghost btn--sm" type="button" id="nc-gen">Gerar</button>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+        <fieldset class="fset">
+          <legend class="fset__title">Plano</legend>
+          <div class="new-client new-client--4">
+            <div>
+              <label class="label" for="nc-tipo">Tipo de plano</label>
+              <select class="field" id="nc-tipo"><option value="consultoria">Consultoria mensal</option><option value="acesso">Só acesso à marca</option></select>
+            </div>
+            <div><label class="label" for="nc-start">Início</label><input class="field" id="nc-start" type="date" required /></div>
+            <div><label class="label" for="nc-months">Duração (meses)</label><select class="field" id="nc-months"><option value="6">6 meses</option><option value="12">12 meses</option><option value="18" selected>18 meses</option><option value="24">24 meses</option><option value="36">36 meses</option></select></div>
+            <div><label class="label" for="nc-goal">Meta de faturamento (%)</label><select class="field" id="nc-goal"><option value="">Sem meta</option><option value="10">+10%</option><option value="15">+15%</option><option value="20">+20%</option><option value="25">+25%</option><option value="30" selected>+30%</option><option value="40">+40%</option><option value="50">+50%</option><option value="100">+100% (dobrar)</option></select></div>
+            <div><label class="label" for="nc-base">Faturamento de partida</label><input class="field" id="nc-base" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" aria-describedby="nc-base-d" /><p class="field-hint" id="nc-base-d">Média mensal dos 12 meses antes do plano</p></div>
+          </div>
+        </fieldset>
+        <div class="new-client__foot">
+          <button class="btn btn--light" type="submit">Criar cliente</button>
+          <p class="msg" id="nc-msg" role="status" aria-live="polite"></p>
+        </div>
+      </form>
+    </section>
+
+    <section class="app-section" aria-labelledby="t-me" id="perfil" data-view="perfil" hidden>
+      <h1 class="title-xl" id="t-me">Seu perfil</h1>
+      <form class="card" id="me-card" novalidate>
+        <p class="small">Aparece no menu do cliente. As mensagens do botão “Falar com o consultor” chegam aqui no painel.</p>
+        <div class="me-photo">
+          <span class="consultant__ini me-photo__view" id="me-avatar" aria-hidden="true"></span>
+          <div class="me-photo__ctl">
+            <label class="label" for="me-foto">Sua foto (JPG ou PNG, até 5 MB)</label>
+            <input class="field field--file" id="me-foto" type="file" accept="image/jpeg,image/png,image/webp" />
+            <label class="me-photo__rm" id="me-rm-wrap" hidden><input type="checkbox" id="me-rm" /> Remover a foto e usar as iniciais</label>
+          </div>
+        </div>
+        <div class="new-client">
+          <div><label class="label" for="me-name">Nome e sobrenome</label><input class="field" id="me-name" autocomplete="name" /></div>
+        </div>
+        <p class="small">Sem foto, o menu do cliente mostra as iniciais do seu nome e sobrenome.</p>
+        <div class="new-client__foot">
+          <button class="btn btn--ghost" type="submit">Salvar perfil</button>
+          <p class="msg" id="me-msg" role="status" aria-live="polite"></p>
+        </div>
+      </form>
     </section>
   </main>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script src="app/config.js"></script>
-  <script src="app/auth.js"></script>
-  <script>
-    (async () => {
-      const { sb, guard, signOut, notConfigured } = window.GangAuth;
-      if (!sb) return notConfigured(document.getElementById('app'));
-      const me = await guard('admin');
-      if (!me) return;
-
-      const $ = (id) => document.getElementById(id);
-      const say = (el, text, kind) => { el.textContent = text; el.className = 'msg' + (kind ? ' is-' + kind : ''); };
-      const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
-
-      $('who').textContent = me.email;
-      $('hello').textContent = 'Olá' + (me.name ? ', ' + me.name.split(' ')[0] : '');
-      $('sign-out').addEventListener('click', signOut);
-
-      // account changes need the service key, so they go through our own server function, which checks you are the admin
-      const api = async (body) => {
-        const { data: { session } } = await sb.auth.getSession();
-        const r = await fetch('/api/admin-users', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
-          body: JSON.stringify(body),
-        });
-        const out = await r.json().catch(() => ({}));
-        if (!r.ok) throw new Error(out.error || 'Não deu certo. Tente de novo.');
-        return out;
-      };
-
-      const randomPass = () => {
-        const chars = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        const bytes = crypto.getRandomValues(new Uint32Array(12));
-        return Array.from(bytes, (b) => chars[b % chars.length]).join('');
-      };
-
-      // ===== client list =====
-      const render = (rows) => {
-        const list = $('clients');
-        list.replaceChildren();
-        $('n-total').textContent = rows.length;
-        $('n-active').textContent = rows.filter((r) => r.active).length;
-        if (!rows.length) { list.append(el('li', 'clients__empty', 'Nenhum cliente ainda. Crie o primeiro acesso em “Novo cliente”.')); return; }
-
-        rows.forEach((c) => {
-          const li = el('li', 'client');
-          const who = el('div');
-          who.append(el('div', 'client__name', c.name || '(sem nome)'), el('div', 'client__mail', c.email));
-          const badge = el('span', 'badge' + (c.active ? '' : ' is-off'), c.active ? 'Ativo' : 'Desativado');
-
-          const actions = el('div', 'client__actions');
-          const btn = (label, fn, danger) => {
-            const b = el('button', 'btn btn--ghost btn--sm' + (danger ? ' btn--danger' : ''), label);
-            b.type = 'button';
-            b.addEventListener('click', async () => {
-              b.disabled = true;
-              try { await fn(); } catch (err) { say($('list-msg'), err.message, 'error'); }
-              b.disabled = false;
-            });
-            return b;
-          };
-          actions.append(
-            btn('Nova senha', async () => {
-              const password = prompt('Nova senha para ' + c.email + ' (mínimo 8 caracteres):', randomPass());
-              if (!password) return;
-              await api({ action: 'set_password', id: c.id, password });
-              say($('list-msg'), 'Senha de ' + c.email + ' alterada. Envie a nova senha para o cliente.', 'ok');
-            }),
-            btn(c.active ? 'Desativar' : 'Ativar', async () => {
-              await api({ action: 'set_active', id: c.id, active: !c.active });
-              await load();
-            }),
-            btn('Excluir', async () => {
-              if (!confirm('Excluir o acesso de ' + c.email + '? Isso não pode ser desfeito.')) return;
-              await api({ action: 'delete', id: c.id });
-              await load();
-            }, true),
-          );
-
-          li.append(who, el('div', 'client__company', c.company || '—'), badge, actions);
-          list.append(li);
-        });
-      };
-
-      const load = async () => {
-        const { data, error } = await sb.from('profiles').select('*').eq('role', 'client').order('created_at', { ascending: false });
-        if (error) return say($('list-msg'), 'Não foi possível carregar os clientes.', 'error');
-        say($('list-msg'), '');
-        render(data);
-      };
-      await load();
-
-      // ===== new client =====
-      const card = $('new-card');
-      $('open-new').addEventListener('click', () => {
-        card.hidden = !card.hidden;
-        $('open-new').setAttribute('aria-expanded', String(!card.hidden));
-        if (!card.hidden) { if (!$('nc-pass').value) $('nc-pass').value = randomPass(); $('nc-name').focus(); }
-      });
-      $('nc-gen').addEventListener('click', () => { $('nc-pass').value = randomPass(); });
-
-      card.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const body = {
-          action: 'create',
-          name: $('nc-name').value.trim(),
-          company: $('nc-company').value.trim(),
-          email: $('nc-email').value.trim(),
-          password: $('nc-pass').value,
-        };
-        if (!body.name || !body.email) return say($('nc-msg'), 'Preencha nome e e-mail.', 'error');
-        if (body.password.length < 8) return say($('nc-msg'), 'A senha precisa ter pelo menos 8 caracteres.', 'error');
-        const submit = card.querySelector('[type=submit]');
-        submit.disabled = true; say($('nc-msg'), 'Criando…');
-        try {
-          await api(body);
-          say($('nc-msg'), 'Acesso criado. Envie para o cliente: ' + body.email + ' / ' + body.password, 'ok');
-          ['nc-name', 'nc-company', 'nc-email'].forEach((id) => { $(id).value = ''; });
-          $('nc-pass').value = randomPass();
-          await load();
-        } catch (err) { say($('nc-msg'), err.message, 'error'); }
-        submit.disabled = false;
-      });
-    })();
-  </script>
+  <script src="app/auth.js?v=2"></script>
+  <script src="app/ui.js?v=20"></script>
+  <script src="app/saude.js?v=8"></script>
+  <script src="app/admin.js?v=15"></script>
 </body>
 </html>

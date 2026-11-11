@@ -54,6 +54,13 @@ module.exports = async (req, res) => {
       const t = await r.text();
       return fail(res, 400, /already|exists|registered/i.test(t) ? 'Já existe um acesso com este e-mail.' : 'Não foi possível criar o acesso.');
     }
+    // the new login belongs to the company the panel just created (the caller was checked as admin above)
+    if (isUuid(body.empresa_id)) {
+      const user = await r.json().catch(() => ({}));
+      const id = user.id || (user.user && user.user.id);
+      const p = id ? await sb('/rest/v1/profiles?id=eq.' + id, { method: 'PATCH', body: JSON.stringify({ empresa_id: body.empresa_id }) }) : null;
+      if (!p || !p.ok) return fail(res, 502, 'O acesso foi criado, mas não foi ligado à empresa. Use “Vincular acesso existente” na página da empresa.');
+    }
     return res.status(200).json({ ok: true });
   }
 

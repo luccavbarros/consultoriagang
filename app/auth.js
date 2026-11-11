@@ -6,11 +6,18 @@
 
   const HOME = { admin: 'admin.html', client: 'cliente.html' };
 
+  // a saved session whose account no longer exists (deleted, or a stale login) is cleared, so pages fall back to the login form
   const getProfile = async () => {
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) return null;
-    const { data } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
-    return data;
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session || !session.user) { if (session) await sb.auth.signOut({ scope: 'local' }); return null; }
+      const { data } = await sb.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
+      if (!data) { await sb.auth.signOut({ scope: 'local' }); return null; }
+      return data;
+    } catch (e) {
+      try { await sb.auth.signOut({ scope: 'local' }); } catch (e2) { /* nothing saved to clear */ }
+      return null;
+    }
   };
 
   // keeps each page to its own people: no session → login; wrong role → their own area; disabled → out
@@ -32,5 +39,23 @@
     document.documentElement.classList.add('is-ready');
   };
 
-  window.GangAuth = { sb, ready, HOME, getProfile, guard, signOut, notConfigured };
+  // account changes need the service key, so the panel calls our own server function, which checks you are the admin
+  const adminApi = async (body) => {
+    const { data: { session } } = await sb.auth.getSession();
+    const r = await fetch('/api/admin-users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (session ? session.access_token : '') },
+      body: JSON.stringify(body),
+    });
+    const out = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(out.error || 'Não deu certo. Tente de novo.');
+    return out;
+  };
+
+  const randomPass = () => {
+    const chars = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    return Array.from(crypto.getRandomValues(new Uint32Array(12)), (b) => chars[b % chars.length]).join('');
+  };
+
+  window.GangAuth = { sb, ready, HOME, getProfile, guard, signOut, notConfigured, adminApi, randomPass };
 })();

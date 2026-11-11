@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex, nofollow" />
   <title>Entrar — GANG</title>
   <link rel="icon" href="assets/favicon-maleta.png" type="image/png" sizes="32x32" />
-  <link rel="stylesheet" href="app/app.css" />
+  <link rel="stylesheet" href="app/app.css?v=24" />
 </head>
 <body>
   <main class="auth">
@@ -48,7 +48,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script src="app/config.js"></script>
-  <script src="app/auth.js"></script>
+  <script src="app/auth.js?v=2"></script>
   <script>
     (async () => {
       const { sb, HOME, getProfile, notConfigured } = window.GangAuth;
@@ -62,7 +62,7 @@
 
       const goHome = async () => {
         const profile = await getProfile();
-        if (profile && profile.active) location.replace(HOME[profile.role] || 'cliente.html');
+        if (profile && profile.active) { location.replace(HOME[profile.role] || 'cliente.html'); return 'saindo'; }
         return profile;
       };
 
@@ -77,7 +77,7 @@
       });
 
       if (new URLSearchParams(location.search).has('off')) say($('msg-login'), 'Este acesso está desativado. Fale com a GANG.', 'error');
-      else if (!recovering) await goHome(); // already logged in: straight to their area
+      else if (!recovering && (await goHome()) === 'saindo') return; // already logged in: straight to their area, without showing the form
       document.documentElement.classList.add('is-ready');
 
       $('go-forgot').addEventListener('click', () => { $('email-forgot').value = $('email').value; show('forgot'); });
@@ -91,6 +91,7 @@
         const { error } = await sb.auth.signInWithPassword({ email, password });
         if (error) { busy(forms.login, false); return say($('msg-login'), 'E-mail ou senha incorretos.', 'error'); }
         const profile = await goHome();
+        if (profile === 'saindo') return;
         if (!profile || !profile.active) {
           await sb.auth.signOut(); busy(forms.login, false);
           say($('msg-login'), 'Este acesso está desativado. Fale com a GANG.', 'error');
