@@ -169,18 +169,18 @@
 
   // ===== indicadores =====
   const ind = (k, text, hot) => { const n = document.querySelector('[data-ind="' + k + '"]'); if (!n) return; n.textContent = text || ''; n.classList.toggle('is-hot', !!hot); };
+  // os avisos do menu: só o ponto colorido e o número (sem palavras); o que não pede nada fica em branco
   const indicadores = () => {
-    ind('plano', D.plano && !soAcesso ? 'Mês ' + mesN + ' de ' + dur : '');
-    ind('inicio', '');
+    ind('plano', ''); ind('inicio', ''); ind('diagnostico', '');
     const h0 = new Date(); h0.setHours(0, 0, 0, 0); const h7 = new Date(h0); h7.setDate(h0.getDate() + 7);
     const semana = eventos().filter((e) => !e.feita && U.day(e.dia) >= h0 && U.day(e.dia) < h7).length;
-    ind('calendario', semana ? semana + ' esta semana' : '');
+    ind('calendario', semana ? String(semana) : '', semana > 0);
     const n = pendentesDoMes().length;
-    ind('acoes', n ? n + ' com você' : '', n > 0);
+    ind('acoes', n ? String(n) : '', n > 0);
     const falta = faltaNumeros();
-    ind('resultados', falta ? 'Enviar ' + U.nomeMesCurto(mesPassado).toLowerCase() : '', falta);
-    ind('consultoria', D.proximo ? U.dia(D.proximo.inicio) : semana ? semana + ' esta semana' : '');
-    ind('diagnostico', D.diagnostico && D.diagnostico.data ? U.mesAno(D.diagnostico.data) : '');
+    ind('resultados', falta ? '1' : '', falta);
+    const encSemana = D.proximo && new Date(D.proximo.inicio) < h7 ? 1 : 0;
+    ind('consultoria', encSemana ? '1' : '', encSemana > 0);
   };
   indicadores();
 
@@ -2325,12 +2325,22 @@
     let frase = numero ? (objNeg.titulo || '') : destino;
     if (!numero) { const m = destino.match(/^([+\-\u2212]?\d[\d.,]*\s?%?)\s+(?:de\s+)?(.+)$/); if (m) { numero = m[1].trim(); frase = m[2]; } }
     frase = frase.replace(/^de\s+/i, '');
-    const out = [el('section', { class: 'goal', 'aria-labelledby': 'goal-t' },
-      el('p', 'eyebrow', 'Meta do plano' + (primeiro ? ' · ' + primeiro : '')),
-      el('h1', { class: 'goal__main' + (numero ? '' : ' goal__main--txt'), id: 'goal-t' },
-        numero ? el('span', 'goal__num', numero) : null,
-        el('span', 'goal__txt', ...(numero ? 'de ' + frase : frase.charAt(0).toUpperCase() + frase.slice(1)).split(/(?<=,)\s+/).map((t) => el('span', 'goal__line', t)))),
-      )];
+    // a meta como um card de indicador (no estilo das referências): rótulo com ícone, o número, a frase e o tempo do plano em segmentos
+    const fimRef = inicioRef ? U.addRef(inicioRef, dur - 1) : null;
+    const mesAgora = inicioRef ? Math.min(Math.max(mesN || 1, 1), dur) : 0;
+    const fraseMeta = numero ? frase : frase.charAt(0).toUpperCase() + frase.slice(1);
+    const out = [el('section', { class: 'goal goal--kpi', 'aria-labelledby': 'goal-t' },
+      el('div', 'goal__head',
+        el('span', { class: 'goal__ico', 'aria-hidden': 'true' }),
+        el('p', 'goal__lbl2', 'Meta do plano'),
+        inicioRef ? el('span', 'goal__chip', 'Mês ' + mesAgora + ' de ' + dur) : null),
+      el('h1', { class: 'goal__val', id: 'goal-t' },
+        numero ? el('span', 'goal__n', numero) : null,
+        el('span', 'goal__f' + (numero ? '' : ' is-so'), fraseMeta)),
+      inicioRef ? el('div', 'goal__tempo',
+        el('div', { class: 'goal__segs', role: 'img', 'aria-label': 'Mês ' + mesAgora + ' de ' + dur + ' do plano', style: '--n:' + dur },
+          Array.from({ length: dur }, (_, i) => el('span', i < mesAgora - 1 ? 'is-ok' : i === mesAgora - 1 ? 'is-now' : null))),
+        el('div', 'goal__ends', el('span', null, U.cap(U.nomeMesCurto(inicioRef)) + ' ' + inicioRef.slice(2, 4)), el('span', null, 'Chegada · ' + U.nomeMesCurto(fimRef) + ' ' + fimRef.slice(2, 4)))) : null)];
     const bm = bannerMensagem(); if (bm) out.push(bm);
     if (!inicioRef) return out.concat(vazio('A trilha aparece assim que o consultor cadastrar o plano.'));
 

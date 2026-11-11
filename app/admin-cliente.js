@@ -132,7 +132,7 @@
       el('span', 'etapas__pct' + (feitos === 6 ? ' is-ok' : ''), feitos + ' de 6 · ' + Math.round(feitos / 6 * 100) + '%'),
       ...passos.flatMap((x, i) => [i ? el('span', { class: 'etapas__sep', 'aria-hidden': 'true' }) : null,
         el('a', { class: 'etapa ' + (x.ok ? 'is-ok' : 'is-todo'), href: '#fech-' + i, title: x.titulo }, CURTO[i] || x.titulo)]).filter(Boolean));
-    $('fech-count').textContent = feitos + '/6'; $('fech-count').className = 'side__ind' + (feitos < 6 ? ' is-hot' : '');
+    $('fech-count').textContent = feitos < 6 ? String(6 - feitos) : ''; $('fech-count').className = 'side__ind' + (feitos < 6 ? ' is-hot' : '');
     $('fech-lista').replaceChildren(...passos.map((x, i) => el('li', { class: 'fech__item' + (x.ok ? ' is-ok' : ''), id: 'fech-' + i },
       el('span', { class: 'fech__ico', 'aria-hidden': 'true' }, x.ok ? '✓' : String(i + 1)),
       el('div', 'fech__txt', el('p', 'fech__t', x.titulo, el('span', 'sr-only', x.ok ? ' (feito)' : ' (pendente)')), el('p', 'fech__d', x.detalhe)),

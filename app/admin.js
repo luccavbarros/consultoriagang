@@ -77,7 +77,7 @@
     const logo = (e, cls) => { const n = el('span', 'cli-logo' + (cls ? ' ' + cls : '')); n.setAttribute('aria-hidden', 'true'); U.avatar(n, e.nome, e.logo_url); return n; };
     $('side-clients').replaceChildren(...(emp.data.length ? emp.data.map((e) => {
       const p = plano[e.id];
-      const ind = pend[e.id] ? el('span', 'side__ind is-hot', String(pend[e.id])) : el('span', 'side__ind', !p ? '' : p.tipo === 'acesso' ? 'Acesso' : 'Mês ' + mesDoPlano(p));
+      const ind = pend[e.id] ? el('span', 'side__ind is-hot', String(pend[e.id])) : el('span', 'side__ind', '');
       return el('li', null, el('a', { class: 'side__link side__link--cli', href: 'admin-cliente.html?id=' + e.id }, logo(e, 'cli-logo--sm'), el('span', 'side__client', e.nome), ind));
     }) : [el('li', 'side__empty', 'Nenhum cliente ainda.')]));
 
