@@ -4935,3 +4935,11 @@
     'Cobranças avulsas e taxas extras fazem o cliente sentir que está pagando o tempo todo',
   ]);
 })();
+
+// ===== Rodada 16: situações de compra são momentos da vida de quem compra, não motivos nem etapas da compra.
+// "Comparando preços", "alguém de confiança" e "recebi uma indicação" valem para qualquer marca e não mostram em que momento ela é lembrada. =====
+(function () {
+  const P = window.GangPresets; if (!P || !P.situacoes) return;
+  const FORA = ['Estou comparando preços', 'Preciso de alguém de confiança, sem dor de cabeça', 'Recebi uma indicação de alguém de confiança'];
+  P.situacoes = P.situacoes.filter((x) => !FORA.includes(x.texto));
+})();
