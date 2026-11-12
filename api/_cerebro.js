@@ -4512,3 +4512,43 @@
     'Comunicação de marca constante por 3 meses seguidos',
   ]);
 })();
+
+// ===== Cada desafio aponta as abordagens que fazem sentido para ele (o consultor só vê as coerentes) =====
+(function () {
+  const P = window.GangPresets; if (!P || !P.desafios || !P.abordagens) return;
+  const G = 'Da biblioteca';
+  const novas = [
+    'Criar motivos para voltar: acompanhamento depois da compra e oferta do próximo passo',
+    'Transformar cada entrega em prova: casos, números e avaliações em todo contato',
+    'Manter presença constante o ano todo com poucos sinais sempre iguais, em vez de campanhas soltas',
+  ];
+  novas.forEach((texto) => { if (!P.abordagens.some((a) => a.texto === texto)) P.abordagens.push({ grupo: G, texto }); });
+  const A = {
+    especialista: 'Ser a especialista em um tipo de cliente e mostrar provas disso em todo contato, em vez de competir por preço',
+    presente: 'Estar presente nas situações em que o cliente decide comprar, com os mesmos sinais visuais sempre',
+    metodo: 'Vender pelo método e pelo resultado, deixando o preço para depois do valor',
+    padrao: 'Padronizar a experiência para que todo cliente receba a mesma promessa, do contato ao pós-venda',
+    indicacao: 'Transformar clientes satisfeitos em indicação, com um processo simples e constante',
+    alcance: 'Alcançar quem ainda não compra da marca, com presença contínua e não só ofertas',
+    foco: 'Concentrar o esforço em uma região e um serviço até virar a referência, antes de expandir',
+    canal: 'Abrir um segundo canal de clientes para não depender de um só',
+    nome: 'Mostrar o que só a marca faz, com nome próprio, para sair da comparação direta',
+    facil: 'Ser a opção mais fácil de comprar: resposta rápida, preço claro e poucos passos',
+    voltar: novas[0], prova: novas[1], constante: novas[2],
+  };
+  const MAPA = [
+    ['A marca é pouco lembrada', ['presente', 'alcance', 'constante']],
+    ['O cliente não vê diferença', ['especialista', 'nome', 'metodo']],
+    ['A marca só é lembrada por quem já é cliente', ['alcance', 'indicacao', 'presente']],
+    ['A proposta começa pelo preço', ['metodo', 'nome', 'prova']],
+    ['A experiência muda de pessoa para pessoa', ['padrao']],
+    ['Os clientes compram uma vez e não voltam', ['voltar', 'indicacao', 'padrao']],
+    ['A marca depende de um único canal', ['canal', 'presente']],
+    ['Um concorrente maior ocupa a posição de referência', ['foco', 'especialista', 'nome']],
+    ['A marca tenta atender todo mundo', ['especialista', 'foco']],
+    ['A empresa tem qualidade, mas não tem provas visíveis', ['prova', 'metodo']],
+    ['É difícil achar e comprar da empresa', ['facil', 'presente']],
+    ['A comunicação é irregular', ['constante', 'presente']],
+  ];
+  P.desafios.forEach((d) => { const m = MAPA.find(([ini]) => d.texto.startsWith(ini)); if (m) d.abordagens = m[1].map((k) => A[k]); });
+})();
