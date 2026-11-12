@@ -2502,7 +2502,6 @@
               el('div', 'est-tl__linha', el('p', 'est-tl__t', c.texto), chip(k, t)),
               el('dl', 'est-tl__meta',
                 c.como_verificar ? el('div', null, el('dt', null, 'Verificamos por'), el('dd', null, el('span', 'est-code', c.como_verificar))) : null,
-                c.dono ? el('div', null, el('dt', null, 'Quem checa'), el('dd', null, c.dono)) : null,
                 el('div', null, el('dt', null, 'Próxima checagem'), el('dd', null, quando || 'a combinar')))));
         }))));
     }

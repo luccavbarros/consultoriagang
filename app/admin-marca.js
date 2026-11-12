@@ -290,8 +290,8 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     [lista, { icone: 'menos', titulo: 'Onde atuamos: deixamos de lado', tabela: 'escolhas', fixo: { tipo: 'deixa_de_lado' }, fields: [{ k: 'texto', label: 'Deixamos de lado', req: true, full: true, type: 'preset', presets: 'deixados' }], resumo: (r) => [r.texto] }],
     [lista, { icone: 'radar', largo: true, titulo: 'O que acompanhamos', nota: 'Condições que precisam continuar verdadeiras. Quando uma vira “Não se confirma”, o cliente vê o aviso e o tema entra na pauta do próximo encontro.', tabela: 'condicoes', fields: [
       { k: 'texto', label: 'Condição', req: true, full: true, type: 'preset', presets: 'condicoes' }, { k: 'como_verificar', label: 'Como verificamos', type: 'preset', presets: 'verificacoes' }, { k: 'status', label: 'Hoje', type: 'select', options: CON, def: 'sem_dados' },
-      { k: 'dono', label: 'Quem checa', type: 'preset', presets: 'donos' }, { k: 'checar_em', label: 'Próxima checagem', type: 'date' }],
-    resumo: (r) => [r.texto, [r.como_verificar, CON_T[r.status], r.dono ? 'checa: ' + r.dono : null, r.checar_em ? 'próxima: ' + U.dia(r.checar_em) : null].filter(Boolean).join(' · ')] }],
+      { k: 'checar_em', label: 'Próxima checagem', type: 'date' }],
+    resumo: (r) => [r.texto, [r.como_verificar, CON_T[r.status], r.checar_em ? 'próxima: ' + U.dia(r.checar_em) : null].filter(Boolean).join(' · ')] }],
   ]);
 
   const FAC = [['aparencia', 'Aparência', 'facetaAparencia'], ['personalidade', 'Personalidade', 'facetaPersonalidade'], ['valores', 'Valores', 'facetaValores'],
