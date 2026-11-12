@@ -134,7 +134,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     mais: 'M12 5v14 M5 12h14', nao: 'M6 6l12 12 M18 6 6 18', rosto: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z M9 10h.01 M15 10h.01 M8.5 14.5a4.5 4.5 0 0 0 7 0',
     forma: 'M12 3 3 8v8l9 5 9-5V8Z', arquivo: 'M14 3H6v18h12V7Z M14 3v4h4', gota: 'M12 3s7 7 7 12a7 7 0 0 1-14 0c0-5 7-12 7-12Z',
     letra: 'M5 20 12 4l7 16 M8 14h8', pin: 'M12 21s7-6 7-12a7 7 0 0 0-14 0c0 6 7 12 7 12Z M12 7a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z',
-    lapis: 'M4 20h4L19 9l-4-4L4 16Z', lixo: 'M4 7h16 M9 7V4h6v3 M6 7l1 13h10l1-13', sobe: 'M12 19V5 M6 11l6-6 6 6',
+    lapis: 'M4 20h4L19 9l-4-4L4 16Z', grip: 'M9 6h.01 M15 6h.01 M9 12h.01 M15 12h.01 M9 18h.01 M15 18h.01', lixo: 'M4 7h16 M9 7V4h6v3 M6 7l1 13h10l1-13', sobe: 'M12 19V5 M6 11l6-6 6 6',
   };
   const ico = (nome) => { const NS = 'http://www.w3.org/2000/svg'; const sv = document.createElementNS(NS, 'svg');
     sv.setAttribute('viewBox', '0 0 24 24'); sv.setAttribute('aria-hidden', 'true');
@@ -163,6 +163,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
         const r = await sb.from(tabela).upsert({ empresa_id: id, ...row }).select('*').single();
         if (r.error) throw new Error('Não foi possível salvar.');
         await ficha(mount, cfg); // redesenha com os arquivos atuais
+        document.dispatchEvent(new CustomEvent('gang:marca-salva'));
         say(mount.querySelector('.msg'), 'Salvo. O cliente já vê no portal.', 'ok');
         return;
       } catch (err) { say(msg, err.message, 'error'); }
@@ -201,7 +202,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
           if (!editando && ordem) row.ordem = rows.reduce((m, x) => Math.max(m, x.ordem || 0), 0) + 1;
           const r = editando ? await sb.from(tabela).update(row).eq('id', editando.id) : await sb.from(tabela).insert(row);
           if (r.error) throw new Error('Não foi possível salvar.');
-          lista(mount, cfg);
+          lista(mount, cfg); document.dispatchEvent(new CustomEvent('gang:marca-salva'));
         } catch (err) { say(msg, err.message, 'error'); btn.disabled = false; }
       });
       formBox.replaceChildren(form); addBtn.hidden = true;
@@ -210,28 +211,60 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     };
     const addBtn = el('button', { class: 'ed-add', type: 'button', onclick: () => abreForm(null) }, ico('mais'), 'Adicionar');
 
-    const move = async (i, d) => {
-      const a = rows[i]; const b = rows[i + d];
-      if (!a || !b) return;
-      await Promise.all([sb.from(tabela).update({ ordem: b.ordem }).eq('id', a.id), sb.from(tabela).update({ ordem: a.ordem }).eq('id', b.id)]);
-      lista(mount, cfg);
+    const move = (i, d) => {
+      if (!rows[i + d]) return;
+      const ids = rows.map((x) => x.id); const [x] = ids.splice(i, 1); ids.splice(i + d, 0, x);
+      focoDepois = x; salvaOrdem(ids);
     };
     const btn = (nome, rotulo, fn, extra) => el('button', { class: 'ed-acao' + (extra || ''), type: 'button', title: rotulo, 'aria-label': rotulo, onclick: fn }, ico(nome));
 
+    const ul = el('ul', 'ed-lista');
+    const arrastavel = ordem && rows.length > 1;
+    // salva a nova ordem (1, 2, 3…) só das linhas que mudaram de lugar
+    const salvaOrdem = async (ids) => {
+      // grava 1, 2, 3… em todas (ordens antigas podem estar repetidas, o que deixaria a lista instável)
+      const mud = ids.map((rid, k) => ({ rid, ordem: k + 1 }));
+      await Promise.all(mud.map(({ rid, ordem: o }) => sb.from(tabela).update({ ordem: o }).eq('id', rid)));
+      lista(mount, cfg).then(() => { if (focoDepois) { const h = mount.querySelector('.ed-item[data-id="' + focoDepois + '"] .ed-alca'); if (h) h.focus(); focoDepois = null; } });
+    };
+    let focoDepois = null;
+    // arrastar pela alça: a linha acompanha o ponteiro e as outras abrem espaço; ao soltar, a ordem é salva
+    const arrasta = (ev) => {
+      const li = ev.currentTarget.closest('.ed-item'); if (!li || ev.button > 0) return;
+      ev.preventDefault();
+      // os eventos ficam na janela: mover a linha no DOM tira a captura do ponteiro da alça
+      const antes = [...ul.children].map((x) => x.dataset.id).join();
+      li.classList.add('is-arrastando'); ul.classList.add('is-ordenando');
+      const anda = (e) => {
+        const irmaos = [...ul.querySelectorAll('.ed-item:not(.is-arrastando)')];
+        const depois = irmaos.find((x) => { const b = x.getBoundingClientRect(); return e.clientY < b.top + b.height / 2; });
+        if (depois) { if (depois !== li.nextElementSibling) ul.insertBefore(li, depois); } else if (ul.lastElementChild !== li) ul.appendChild(li);
+      };
+      const solta = () => {
+        window.removeEventListener('pointermove', anda); window.removeEventListener('pointerup', solta); window.removeEventListener('pointercancel', solta);
+        li.classList.remove('is-arrastando'); ul.classList.remove('is-ordenando');
+        const ids = [...ul.children].map((x) => x.dataset.id);
+        if (ids.join() !== antes) salvaOrdem(ids);
+      };
+      window.addEventListener('pointermove', anda); window.addEventListener('pointerup', solta); window.addEventListener('pointercancel', solta);
+    };
     mount.replaceChildren(el('div', 'ed-card',
       el('div', 'ed-head', tile(icone || 'pulso', tom),
         el('div', 'ed-head__txt', el('h3', 'ed-head__t', titulo, el('span', 'ed-n', String(rows.length))), nota ? el('p', 'ed-head__n', nota) : null),
         addBtn),
       formBox,
-      el('ul', 'ed-lista', rows.length ? rows.map((r, i) => {
+      ul),
+      );
+    ul.append(...(rows.length ? rows.map((r, i) => {
         const [t, sub] = resumo(r);
-        return el('li', 'ed-item',
+        return el('li', { class: 'ed-item', 'data-id': r.id },
+          arrastavel ? el('button', { class: 'ed-alca', type: 'button', title: 'Arraste para mudar a ordem', 'aria-label': 'Mudar a ordem de “' + (typeof t === 'string' ? t : 'item') + '” (use as setas do teclado)',
+            onpointerdown: (ev) => arrasta(ev), onkeydown: (ev) => { if (ev.key === 'ArrowUp' || ev.key === 'ArrowDown') { ev.preventDefault(); move(i, ev.key === 'ArrowUp' ? -1 : 1, true); } } }, ico('grip')) : null,
           el('div', 'ed-item__main', el('p', 'ed-item__t', t), sub ? el('p', 'ed-item__s', sub) : null),
           el('div', 'ed-item__acoes',
-            ordem && i > 0 ? btn('sobe', 'Subir', () => move(i, -1)) : null,
             btn('lapis', 'Editar', () => abreForm(r)),
-            btn('lixo', 'Excluir', async () => { if (!confirm('Excluir “' + (typeof t === 'string' ? t : 'este item') + '”?')) return; await sb.from(tabela).delete().eq('id', r.id); lista(mount, cfg); }, ' ed-acao--bad')));
-      }) : el('li', 'ed-vazio', vazio || 'Nada cadastrado ainda.'))));
+            btn('lixo', 'Excluir', async () => { if (!confirm('Excluir “' + (typeof t === 'string' ? t : 'este item') + '”?')) return; await sb.from(tabela).delete().eq('id', r.id); lista(mount, cfg); document.dispatchEvent(new CustomEvent('gang:marca-salva')); }, ' ed-acao--bad')));
+      }) : [el('li', 'ed-vazio', vazio || 'Nada cadastrado ainda.')]));
     const cfg = { titulo, nota, tabela, fields, fixo, resumo, pasta, vazio, ordem, icone, tom, largo, max, aoAbrir };
     if (max && rows.length >= max) addBtn.hidden = true;
   };
@@ -270,21 +303,62 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     [lista, { icone: 'alvo', largo: true, titulo: 'As causas que o plano ataca', tabela: 'causas', fields: [{ k: 'texto', label: 'Causa', req: true, full: true, type: 'preset', presets: 'causas' }], resumo: (r) => [r.texto] }],
   ]);
 
+  // ===== Teste de estratégia ruim: o que costuma faltar numa estratégia que é só desejo =====
+  const testeEstrategia = async (mount) => {
+    mount.classList.add('is-largo');
+    const [{ data: p }, { data: obs }, { data: esc }, { data: acs }] = await Promise.all([
+      sb.from('planos').select('desafio, como_vencer, objetivo_proximo, objetivo_proximo_ate').eq('empresa_id', id).maybeSingle(),
+      sb.from('objetivos').select('nivel').eq('empresa_id', id),
+      sb.from('escolhas').select('tipo').eq('empresa_id', id),
+      sb.from('acoes').select('peso, objetivo_id, mes_previsto, status').eq('empresa_id', id),
+    ]);
+    const P = p || {};
+    const ref = U.ref(); const ate = U.addRef(ref, 3);
+    const ess = (acs || []).filter((a) => a.peso === 'essencial' && a.status !== 'feita' && a.mes_previsto >= ref && a.mes_previsto <= ate);
+    const ligadas = ess.filter((a) => a.objetivo_id).length;
+    const meta = /^\s*([+\-]?\d+[\d.,]*\s*%|crescer|aumentar|faturar|vender mais|dobrar)/i;
+    const floreio = /(excel[êe]ncia|inova[çc][ãa]o|sinergia|refer[êe]ncia|l[íi]der|melhor (empresa|do mercado)|qualidade total|valor agregado)/i;
+    const nObj = (obs || []).filter((o) => o.nivel !== 'comunicacao').length;
+    const T = [
+      [!!P.desafio, 'Nomeia o desafio', P.desafio ? 'O obstáculo principal está escrito.' : 'Sem o desafio, não dá para saber se a estratégia resolve alguma coisa. Escreva o que impede a marca de crescer.'],
+      [!!P.como_vencer && !meta.test(P.como_vencer), 'Tem uma abordagem, não só uma meta', !P.como_vencer ? 'Falta dizer como a marca vai vencer o desafio.' : meta.test(P.como_vencer) ? 'A abordagem parece uma meta ("crescer", "+30%"). Meta é aonde ir; a abordagem é o caminho.' : 'A abordagem diz o caminho, não só o destino.'],
+      [!!P.como_vencer && !floreio.test(P.como_vencer), 'Sem floreio', !P.como_vencer ? 'Escreva a abordagem em palavras concretas.' : floreio.test(P.como_vencer) ? 'Troque palavras vagas ("excelência", "referência", "inovação") pelo que a marca faz de fato.' : 'A abordagem usa palavras concretas.'],
+      [(esc || []).some((e) => e.tipo === 'deixa_de_lado'), 'Faz escolhas', (esc || []).some((e) => e.tipo === 'deixa_de_lado') ? 'Diz o que fica de fora.' : 'Estratégia também é dizer não. Cadastre o que a marca deixa de lado.'],
+      [nObj > 0 && nObj <= 3, 'Foco', nObj === 0 ? 'Cadastre de 1 a 3 objetivos de negócio e marca.' : nObj <= 3 ? nObj + (nObj === 1 ? ' objetivo de negócio e marca.' : ' objetivos de negócio e marca.') : nObj + ' objetivos dividem o esforço. Fique com até 3.'],
+      [ess.length > 0 && ligadas === ess.length, 'Ações coerentes', !ess.length ? 'Não há ações essenciais nos próximos 3 meses.' : ligadas === ess.length ? 'As ' + ess.length + ' ações essenciais dos próximos 3 meses ligam a um objetivo.' : (ess.length - ligadas) + ' de ' + ess.length + ' ações essenciais dos próximos 3 meses não ligam a nenhum objetivo.'],
+      [!!P.objetivo_proximo && !!P.objetivo_proximo_ate, 'Próximo marco com data', P.objetivo_proximo && P.objetivo_proximo_ate ? 'Até ' + U.dia(P.objetivo_proximo_ate) + '.' : 'Defina um marco alcançável e a data. Ele dá ritmo e mostra progresso cedo.'],
+    ];
+    const ok = T.filter((x) => x[0]).length;
+    mount.replaceChildren(el('div', 'ed-card',
+      el('div', 'ed-head', tile('check'), el('div', 'ed-head__txt', el('h3', 'ed-head__t', 'Teste da estratégia', el('span', 'ed-n', ok + '/' + T.length)),
+        el('p', 'ed-head__n', 'O que separa uma estratégia de verdade de uma lista de desejos. Atualiza a cada mudança.'))),
+      el('ul', 'ed-lista teste', T.map(([bom, t, d]) => el('li', 'ed-item teste__i' + (bom ? ' is-ok' : ''),
+        el('span', { class: 'teste__q', 'aria-hidden': 'true' }, bom ? '✓' : '!'),
+        el('div', 'ed-item__main', el('p', 'ed-item__t', t), el('p', 'ed-item__s', d)))))));
+  };
+  // o teste refaz a conta quando algo da Estratégia é salvo
+  const refazTeste = () => { const m = document.querySelector('#pane-estrategia .editor-block:nth-child(2)'); if (m) testeEstrategia(m); };
+  document.addEventListener('gang:marca-salva', () => setTimeout(refazTeste, 300));
+
   const NIV = [['negocio', 'Negócio'], ['marca', 'Marca'], ['comunicacao', 'Comunicação']];
   const NIV_T = Object.fromEntries(NIV);
   const CON = [['se_confirma', 'Se confirma'], ['em_observacao', 'Em observação'], ['sem_dados', 'Sem dados ainda'], ['nao_se_confirma', 'Não se confirma']];
   const CON_T = Object.fromEntries(CON);
   montar('pane-estrategia', [
-    [ficha, { icone: 'mapa', titulo: 'Estratégia', nota: 'Datas, a frase de como vencemos e o PDF do plano completo.', tabela: 'planos', pasta: 'estrategia', fields: [
+    [ficha, { icone: 'mapa', titulo: 'O cerne da estratégia', nota: 'O desafio que a marca precisa vencer, a abordagem para vencê-lo e o próximo marco. As ações do plano saem daqui.', tabela: 'planos', pasta: 'estrategia', fields: [
+      { k: 'desafio', label: '1. O desafio: o obstáculo principal, em uma frase', full: true, type: 'preset', presets: 'desafios' },
+      { k: 'como_vencer', label: '2. A abordagem: como vamos vencer esse desafio', full: true, type: 'preset', presets: 'abordagens' },
+      { k: 'objetivo_proximo', label: '3. O próximo marco: algo alcançável que destrava o resto', type: 'preset', presets: 'marcos' },
+      { k: 'objetivo_proximo_ate', label: 'Até', type: 'date' },
       { k: 'estrategia_aprovada_em', label: 'Aprovada em', type: 'date' }, { k: 'proxima_revisao_estrategia', label: 'Próxima revisão', type: 'date' },
-      { k: 'como_vencer', label: 'Como vencemos (uma frase)', type: 'textarea', rows: 2 },
       { k: 'estrategia_pdf', label: 'Plano completo (PDF)', type: 'file', accept: 'application/pdf' }] }],
+    [testeEstrategia, {}],
     [lista, { icone: 'alvo', tom: 'gang', titulo: 'Objetivos', nota: 'Negócio (com o número em destaque), Marca e Comunicação (notar, acreditar, sentir). As ações se ligam a eles.', tabela: 'objetivos', fields: [
       { k: 'titulo', label: 'Objetivo', full: true, type: 'preset', presets: 'objetivos', fill: { nivel: 'nivel' } },
       { k: 'nivel', label: 'Nível', type: 'select', options: NIV }, { k: 'destaque', label: 'Número em destaque (negócio)', type: 'preset', presets: 'destaques' },
       { k: 'notar', label: 'Notar (comunicação)', type: 'preset', presets: 'notar' }, { k: 'acreditar', label: 'Acreditar (comunicação)', type: 'preset', presets: 'acreditar' }, { k: 'sentir', label: 'Sentir (comunicação)', type: 'preset', presets: 'sentir' }],
     resumo: (r) => [NIV_T[r.nivel] + ': ' + (r.destaque ? r.destaque + ' ' : '') + (r.titulo || ''), r.nivel === 'comunicacao' ? ['Notar ' + (r.notar || '—'), 'acreditar ' + (r.acreditar || '—'), 'sentir ' + (r.sentir || '—')].join(' · ') : null] }],
-    [lista, { icone: 'pin', titulo: 'Situações de compra', nota: 'Os momentos em que alguém pensa na categoria (How Brands Grow). Ex.: “vou reformar antes de alugar”, “apareceu uma infiltração”. Entram na pesquisa e nas ações.', tabela: 'situacoes', fields: [
+    [lista, { icone: 'pin', titulo: 'Situações de compra', nota: 'Os momentos em que alguém pensa na categoria. Ex.: “vou reformar antes de alugar”, “apareceu uma infiltração”. Entram na pesquisa e nas ações.', tabela: 'situacoes', fields: [
       { k: 'texto', label: 'Situação', req: true, full: true, type: 'preset', presets: 'situacoes' }], resumo: (r) => [r.texto] }],
     [lista, { icone: 'check', tom: 'ok', titulo: 'Onde atuamos: prioridade', tabela: 'escolhas', fixo: { tipo: 'prioridade' }, fields: [{ k: 'texto', label: 'Prioridade', req: true, full: true, type: 'preset', presets: 'prioridades' }], resumo: (r) => [r.texto] }],
     [lista, { icone: 'menos', titulo: 'Onde atuamos: deixamos de lado', tabela: 'escolhas', fixo: { tipo: 'deixa_de_lado' }, fields: [{ k: 'texto', label: 'Deixamos de lado', req: true, full: true, type: 'preset', presets: 'deixados' }], resumo: (r) => [r.texto] }],
@@ -319,13 +393,13 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     [ficha, { icone: 'forma', titulo: 'Plataforma de marca', tabela: 'plataformas', pasta: 'plataforma', fields: [
       { k: 'entregue_em', label: 'Entregue em', type: 'date' }, { k: 'pdf', label: 'Plataforma em PDF', type: 'file', accept: 'application/pdf' },
       { k: 'posicionamento', label: 'Posicionamento', type: 'textarea', rows: 3, placeholder: 'Para [quem], [marca] é [o quê] que [benefício], porque [prova], ao contrário de [alternativa].' },
-      { k: 'mensagem_central', label: 'Mensagem central', full: true }] }],
+      { k: 'mensagem_central', label: 'Mensagem central', full: true, type: 'preset', presets: 'mensagensCentrais' }] }],
     [lista, { icone: 'alvo', largo: true, titulo: 'Identidade central', nota: 'De 2 a 4 ideias que não mudam com o tempo. Servem de filtro para aprovar peças, parcerias e serviços novos.', tabela: 'identidade_central', max: 4,
       vazio: 'Ainda sem a identidade central.', fields: [
-      { k: 'texto', label: 'Ideia que não muda', req: true, full: true, type: 'preset', presets: 'identidadeCentral' },
+      { k: 'texto', label: 'Ideia que não muda', req: true, full: true, type: 'preset', presets: 'identidadeCentral', fill: { explicacao: 'explicacao' } },
       { k: 'explicacao', label: 'O que isso significa na prática', full: true, type: 'textarea', rows: 2, placeholder: 'Ex.: nenhum projeto começa sem o plano completo aprovado pelo cliente.' }],
     resumo: (r) => [r.texto, r.explicacao] }],
-    [lista, { icone: 'balao', titulo: 'Mensagens de apoio', tabela: 'mensagens_apoio', fields: [{ k: 'texto', label: 'Mensagem', req: true, full: true }], resumo: (r) => [r.texto] }],
+    [lista, { icone: 'balao', titulo: 'Mensagens de apoio', nota: 'As provas da mensagem central: por que acreditar nela.', tabela: 'mensagens_apoio', fields: [{ k: 'texto', label: 'Mensagem', req: true, full: true, type: 'preset', presets: 'mensagensApoio' }], resumo: (r) => [r.texto] }],
     [lista, { icone: 'voz', titulo: 'Tom de voz: atributos', tabela: 'tom_atributos', fields: [{ k: 'nome', label: 'Atributo', req: true, type: 'preset', presets: 'tom', fill: { descricao: 'descricao' } }, { k: 'descricao', label: 'Descrição', placeholder: 'Preenchida ao escolher o atributo' }], resumo: (r) => [r.nome, r.descricao] }],
     [lista, { icone: 'check', tom: 'ok', titulo: 'A marca diz', tabela: 'tom_exemplos', fixo: { tipo: 'diz' }, fields: [{ k: 'texto', label: 'Exemplo', req: true, full: true, type: 'preset', presets: 'tomDiz' }], resumo: (r) => [r.texto] }],
     [lista, { icone: 'nao', tom: 'bad', titulo: 'Nunca diz', tabela: 'tom_exemplos', fixo: { tipo: 'nunca_diz' }, fields: [{ k: 'texto', label: 'Exemplo', req: true, full: true, type: 'preset', presets: 'tomNuncaDiz' }], resumo: (r) => [r.texto] }],

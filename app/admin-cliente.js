@@ -141,6 +141,8 @@
           x.chave === 'numeros' ? el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => semNumeros(true) }, 'Marcar como OK sem envio') : null))));
     // outros sinais que não estão nos 6 passos
     const extra = G.sinais(B).filter((x) => /essencia|atividade|Pesquisa|travada/.test(x.texto));
+    // "Abrir" leva à seção exata e contorna ela por um instante, para o consultor ver onde está
+    const alvoDoSinal = (x) => (/pesquisa/i.test(x.texto) ? 'res-pesq' : /números/i.test(x.texto) ? 'res-num' : /veredito/i.test(x.texto) ? 'pane-foco' : 'pane-' + x.aba);
     // em lista, como os passos acima: sinal colorido, o que é e um botão para resolver (nada solto no canto da tela)
     const textoSinal = (t) => t.replace(/^Pesquisa com 0 respostas.*$/, 'A pesquisa ainda não recebeu respostas');
     const ICO_S = { alto: '!', medio: '!', baixo: 'i' };
@@ -149,7 +151,7 @@
       el('ul', 'atencao__lista', extra.map((x) => el('li', 'atencao__i is-' + x.nivel,
         el('span', { class: 'atencao__q', 'aria-hidden': 'true' }, ICO_S[x.nivel] || 'i'),
         el('p', 'atencao__t', textoSinal(x.texto)),
-        el('a', { class: 'btn btn--ghost btn--sm', href: '#' + x.aba }, 'Abrir')))))] : []));
+        el('a', { class: 'btn btn--ghost btn--sm', href: '#' + x.aba, onclick: () => destacaAlvo(alvoDoSinal(x)) }, 'Abrir')))))] : []));
   };
   // resumo do cliente no topo: mês do plano, fechamento, promessa e próximo encontro
   const desenhaRaiox = (B, feitos) => {
@@ -191,6 +193,17 @@
       ? [el('span', 'vz__b vz__b--l'), el('span', 'vz__b vz__b--r'), el('span', 'vz__b vz__b--l vz__b--c')]
       : [el('span', 'vz__l vz__l--a'), el('span', 'vz__l vz__l--b'), el('span', 'vz__l vz__l--c')]),
     el('p', 'vz__t', titulo), el('p', 'vz__d', texto), acao || null);
+  // rola até um bloco e desenha um contorno que some sozinho
+  const destacaAlvo = (alvoId) => setTimeout(() => {
+    const t = document.getElementById(alvoId); if (!t) return;
+    t.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    t.classList.remove('is-alvo'); void t.offsetWidth; t.classList.add('is-alvo');
+    setTimeout(() => t.classList.remove('is-alvo'), 2400);
+  }, 120);
+  // atalhos dentro de Resultados (Números, Pesquisa…): rolam até o bloco em vez de trocar o endereço (que levava ao Fechamento)
+  document.querySelectorAll('.subnav a[href^="#"]').forEach((a) => a.addEventListener('click', (ev) => {
+    ev.preventDefault(); destacaAlvo(a.getAttribute('href').slice(1));
+  }));
   // ===== mensagens do cliente =====
   const loadMsgs = async (marcar) => {
     const { data } = await sb.from('mensagens').select('*').eq('empresa_id', id).order('criada_em');
@@ -1095,7 +1108,22 @@
 
   // ===== resultados: pesquisa de marca =====
   const pesqForm = $('pesq-form');
+  let editPesq = null; // a rodada sendo editada (null = nova rodada)
+  const travaPesq = (on) => { ['q-cat', 'q-conc', 'q-af'].forEach((k) => { $(k).disabled = on; }); };
+  const editaPesq = (q, nResp) => {
+    editPesq = { ...q, nResp };
+    toggle(pesqForm, $('open-pesq'), true);
+    $('q-titulo').value = q.titulo || ''; $('q-cat').value = q.categoria || '';
+    $('q-conc').value = (q.concorrentes || []).join('\n'); $('q-af').value = (q.afirmacoes || []).join('\n');
+    pesqForm.querySelector('.pq__mais').open = true;
+    travaPesq(nResp > 0);
+    pesqForm.querySelector('[type=submit]').textContent = 'Salvar alterações';
+    say($('q-msg'), nResp > 0 ? 'Esta rodada já tem ' + nResp + (nResp === 1 ? ' resposta' : ' respostas') + ': só o nome pode mudar, para não misturar perguntas diferentes. Para mudar as perguntas, abra uma nova rodada.' : 'Sem respostas ainda: dá para mudar tudo. As situações de compra e os ativos são atualizados com o que está cadastrado hoje.', nResp > 0 ? 'error' : null);
+    pesqForm.scrollIntoView({ block: 'start', behavior: 'smooth' }); $('q-titulo').focus({ preventScroll: true });
+    resumoPesq();
+  };
   const abrePesq = async () => {
+    editPesq = null; travaPesq(false); pesqForm.querySelector('[type=submit]').textContent = 'Abrir a rodada';
     toggle(pesqForm, $('open-pesq'), true);
     const [{ data: obj }, { data: imp }, { data: q0 }] = await Promise.all([
       sb.from('objetivos').select('*').eq('empresa_id', id).eq('nivel', 'comunicacao').limit(1),
@@ -1122,28 +1150,38 @@
     const item = (ok, texto, falta, aba) => el('li', 'pq__item' + (ok ? ' is-ok' : ' is-falta'), el('span', 'pq__ico', ok ? '✓' : '!'),
       el('span', null, texto, !ok && aba ? [' ', el('a', { class: 'link', href: '#' + aba }, falta)] : null));
     const ns = (sits || []).length, na = (atv || []).length;
-    $('q-resumo').replaceChildren(
+    $('q-resumo').replaceChildren(...[
       item(!!cat, cat ? 'Que marcas vêm à cabeça quando pensam em ' + cat : 'Que marcas vêm à cabeça na categoria (falta escrever a categoria)'),
       item(ns > 0, ns ? 'Em quais de ' + ns + (ns === 1 ? ' situação de compra' : ' situações de compra') + ' lembram da marca' : 'Nenhuma situação de compra cadastrada:', 'cadastrar em Estratégia', 'estrategia'),
       item(na > 0, na ? 'Se reconhecem ' + na + (na === 1 ? ' ativo da marca' : ' ativos da marca') + ' sem o nome' : 'Nenhum ativo distintivo cadastrado:', 'cadastrar em Identidade', 'identidade'),
       item(true, conc.length ? 'Qual escolheriam entre a marca e ' + conc.length + (conc.length === 1 ? ' concorrente' : ' concorrentes') : 'Qual escolheriam (sem concorrentes, só a marca)'),
       af.length ? item(true, af.length + (af.length === 1 ? ' frase para dar nota' : ' frases para dar nota')) : null,
-      item(true, 'Se já são clientes, para separar quem compra de quem ainda não compra'));
+      item(true, 'Se já são clientes, para separar quem compra de quem ainda não compra')].filter(Boolean)); // replaceChildren escreveria "null"
   };
   ['q-cat', 'q-conc', 'q-af'].forEach((k) => $(k).addEventListener('input', () => { clearTimeout(resumoPesq.t); resumoPesq.t = setTimeout(resumoPesq, 250); }));
   $('open-pesq').addEventListener('click', () => (pesqForm.hidden ? abrePesq() : toggle(pesqForm, $('open-pesq'), false)));
-  $('q-cancel').addEventListener('click', () => toggle(pesqForm, $('open-pesq'), false));
+  $('q-cancel').addEventListener('click', () => { editPesq = null; travaPesq(false); toggle(pesqForm, $('open-pesq'), false); });
   pesqForm.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     const af = linhasDe($('q-af').value); const conc = linhasDe($('q-conc').value);
     if (!val('q-cat')) { $('q-cat').focus(); return say($('q-msg'), 'Escreva como o cliente chama o que vocês vendem.', 'error'); }
     if (!val('q-titulo')) $('q-titulo').value = 'Rodada de ' + U.mesAno(new Date());
     if (af.length > 6) return say($('q-msg'), 'Use no máximo 6 frases.', 'error');
+    if (editPesq && editPesq.nResp > 0) {
+      const r0 = await sb.from('pesquisas').update({ titulo: val('q-titulo') }).eq('id', editPesq.id);
+      if (r0.error) return say($('q-msg'), 'Não foi possível salvar.', 'error');
+      editPesq = null; travaPesq(false); toggle(pesqForm, $('open-pesq'), false); loadPesqs(); return;
+    }
     const [{ data: sits }, { data: atv }] = await Promise.all([
       sb.from('situacoes').select('id, texto').eq('empresa_id', id).order('ordem'),
       sb.from('ativos').select('id, nome, tipo, texto, imagem_url').eq('empresa_id', id).order('ordem'),
     ]);
     if (!(sits || []).length && !(atv || []).length && !af.length) return say($('q-msg'), 'Cadastre as situações de compra (Estratégia) ou os ativos distintivos (Identidade) antes de abrir a rodada.', 'error');
+    if (editPesq) {
+      const r1 = await sb.from('pesquisas').update({ titulo: val('q-titulo'), categoria: val('q-cat'), afirmacoes: af, concorrentes: conc.slice(0, 8), situacoes: sits || [], ativos: atv || [] }).eq('id', editPesq.id);
+      if (r1.error) return say($('q-msg'), 'Não foi possível salvar.', 'error');
+      editPesq = null; toggle(pesqForm, $('open-pesq'), false); loadPesqs(); return;
+    }
     // uma rodada aberta por vez: a anterior fecha
     await sb.from('pesquisas').update({ aberta: false }).eq('empresa_id', id).eq('aberta', true);
     const r = await sb.from('pesquisas').insert({ empresa_id: id, titulo: val('q-titulo'), categoria: val('q-cat'), afirmacoes: af, concorrentes: conc.slice(0, 8), situacoes: sits || [], ativos: atv || [] });
@@ -1171,6 +1209,7 @@
           el('p', 'row__text', n(q.id) + ' respostas · ' + q.categoria + ' · ' + (q.situacoes || []).length + ' situações · ' + (q.ativos || []).length + ' ativos')),
         el('div', 'row__actions',
           q.aberta ? rowBtn('Copiar link', async (e) => { try { await navigator.clipboard.writeText(url); e.target.textContent = 'Copiado'; } catch (er) { window.prompt('Link da pesquisa:', url); } }) : null,
+          rowBtn('Editar', () => editaPesq(q, n(q.id))),
           rowBtn(q.aberta ? 'Fechar' : 'Reabrir', async () => { await sb.from('pesquisas').update({ aberta: !q.aberta }).eq('id', q.id); loadPesqs(); }),
           rowBtn('Excluir', async () => { if (!confirm('Excluir a rodada “' + q.titulo + '” e as respostas dela?')) return; await sb.from('pesquisas').delete().eq('id', q.id); loadPesqs(); }, true)));
     }) : [el('li', 'clients__empty', 'Nenhuma rodada ainda.')]));
@@ -1280,7 +1319,7 @@
       el('div', 'row__main', el('p', 'row__eyebrow', TIPO_E[e.tipo] + ' · ' + e.duracao_min + ' min · ' + SIT_E[e.status]), el('p', 'row__title', U.quando(e.inicio)),
         el('p', 'row__text', (e.decisoes || []).length ? 'Decisões: ' + e.decisoes.join('; ') : ((e.pauta || []).length ? 'Pauta: ' + e.pauta.join('; ') : 'Sem pauta'))),
       el('div', 'row__actions', rowBtn('Editar', () => abreEnc(e)),
-        rowBtn('Excluir', async () => { if (!confirm('Excluir o encontro de ' + U.quando(e.inicio) + '?')) return; await sb.from('encontros').delete().eq('id', e.id); loadEncs(); }, true)))) : [el('li', 'vz-li', vazioC('lista', 'Nenhum encontro ainda', 'Agende o primeiro: o cliente vê a data, a pauta e pode adicionar à agenda.', el('button', { class: 'btn btn--light btn--sm', type: 'button', onclick: () => $('open-enc').click() }, 'Agendar encontro')))]));
+        rowBtn('Excluir', async () => { if (!confirm('Excluir o encontro de ' + U.quando(e.inicio) + '?')) return; await sb.from('encontros').delete().eq('id', e.id); loadEncs(); }, true)))) : [el('li', 'vz-li', vazioC('lista', 'Nenhum encontro ainda', 'Agende o primeiro no botão acima: o cliente vê a data, a pauta e pode adicionar à agenda.'))]));
   };
   loadEncs();
 

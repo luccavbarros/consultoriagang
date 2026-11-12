@@ -2179,6 +2179,7 @@
   const ICP = {
     ok: 'M20 6 9 17l-5-5', nao: 'M6 6l12 12 M18 6 6 18', meio: 'M6 12h12', alerta: 'M12 8v5 M12 16.5v.5 M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z',
     arquivo: 'M14 3H6v18h12V7Z M14 3v4h4', balao: 'M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12Z', peca: 'M4 5h16v14H4Z M4 15l5-5 4 4 3-3 4 4',
+    grafico: 'M4 20V10 M10 20V4 M16 20v-7 M3 20h18', alvo: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z',
   };
   const icp = (nome) => { const NS = 'http://www.w3.org/2000/svg'; const sv = document.createElementNS(NS, 'svg'); sv.setAttribute('viewBox', '0 0 24 24'); sv.setAttribute('aria-hidden', 'true');
     ICP[nome].split(' M').forEach((d, i) => { const pa = document.createElementNS(NS, 'path'); pa.setAttribute('d', (i ? 'M' : '') + d); sv.append(pa); }); return sv; };
@@ -2554,9 +2555,9 @@
     const p = D.plano || {};
     const out = [head([p.estrategia_aprovada_em ? 'Aprovada em ' + U.mesAno(p.estrategia_aprovada_em) : null,
       p.proxima_revisao_estrategia ? 'próxima revisão em ' + U.mesAno(p.proxima_revisao_estrategia) : null].filter(Boolean).join(' · '),
-    'Estratégia', 'Aonde a marca vai e as escolhas que fizemos para chegar lá. Toda ação do plano liga a um destes objetivos.',
+    'Estratégia', 'O desafio da marca, como vamos vencê-lo e as escolhas que fizemos. Toda ação do plano sai daqui.',
     p.estrategia_pdf ? baixar(p.estrategia_pdf, 'Baixar plano completo (PDF)') : null)];
-    if (!D.objetivos.length && !D.escolhas.length && !p.como_vencer && !D.condicoes.length) return out.concat(vazio());
+    if (!D.objetivos.length && !D.escolhas.length && !p.como_vencer && !p.desafio && !D.condicoes.length) return out.concat(vazio());
     const conf = D.condicoes.filter((c) => c.status === 'se_confirma').length;
     out.push(faixa([
       D.objetivos.length ? ['Objetivos', String(D.objetivos.length)] : null,
@@ -2564,17 +2565,43 @@
       D.condicoes.length ? ['Condições que se confirmam', conf + ' de ' + D.condicoes.length] : null,
       p.proxima_revisao_estrategia ? ['Próxima revisão', U.mesAno(p.proxima_revisao_estrategia)] : null]));
 
+    // o cerne: o desafio (diagnóstico), a abordagem para vencê-lo e as ações que se reforçam
+    if (p.desafio || p.como_vencer) {
+      const objNome = (oid) => { const o = D.objetivos.find((x) => x.id === oid); return o ? ((o.destaque ? o.destaque + ' ' : '') + (o.titulo || '')).trim() : null; };
+      const acs = D.acoes.filter((a) => a.peso === 'essencial' && a.status !== 'feita' && a.mes_previsto >= hoje)
+        .sort((a, b) => a.mes_previsto.localeCompare(b.mes_previsto)).slice(0, 4);
+      const passo = (n, rot, ...corpo) => el('div', 'cerne__p', el('div', 'cerne__h', quad(String(n), 'num'), el('p', 'cerne__rot', rot)), corpo);
+      out.push(secN('cerne-t', 'O cerne da estratégia', null, 'Sem um desafio claro, estratégia vira lista de desejos. Por isso ela começa por ele.',
+        el('div', 'cerne',
+          passo(1, 'O desafio', p.desafio ? el('p', 'cerne__t', p.desafio) : el('p', 'cerne__vazio', 'O consultor ainda vai escrever.')),
+          passo(2, 'Como vamos vencer', p.como_vencer ? el('p', 'cerne__t', p.como_vencer) : el('p', 'cerne__vazio', 'O consultor ainda vai escrever.')),
+          passo(3, 'Ações que se reforçam', acs.length
+            ? el('ul', 'cerne__acs', acs.map((a) => el('li', null, el('span', 'cerne__ac', a.titulo),
+              el('span', 'cerne__ac-m', U.cap(U.nomeMesCurto(a.mes_previsto)) + (objNome(a.objetivo_id) ? ' · ' + objNome(a.objetivo_id) : '')))))
+            : el('p', 'cerne__vazio', 'As ações essenciais dos próximos meses aparecem aqui.'))),
+        p.objetivo_proximo ? el('div', 'cerne__marco', el('span', 'cerne__marco-rot', 'Próximo marco'), el('span', 'cerne__marco-t', p.objetivo_proximo),
+          p.objetivo_proximo_ate ? el('span', 'cerne__marco-d', 'até ' + U.dia(p.objetivo_proximo_ate)) : null) : null));
+    }
+
     if (D.objetivos.length) {
+      // cartão de objetivo (como os cartões de indicador do designer): nível com ícone, o objetivo e, no rodapé, como medimos
+      const NIV_O = { negocio: ['Negócio', 'grafico', 'negocio'], marca: ['Marca', 'alvo', 'marca'], comunicacao: ['Comunicação', 'balao', 'marketing'] };
+      const FREQ_O = { mensal: 'todo mês', semestral: 'a cada 6 meses', anual: 'todo ano' };
       const card = (o) => {
-        if (o.nivel === 'comunicacao') {
-          return el('div', 'obj', el('p', 'eyebrow', 'Comunicação'), el('dl', 'obj__com',
-            [['Notar', o.notar], ['Acreditar', o.acreditar], ['Sentir', o.sentir]].filter(([, v]) => v).map(([k, v]) => [el('dt', null, k), el('dd', null, v)])),
-          o.titulo && !(o.notar || o.acreditar || o.sentir) ? el('p', 'obj__title', o.titulo) : null);
-        }
-        return el('div', 'obj', el('p', 'eyebrow', NIVEL[o.nivel]), o.destaque ? el('p', 'obj__num', o.destaque) : null,
-          el('p', o.destaque ? 'box__text' : 'obj__title', o.titulo));
+        const [rot, ico, nivM] = NIV_O[o.nivel] || ['Objetivo', 'alvo', o.nivel];
+        const mets = D.metricas.filter((m) => m.nivel === nivM).slice(0, 2);
+        const corpo = o.nivel === 'comunicacao' && (o.notar || o.acreditar || o.sentir)
+          ? el('dl', 'oc__com', [['Notar', o.notar], ['Acreditar', o.acreditar], ['Sentir', o.sentir]].filter(([, v]) => v)
+            .map(([k, v]) => el('div', null, el('dt', null, k), el('dd', null, v))))
+          : el('div', 'oc__corpo', o.destaque ? el('p', 'oc__num', o.destaque) : null, el('p', o.destaque ? 'oc__sub' : 'oc__t', o.titulo));
+        return el('article', 'oc',
+          el('div', 'oc__head', quad(ico), el('p', 'oc__rot', 'Objetivo de ' + rot.toLowerCase())),
+          corpo,
+          el('div', 'oc__pe', el('span', 'oc__pe-rot', 'Medimos por'),
+            mets.length ? mets.map((m) => el('span', 'oc__met', m.nome, el('span', 'oc__freq', ' · ' + (FREQ_O[m.frequencia] || m.frequencia))))
+              : el('span', 'oc__met oc__met--vazio', 'a definir com o consultor')));
       };
-      out.push(sec('obj-t', 'Objetivos', el('div', 'objs', D.objetivos.map(card))));
+      out.push(secN('obj-t', 'Objetivos', D.objetivos.length, 'Toda ação do plano liga a um destes.', el('div', 'ocs', D.objetivos.map(card))));
     }
     if (D.metricas.length) {
       const NIV = { negocio: 'Negócio', marketing: 'Marketing', marca: 'Marca' };
@@ -2592,7 +2619,6 @@
         el('div', 'est-grupo__head', el('h2', { class: 'box__title', id: idt }, titulo), el('span', 'est-n', String(n))),
         el('ul', 'est-lista', itens.map((t) => el('li', 'est-item', el('span', { class: 'est-ico est-ico--' + tipo, 'aria-hidden': 'true' }, tipo === 'sim' ? '✓' : '–'), el('span', null, t)))),
         extra);
-      if (p.como_vencer) out.push(el('section', { class: 'box est-vencer', 'aria-labelledby': 'vencer-t' }, el('p', { class: 'eyebrow', id: 'vencer-t' }, 'Como vencemos'), el('p', 'say__main', p.como_vencer)));
       out.push(el('div', 'est-dois',
         prio.length ? grupo('onde-t', 'Onde jogamos', prio.length, prio.map((x) => x.texto), 'sim') : null,
         lado.length || D.descartadas.length ? grupo('lado-t', 'O que deixamos de lado', lado.length + D.descartadas.length, lado.map((x) => x.texto), 'nao',
