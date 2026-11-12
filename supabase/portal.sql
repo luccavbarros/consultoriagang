@@ -1093,3 +1093,61 @@ drop policy if exists "ler da propria empresa" on public.elementos_marca;
 drop policy if exists "admin escreve" on public.elementos_marca;
 create policy "ler da propria empresa" on public.elementos_marca for select using (public.pode_ver(empresa_id));
 create policy "admin escreve" on public.elementos_marca for all using (public.is_admin()) with check (public.is_admin());
+
+-- ===================== Ações dos meses futuros ficam com o consultor =====================
+-- O cliente lê as ações até o mês seguinte; das que vêm depois, só a contagem por mês (portal_acoes_futuras).
+-- Assim ninguém copia o plano inteiro de uma vez.
+drop policy if exists "ler da propria empresa" on public.acoes;
+create policy "ler da propria empresa" on public.acoes for select using (
+  public.pode_ver(empresa_id)
+  and (public.is_admin() or mes_previsto <= to_char((now() at time zone 'America/Sao_Paulo') + interval '1 month', 'YYYY-MM'))
+);
+
+create or replace function public.portal_acoes_futuras()
+returns table (mes_previsto text, n int, essenciais int)
+language sql stable security definer set search_path = public
+as $$
+  select a.mes_previsto, count(*)::int, count(*) filter (where a.peso = 'essencial')::int
+    from public.acoes a
+   where a.empresa_id = public.minha_empresa()
+     and a.mes_previsto > to_char((now() at time zone 'America/Sao_Paulo') + interval '1 month', 'YYYY-MM')
+     and a.status <> 'feita'
+   group by a.mes_previsto
+   order by a.mes_previsto;
+$$;
+grant execute on function public.portal_acoes_futuras() to authenticated;
+
+-- ===================== Identidade central (de 2 a 4 ideias que não mudam) =====================
+create table if not exists public.identidade_central (
+  id uuid primary key default gen_random_uuid(),
+  empresa_id uuid not null references public.empresas (id) on delete cascade,
+  texto text not null,
+  explicacao text,
+  ordem int not null default 0
+);
+alter table public.identidade_central enable row level security;
+drop policy if exists "ler da propria empresa" on public.identidade_central;
+drop policy if exists "admin escreve" on public.identidade_central;
+create policy "ler da propria empresa" on public.identidade_central for select using (public.pode_ver(empresa_id));
+create policy "admin escreve" on public.identidade_central for all using (public.is_admin()) with check (public.is_admin());
+
+-- ===================== Lembretes por e-mail (função diária api/lembretes.js no Vercel) =====================
+-- O cliente pode desligar em "Sua foto e avisos". Cada aviso é enviado uma vez só (chave única por pessoa).
+alter table public.profiles add column if not exists aceita_lembretes boolean not null default true;
+create table if not exists public.lembretes_enviados (
+  perfil_id uuid not null references public.profiles (id) on delete cascade,
+  empresa_id uuid references public.empresas (id) on delete cascade,
+  chave text not null,
+  assunto text,
+  enviado_em timestamptz not null default now(),
+  primary key (perfil_id, chave)
+);
+alter table public.lembretes_enviados enable row level security;
+drop policy if exists "consultor le" on public.lembretes_enviados;
+create policy "consultor le" on public.lembretes_enviados for select using (public.is_admin());
+
+create or replace function public.portal_lembretes(p_on boolean)
+returns void
+language sql security definer set search_path = public
+as $$ update public.profiles set aceita_lembretes = coalesce(p_on, true) where id = auth.uid(); $$;
+grant execute on function public.portal_lembretes(boolean) to authenticated;
