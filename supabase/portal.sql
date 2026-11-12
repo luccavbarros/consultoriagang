@@ -1151,3 +1151,8 @@ returns void
 language sql security definer set search_path = public
 as $$ update public.profiles set aceita_lembretes = coalesce(p_on, true) where id = auth.uid(); $$;
 grant execute on function public.portal_lembretes(boolean) to authenticated;
+
+-- ===================== Estratégia pelo cerne: o desafio, a abordagem (como_vencer) e o próximo marco =====================
+alter table public.planos add column if not exists desafio text;             -- o diagnóstico: o obstáculo principal que a estratégia precisa vencer
+alter table public.planos add column if not exists objetivo_proximo text;    -- o próximo marco: algo alcançável que destrava o resto
+alter table public.planos add column if not exists objetivo_proximo_ate date;
