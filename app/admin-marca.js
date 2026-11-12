@@ -179,10 +179,10 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
         const lista = fonte && fonte[f.depende.chave] ? todas.filter((a) => fonte[f.depende.chave].includes(a.texto)) : todas;
         const velho = $(idc) && $(idc).closest('.combo'); if (!velho) return;
         const atualV = U.comboValue(idc);
-        const valor = manter || (atualV && lista.some((a) => a.texto === atualV)) ? atualV : null;
-        const novo = U.combo(idc, lista, valor, { semGrupos: true, vazio: U.comboValue(idDe) ? 'Escolha…' : 'Escolha o desafio primeiro' });
-        // só libera depois que o campo de origem (o desafio) tem valor
+        // só libera depois que o campo de origem (o desafio) tem valor; sem ele, fica desativado e vazio
         const livre = !!U.comboValue(idDe);
+        const valor = !livre ? null : manter || (atualV && lista.some((a) => a.texto === atualV)) ? atualV : null;
+        const novo = U.combo(idc, lista, valor, { semGrupos: true, vazio: livre ? 'Escolha…' : 'Escolha o desafio primeiro' });
         novo.querySelectorAll('select, input').forEach((x) => { x.disabled = !livre; });
         novo.classList.toggle('is-travado', !livre);
         velho.replaceWith(novo);
@@ -302,7 +302,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   montar('pane-diagnostico', [
     [ficha, { icone: 'pulso', titulo: 'Diagnóstico', nota: 'O ponto de partida da marca, como o cliente vê em Diagnóstico.', tabela: 'diagnosticos', fields: [
       { k: 'data', label: 'Data do diagnóstico', type: 'date' }, { k: 'proximo', label: 'Próximo diagnóstico', type: 'date' },
-      { k: 'resumo', label: 'Em uma frase', type: 'textarea' }] }],
+      { k: 'resumo', label: 'Em uma frase', full: true, type: 'preset', presets: 'resumosDiagnostico' }] }],
     [lista, { icone: 'olho', tom: 'gang', titulo: 'A marca do cliente', nota: 'Como as pessoas viam a marca antes do trabalho.', tabela: 'impressoes', fixo: { eh_cliente: true }, max: 1,
       vazio: 'Ainda sem a leitura da marca do cliente.', aoAbrir: (pre) => nomeEmpresa.then((n) => { const i = $(pre + 'marca_nome'); if (i && !i.value) i.value = n || ''; }), fields: [
       { k: 'marca_nome', label: 'Marca', req: true },
@@ -328,7 +328,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   const testeEstrategia = async (mount) => {
     mount.classList.add('is-largo');
     const [{ data: p }, { data: obs }, { data: esc }] = await Promise.all([
-      sb.from('planos').select('desafio, como_vencer, objetivo_proximo, objetivo_proximo_ate').eq('empresa_id', id).maybeSingle(),
+      sb.from('planos').select('desafio, como_vencer').eq('empresa_id', id).maybeSingle(),
       sb.from('objetivos').select('nivel').eq('empresa_id', id),
       sb.from('escolhas').select('tipo').eq('empresa_id', id),
     ]);
@@ -342,7 +342,6 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       [!!P.como_vencer && !floreio.test(P.como_vencer), 'Sem floreio', !P.como_vencer ? 'Escreva a abordagem em palavras concretas.' : floreio.test(P.como_vencer) ? 'Troque palavras vagas ("excelência", "referência", "inovação") pelo que a marca faz de fato.' : 'A abordagem usa palavras concretas.'],
       [(esc || []).some((e) => e.tipo === 'deixa_de_lado'), 'Faz escolhas', (esc || []).some((e) => e.tipo === 'deixa_de_lado') ? 'Diz o que fica de fora.' : 'Estratégia também é dizer não. Cadastre o que a marca deixa de lado.'],
       [nObj > 0 && nObj <= 3, 'Foco', nObj === 0 ? 'Cadastre de 1 a 3 objetivos de negócio e marca.' : nObj <= 3 ? nObj + (nObj === 1 ? ' objetivo de negócio e marca.' : ' objetivos de negócio e marca.') : nObj + ' objetivos dividem o esforço. Fique com até 3.'],
-      [!!P.objetivo_proximo && !!P.objetivo_proximo_ate, 'Próximo marco com data', P.objetivo_proximo && P.objetivo_proximo_ate ? 'Até ' + U.dia(P.objetivo_proximo_ate) + '.' : 'Defina um marco alcançável e a data. Ele dá ritmo e mostra progresso cedo.'],
     ];
     const ok = T.filter((x) => x[0]).length;
     mount.replaceChildren(el('div', 'ed-card',
@@ -361,11 +360,9 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   const CON = [['se_confirma', 'Se confirma'], ['em_observacao', 'Em observação'], ['sem_dados', 'Sem dados ainda'], ['nao_se_confirma', 'Não se confirma']];
   const CON_T = Object.fromEntries(CON);
   montar('pane-estrategia', [
-    [ficha, { icone: 'mapa', titulo: 'O cerne da estratégia', nota: 'O desafio que a marca precisa vencer, a abordagem para vencê-lo e o próximo marco.', tabela: 'planos', pasta: 'estrategia', fields: [
+    [ficha, { icone: 'mapa', titulo: 'O cerne da estratégia', nota: 'O desafio que a marca precisa vencer e a abordagem para vencê-lo.', tabela: 'planos', pasta: 'estrategia', fields: [
       { k: 'desafio', label: '1. O desafio (o obstáculo principal)', full: true, type: 'preset', presets: 'desafios' },
       { k: 'como_vencer', label: '2. A abordagem (como vencer o desafio)', full: true, type: 'preset', presets: 'abordagens', depende: { de: 'desafio', lista: 'desafios', chave: 'abordagens' } },
-      { k: 'objetivo_proximo', label: '3. O próximo marco', full: true, type: 'preset', presets: 'marcos' },
-      { k: 'objetivo_proximo_ate', label: 'Marco até', type: 'date' },
       { k: 'estrategia_aprovada_em', label: 'Aprovada em', type: 'date' }, { k: 'proxima_revisao_estrategia', label: 'Próxima revisão', type: 'date' },
       { k: 'estrategia_pdf', label: 'Plano completo (PDF)', type: 'file', accept: 'application/pdf' }] }],
     [testeEstrategia, {}],

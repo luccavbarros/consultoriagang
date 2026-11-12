@@ -4552,3 +4552,23 @@
   ];
   P.desafios.forEach((d) => { const m = MAPA.find(([ini]) => d.texto.startsWith(ini)); if (m) d.abordagens = m[1].map((k) => A[k]); });
 })();
+
+// ===== Diagnóstico "em uma frase": o retrato do ponto de partida (o que a marca entrega, o que falta e a consequência) =====
+(function () {
+  const P = window.GangPresets; if (!P) return;
+  const G = 'Da biblioteca';
+  P.resumosDiagnostico = [
+    'A marca entregava o básico que o setor exige, mas não tinha uma diferença clara, por isso competia principalmente por preço.',
+    'A marca era bem avaliada por quem já era cliente, mas pouco lembrada por quem ainda não comprava, por isso crescia devagar.',
+    'A qualidade do trabalho era alta, mas não aparecia na comunicação, por isso o cliente não via motivo para pagar mais.',
+    'A marca era conhecida, mas parada no tempo: o visual e a comunicação não acompanharam o que a empresa virou.',
+    'Cada canal falava de um jeito, com cores e mensagens diferentes, por isso a marca não era reconhecida de longe.',
+    'A empresa dependia quase só de indicação, o que trazia bons clientes, mas tornava o crescimento imprevisível.',
+    'A marca tentava atender todo tipo de cliente e acabava não sendo a primeira escolha de nenhum.',
+    'A promessa da venda era boa, mas a entrega variava de pessoa para pessoa, e isso afastava quem poderia voltar.',
+    'A marca aparecia pouco nos momentos em que o cliente decidia comprar, por isso perdia para quem estava presente.',
+    'Os clientes compravam uma vez e não voltavam: faltava motivo e caminho para a segunda compra.',
+    'A marca era difícil de achar e de comprar, então parte da procura se perdia antes do primeiro contato.',
+    'A comunicação vinha em campanhas soltas, com pausas longas, por isso a lembrança subia e caía a cada mês.',
+  ].map((texto) => ({ grupo: G, texto }));
+})();

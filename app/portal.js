@@ -2575,9 +2575,7 @@
       out.push(secN('cerne-t', 'O cerne da estratégia', null, 'Sem um desafio claro, estratégia vira lista de desejos. Por isso ela começa por ele.',
         el('div', 'cerne',
           passo(1, 'O desafio', p.desafio ? el('p', 'cerne__t', p.desafio) : el('p', 'cerne__vazio', 'O consultor ainda vai escrever.')),
-          passo(2, 'Como vamos vencer', p.como_vencer ? el('p', 'cerne__t', p.como_vencer) : el('p', 'cerne__vazio', 'O consultor ainda vai escrever.'))),
-        p.objetivo_proximo ? el('div', 'cerne__marco', el('span', 'cerne__marco-rot', 'Próximo marco'), el('span', 'cerne__marco-t', p.objetivo_proximo),
-          p.objetivo_proximo_ate ? el('span', 'cerne__marco-d', 'até ' + U.dia(p.objetivo_proximo_ate)) : null) : null));
+          passo(2, 'Como vamos vencer', p.como_vencer ? el('p', 'cerne__t', p.como_vencer) : el('p', 'cerne__vazio', 'O consultor ainda vai escrever.')))));
     }
 
     if (D.objetivos.length) {
