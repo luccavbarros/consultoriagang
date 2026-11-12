@@ -5708,3 +5708,50 @@
   liga('Ter uma relação direta', ['Publicar toda semana no LinkedIn da empresa e dos sócios, sempre com os mesmos ativos da marca',
     'Pedir uma conversa por ano com o dono ou o diretor de cada cliente B2B importante']);
 })();
+
+// ===== Rodada 24: ativação fundamentada, onde a biblioteca tinha pouca (a auditoria mostrou 2,6× mais marca que ativação).
+// B2B: os "comportamentos vencedores" dos níveis de resposta, leads e conversão do estudo de 435 casos de eficácia B2B.
+// Varejo: as medições de comportamento de compra dentro da loja (cesta, zona de entrada, caminho real e sinalização).
+// Também passam a contar como ativação 4 ações que são ofertas e contatos de venda de curto prazo, pela definição de ativação dos estudos de eficácia. =====
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'Mostrar o serviço funcionando para quem está avaliando: uma demonstração concreta, e não uma lista de vantagens', esforco: 'venda', promessa: 'vendas', tema: 'venda', tipo: 'ativacao', tam: 'M', ler: 60, setores: ['b2b', 'servicos'],
+      porque: 'Nos casos B2B mais eficazes, mostrar o benefício de forma concreta e inesperada fez mais pela resposta do que listar atributos. Ver funcionando tira a dúvida que a proposta não tira.',
+      metrica: 'Demonstrações que viram proposta', passos: ['Escolher o resultado mais convincente do serviço', 'Montar uma demonstração curta, com um caso real', 'Oferecer a demonstração a quem está avaliando', 'Anotar quantas viram proposta'] },
+    { texto: 'Mandar às empresas-alvo uma peça direta que convide a agir (um desafio, uma pergunta, um teste rápido), e não uma lista de argumentos', esforco: 'venda', promessa: 'pessoas', tema: 'anuncio', tipo: 'ativacao', tam: 'M', ler: 60, setores: ['b2b'],
+      porque: 'Nos casos B2B eficazes, o contato direto que envolve o destinatário teve mais resposta do que o que tenta dizer tudo. Quem participa se qualifica sozinho.',
+      metrica: 'Respostas à peça direta', passos: ['Escolher as empresas-alvo', 'Criar um convite com uma pergunta ou desafio do setor', 'Enviar com um próximo passo simples', 'Contar as respostas e as conversas abertas'] },
+    { texto: 'Acompanhar os contatos que mudam de empresa e retomar a conversa na empresa nova', esforco: 'venda', promessa: 'pessoas', tema: 'relacao', tipo: 'ativacao', tam: 'P', ler: 90, setores: ['b2b', 'servicos'],
+      porque: 'Nos casos B2B estudados, manter a relação com a pessoa mesmo quando ela troca de empresa gerou mais oportunidades do que acompanhar só o cargo. Quem já confia na marca a leva junto.',
+      metrica: 'Oportunidades vindas de contatos que mudaram de empresa', passos: ['Listar os contatos que mais compraram ou indicaram', 'Ver todo mês quem mudou de empresa', 'Mandar uma mensagem de parabéns com algo útil', 'Propor uma conversa na empresa nova'] },
+    { texto: 'Preparar os parceiros e revendedores que vendem a marca: material pronto, o argumento principal e um incentivo claro', esforco: 'venda', promessa: 'vendas', tema: 'distribuicao', tipo: 'ativacao', tam: 'M', ler: 90, setores: ['b2b', 'varejo'],
+      porque: 'Em muitas categorias, quem revende influencia a decisão final. Nos casos B2B eficazes de conversão, informar, inspirar e incentivar o canal foi um dos comportamentos vencedores.',
+      metrica: 'Vendas feitas pelos parceiros', passos: ['Listar quem revende ou indica a marca', 'Montar um material curto com o argumento principal', 'Definir um incentivo simples', 'Acompanhar as vendas por parceiro'] },
+    { texto: 'Deixar cestas ou sacolas ao alcance na entrada e ao longo da loja', esforco: 'venda', promessa: 'vendas', tema: 'experiencia', tipo: 'ativacao', tam: 'P', ler: 30, setores: ['varejo'],
+      porque: 'Nas medições de comportamento de compra em loja, quem pegou uma cesta comprou muito mais do que quem andava de mãos cheias: num dos estudos, 75% contra 34%. Mão ocupada é compra que não acontece.',
+      metrica: 'Clientes que compram por visita', passos: ['Colocar cestas logo depois da entrada', 'Deixar cestas também no meio e no fundo da loja', 'Treinar a equipe a oferecer cesta a quem está com as mãos cheias', 'Comparar as vendas por visita antes e depois'] },
+    { texto: 'Tirar das primeiras passadas da loja as ofertas e avisos importantes e colocá-los onde o cliente já desacelerou', esforco: 'venda', promessa: 'vendas', tema: 'experiencia', tipo: 'ativacao', tam: 'P', ler: 30, setores: ['varejo'],
+      porque: 'Nas medições em loja, quem acaba de entrar ainda está se ajustando ao ambiente e quase não vê o que está na entrada. A mesma oferta rende mais alguns passos para dentro.',
+      metrica: 'Vendas dos itens em oferta', passos: ['Ver o que está nos primeiros metros da loja', 'Mudar ofertas e avisos para depois da entrada', 'Deixar a entrada livre e convidativa', 'Comparar as vendas dos itens antes e depois'] },
+    { texto: 'Virar placas e ofertas para o caminho que o cliente realmente faz, e não para a porta principal', esforco: 'venda', promessa: 'vendas', tema: 'experiencia', tipo: 'ativacao', tam: 'P', ler: 30, setores: ['varejo'],
+      porque: 'Nas medições em loja, grande parte da sinalização estava virada para a entrada principal, enquanto os clientes chegavam às seções por outro lado. Placa que não é vista não vende.',
+      metrica: 'Clientes que param nos pontos com oferta', passos: ['Observar por um dia por onde os clientes chegam a cada seção', 'Marcar as placas que estão de costas para esse caminho', 'Virar ou mudar as placas', 'Observar de novo quantos param'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+  // ofertas e contatos de venda de curto prazo: ativação, e não base
+  ['Oferecer o próximo serviço lógico logo depois que o cliente tem um resultado', 'Oferecer uma forma de diminuir o risco da primeira compra: etapa piloto, garantia ou saída combinada',
+    'Pedir ao cliente novo um primeiro passo bem pequeno antes do compromisso maior', 'Combinar com o cliente o acompanhamento depois da proposta: em 2, 5 e 10 dias, cada contato com algo útil']
+    .forEach((t) => { const a = P.acoes.find((x) => x.texto === t); if (a) a.tipo = 'ativacao'; });
+  // ligar às abordagens que elas executam
+  const liga = (ini, titulos) => { const ab = (P.abordagens || []).find((y) => y.texto.startsWith(ini)); if (!ab || !ab.acoes) return;
+    titulos.forEach((t) => { if (!ab.acoes.includes(t)) ab.acoes.push(t); }); };
+  liga('Ser a mais comprovada', [NOVAS[0].texto]);
+  liga('Vender o resultado', [NOVAS[0].texto]);
+  liga('Ser a parceira de longo prazo', [NOVAS[2].texto]);
+  liga('Ter uma relação direta', [NOVAS[2].texto]);
+  liga('Ganhar mercado conquistando', [NOVAS[3].texto]);
+  liga('Ser a escolha mais conveniente', [NOVAS[4].texto]);
+})();
