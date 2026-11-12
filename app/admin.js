@@ -87,10 +87,10 @@
     emp.data.forEach((e) => {
       const p = plano[e.id];
       const acessos = perfis.data.filter((x) => x.empresa_id === e.id);
-      const status = !p ? 'Sem plano' : p.status !== 'ativo' ? (p.status === 'pausado' ? 'Pausado' : 'Encerrado') : p.tipo === 'acesso' ? 'Só acesso à marca' : 'Mês ' + mesDoPlano(p) + ' de ' + p.duracao_meses;
+      const status = !p ? 'Sem plano' : p.status !== 'ativo' ? el('span', 'badge selo-plano' + (p.status === 'pausado' ? ' is-warn' : ' is-off'), p.status === 'pausado' ? 'Pausado' : 'Encerrado') : p.tipo === 'acesso' ? 'Só acesso à marca' : 'Mês ' + mesDoPlano(p) + ' de ' + p.duracao_meses;
       list.append(el('li', 'client client--link',
         el('a', { class: 'client__name client__name--logo', href: 'admin-cliente.html?id=' + e.id }, logo(e), el('span', null, e.nome)),
-        el('div', 'client__company', status),
+        el('div', 'client__company', status, p && p.status === 'ativo' ? el('span', 'badge selo-plano', 'Ativo') : null),
         el('div', 'client__mail', acessos.length ? acessos.length + (acessos.length > 1 ? ' acessos' : ' acesso') : 'Sem acesso'),
         pend[e.id] ? el('span', 'badge is-warn', pend[e.id] + (pend[e.id] > 1 ? ' pedidos' : ' pedido')) : el('span'),
       ));

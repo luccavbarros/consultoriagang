@@ -118,17 +118,37 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     return row;
   };
 
+  // ícones dos cartões (traço fino, como no restante do painel)
+  const ICO = {
+    pulso: 'M3 12h4l3-8 4 16 3-8h4', olho: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z',
+    check: 'M20 6 9 17l-5-5', estrela: 'm12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9Z',
+    alvo: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z', mapa: 'M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z M9 4v14 M15 6v14',
+    seta: 'M5 12h14 M13 6l6 6-6 6', menos: 'M5 12h14', radar: 'M12 12 19 5 M12 3a9 9 0 1 0 9 9',
+    balao: 'M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12Z', voz: 'M4 10v4 M8 6v12 M12 3v18 M16 7v10 M20 10v4',
+    mais: 'M12 5v14 M5 12h14', nao: 'M6 6l12 12 M18 6 6 18', rosto: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z M9 10h.01 M15 10h.01 M8.5 14.5a4.5 4.5 0 0 0 7 0',
+    forma: 'M12 3 3 8v8l9 5 9-5V8Z', arquivo: 'M14 3H6v18h12V7Z M14 3v4h4', gota: 'M12 3s7 7 7 12a7 7 0 0 1-14 0c0-5 7-12 7-12Z',
+    letra: 'M5 20 12 4l7 16 M8 14h8', pin: 'M12 21s7-6 7-12a7 7 0 0 0-14 0c0 6 7 12 7 12Z M12 7a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z',
+    lapis: 'M4 20h4L19 9l-4-4L4 16Z', lixo: 'M4 7h16 M9 7V4h6v3 M6 7l1 13h10l1-13', sobe: 'M12 19V5 M6 11l6-6 6 6',
+  };
+  const ico = (nome) => { const NS = 'http://www.w3.org/2000/svg'; const sv = document.createElementNS(NS, 'svg');
+    sv.setAttribute('viewBox', '0 0 24 24'); sv.setAttribute('aria-hidden', 'true');
+    (ICO[nome] || ICO.pulso).split(' M').forEach((d, i) => { const pa = document.createElementNS(NS, 'path'); pa.setAttribute('d', (i ? 'M' : '') + d); sv.append(pa); });
+    return sv; };
+  const tile = (nome, tom) => el('span', 'ed-ico' + (tom ? ' ed-ico--' + tom : ''), ico(nome));
+
   // ----- ficha: um registro por empresa (diagnosticos, plataformas, identidades, planos) -----
   const ficha = async (mount, cfg) => {
     const { titulo, nota, tabela, fields, pasta } = cfg;
+    mount.classList.add('is-largo');
     const pre = 'fi-' + tabela + '-';
     const { data } = await sb.from(tabela).select('*').eq('empresa_id', id).maybeSingle();
     let atual = data;
     const msg = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite' });
-    const form = el('form', { class: 'card', novalidate: true },
-      el('h3', 'title-sm', titulo), nota ? el('p', 'small', nota) : null,
-      el('div', 'new-client', fields.map((f) => campo(f, atual ? atual[f.k] : null, pre))),
-      el('div', 'new-client__foot', el('button', { class: 'btn btn--light', type: 'submit' }, 'Salvar'), msg));
+    const form = el('form', { class: 'ed-card ed-card--ficha', novalidate: true },
+      el('div', 'ed-head', tile(cfg.icone || 'pulso'), el('div', 'ed-head__txt', el('h3', 'ed-head__t', titulo), nota ? el('p', 'ed-head__n', nota) : null),
+        el('button', { class: 'btn btn--light btn--sm ed-head__btn', type: 'submit' }, 'Salvar')),
+      el('div', 'new-client ed-campos', fields.map((f) => campo(f, atual ? atual[f.k] : null, pre))),
+      el('div', 'ed-foot', msg));
     form.addEventListener('submit', async (ev) => {
       ev.preventDefault();
       const btn = form.querySelector('[type=submit]'); btn.disabled = true; say(msg, 'Salvando…');
@@ -146,7 +166,8 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   };
 
   // ----- lista: vários itens com ordem -----
-  const lista = async (mount, { titulo, nota, tabela, fields, fixo = {}, resumo, pasta, vazio, ordem = true }) => {
+  const lista = async (mount, { titulo, nota, tabela, fields, fixo = {}, resumo, pasta, vazio, ordem = true, icone, tom, largo }) => {
+    if (largo) mount.classList.add('is-largo');
     const pre = 'li-' + tabela + '-' + Object.values(fixo).join('-') + '-';
     let q = sb.from(tabela).select('*').eq('empresa_id', id);
     Object.entries(fixo).forEach(([k, v]) => { q = q.eq(k, v); });
@@ -158,14 +179,14 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
 
     const abreForm = (r) => {
       editando = r;
-      const form = el('form', { class: 'card', novalidate: true },
-        el('h4', 'title-sm', r ? 'Editar' : 'Adicionar'),
+      const form = el('form', { class: 'ed-form', novalidate: true },
+        el('p', 'ed-form__t', r ? 'Editar' : 'Adicionar'),
         el('div', 'new-client', fields.map((f) => campo(f, r ? r[f.k] : null, pre,
           // só o campo principal (o nome do item) esconde o que já foi adicionado; os de apoio podem se repetir
           f.type === 'preset' && (f.req || f.k === 'titulo') ? rows.filter((x) => x !== r).map((x) => x[f.k]).filter(Boolean) : null))),
         el('div', 'new-client__foot',
           el('button', { class: 'btn btn--light btn--sm', type: 'submit' }, 'Salvar'),
-          el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => { formBox.replaceChildren(addBtn); } }, 'Cancelar'), msg));
+          el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => { formBox.replaceChildren(); addBtn.hidden = false; } }, 'Cancelar'), msg));
       form.addEventListener('submit', async (ev) => {
         ev.preventDefault();
         const btn = form.querySelector('[type=submit]'); btn.disabled = true; say(msg, 'Salvando…');
@@ -177,10 +198,10 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
           lista(mount, cfg);
         } catch (err) { say(msg, err.message, 'error'); btn.disabled = false; }
       });
-      formBox.replaceChildren(form);
+      formBox.replaceChildren(form); addBtn.hidden = true;
       form.querySelector('input, textarea, select').focus();
     };
-    const addBtn = el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => abreForm(null) }, '+ Adicionar');
+    const addBtn = el('button', { class: 'ed-add', type: 'button', onclick: () => abreForm(null) }, ico('mais'), 'Adicionar');
 
     const move = async (i, d) => {
       const a = rows[i]; const b = rows[i + d];
@@ -188,49 +209,50 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       await Promise.all([sb.from(tabela).update({ ordem: b.ordem }).eq('id', a.id), sb.from(tabela).update({ ordem: a.ordem }).eq('id', b.id)]);
       lista(mount, cfg);
     };
-    const btn = (label, fn, extra) => el('button', { class: 'btn btn--ghost btn--sm' + (extra || ''), type: 'button', onclick: fn }, label);
+    const btn = (nome, rotulo, fn, extra) => el('button', { class: 'ed-acao' + (extra || ''), type: 'button', title: rotulo, 'aria-label': rotulo, onclick: fn }, ico(nome));
 
-    mount.replaceChildren(el('div', 'editor',
-      el('div', 'editor__head', el('h3', 'title-sm', titulo), nota ? el('p', 'small', nota) : null),
-      el('ul', 'rows', rows.length ? rows.map((r, i) => {
+    mount.replaceChildren(el('div', 'ed-card',
+      el('div', 'ed-head', tile(icone || 'pulso', tom),
+        el('div', 'ed-head__txt', el('h3', 'ed-head__t', titulo, el('span', 'ed-n', String(rows.length))), nota ? el('p', 'ed-head__n', nota) : null),
+        addBtn),
+      formBox,
+      el('ul', 'ed-lista', rows.length ? rows.map((r, i) => {
         const [t, sub] = resumo(r);
-        return el('li', 'row',
-          el('div', 'row__main', el('p', 'row__title', t), sub ? el('p', 'row__text', sub) : null),
-          el('div', 'row__actions',
-            ordem && i > 0 ? btn('↑', () => move(i, -1)) : null,
-            btn('Editar', () => abreForm(r)),
-            btn('Excluir', async () => { if (!confirm('Excluir “' + t + '”?')) return; await sb.from(tabela).delete().eq('id', r.id); lista(mount, cfg); }, ' btn--danger')));
-      }) : el('li', 'clients__empty', vazio || 'Nada cadastrado ainda.')),
-      formBox));
-    formBox.replaceChildren(addBtn);
-    const cfg = { titulo, nota, tabela, fields, fixo, resumo, pasta, vazio, ordem };
+        return el('li', 'ed-item',
+          el('div', 'ed-item__main', el('p', 'ed-item__t', t), sub ? el('p', 'ed-item__s', sub) : null),
+          el('div', 'ed-item__acoes',
+            ordem && i > 0 ? btn('sobe', 'Subir', () => move(i, -1)) : null,
+            btn('lapis', 'Editar', () => abreForm(r)),
+            btn('lixo', 'Excluir', async () => { if (!confirm('Excluir “' + (typeof t === 'string' ? t : 'este item') + '”?')) return; await sb.from(tabela).delete().eq('id', r.id); lista(mount, cfg); }, ' ed-acao--bad')));
+      }) : el('li', 'ed-vazio', vazio || 'Nada cadastrado ainda.'))));
+    const cfg = { titulo, nota, tabela, fields, fixo, resumo, pasta, vazio, ordem, icone, tom, largo };
   };
 
   // ----- seções de cada aba -----
   const montar = (pane, blocos) => {
     const box = $(pane);
-    box.replaceChildren();
+    box.replaceChildren(); box.classList.add('ed-grade');
     blocos.forEach(([fn, cfg]) => { const m = el('div', 'editor-block'); box.append(m); fn(m, cfg); });
   };
   const POS = [['entrega', 'Entregava'], ['entrega_mal', 'Entregava mal'], ['nao_entrega', 'Não entregava']];
   const POS_T = Object.fromEntries(POS);
 
   montar('pane-diagnostico', [
-    [ficha, { titulo: 'Diagnóstico', nota: 'O ponto de partida da marca, como o cliente vê em Diagnóstico.', tabela: 'diagnosticos', fields: [
+    [ficha, { icone: 'pulso', titulo: 'Diagnóstico', nota: 'O ponto de partida da marca, como o cliente vê em Diagnóstico.', tabela: 'diagnosticos', fields: [
       { k: 'data', label: 'Data do diagnóstico', type: 'date' }, { k: 'proximo', label: 'Próximo diagnóstico', type: 'date' },
       { k: 'resumo', label: 'Em uma frase', type: 'textarea' }] }],
-    [lista, { titulo: 'Como as pessoas viam a marca', nota: 'A marca do cliente e os concorrentes.', tabela: 'impressoes', fields: [
+    [lista, { icone: 'olho', largo: true, titulo: 'Como as pessoas viam a marca', nota: 'A marca do cliente e os concorrentes.', tabela: 'impressoes', fields: [
       { k: 'marca_nome', label: 'Marca', req: true }, { k: 'eh_cliente', label: 'É a marca do cliente?', type: 'bool', def: false },
       { k: 'notam', label: 'O que notavam', type: 'preset', presets: 'notam' }, { k: 'acreditam', label: 'O que acreditavam', type: 'preset', presets: 'acreditam' },
       { k: 'sentem', label: 'O que sentiam', type: 'preset', presets: 'sentem' }],
     resumo: (r) => [r.marca_nome + (r.eh_cliente ? ' (cliente)' : ''), [r.notam, r.acreditam, r.sentem].filter(Boolean).join(' · ')] }],
-    [lista, { titulo: 'O que todo cliente exige', nota: 'Motivadores: o mínimo da categoria.', tabela: 'fatores', fixo: { tipo: 'motivador' }, fields: [
+    [lista, { icone: 'check', titulo: 'O que todo cliente exige', nota: 'Motivadores: o mínimo da categoria.', tabela: 'fatores', fixo: { tipo: 'motivador' }, fields: [
       { k: 'texto', label: 'Item', req: true, type: 'preset', presets: 'motivadores' }, { k: 'posicao', label: 'A marca…', type: 'select', options: POS }],
     resumo: (r) => [r.texto, POS_T[r.posicao]] }],
-    [lista, { titulo: 'O que faz escolher uma marca', nota: 'Discriminadores: o que diferencia.', tabela: 'fatores', fixo: { tipo: 'discriminador' }, fields: [
+    [lista, { icone: 'estrela', tom: 'gang', titulo: 'O que faz escolher uma marca', nota: 'Discriminadores: o que diferencia.', tabela: 'fatores', fixo: { tipo: 'discriminador' }, fields: [
       { k: 'texto', label: 'Item', req: true, type: 'preset', presets: 'discriminadores' }, { k: 'posicao', label: 'A marca…', type: 'select', options: POS }],
     resumo: (r) => [r.texto, POS_T[r.posicao]] }],
-    [lista, { titulo: 'As causas que o plano ataca', tabela: 'causas', fields: [{ k: 'texto', label: 'Causa', req: true, full: true, type: 'preset', presets: 'causas' }], resumo: (r) => [r.texto] }],
+    [lista, { icone: 'alvo', largo: true, titulo: 'As causas que o plano ataca', tabela: 'causas', fields: [{ k: 'texto', label: 'Causa', req: true, full: true, type: 'preset', presets: 'causas' }], resumo: (r) => [r.texto] }],
   ]);
 
   const NIV = [['negocio', 'Negócio'], ['marca', 'Marca'], ['comunicacao', 'Comunicação']];
@@ -238,20 +260,20 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   const CON = [['se_confirma', 'Se confirma'], ['em_observacao', 'Em observação'], ['sem_dados', 'Sem dados ainda'], ['nao_se_confirma', 'Não se confirma']];
   const CON_T = Object.fromEntries(CON);
   montar('pane-estrategia', [
-    [ficha, { titulo: 'Estratégia', nota: 'Datas, a frase de como vencemos e o PDF do plano completo.', tabela: 'planos', pasta: 'estrategia', fields: [
+    [ficha, { icone: 'mapa', titulo: 'Estratégia', nota: 'Datas, a frase de como vencemos e o PDF do plano completo.', tabela: 'planos', pasta: 'estrategia', fields: [
       { k: 'estrategia_aprovada_em', label: 'Aprovada em', type: 'date' }, { k: 'proxima_revisao_estrategia', label: 'Próxima revisão', type: 'date' },
       { k: 'como_vencer', label: 'Como vencemos (uma frase)', type: 'textarea', rows: 2 },
       { k: 'estrategia_pdf', label: 'Plano completo (PDF)', type: 'file', accept: 'application/pdf' }] }],
-    [lista, { titulo: 'Objetivos', nota: 'Negócio (com o número em destaque), Marca e Comunicação (notar, acreditar, sentir). As ações se ligam a eles.', tabela: 'objetivos', fields: [
+    [lista, { icone: 'alvo', tom: 'gang', titulo: 'Objetivos', nota: 'Negócio (com o número em destaque), Marca e Comunicação (notar, acreditar, sentir). As ações se ligam a eles.', tabela: 'objetivos', fields: [
       { k: 'titulo', label: 'Objetivo', full: true, type: 'preset', presets: 'objetivos', fill: { nivel: 'nivel' } },
       { k: 'nivel', label: 'Nível', type: 'select', options: NIV }, { k: 'destaque', label: 'Número em destaque (negócio)', type: 'preset', presets: 'destaques' },
       { k: 'notar', label: 'Notar (comunicação)', type: 'preset', presets: 'notar' }, { k: 'acreditar', label: 'Acreditar (comunicação)', type: 'preset', presets: 'acreditar' }, { k: 'sentir', label: 'Sentir (comunicação)', type: 'preset', presets: 'sentir' }],
     resumo: (r) => [NIV_T[r.nivel] + ': ' + (r.destaque ? r.destaque + ' ' : '') + (r.titulo || ''), r.nivel === 'comunicacao' ? ['Notar ' + (r.notar || '—'), 'acreditar ' + (r.acreditar || '—'), 'sentir ' + (r.sentir || '—')].join(' · ') : null] }],
-    [lista, { titulo: 'Situações de compra', nota: 'Os momentos em que alguém pensa na categoria (How Brands Grow). Ex.: “vou reformar antes de alugar”, “apareceu uma infiltração”. Entram na pesquisa e nas ações.', tabela: 'situacoes', fields: [
+    [lista, { icone: 'pin', titulo: 'Situações de compra', nota: 'Os momentos em que alguém pensa na categoria (How Brands Grow). Ex.: “vou reformar antes de alugar”, “apareceu uma infiltração”. Entram na pesquisa e nas ações.', tabela: 'situacoes', fields: [
       { k: 'texto', label: 'Situação', req: true, full: true, type: 'preset', presets: 'situacoes' }], resumo: (r) => [r.texto] }],
-    [lista, { titulo: 'Onde atuamos: prioridade', tabela: 'escolhas', fixo: { tipo: 'prioridade' }, fields: [{ k: 'texto', label: 'Prioridade', req: true, full: true, type: 'preset', presets: 'prioridades' }], resumo: (r) => [r.texto] }],
-    [lista, { titulo: 'Onde atuamos: deixamos de lado', tabela: 'escolhas', fixo: { tipo: 'deixa_de_lado' }, fields: [{ k: 'texto', label: 'Deixamos de lado', req: true, full: true, type: 'preset', presets: 'deixados' }], resumo: (r) => [r.texto] }],
-    [lista, { titulo: 'O que acompanhamos', nota: 'Condições que precisam continuar verdadeiras. Quando uma vira “Não se confirma”, o cliente vê o aviso e o tema entra na pauta do próximo encontro.', tabela: 'condicoes', fields: [
+    [lista, { icone: 'check', tom: 'ok', titulo: 'Onde atuamos: prioridade', tabela: 'escolhas', fixo: { tipo: 'prioridade' }, fields: [{ k: 'texto', label: 'Prioridade', req: true, full: true, type: 'preset', presets: 'prioridades' }], resumo: (r) => [r.texto] }],
+    [lista, { icone: 'menos', titulo: 'Onde atuamos: deixamos de lado', tabela: 'escolhas', fixo: { tipo: 'deixa_de_lado' }, fields: [{ k: 'texto', label: 'Deixamos de lado', req: true, full: true, type: 'preset', presets: 'deixados' }], resumo: (r) => [r.texto] }],
+    [lista, { icone: 'radar', largo: true, titulo: 'O que acompanhamos', nota: 'Condições que precisam continuar verdadeiras. Quando uma vira “Não se confirma”, o cliente vê o aviso e o tema entra na pauta do próximo encontro.', tabela: 'condicoes', fields: [
       { k: 'texto', label: 'Condição', req: true, full: true, type: 'preset', presets: 'condicoes' }, { k: 'como_verificar', label: 'Como verificamos', type: 'preset', presets: 'verificacoes' }, { k: 'status', label: 'Hoje', type: 'select', options: CON, def: 'sem_dados' },
       { k: 'dono', label: 'Quem checa', type: 'preset', presets: 'donos' }, { k: 'checar_em', label: 'Próxima checagem', type: 'date' }],
     resumo: (r) => [r.texto, [r.como_verificar, CON_T[r.status], r.dono ? 'checa: ' + r.dono : null, r.checar_em ? 'próxima: ' + U.dia(r.checar_em) : null].filter(Boolean).join(' · ')] }],
@@ -262,9 +284,12 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     const { data } = await sb.from('facetas').select('*').eq('empresa_id', id);
     const v = Object.fromEntries((data || []).map((f) => [f.chave, f.texto]));
     const msg = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite' });
-    const form = el('form', { class: 'card', novalidate: true }, el('h3', 'title-sm', 'Quem a marca é'), el('p', 'small', 'As seis facetas da identidade.'),
-      el('div', 'new-client', FAC.map(([k, t]) => { const ta = el('textarea', { class: 'field', id: 'fa-' + k, rows: 2 }); ta.value = v[k] || ''; return el('div', null, el('label', { class: 'label', for: 'fa-' + k }, t), ta); })),
-      el('div', 'new-client__foot', el('button', { class: 'btn btn--light', type: 'submit' }, 'Salvar facetas'), msg));
+    mount.classList.add('is-largo');
+    const form = el('form', { class: 'ed-card ed-card--ficha', novalidate: true },
+      el('div', 'ed-head', tile('rosto'), el('div', 'ed-head__txt', el('h3', 'ed-head__t', 'Quem a marca é'), el('p', 'ed-head__n', 'As seis facetas da identidade.')),
+        el('button', { class: 'btn btn--light btn--sm ed-head__btn', type: 'submit' }, 'Salvar')),
+      el('div', 'new-client new-client--3 ed-campos', FAC.map(([k, t]) => { const ta = el('textarea', { class: 'field', id: 'fa-' + k, rows: 2 }); ta.value = v[k] || ''; return el('div', null, el('label', { class: 'label', for: 'fa-' + k }, t), ta); })),
+      el('div', 'ed-foot', msg));
     form.addEventListener('submit', async (ev) => {
       ev.preventDefault();
       const rows = FAC.map(([k]) => ({ empresa_id: id, chave: k, texto: $('fa-' + k).value.trim() || null }));
@@ -274,14 +299,14 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     mount.replaceChildren(form);
   };
   montar('pane-plataforma', [
-    [ficha, { titulo: 'Plataforma de marca', tabela: 'plataformas', pasta: 'plataforma', fields: [
+    [ficha, { icone: 'forma', titulo: 'Plataforma de marca', tabela: 'plataformas', pasta: 'plataforma', fields: [
       { k: 'entregue_em', label: 'Entregue em', type: 'date' }, { k: 'pdf', label: 'Plataforma em PDF', type: 'file', accept: 'application/pdf' },
       { k: 'posicionamento', label: 'Posicionamento', type: 'textarea', rows: 3, placeholder: 'Para [quem], [marca] é [o quê] que [benefício], porque [prova], ao contrário de [alternativa].' },
       { k: 'mensagem_central', label: 'Mensagem central', full: true }] }],
-    [lista, { titulo: 'Mensagens de apoio', tabela: 'mensagens_apoio', fields: [{ k: 'texto', label: 'Mensagem', req: true, full: true }], resumo: (r) => [r.texto] }],
-    [lista, { titulo: 'Tom de voz: atributos', tabela: 'tom_atributos', fields: [{ k: 'nome', label: 'Atributo', req: true, type: 'preset', presets: 'tom', fill: { descricao: 'descricao' } }, { k: 'descricao', label: 'Descrição', placeholder: 'Preenchida ao escolher o atributo' }], resumo: (r) => [r.nome, r.descricao] }],
-    [lista, { titulo: 'A marca diz', tabela: 'tom_exemplos', fixo: { tipo: 'diz' }, fields: [{ k: 'texto', label: 'Exemplo', req: true, full: true, type: 'preset', presets: 'tomDiz' }], resumo: (r) => [r.texto] }],
-    [lista, { titulo: 'Nunca diz', tabela: 'tom_exemplos', fixo: { tipo: 'nunca_diz' }, fields: [{ k: 'texto', label: 'Exemplo', req: true, full: true, type: 'preset', presets: 'tomNuncaDiz' }], resumo: (r) => [r.texto] }],
+    [lista, { icone: 'balao', titulo: 'Mensagens de apoio', tabela: 'mensagens_apoio', fields: [{ k: 'texto', label: 'Mensagem', req: true, full: true }], resumo: (r) => [r.texto] }],
+    [lista, { icone: 'voz', titulo: 'Tom de voz: atributos', tabela: 'tom_atributos', fields: [{ k: 'nome', label: 'Atributo', req: true, type: 'preset', presets: 'tom', fill: { descricao: 'descricao' } }, { k: 'descricao', label: 'Descrição', placeholder: 'Preenchida ao escolher o atributo' }], resumo: (r) => [r.nome, r.descricao] }],
+    [lista, { icone: 'check', tom: 'ok', titulo: 'A marca diz', tabela: 'tom_exemplos', fixo: { tipo: 'diz' }, fields: [{ k: 'texto', label: 'Exemplo', req: true, full: true, type: 'preset', presets: 'tomDiz' }], resumo: (r) => [r.texto] }],
+    [lista, { icone: 'nao', tom: 'bad', titulo: 'Nunca diz', tabela: 'tom_exemplos', fixo: { tipo: 'nunca_diz' }, fields: [{ k: 'texto', label: 'Exemplo', req: true, full: true, type: 'preset', presets: 'tomNuncaDiz' }], resumo: (r) => [r.texto] }],
     [facetas, {}],
   ]);
 
@@ -289,27 +314,27 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   const AP = [['aplicada', 'Aplicada'], ['em_andamento', 'Em andamento'], ['prevista', 'Prevista']];
   const AP_T = Object.fromEntries(AP);
   montar('pane-identidade', [
-    [ficha, { titulo: 'Identidade visual', tabela: 'identidades', pasta: 'identidade', fields: [
+    [ficha, { icone: 'forma', titulo: 'Identidade visual', tabela: 'identidades', pasta: 'identidade', fields: [
       { k: 'entregue_em', label: 'Entregue em', type: 'date' }, { k: 'versao', label: 'Versão', placeholder: '1.0' },
       { k: 'zip', label: 'Tudo em um .zip', type: 'file', accept: '.zip,application/zip' }] }],
-    [lista, { titulo: 'Ativos distintivos', nota: 'O que faz reconhecer a marca sem ler o nome: cor, símbolo, frase, personagem. Na pesquisa, cada um aparece sem a marca e medimos fama e exclusividade.', tabela: 'ativos', fields: [
+    [lista, { icone: 'estrela', tom: 'gang', titulo: 'Ativos distintivos', nota: 'O que faz reconhecer a marca sem ler o nome: cor, símbolo, frase, personagem. Na pesquisa, cada um aparece sem a marca e medimos fama e exclusividade.', tabela: 'ativos', fields: [
       { k: 'tipo', label: 'Tipo', type: 'select', options: [['cor', 'Cor'], ['simbolo', 'Símbolo'], ['frase', 'Frase'], ['personagem', 'Personagem'], ['som', 'Som'], ['outro', 'Outro']] },
       { k: 'nome', label: 'Nome (só para você)', req: true, type: 'preset', presets: 'nomesAtivo' },
       { k: 'texto', label: 'Frase sem o nome da marca, ou o HEX da cor', full: true, placeholder: '#E5482A' },
       { k: 'imagem_url', label: 'Imagem sem o nome da marca (símbolo, personagem)', type: 'filepub' }],
     resumo: (r) => [r.nome, ({ cor: 'Cor', simbolo: 'Símbolo', frase: 'Frase', personagem: 'Personagem', som: 'Som', outro: 'Outro' })[r.tipo] + (r.texto ? ' · ' + r.texto : '') + (r.imagem_url ? ' · com imagem' : '')] }],
-    [lista, { titulo: 'Logos, manuais e modelos', nota: 'Logos aparecem com prévia (a 2ª fica sobre fundo escuro). Os outros viram a lista “Modelos e manuais”.', tabela: 'arquivos_marca', pasta: 'identidade', fields: [
+    [lista, { icone: 'arquivo', titulo: 'Logos, manuais e modelos', nota: 'Logos aparecem com prévia (a 2ª fica sobre fundo escuro). Os outros viram a lista “Modelos e manuais”.', tabela: 'arquivos_marca', pasta: 'identidade', fields: [
       { k: 'categoria', label: 'Tipo', type: 'select', options: CAT }, { k: 'nome', label: 'Nome', req: true, placeholder: 'Logo principal' },
       { k: 'descricao', label: 'Descrição', full: true, placeholder: 'Sobre fundo escuro' },
       { k: 'previa', label: 'Prévia (imagem, para logos)', type: 'file', accept: 'image/*' },
       { k: 'formatos', label: 'Arquivos para baixar', type: 'formats' }],
     resumo: (r) => [r.nome, (CAT.find(([k]) => k === r.categoria) || [, ''])[1] + ' · ' + ((r.formatos || []).map((f) => f.formato).join(', ') || 'sem arquivos')] }],
-    [lista, { titulo: 'Cores', tabela: 'cores', fields: [
+    [lista, { icone: 'gota', titulo: 'Cores', tabela: 'cores', fields: [
       { k: 'nome', label: 'Nome', req: true, type: 'preset', presets: 'nomesCor' }, { k: 'hex', label: 'HEX', type: 'color', req: true, placeholder: '#111111' },
       { k: 'cmyk', label: 'CMYK', placeholder: '0 0 0 93' }, { k: 'pantone', label: 'Pantone', placeholder: 'Pantone 172 C' }],
     resumo: (r) => [el('span', null, el('span', { class: 'dot', style: 'background:' + r.hex }), r.nome), [r.hex, r.cmyk ? 'CMYK ' + r.cmyk : null, r.pantone].filter(Boolean).join(' · ')] }],
-    [lista, { titulo: 'Tipografia', tabela: 'tipografias', fields: [{ k: 'nome', label: 'Fonte', req: true }, { k: 'uso', label: 'Uso', type: 'preset', presets: 'usosFonte' }], resumo: (r) => [r.nome, r.uso] }],
-    [lista, { titulo: 'Onde a nova marca já está', tabela: 'aplicacoes', fields: [
+    [lista, { icone: 'letra', titulo: 'Tipografia', tabela: 'tipografias', fields: [{ k: 'nome', label: 'Fonte', req: true }, { k: 'uso', label: 'Uso', type: 'preset', presets: 'usosFonte' }], resumo: (r) => [r.nome, r.uso] }],
+    [lista, { icone: 'pin', largo: true, titulo: 'Onde a nova marca já está', tabela: 'aplicacoes', fields: [
       { k: 'ponto_contato', label: 'Ponto de contato', req: true, type: 'preset', presets: 'pontosContato' }, { k: 'status', label: 'Situação', type: 'select', options: AP, def: 'prevista' },
       { k: 'data', label: 'Data', type: 'date' }],
     resumo: (r) => [r.ponto_contato, AP_T[r.status] + (r.data ? ' · ' + U.dia(r.data) : '')] }],

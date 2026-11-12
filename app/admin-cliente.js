@@ -209,7 +209,13 @@
     sb.from('profiles').select('id, name, email').eq('role', 'admin').eq('active', true),
   ]);
   const p = plano || { inicio: null, duracao_meses: 18, status: 'ativo', tipo: 'consultoria', esforco_marca_pct: 60, prazo_revisao_dias: 2, consultor_id: me.id };
-  const sub = () => { $('sub').textContent = !p.inicio ? 'Sem plano' : p.tipo === 'acesso' ? 'Só acesso · ' + p.status : 'Mês ' + mesDoPlano(p) + ' de ' + p.duracao_meses + ' · ' + p.status; };
+  const SELO_P = { ativo: ['', 'Ativo'], pausado: [' is-warn', 'Pausado'], encerrado: [' is-off', 'Encerrado'] };
+  const sub = () => {
+    const alvo = $('sub'); alvo.textContent = '';
+    if (!p.inicio) { alvo.textContent = 'Sem plano'; return; }
+    const [c, t] = SELO_P[p.status] || ['', p.status];
+    alvo.append(el('span', null, p.tipo === 'acesso' ? 'Só acesso' : 'Mês ' + mesDoPlano(p) + ' de ' + p.duracao_meses), el('span', 'badge selo-plano' + c, t));
+  };
   sub();
 
   $('p-consultor').replaceChildren(...admins.map((a) => el('option', { value: a.id }, a.name || a.email)));
