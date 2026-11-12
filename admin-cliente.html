@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="app/app.css?v=25" />
   <link rel="stylesheet" href="app/portal.css?v=65" />
-  <link rel="stylesheet" href="app/tema.css?v=123" />
+  <link rel="stylesheet" href="app/tema.css?v=124" />
   <script src="app/entrada.js?v=2"></script>
 </head>
 <body class="portal-body">
@@ -356,9 +356,9 @@
       </div>
 
       <div class="grade3">
-      <div class="bloco" id="res-met">
+      <div class="bloco bloco--card" id="res-met">
       <div class="app-section__head">
-        <h2 class="title-sm">Uma métrica por objetivo</h2>
+        <div><h2 class="title-sm">Uma métrica por objetivo</h2><p class="small">O número que mostra se cada objetivo está andando.</p></div>
         <button class="btn btn--light btn--sm" id="open-met" aria-expanded="false" aria-controls="met-form">Nova métrica</button>
       </div>
       <form class="card" id="met-form" novalidate hidden>
@@ -385,7 +385,7 @@
       <ul class="rows rows--compact" id="mets"></ul>
       </div>
 
-      <div class="bloco" id="res-pesq">
+      <div class="bloco bloco--card" id="res-pesq">
       <div class="app-section__head">
         <div><h2 class="title-sm">Pesquisa de marca</h2><p class="small">Link anônimo para os clientes do cliente. Uma rodada no início e outra a cada 6 meses.</p></div>
         <button class="btn btn--light btn--sm" id="open-pesq" aria-expanded="false" aria-controls="pesq-form">Nova rodada</button>
@@ -416,11 +416,12 @@
       <ul class="rows" id="pesqs"></ul>
       </div>
 
-      <div class="bloco" id="res-busca">
-      <h2 class="title-sm">Participação nas buscas</h2>
-      <p class="small">Uma vez por mês: abra a comparação pronta no Google Trends e anote a fatia da marca (%).</p>
-      <p><a class="btn btn--ghost btn--sm" id="b-trends" target="_blank" rel="noopener" href="https://trends.google.com/trends/explore?geo=BR&amp;date=today%2012-m">Abrir a comparação no Google Trends</a></p>
-      <form class="inline-add" id="busca-form" novalidate>
+      <div class="bloco bloco--card" id="res-busca">
+      <div class="app-section__head">
+        <div><h2 class="title-sm">Participação nas buscas</h2><p class="small">Uma vez por mês, anote a fatia da marca (%) na comparação pronta.</p></div>
+        <a class="btn btn--ghost btn--sm" id="b-trends" target="_blank" rel="noopener" href="https://trends.google.com/trends/explore?geo=BR&amp;date=today%2012-m">Abrir no Google Trends</a>
+      </div>
+      <form class="linha-add" id="busca-form" novalidate>
         <div class="new-client__pass">
           <input class="field" id="b-mes" type="month" aria-label="Mês" />
           <input class="field" id="b-pct" type="number" min="0" max="100" step="any" placeholder="%" aria-label="Participação da marca (%)" />
@@ -431,19 +432,21 @@
       <ul class="rows rows--compact" id="buscas"></ul>
       </div>
 
-      <div class="bloco" id="res-disp">
-      <h2 class="title-sm">Fácil de encontrar e de comprar</h2>
-      <p class="small">A cada 6 meses, confira cada item como se fosse um cliente. A nota aparece em Resultados, ao lado de como a marca é vista.</p>
-      <form class="card disp" id="disp-form" novalidate>
+      <div class="bloco bloco--card" id="res-disp">
+      <div class="app-section__head">
+        <div><h2 class="title-sm">Fácil de encontrar e de comprar</h2><p class="small">A cada 6 meses, confira cada item como se fosse um cliente.<br>A nota aparece para o cliente em Resultados.</p></div>
+      </div>
+      <form class="disp" id="disp-form" novalidate>
         <div class="disp__itens" id="disp-itens"></div>
         <div class="new-client__foot"><div class="disp__mes"><input class="field" id="disp-mes" type="month" aria-label="Mês da verificação" /></div><button class="btn btn--light btn--sm" type="submit">Salvar verificação</button><p class="msg" id="disp-msg" role="status" aria-live="polite"></p></div>
       </form>
       <ul class="rows rows--compact" id="disps"></ul>
       </div>
 
-      <div class="bloco" id="res-voz">
-      <h2 class="title-sm">O que os clientes disseram</h2>
-      <p class="small">Frases que o cliente registra no portal, mês a mês.</p>
+      <div class="bloco bloco--card" id="res-voz">
+      <div class="app-section__head">
+        <div><h2 class="title-sm">O que os clientes disseram</h2><p class="small">Frases que o cliente registra no portal, mês a mês.</p></div>
+      </div>
       <ul class="rows rows--compact" id="vozes-adm"></ul>
       </div>
       </div>
@@ -552,6 +555,6 @@
   <script src="app/cerebro.js?v=1"></script>
   <script src="app/admin-marca.js?v=32"></script>
   <script src="app/saude.js?v=9"></script>
-  <script src="app/admin-cliente.js?v=76"></script>
+  <script src="app/admin-cliente.js?v=77"></script>
 </body>
 </html>
