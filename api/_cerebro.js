@@ -4943,3 +4943,653 @@
   const FORA = ['Estou comparando preços', 'Preciso de alguém de confiança, sem dor de cabeça', 'Recebi uma indicação de alguém de confiança'];
   P.situacoes = P.situacoes.filter((x) => !FORA.includes(x.texto));
 })();
+
+// ===== Rodada 17: base da marca (voz e posicionamento), com critério de consultoria
+// Voz: atributos genéricos ("amigável", "profissional") servem para qualquer marca; os que diferenciam vêm em tensão,
+// dizendo o que a marca é e até onde vai. A voz é fixa; o tom muda conforme o momento (erro, cobrança, atraso, boas-vindas). =====
+(function () {
+  const P = window.GangPresets; if (!P) return;
+  const G = 'Da biblioteca';
+  const addObj = (lista, itens) => { if (!P[lista]) P[lista] = []; itens.forEach((it) => { if (!P[lista].some((x) => x.texto === it.texto)) P[lista].push({ grupo: G, ...it }); }); };
+  const add = (lista, itens) => addObj(lista, itens.map((texto) => ({ texto })));
+
+  addObj('tom', [
+    { texto: 'Confiante sem arrogância', descricao: 'Afirma com base em fatos e casos; nunca diz que é a melhor' },
+    { texto: 'Técnica sem jargão', descricao: 'Mostra que domina o assunto, mas explica com as palavras do cliente' },
+    { texto: 'Próxima sem intimidade forçada', descricao: 'Fala de igual para igual, sem apelidos nem gírias que a marca não usaria' },
+    { texto: 'Direta sem ser fria', descricao: 'Vai ao ponto em poucas frases e sempre diz o próximo passo' },
+    { texto: 'Bem-humorada sem fazer piada', descricao: 'Leveza nas palavras, nunca às custas do cliente ou de um problema sério' },
+    { texto: 'Firme sem ser dura', descricao: 'Diz não com clareza, explica o porquê e oferece uma saída' },
+    { texto: 'Simples sem ser simplória', descricao: 'Frases curtas e palavras comuns, sem tratar o cliente como quem não entende' },
+    { texto: 'Calorosa sem exagero', descricao: 'Mostra cuidado com atitudes e detalhes, não com pontos de exclamação' },
+    { texto: 'Ousada com fundamento', descricao: 'Diz o que os outros evitam, sempre com um motivo ou uma prova' },
+    { texto: 'Sóbria sem ser distante', descricao: 'Poucas palavras e nenhum exagero, mas sempre com uma pessoa por trás' },
+  ]);
+  // o que a marca diz: inclui os momentos difíceis, em que o tom mais pesa
+  add('tomDiz', [
+    'Seu pagamento não passou. Para resolver, é só tentar de novo por este link.',
+    'Recebemos seu pedido. O próximo passo é nosso: até amanhã você recebe a proposta.',
+    'Vai atrasar dois dias, por causa do fornecedor. Já ajustamos o resto para você não esperar mais.',
+    'Bem-vindo. Nos primeiros dias, isto é o que vai acontecer.',
+    'Não fazemos esse serviço, mas sabemos quem faz bem.',
+    'Você pode cancelar quando quiser, pelo mesmo canal em que contratou.',
+  ]);
+  // o que a marca não diz: frases que qualquer empresa poderia assinar, ou que escondem quem está falando
+  add('tomNuncaDiz', [
+    'Sua solicitação foi encaminhada ao setor responsável.',
+    'Em caso de dúvidas, estamos à disposição.',
+    'Somos apaixonados pelo que fazemos.',
+    'Soluções completas para todas as suas necessidades.',
+    'Agradecemos a compreensão.',
+    'Lamentamos o ocorrido.',
+  ]);
+})();
+
+// ===== Rodada 18: cada abordagem aponta as ações da biblioteca que a executam e as que contradizem a renúncia dela.
+// O modelo de plano usa isso: o setor dá o esqueleto (marcos, fundação, canais); a abordagem decide o que entra primeiro e o que fica de fora. =====
+(function () {
+  const P = window.GangPresets; if (!P || !P.abordagens) return;
+  const L = [
+ {
+  "ini": "Ser a especialista",
+  "curto": "Ser a especialista",
+  "acoes": [
+   "Escolher a especialidade principal e mostrá-la em tudo, sem deixar de falar com toda a categoria",
+   "Escrever o perfil do cliente ideal e os sinais de quem não é cliente para a empresa",
+   "Escrever o estudo de caso do melhor cliente: problema, solução e resultado em números",
+   "Publicar a formação e a especialidade de cada profissional em linguagem simples",
+   "Escrever uma página para cada serviço usando o nome que o cliente digita na busca",
+   "Preparar uma ideia que ensine algo novo ao cliente sobre o negócio dele e abrir as reuniões com ela",
+   "Trocar propostas feitas sem conversa por um diagnóstico curto, pago ou agendado, antes de orçar"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Ser a mais lembrada em uma região",
+  "curto": "Ser a mais lembrada na região",
+  "acoes": [
+   "Concentrar a presença numa região ou num nicho onde a empresa possa ser a mais lembrada",
+   "Anunciar perto de onde o cliente compra: mídia de rua, rádio local ou ponto de venda",
+   "Apoiar algo local que o público frequenta, com a marca bem visível",
+   "Participar de uma feira ou evento do setor com os ativos da marca",
+   "Pedir avaliação no Google aos clientes satisfeitos recentes e deixar o link pronto para os próximos",
+   "Cadastrar e completar o perfil da empresa no Google, nos mapas e nos marketplaces do setor"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Concentrar a empresa no que ela faz melhor",
+  "curto": "Concentrar no que faz melhor",
+  "acoes": [
+   "Revisar o portfólio: separar o que traz clientes, o que dá lucro e o que só ocupa espaço",
+   "Calcular a margem de cada serviço ou produto e concentrar a comunicação nos mais lucrativos",
+   "Cortar um item que a empresa oferece e o cliente não valoriza, e reforçar o essencial na comunicação",
+   "Escrever o que a empresa deixa de fazer neste ano para focar no que importa",
+   "Revisar o cardápio: destacar os itens de maior margem e tirar os que quase ninguém pede",
+   "Calcular quais clientes dão lucro e quais dão prejuízo, contando o tempo gasto com cada um"
+  ],
+  "fora": [
+   "Lançar uma novidade por semestre e comunicar como notícia"
+  ]
+ },
+ {
+  "ini": "Ser a opção premium",
+  "curto": "Ser a opção premium",
+  "acoes": [
+   "Criar uma versão premium do serviço principal",
+   "Para marcas premium: tirar o desconto público e reservar condições só para clientes antigos",
+   "Usar preço redondo nos serviços premium e reservar os quebrados para as ofertas",
+   "Refazer a tabela de preços a partir do valor que cada serviço gera para o cliente",
+   "Criar um ritual marcante na entrega (embalagem, boas-vindas, encerramento)",
+   "Escolher os sinais de qualidade que o cliente enxerga (pontualidade, acabamento, limpeza, resposta rápida) e padronizar esses primeiro",
+   "Criar uma garantia clara, por escrito, que tira o risco do cliente",
+   "Revisar o ambiente onde o cliente espera e é atendido: limpeza, luz, som, conforto e a marca à vista"
+  ],
+  "fora": [
+   "Fazer uma ação de ativação com prazo (oferta ou condição especial)",
+   "Oferecer uma condição melhor nos horários e dias de pouco movimento",
+   "Criar um pacote que junte o serviço principal a um complemento, por menos do que os dois separados"
+  ]
+ },
+ {
+  "ini": "Sair da faixa de preço baixo",
+  "curto": "Sair do preço baixo",
+  "acoes": [
+   "Refazer a tabela de preços a partir do valor que cada serviço gera para o cliente",
+   "Reescrever o modelo de proposta: recomendação primeiro, problema do cliente, impacto em dinheiro e a mensagem central",
+   "Tirar o preço como mensagem principal dos anúncios e mostrar o que a empresa faz melhor",
+   "Montar a proposta com 3 opções: a mais completa primeiro e a recomendada marcada",
+   "Revisar os preços uma vez por ano com uma regra escrita, e não só quando o custo sobe",
+   "Avisar o aumento de preço com antecedência, explicando o motivo e o que melhorou",
+   "Separar do preço principal os extras que hoje saem de graça e cobrar por eles",
+   "Escrever o perfil do cliente ideal e os sinais de quem não é cliente para a empresa"
+  ],
+  "fora": [
+   "Fazer uma ação de ativação com prazo (oferta ou condição especial)",
+   "Oferecer uma condição melhor nos horários e dias de pouco movimento"
+  ]
+ },
+ {
+  "ini": "Ser a opção simples",
+  "curto": "Ser a opção simples",
+  "acoes": [
+   "Cortar um item que a empresa oferece e o cliente não valoriza, e reforçar o essencial na comunicação",
+   "Revisar o caminho de compra e cortar etapas: botão de WhatsApp, orçamento em 24h, Pix e cartão",
+   "Deixar o preço de partida e o próximo passo visíveis em todos os canais da marca",
+   "Mandar ao cliente indeciso só as 2 informações que decidem, e não o catálogo inteiro",
+   "Organizar os serviços numa estrutura simples: a marca principal mais um nome descritivo, sem submarcas soltas",
+   "Oferecer formas de pagamento que facilitem a compra sem baixar o preço: parcelas, assinatura ou entrada menor",
+   "Permitir agendar ou pedir online a qualquer hora do dia"
+  ],
+  "fora": [
+   "Criar uma versão premium do serviço principal"
+  ]
+ },
+ {
+  "ini": "Ser a escolha mais conveniente",
+  "curto": "Ser a mais conveniente",
+  "acoes": [
+   "Revisar o caminho de compra e cortar etapas: botão de WhatsApp, orçamento em 24h, Pix e cartão",
+   "Permitir agendar ou pedir online a qualquer hora do dia",
+   "Deixar o botão de contato ou de compra sempre visível no celular, em todas as páginas",
+   "Montar o catálogo no WhatsApp Business com fotos, preços e descrição de cada serviço ou produto",
+   "Ampliar o horário ou os dias de atendimento nos períodos em que o cliente mais procura",
+   "Levar o serviço até o cliente: atendimento em casa, na empresa dele ou online",
+   "Definir quem responde os contatos e criar respostas prontas para responder em até 1 hora",
+   "Pedir a 3 pessoas de fora que tentem comprar ou pedir orçamento pelo celular e cortar o que travar",
+   "Reduzir a compra no site ao menor número de etapas e testar no celular"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Ser a primeira em uma subcategoria",
+  "curto": "Ser a primeira numa subcategoria",
+  "acoes": [
+   "Dar nome à categoria que a empresa quer liderar e usar sempre o mesmo nome",
+   "Dar um nome próprio ao método ou ao serviço principal",
+   "Escolher a palavra que a marca quer ocupar na cabeça do cliente e repeti-la em tudo",
+   "Fazer um levantamento do setor e divulgar os números para clientes, imprensa e redes",
+   "Abrir a apresentação comercial pela mudança no mercado que torna o jeito antigo arriscado",
+   "Dizer sempre o que a empresa é junto com o nome: \"Lume, clínica de estética\""
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Ser a alternativa ao jeito",
+  "curto": "Ser a alternativa à categoria",
+  "acoes": [
+   "Mapear os códigos da categoria: o que todos repetem, o que está ficando velho e o que está surgindo",
+   "Publicar um manifesto curto: o que a marca defende e o que se recusa a fazer",
+   "Criar uma campanha feita para ser comentada: uma ideia que as pessoas contem a outras",
+   "Publicar uma vez por mês uma opinião forte da empresa sobre um tema do setor",
+   "Admitir na comunicação uma limitação honesta da empresa, ao lado do que ela faz de melhor",
+   "Identificar uma tensão que o cliente vive na sociedade e colocar a marca do lado dele"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Escolher contra quem a marca é comparada",
+  "curto": "Escolher contra quem é comparada",
+  "acoes": [
+   "Criar um comparativo de uma página: a empresa e o concorrente principal, lado a lado",
+   "Fazer uma oficina de 1 hora com os sócios: o que o cliente usaria se a empresa não existisse e o que só ela faz",
+   "Dizer sempre o que a empresa é junto com o nome: \"Lume, clínica de estética\"",
+   "Descrever o negócio pela necessidade que ele resolve, e não pelo produto que vende",
+   "Testar a frase de posicionamento com 10 clientes: eles entendem, acreditam e acham diferente?"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Competir pelo que leva tempo",
+  "curto": "Competir pelo que não se copia",
+  "acoes": [
+   "Fazer o inventário dos ativos da marca: o que existe, onde aparece e com que frequência",
+   "Escrever as regras de uso dos 2 ativos mais fortes e não mudar nada neles por 12 meses",
+   "Manter a mesma ideia de campanha por pelo menos 2 anos, variando só as peças",
+   "Ao atualizar a identidade, manter os elementos que as pessoas já reconhecem",
+   "Cobrir o logo das peças e testar se ainda dá para saber que são da marca",
+   "Testar os ativos com 30 pessoas: quantas ligam cada um à marca e quantas ligam a outra empresa",
+   "Criar um programa próprio e recorrente que dê energia à marca (prêmio local, série de conteúdo ou encontro anual), sempre com o mesmo nome",
+   "Criar uma marca sensorial no espaço: um cheiro, uma música ou um material que seja sempre o mesmo"
+  ],
+  "fora": [
+   "Lançar uma novidade por semestre e comunicar como notícia"
+  ]
+ },
+ {
+  "ini": "Ser a parceira de longo prazo",
+  "curto": "Ser parceira de longo prazo",
+  "acoes": [
+   "Fazer uma revisão de resultados a cada trimestre com cada cliente grande",
+   "Pedir uma conversa por ano com o dono ou o diretor de cada cliente B2B importante",
+   "Lembrar com o cliente os marcos da relação: um ano de parceria, um resultado alcançado",
+   "Enviar aos clientes atuais um resumo do que foi entregue e do resultado",
+   "Montar um conselho com 5 clientes que se reúne a cada semestre para opinar",
+   "Separar os clientes em níveis pelo que trazem para a empresa e definir o atendimento de cada nível",
+   "Combinar por escrito, no início, o que a empresa faz, o que o cliente faz e como os dois vão saber que deu certo"
+  ],
+  "fora": [
+   "Fazer uma ação de ativação com prazo (oferta ou condição especial)"
+  ]
+ },
+ {
+  "ini": "Trocar a venda única",
+  "curto": "Acompanhar, não só vender",
+  "acoes": [
+   "Montar o acompanhamento depois da compra, com um contato marcado e a oferta do próximo passo",
+   "Acompanhar de perto o cliente nas 2 primeiras semanas, quando o risco de desistência é maior",
+   "Marcar o próximo atendimento antes de o cliente ir embora",
+   "Descobrir de quanto em quanto tempo o cliente volta a comprar e lembrá-lo perto da data",
+   "Oferecer o próximo serviço lógico logo depois que o cliente tem um resultado",
+   "Fazer uma revisão de resultados a cada trimestre com cada cliente grande",
+   "Avisar o cliente que está usando pouco o serviço e oferecer ajuda antes que ele cancele"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Ganhar mercado conquistando",
+  "curto": "Conquistar quem ainda não compra",
+  "acoes": [
+   "Fazer uma campanha de alcance amplo para quem ainda não é cliente, com a maior parte da verba",
+   "Anunciar o ano todo para quem não está comprando agora: a maioria do mercado só vai comprar mais tarde",
+   "Calcular a fatia de voz da marca e manter o investimento acima da fatia de mercado",
+   "Configurar os anúncios para alcance, com limite de frequência por pessoa",
+   "Dividir a verba entre pelo menos 2 tipos de mídia, porque juntos alcançam mais gente",
+   "Usar o melhor conteúdo da marca como anúncio para quem ainda não segue a empresa",
+   "Ligar a marca às 3 situações de compra mais frequentes em toda a comunicação do semestre"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Ser a marca dona de uma situação",
+  "curto": "Ser dona de uma situação de compra",
+  "acoes": [
+   "Listar as 10 situações em que alguém precisa do que a empresa vende: quando, onde, com quem e por quê",
+   "Ligar a marca às 3 situações de compra mais frequentes em toda a comunicação do semestre",
+   "Produzir um conteúdo para uma situação de compra específica",
+   "Anunciar em conteúdos e lugares ligados ao momento em que o cliente pensa no assunto",
+   "Revisar as peças do último mês: quantas citam uma situação de compra, e não só o produto",
+   "Entrevistar 5 clientes recentes sobre o momento em que decidiram comprar: o que estava acontecendo e o que pesou"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Sair na frente no jeito novo",
+  "curto": "Sair na frente no jeito novo de comprar",
+  "acoes": [
+   "Entrar em um canal novo de venda por semestre: marketplace, parceiro, revenda ou aplicativo",
+   "Permitir agendar ou pedir online a qualquer hora do dia",
+   "Revisar a cada semestre o que mudou na categoria: novos concorrentes, novos canais e novas exigências dos clientes",
+   "Reduzir a compra no site ao menor número de etapas e testar no celular",
+   "Montar o catálogo no WhatsApp Business com fotos, preços e descrição de cada serviço ou produto",
+   "Aparecer nas listas, guias e comparadores que o cliente consulta antes de comprar"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Ter uma relação direta",
+  "curto": "Ter relação direta com o cliente",
+  "acoes": [
+   "Garantir que quem procura o nome da marca encontre a empresa em primeiro lugar",
+   "Permitir agendar ou pedir online a qualquer hora do dia",
+   "Montar o catálogo no WhatsApp Business com fotos, preços e descrição de cada serviço ou produto",
+   "Escrever e enviar para a base de clientes uma mensagem útil (dica, novidade ou caso), sem vender",
+   "Criar um clube de clientes com nome, encontros e pequenos benefícios para quem já compra"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Atender muitos clientes médios",
+  "curto": "Atender muitos clientes médios",
+  "acoes": [
+   "Oferecer formas de pagamento que facilitem a compra sem baixar o preço: parcelas, assinatura ou entrada menor",
+   "Criar um programa de indicação com benefício para quem indica e para quem chega",
+   "Entrar em um canal novo de venda por semestre: marketplace, parceiro, revenda ou aplicativo",
+   "Criar um pacote que junte o serviço principal a um complemento, por menos do que os dois separados",
+   "Montar a proposta com 3 opções: a mais completa primeiro e a recomendada marcada"
+  ],
+  "fora": [
+   "Escolher 20 empresas-alvo e montar uma abordagem sob medida para cada uma"
+  ]
+ },
+ {
+  "ini": "Começar por um nicho",
+  "curto": "Começar por um nicho",
+  "acoes": [
+   "Concentrar a presença numa região ou num nicho onde a empresa possa ser a mais lembrada",
+   "Escrever o perfil do cliente ideal e os sinais de quem não é cliente para a empresa",
+   "Escrever o estudo de caso do melhor cliente: problema, solução e resultado em números",
+   "Oferecer uma forma de diminuir o risco da primeira compra: etapa piloto, garantia ou saída combinada",
+   "Publicar resultados reais de ex-alunos ou ex-clientes, com autorização"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Ser a empresa próxima",
+  "curto": "Ser a empresa próxima",
+  "acoes": [
+   "Gravar um vídeo de 2 minutos apresentando a equipe e o jeito de trabalhar",
+   "Personalizar as mensagens aos clientes com o nome e um detalhe da história de cada um",
+   "Contar a história de alguém da equipe que mostre, na prática, como a empresa trabalha",
+   "Conversar com um cliente toda semana, por 15 minutos, e anotar o que aprendeu",
+   "Pedir uma conversa por ano com o dono ou o diretor de cada cliente B2B importante"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Prometer menos e entregar",
+  "curto": "Prometer menos, entregar sempre",
+  "acoes": [
+   "Escrever o padrão de atendimento: quem responde, como responde e em quanto tempo, do primeiro contato ao pós-venda",
+   "Escrever em uma página o passo a passo do atendimento e treinar a equipe nele",
+   "Escrever as promessas do atendimento que todo cliente deve sentir e conferir uma por semana",
+   "Escolher os sinais de qualidade que o cliente enxerga (pontualidade, acabamento, limpeza, resposta rápida) e padronizar esses primeiro",
+   "Conferir se o que o site e a venda prometem é o que a operação consegue entregar, e alinhar os dois",
+   "Combinar por escrito, no início, o que a empresa faz, o que o cliente faz e como os dois vão saber que deu certo",
+   "Explicar o tratamento ou o serviço em etapas, com prazos e custos por escrito, antes de começar"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Conquistar quem usa",
+  "curto": "Conquistar quem usa",
+  "acoes": [
+   "Mapear em cada venda B2B quem decide, quem usa, quem paga e quem pode barrar, e falar com cada um",
+   "Montar um material para o contato interno convencer os outros decisores da empresa dele",
+   "Ensinar o cliente a ficar melhor naquilo que ele quer fazer com o produto ou serviço",
+   "Acompanhar de perto o cliente nas 2 primeiras semanas, quando o risco de desistência é maior",
+   "Avisar o cliente que está usando pouco o serviço e oferecer ajuda antes que ele cancele"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Assumir o que a empresa é hoje",
+  "curto": "Assumir o que a empresa é hoje",
+  "acoes": [
+   "Reescrever o site: abrir pelo que só você entrega, na linguagem do cliente",
+   "Atualizar redes sociais com a nova identidade",
+   "Trocar a fachada / ambiente para a nova identidade",
+   "Descrever o negócio pela necessidade que ele resolve, e não pelo produto que vende",
+   "Perguntar a 10 clientes quais 3 palavras descrevem a empresa e comparar com o que a marca quer"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Ser a única da região",
+  "curto": "Ser a única da região",
+  "acoes": [
+   "Ter um item que só a casa tem e colocá-lo em destaque em todos os canais",
+   "Dar um nome próprio ao método ou ao serviço principal",
+   "Escolher a palavra que a marca quer ocupar na cabeça do cliente e repeti-la em tudo",
+   "Escolher a especialidade principal e mostrá-la em tudo, sem deixar de falar com toda a categoria",
+   "Concentrar a presença numa região ou num nicho onde a empresa possa ser a mais lembrada"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Vender o resultado",
+  "curto": "Vender o resultado",
+  "acoes": [
+   "Cobrar por projeto ou por resultado, e não por hora",
+   "Calcular com o cliente, na primeira reunião, quanto o problema custa a ele por mês",
+   "Combinar com o cliente, antes de falar de preço, os objetivos e como o sucesso será medido",
+   "Criar uma garantia clara, por escrito, que tira o risco do cliente",
+   "Oferecer uma forma de diminuir o risco da primeira compra: etapa piloto, garantia ou saída combinada",
+   "Escrever o estudo de caso do melhor cliente: problema, solução e resultado em números"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Ser a mais comprovada",
+  "curto": "Ser a mais comprovada",
+  "acoes": [
+   "Transformar cada entrega concluída em um caso curto: o problema, o que foi feito e o resultado em número",
+   "Coletar e publicar depoimentos com nomes e números reais",
+   "Mostrar prova social concreta no site e na proposta: quantos clientes, quem são e desde quando",
+   "Escrever o estudo de caso do melhor cliente: problema, solução e resultado em números",
+   "Publicar resultados reais de ex-alunos ou ex-clientes, com autorização",
+   "Fotografar antes e depois sempre com a mesma luz e o mesmo ângulo, com autorização",
+   "Reunir no site e nas propostas as provas de credibilidade: anos de mercado, clientes atendidos, certificações e garantias",
+   "Inscrever a empresa em prêmios, rankings ou certificações respeitados no setor",
+   "Revisar o site e os anúncios trocando adjetivos por fatos e números"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Ter uma só promessa",
+  "curto": "Ter uma só promessa",
+  "acoes": [
+   "Escrever o roteiro da conversa de venda com a mesma promessa, as mesmas provas e os mesmos limites da comunicação",
+   "Treinar a equipe na mensagem central e no tom de voz",
+   "Mandar o guia de tom de voz para todos que escrevem ou atendem pela empresa",
+   "Mostrar a marca no primeiro dia de quem entra: a promessa, o tom de voz e como atender",
+   "Escrever com cada área o que ela faz, no dia a dia, para cumprir a promessa da marca",
+   "Conferir se o que o site e a venda prometem é o que a operação consegue entregar, e alinhar os dois",
+   "Criar modelos editáveis de posts, propostas e apresentações para a equipe não improvisar",
+   "Escrever o glossário da marca: as palavras que a marca usa e as que evita"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Construir a marca de forma contínua",
+  "curto": "Construir a marca sem parar",
+  "acoes": [
+   "Manter anúncios no ar todos os meses, com menos verba por mês, em vez de picos com meses parados",
+   "Manter a mesma ideia de campanha por pelo menos 2 anos, variando só as peças",
+   "Criar uma série fixa nas redes: mesmo dia, mesmo formato e a mesma abertura",
+   "Montar o calendário de comunicação dos próximos 6 meses",
+   "Dividir a verba do ano entre construir a marca e gerar vendas imediatas, com cerca de 60% para marca",
+   "Manter o anúncio que funciona no ar por mais tempo: o cansaço da equipe não é o cansaço do público",
+   "Calcular a perda provável de vendas por ficar sem anunciar, antes de qualquer corte na verba de marca"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Ser a desafiante declarada",
+  "curto": "Ser a desafiante declarada",
+  "acoes": [
+   "Criar um comparativo de uma página: a empresa e o concorrente principal, lado a lado",
+   "Criar uma campanha feita para ser comentada: uma ideia que as pessoas contem a outras",
+   "Publicar uma vez por mês uma opinião forte da empresa sobre um tema do setor",
+   "Publicar um manifesto curto: o que a marca defende e o que se recusa a fazer",
+   "Fazer uma ação com outra marca respeitada pelo mesmo público",
+   "Admitir na comunicação uma limitação honesta da empresa, ao lado do que ela faz de melhor"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Ter um ponto de vista claro",
+  "curto": "Ter um ponto de vista claro",
+  "acoes": [
+   "Publicar um manifesto curto: o que a marca defende e o que se recusa a fazer",
+   "Publicar uma vez por mês uma opinião forte da empresa sobre um tema do setor",
+   "Identificar uma tensão que o cliente vive na sociedade e colocar a marca do lado dele",
+   "Antes de falar de uma causa ou propósito, conferir se a empresa já pratica o que vai dizer",
+   "Admitir na comunicação uma limitação honesta da empresa, ao lado do que ela faz de melhor"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Puxar a conversa da categoria",
+  "curto": "Puxar a conversa da categoria",
+  "acoes": [
+   "Publicar uma vez por mês uma opinião forte da empresa sobre um tema do setor",
+   "Fazer um levantamento do setor e divulgar os números para clientes, imprensa e redes",
+   "Dar uma palestra ou aula aberta sobre o tema da empresa em um evento do setor",
+   "Abrir a apresentação comercial pela mudança no mercado que torna o jeito antigo arriscado",
+   "Preparar uma ideia que ensine algo novo ao cliente sobre o negócio dele e abrir as reuniões com ela",
+   "Levar uma história da empresa para a imprensa local ou para a mídia do setor"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Concentrar quase todo o esforço",
+  "curto": "Concentrar o esforço",
+  "acoes": [
+   "Comparar o retorno de cada canal a cada trimestre e passar verba do pior para o melhor",
+   "Escrever o que a empresa deixa de fazer neste ano para focar no que importa",
+   "Ligar a marca às 3 situações de compra mais frequentes em toda a comunicação do semestre",
+   "Manter o anúncio que funciona no ar por mais tempo: o cansaço da equipe não é o cansaço do público",
+   "Manter anúncios no ar todos os meses, com menos verba por mês, em vez de picos com meses parados"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Trazer para a categoria uma emoção",
+  "curto": "Trazer uma emoção nova à categoria",
+  "acoes": [
+   "Produzir uma peça emocional de marca (história, causa ou cliente real)",
+   "Testar o anúncio pela emoção que ele provoca, não só pela mensagem que passa",
+   "Mostrar cuidado com as pessoas, e não só competência: gestos, histórias e respostas humanas",
+   "Mostrar o que a escolha da marca diz sobre quem compra",
+   "Criar algo que o cliente queira mostrar: um certificado, uma foto ou uma frase da marca",
+   "Criar um ritual marcante na entrega (embalagem, boas-vindas, encerramento)"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Tornar a compra um hábito",
+  "curto": "Tornar a compra um hábito",
+  "acoes": [
+   "Descobrir de quanto em quanto tempo o cliente volta a comprar e lembrá-lo perto da data",
+   "Marcar o próximo atendimento antes de o cliente ir embora",
+   "Oferecer formas de pagamento que facilitem a compra sem baixar o preço: parcelas, assinatura ou entrada menor",
+   "Criar um clube de clientes com nome, encontros e pequenos benefícios para quem já compra",
+   "Reativar quem não compra há mais de 6 meses com uma mensagem útil e um motivo para voltar",
+   "Oferecer o próximo serviço lógico logo depois que o cliente tem um resultado"
+  ],
+  "fora": [
+   "Fazer uma ação de ativação com prazo (oferta ou condição especial)"
+  ]
+ },
+ {
+  "ini": "Ser a fornecedora de confiança",
+  "curto": "Ser a fornecedora de confiança",
+  "acoes": [
+   "Fazer uma revisão de resultados a cada trimestre com cada cliente grande",
+   "Combinar por escrito, no início, o que a empresa faz, o que o cliente faz e como os dois vão saber que deu certo",
+   "Começar todo relatório e e-mail importante ao cliente pela conclusão, em uma frase",
+   "Lembrar com o cliente os marcos da relação: um ano de parceria, um resultado alcançado",
+   "Montar um conselho com 5 clientes que se reúne a cada semestre para opinar",
+   "Separar os clientes em níveis pelo que trazem para a empresa e definir o atendimento de cada nível"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Organizar a oferta em torno do progresso",
+  "curto": "Organizar a oferta pelo progresso do cliente",
+  "acoes": [
+   "Escrever o perfil de compra: o que leva a buscar, o que conta como sucesso, o que trava, quem participa e como compara",
+   "Entrevistar 5 clientes recentes sobre o momento em que decidiram comprar: o que estava acontecendo e o que pesou",
+   "Descrever o negócio pela necessidade que ele resolve, e não pelo produto que vende",
+   "Publicar no site as situações em que a empresa é a melhor escolha",
+   "Descrever com o cliente a situação de hoje e a situação desejada antes de apresentar a solução",
+   "Produzir um conteúdo para uma situação de compra específica"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Competir com a não compra",
+  "curto": "Competir com a não compra",
+  "acoes": [
+   "Oferecer uma aula ou amostra gratuita, com data marcada, para quem ainda não é aluno",
+   "Oferecer teste gratuito com acompanhamento nos primeiros 7 dias",
+   "Pedir ao cliente novo um primeiro passo bem pequeno antes do compromisso maior",
+   "Oferecer uma forma de diminuir o risco da primeira compra: etapa piloto, garantia ou saída combinada",
+   "Responder no site as 5 perguntas que todo cliente faz, inclusive o preço",
+   "Listar os medos que impedem o cliente de trocar de fornecedor e responder a cada um na comunicação"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Ser dona de um benefício",
+  "curto": "Ser dona de um benefício",
+  "acoes": [
+   "Escolher a palavra que a marca quer ocupar na cabeça do cliente e repeti-la em tudo",
+   "Reduzir cada anúncio a uma só ideia e cortar o resto",
+   "Ligar a marca às 3 situações de compra mais frequentes em toda a comunicação do semestre",
+   "Completar a proposta de valor com os três benefícios: o que a marca resolve, como faz o cliente se sentir e o que a escolha diz sobre ele",
+   "Ordenar listas de benefícios com o mais forte primeiro e o segundo mais forte por último"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Vender conhecimento e diagnóstico",
+  "curto": "Vender conhecimento e diagnóstico",
+  "acoes": [
+   "Trocar propostas feitas sem conversa por um diagnóstico curto, pago ou agendado, antes de orçar",
+   "Cobrar pelo diagnóstico ou pela primeira etapa, em vez de fazer de graça",
+   "Preparar uma ideia que ensine algo novo ao cliente sobre o negócio dele e abrir as reuniões com ela",
+   "Dar uma recomendação útil já na primeira conversa, antes de fechar qualquer coisa",
+   "Fazer um levantamento do setor e divulgar os números para clientes, imprensa e redes",
+   "Calcular com o cliente, na primeira reunião, quanto o problema custa a ele por mês"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Mostrar as pessoas por trás",
+  "curto": "Mostrar as pessoas por trás da marca",
+  "acoes": [
+   "Gravar um vídeo de 2 minutos apresentando a equipe e o jeito de trabalhar",
+   "Contar a história de alguém da equipe que mostre, na prática, como a empresa trabalha",
+   "Mostrar cuidado com as pessoas, e não só competência: gestos, histórias e respostas humanas",
+   "Admitir na comunicação uma limitação honesta da empresa, ao lado do que ela faz de melhor",
+   "Responder todas as avaliações atuais, inclusive as negativas, e definir quem responde as novas",
+   "Dar à equipe um valor ou uma solução que ela pode usar na hora para resolver uma reclamação, sem pedir autorização"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Ter ofertas em níveis",
+  "curto": "Ter ofertas em níveis",
+  "acoes": [
+   "Montar a proposta com 3 opções: a mais completa primeiro e a recomendada marcada",
+   "Separar os clientes em níveis pelo que trazem para a empresa e definir o atendimento de cada nível",
+   "Criar um pacote que junte o serviço principal a um complemento, por menos do que os dois separados",
+   "Criar uma versão premium do serviço principal",
+   "Oferecer formas de pagamento que facilitem a compra sem baixar o preço: parcelas, assinatura ou entrada menor"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Cobrar pela diferença de valor",
+  "curto": "Cobrar pelo valor",
+  "acoes": [
+   "Refazer a tabela de preços a partir do valor que cada serviço gera para o cliente",
+   "Calcular com o cliente, na primeira reunião, quanto o problema custa a ele por mês",
+   "Reescrever o modelo de proposta: recomendação primeiro, problema do cliente, impacto em dinheiro e a mensagem central",
+   "Combinar com o cliente, antes de falar de preço, os objetivos e como o sucesso será medido",
+   "Cobrar por projeto ou por resultado, e não por hora",
+   "Medir quanto a mais o cliente aceita pagar pela marca em comparação com a média do mercado"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Aparecer mais do que o tamanho",
+  "curto": "Aparecer mais do que o tamanho",
+  "acoes": [
+   "Calcular a fatia de voz da marca e manter o investimento acima da fatia de mercado",
+   "Dividir a verba do ano entre construir a marca e gerar vendas imediatas, com cerca de 60% para marca",
+   "Manter anúncios no ar todos os meses, com menos verba por mês, em vez de picos com meses parados",
+   "Calcular a perda provável de vendas por ficar sem anunciar, antes de qualquer corte na verba de marca",
+   "Fazer uma campanha de alcance amplo para quem ainda não é cliente, com a maior parte da verba"
+  ],
+  "fora": []
+ },
+ {
+  "ini": "Ser fácil de reconhecer",
+  "curto": "Ser fácil de reconhecer",
+  "acoes": [
+   "Fazer o inventário dos ativos da marca: o que existe, onde aparece e com que frequência",
+   "Escrever as regras de uso dos 2 ativos mais fortes e não mudar nada neles por 12 meses",
+   "Cobrir o logo das peças e testar se ainda dá para saber que são da marca",
+   "Testar os ativos com 30 pessoas: quantas ligam cada um à marca e quantas ligam a outra empresa",
+   "Criar um bordão ou personagem próprio e usar em todos os anúncios",
+   "Criar uma vinheta sonora curta e usar no início e no fim de todos os vídeos",
+   "Ao atualizar a identidade, manter os elementos que as pessoas já reconhecem"
+  ],
+  "fora": []
+ }
+];
+  L.forEach((x) => { const a = P.abordagens.find((y) => y.texto.startsWith(x.ini)); if (a) { a.curto = x.curto; a.acoes = x.acoes; a.fora = x.fora; } });
+})();
