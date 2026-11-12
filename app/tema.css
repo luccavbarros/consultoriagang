@@ -1649,3 +1649,78 @@ summary.hist__linha:hover, .hist__det[open] > summary { background: #1c1c1c; }
 @media (max-width: 600px) { .limpar__op { grid-template-columns: auto minmax(0, 1fr); } .limpar__op .field { grid-column: 1 / -1; width: 100%; } }
 .limpar .btn--danger { background: var(--bad-bg); color: var(--bad); border: 0; }
 .limpar .btn--danger:disabled { opacity: .45; }
+
+/* ===== Mensagens do painel: uma janela de conversa (não uma faixa larga) ===== */
+.conv { max-width: 760px; border: 1px solid var(--line); border-radius: var(--r); background: var(--lightblack); overflow: hidden; display: grid; }
+.conv__topo { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+.conv__av { flex: none; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: #f3f3f3 center / cover; color: #111; font-size: 12px; font-weight: 600; }
+.conv__quem { min-width: 0; display: grid; gap: 1px; }
+.conv__nome { margin: 0; font-size: var(--t-txt); font-weight: 600; color: #fff; }
+.conv__d { margin: 0; font-size: var(--t-leg); color: var(--ganggrey); }
+.conv__fio.chat--panel { max-height: 460px; min-height: 220px; border-radius: 0; background: #171717; padding: 18px 16px; gap: 8px; }
+.conv__fio.is-vazio { min-height: 0; justify-content: center; }
+.conv__dia { align-self: center; margin: 6px 0 2px; padding: 2px 8px; border-radius: 6px; background: #222; font-size: var(--t-micro); color: #9a9a9a; }
+.conv .chat__msg { max-width: 72%; padding: 8px 12px; border-radius: 14px; }
+.conv .chat__msg--cliente { background: #f3f3f3; color: #111; border-bottom-right-radius: 4px; }
+.conv .chat__msg--consultor { background: #262626; border: 0; color: #ececec; border-bottom-left-radius: 4px; }
+.conv .chat__msg.is-nova { box-shadow: 0 0 0 1px rgba(229, 72, 42, .55); }
+.conv .chat__text { font-size: var(--t-ui); }
+.conv .chat__meta { font-size: var(--t-micro); }
+.conv__form { display: flex; align-items: flex-end; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); }
+.conv__txt.field { flex: 1; min-height: 40px; height: 40px; max-height: 160px; padding: 10px 12px; resize: none; line-height: 1.4; }
+.conv__env { flex: none; height: 40px; }
+.conv__msg:empty { display: none; }
+.conv__msg { margin: 0; padding: 0 14px 10px; }
+
+/* ===== Vazio compacto (Mensagens, Encontros, Peças) ===== */
+.vz { max-width: 360px; margin: 0 auto; padding: 22px 20px; display: grid; justify-items: center; gap: 6px; text-align: center; }
+.vz__prev { width: 156px; margin-bottom: 10px; padding: 12px; display: grid; gap: 7px; border-radius: 12px; border: 1px solid var(--line-2); background: #1b1b1b; box-shadow: 0 10px 28px rgba(0, 0, 0, .35); }
+.vz__l { display: block; height: 6px; border-radius: 3px; background: #2e2e2e; }
+.vz__l--a { width: 46%; background: #E5482A; opacity: .85; } .vz__l--b { width: 88%; } .vz__l--c { width: 62%; }
+.vz__b { display: block; height: 14px; border-radius: 7px; background: #2e2e2e; }
+.vz__b--l { width: 62%; justify-self: start; } .vz__b--r { width: 50%; justify-self: end; background: #E5482A; opacity: .85; } .vz__b--c { width: 40%; }
+.vz__t { margin: 0; font-size: var(--t-txt); font-weight: 600; color: #fff; }
+.vz__d { margin: 0; max-width: 32ch; font-size: var(--t-ui); line-height: 1.5; color: var(--ganggrey); }
+.vz .btn { margin-top: 8px; }
+.rows:has(> .vz-li) { max-width: 420px; border-style: dashed; background: var(--lightblack); }
+.vz-li { list-style: none; }
+
+/* janelas "Partir de outro cliente" e "Limpar plano": margem interna e controles neutros (branco, cinza e preto) */
+.copia__f, .limpar__f { padding: 22px 24px 20px; }
+.copia__f > .title-sm, .limpar__f > .title-sm { margin: 0; font-size: var(--t-bloco); }
+.copia__f > .small, .limpar__f > .small { margin: 0; max-width: 46ch; }
+.copia__g { background: #171717; }
+.copia__g legend { font-size: var(--t-leg); color: var(--ganggrey); }
+.copia__op input[type=checkbox], .limpar__op input[type=radio] {
+  appearance: none; -webkit-appearance: none; flex: none; width: 16px; height: 16px; margin: 0; display: grid; place-items: center;
+  border: 1px solid #4a4a4a; background: #111; cursor: pointer; transition: background-color .15s, border-color .15s; }
+.copia__op input[type=checkbox] { border-radius: 5px; }
+.limpar__op input[type=radio] { border-radius: 50%; }
+.copia__op input[type=checkbox]:checked { background: #f3f3f3; border-color: #f3f3f3; }
+.copia__op input[type=checkbox]:checked::after { content: ""; width: 9px; height: 5px; margin-top: -2px; border: solid #111; border-width: 0 0 2px 2px; transform: rotate(-45deg); }
+.limpar__op input[type=radio]:checked { border-color: #f3f3f3; }
+.limpar__op input[type=radio]:checked::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #f3f3f3; }
+.copia__op input:focus-visible, .limpar__op input:focus-visible { outline: 2px solid #f3f3f3; outline-offset: 2px; }
+.copia__vazio { margin: 0; padding: 10px 12px; border-radius: 10px; background: #171717; border: 1px dashed var(--line-2); font-size: var(--t-ui); color: var(--ganggrey); }
+/* cartões lado a lado com a mesma altura (a lista começa na mesma linha e o cartão acompanha o vizinho) */
+.ed-grade { align-items: stretch; }
+.ed-grade > .editor-block { display: flex; flex-direction: column; }
+.ed-grade > .editor-block > .ed-card { flex: 1; align-content: start; grid-template-rows: auto auto 1fr; }
+.ed-card .ed-head { min-height: 52px; }
+/* "Também precisa de atenção" (fechamento do mês): lista agrupada, não um selo solto no canto */
+.atencao { display: grid; gap: 12px; margin-top: 8px; }
+.atencao__head { display: flex; align-items: center; gap: 10px; }
+.atencao__head .title-sm { margin: 0; }
+.atencao__n { min-width: 22px; height: 20px; padding: 0 6px; border-radius: 6px; display: inline-grid; place-items: center; background: #2b2b2b; font-size: var(--t-micro); color: #cfcfcf; }
+.atencao__lista { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 12px; background: #171717; overflow: hidden; }
+.atencao__i { display: flex; align-items: center; gap: 12px; padding: 11px 14px; }
+.atencao__i + .atencao__i { border-top: 1px solid var(--line); }
+.atencao__q { flex: none; width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #60a5fa; background: rgba(96, 165, 250, .12); box-shadow: inset 0 0 0 1px rgba(96, 165, 250, .3); }
+.atencao__i.is-alto .atencao__q { color: var(--bad); background: var(--bad-bg); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bad) 30%, transparent); }
+.atencao__i.is-medio .atencao__q { color: var(--warn); background: var(--warn-bg); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warn) 30%, transparent); }
+.atencao__t { flex: 1; min-width: 0; margin: 0; font-size: var(--t-txt); color: #ececec; }
+.atencao__t { max-width: none !important; }
+.ed-card .ed-head { min-height: 0; }
+@media (min-width: 861px) { .ed-grade > .editor-block:not(.is-largo) .ed-head { min-height: 60px; } }
+/* ícones dos cartões do consultor: todos neutros (a cor ficava sem critério) */
+.ed-ico--gang, .ed-ico--ok, .ed-ico--bad { color: #cfcfcf; background: #242424; box-shadow: inset 0 0 0 1px var(--line-2); }

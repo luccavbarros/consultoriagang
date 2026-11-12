@@ -141,7 +141,15 @@
           x.chave === 'numeros' ? el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => semNumeros(true) }, 'Marcar como OK sem envio') : null))));
     // outros sinais que não estão nos 6 passos
     const extra = G.sinais(B).filter((x) => /essencia|atividade|Pesquisa|travada/.test(x.texto));
-    $('fech-sinais').replaceChildren(...(extra.length ? [el('h2', 'title-sm', 'Também precisa de atenção'), el('ul', 'risk__sinais', extra.map((x) => el('li', null, el('a', { class: 'risk__sinal is-' + x.nivel, href: '#' + x.aba }, x.texto))))] : []));
+    // em lista, como os passos acima: sinal colorido, o que é e um botão para resolver (nada solto no canto da tela)
+    const textoSinal = (t) => t.replace(/^Pesquisa com 0 respostas.*$/, 'A pesquisa ainda não recebeu respostas');
+    const ICO_S = { alto: '!', medio: '!', baixo: 'i' };
+    $('fech-sinais').replaceChildren(...(extra.length ? [el('section', { class: 'atencao', 'aria-labelledby': 'aten-t' },
+      el('div', 'atencao__head', el('h2', { class: 'title-sm', id: 'aten-t' }, 'Também precisa de atenção'), el('span', 'atencao__n', String(extra.length))),
+      el('ul', 'atencao__lista', extra.map((x) => el('li', 'atencao__i is-' + x.nivel,
+        el('span', { class: 'atencao__q', 'aria-hidden': 'true' }, ICO_S[x.nivel] || 'i'),
+        el('p', 'atencao__t', textoSinal(x.texto)),
+        el('a', { class: 'btn btn--ghost btn--sm', href: '#' + x.aba }, 'Abrir')))))] : []));
   };
   // resumo do cliente no topo: mês do plano, fechamento, promessa e próximo encontro
   const desenhaRaiox = (B, feitos) => {
@@ -177,6 +185,12 @@
     say($('e-sug-msg'), novos.length ? novos.length + (novos.length === 1 ? ' item sugerido' : ' itens sugeridos') + ' a partir das ações, dos números e das peças. Ajuste o que quiser.' : 'A pauta já tem tudo o que os dados sugerem.', 'ok');
   });
 
+  // estado vazio compacto (no lugar de faixas largas e vazias): prévia em esqueleto, título, texto e uma ação opcional
+  const vazioC = (tipo, titulo, texto, acao) => el('div', 'vz vz--' + tipo,
+    el('div', { class: 'vz__prev', 'aria-hidden': 'true' }, tipo === 'chat'
+      ? [el('span', 'vz__b vz__b--l'), el('span', 'vz__b vz__b--r'), el('span', 'vz__b vz__b--l vz__b--c')]
+      : [el('span', 'vz__l vz__l--a'), el('span', 'vz__l vz__l--b'), el('span', 'vz__l vz__l--c')]),
+    el('p', 'vz__t', titulo), el('p', 'vz__d', texto), acao || null);
   // ===== mensagens do cliente =====
   const loadMsgs = async (marcar) => {
     const { data } = await sb.from('mensagens').select('*').eq('empresa_id', id).order('criada_em');
@@ -186,11 +200,23 @@
     const n = marcar ? 0 : novas.length;
     $('msg-count').hidden = !n; $('msg-count').textContent = n;
     const box = $('adm-chat');
-    box.replaceChildren(...(rows.length ? rows.map((m) => el('div', 'chat__msg chat__msg--' + (m.de === 'consultor' ? 'cliente' : 'consultor'),
-      el('p', 'chat__text', m.texto),
-      el('p', 'chat__meta', (m.de === 'consultor' ? 'Você' : emp.nome) + ' · ' + U.dia(m.criada_em) + ' · ' + U.hora(m.criada_em) + (m.de === 'cliente' && !m.lida && !marcar ? ' · nova' : '')))) : [el('p', 'chat__empty', 'Nenhuma mensagem ainda.')]));
+    // dias separados, balões: os seus à direita, os do cliente à esquerda
+    let dia = null; const itens = [];
+    rows.forEach((m) => {
+      const d = U.dia(m.criada_em); if (d !== dia) { dia = d; itens.push(el('p', 'conv__dia', d)); }
+      itens.push(el('div', 'chat__msg chat__msg--' + (m.de === 'consultor' ? 'cliente' : 'consultor') + (m.de === 'cliente' && !m.lida && !marcar ? ' is-nova' : ''),
+        el('p', 'chat__text', m.texto),
+        el('p', 'chat__meta', (m.de === 'consultor' ? 'Você' : (emp.nome || 'Cliente')) + ' · ' + U.hora(m.criada_em) + (m.de === 'cliente' && !m.lida && !marcar ? ' · nova' : ''))));
+    });
+    box.classList.toggle('is-vazio', !rows.length);
+    box.replaceChildren(...(rows.length ? itens : [vazioC('chat', 'Nenhuma mensagem ainda', 'Escreva a primeira. Ela aparece em destaque no portal do cliente até ser lida.')]));
     box.scrollTop = box.scrollHeight;
   };
+  if ($('conv-nome')) { $('conv-nome').textContent = emp.nome || 'Cliente'; U.avatar($('conv-av'), emp.nome, emp.logo_url); }
+  // Enter envia; Shift+Enter quebra a linha; a caixa cresce com o texto
+  const caixa = $('adm-chat-txt');
+  caixa.addEventListener('input', () => { caixa.style.height = 'auto'; caixa.style.height = Math.min(caixa.scrollHeight, 160) + 'px'; });
+  caixa.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); $('adm-chat-form').requestSubmit(); } });
   const naAbaMensagens = () => location.hash === '#mensagens';
   loadMsgs(naAbaMensagens());
   window.addEventListener('hashchange', () => { if (naAbaMensagens()) loadMsgs(true); });
@@ -200,7 +226,7 @@
     if (!t) return say($('adm-chat-msg'), 'Escreva a resposta.', 'error');
     const r = await sb.from('mensagens').insert({ empresa_id: id, autor_id: me.id, de: 'consultor', texto: t });
     if (r.error) return say($('adm-chat-msg'), 'Não foi possível enviar.', 'error');
-    $('adm-chat-txt').value = ''; say($('adm-chat-msg'), 'Enviada. O cliente vê no portal.', 'ok'); loadMsgs(true);
+    $('adm-chat-txt').value = ''; caixa.style.height = ''; say($('adm-chat-msg'), ''); loadMsgs(true);
   });
 
   // ===== plano =====
@@ -1254,7 +1280,7 @@
       el('div', 'row__main', el('p', 'row__eyebrow', TIPO_E[e.tipo] + ' · ' + e.duracao_min + ' min · ' + SIT_E[e.status]), el('p', 'row__title', U.quando(e.inicio)),
         el('p', 'row__text', (e.decisoes || []).length ? 'Decisões: ' + e.decisoes.join('; ') : ((e.pauta || []).length ? 'Pauta: ' + e.pauta.join('; ') : 'Sem pauta'))),
       el('div', 'row__actions', rowBtn('Editar', () => abreEnc(e)),
-        rowBtn('Excluir', async () => { if (!confirm('Excluir o encontro de ' + U.quando(e.inicio) + '?')) return; await sb.from('encontros').delete().eq('id', e.id); loadEncs(); }, true)))) : [el('li', 'clients__empty', 'Nenhum encontro ainda.')]));
+        rowBtn('Excluir', async () => { if (!confirm('Excluir o encontro de ' + U.quando(e.inicio) + '?')) return; await sb.from('encontros').delete().eq('id', e.id); loadEncs(); }, true)))) : [el('li', 'vz-li', vazioC('lista', 'Nenhum encontro ainda', 'Agende o primeiro: o cliente vê a data, a pauta e pode adicionar à agenda.', el('button', { class: 'btn btn--light btn--sm', type: 'button', onclick: () => $('open-enc').click() }, 'Agendar encontro')))]));
   };
   loadEncs();
 
@@ -1319,7 +1345,7 @@
             p.link ? el('a', { class: 'link', href: p.link, target: '_blank', rel: 'noopener' }, 'Abrir link') : null,
             p.respondido_em ? el('span', 'row__text', 'Respondido em ' + U.dia(p.respondido_em) + (p.visto_pelo_cliente ? ' · visto' : '')) : null)),
         el('div', 'ped__answer', el('div', 'ped__checks', el('p', 'row__eyebrow', 'A peça…'), chks.map(([, l]) => l)), prontas, resp, exLabel, el('div', 'ped__row', sel, salvar, msg)));
-    }) : [el('li', 'clients__empty', 'Nenhuma peça enviada ainda.')]));
+    }) : [el('li', 'vz-li', vazioC('lista', 'Nenhuma peça para revisar', 'Quando o cliente mandar um post, uma proposta ou um anúncio para revisão, ele aparece aqui.'))]));
   };
   loadPeds();
 
