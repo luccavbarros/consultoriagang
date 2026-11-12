@@ -331,5 +331,23 @@
 
   // soma dias a uma data AAAA-MM-DD (para "medir em")
   const addDias = (iso, n) => { const d = new Date(String(iso).slice(0, 10) + 'T12:00:00'); d.setDate(d.getDate() + Number(n || 0)); return d.toLocaleDateString('sv-SE'); };
+  // barra lateral sem rolagem: mantém o espaçamento do desktop e só aperta (em 3 níveis) quando não cabe na altura da tela
+  const ajustaLado = () => {
+    const side = document.querySelector('.side');
+    if (!side || window.innerWidth <= 860) { if (side) side.classList.remove('side--c1', 'side--c2', 'side--c3'); return; }
+    side.classList.remove('side--c1', 'side--c2', 'side--c3');
+    for (const n of ['side--c1', 'side--c2', 'side--c3']) {
+      if (side.scrollHeight <= side.clientHeight + 1) break;
+      side.classList.remove('side--c1', 'side--c2', 'side--c3'); side.classList.add(n);
+    }
+  };
+  let ajT = null; const ajusta = () => { clearTimeout(ajT); ajT = setTimeout(ajustaLado, 60); };
+  window.addEventListener('resize', ajusta);
+  document.addEventListener('DOMContentLoaded', () => {
+    ajustaLado();
+    const side = document.querySelector('.side');
+    // o menu muda de altura quando entram avisos, o consultor ou o nome: reavalia
+    if (side && window.MutationObserver) new MutationObserver(ajusta).observe(side, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
+  });
   window.GangUI = { buscaFonte, addDias, moedaFmt, moedaValor, moedaSet, PROMESSAS, promessaDe, combo, comboValue, comboSet, multi, multiValue, avatar, iniciais, $, el, say, day, fmt, cap, dia, diaAno, mesAno, hora, quando, ref, refDate, addRef, nomeMes, nomeMesCurto, mesesEntre, mesDoPlano, diasAte, reais, pct };
 })();
