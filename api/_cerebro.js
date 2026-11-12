@@ -4891,3 +4891,47 @@
   P.abordagens.forEach((a) => { a.texto = novo(a.texto); });
   (P.desafios || []).forEach((d) => { if (d.abordagens) d.abordagens = d.abordagens.map(novo); });
 })();
+
+// ===== Rodada 15: só o que tem evidência de eficácia e ainda não estava aqui
+// (estudos de campanhas eficazes em B2B e B2C, vendas de marcas que pararam de anunciar, diferenciação percebida x distintividade,
+// experimentos de comportamento do consumidor sobre preço e ordem da informação). O que já existia (fatia de voz como ação,
+// prova social, histórias, equilíbrio marca/venda, emoção) não foi repetido. =====
+(function () {
+  const P = window.GangPresets; if (!P || !P.desafios || !P.abordagens) return;
+  const G = 'Da biblioteca';
+  const add = (lista, itens) => { if (!P[lista]) P[lista] = []; itens.forEach((texto) => { if (!P[lista].some((x) => x.texto === texto)) P[lista].push({ grupo: G, texto }); }); };
+  const achar = (ini) => (P.abordagens.find((a) => a.texto.startsWith(ini)) || {}).texto;
+
+  // marcas que falam mais do que o seu tamanho tendem a ganhar participação; as que param de anunciar perdem vendas ano após ano
+  const esov = 'Aparecer mais do que o tamanho atual da marca, mantendo a fatia de comunicação acima da fatia de mercado, vencendo porque as marcas que falam mais do que o seu tamanho tendem a crescer. Abrimos mão de parte do lucro de curto prazo para financiar esse crescimento.';
+  // os clientes quase nunca veem grandes diferenças entre marcas e compram mesmo assim; o que pesa é reconhecer e lembrar rápido
+  const distinta = 'Ser fácil de reconhecer, em vez de tentar parecer diferente em tudo, usando sempre os mesmos sinais próprios, vencendo porque o cliente escolhe a marca que reconhece e lembra mais rápido. Abrimos mão de trocar de visual e de mensagem a cada campanha.';
+  add('abordagens', [esov, distinta]);
+  const A = { esov, distinta, conquistar: achar('Ganhar mercado conquistando'), emocao: achar('Trazer para a categoria uma emoção'), continua: achar('Construir a marca de forma contínua') };
+
+  // campanhas só racionais, curtas e com público estreito são as que menos fazem a marca crescer (estudo com 435 casos B2B)
+  const novo = 'A comunicação fala só com quem já está pronto para comprar agora, de forma racional e em ações curtas, e a marca não ganha clientes novos';
+  if (!P.desafios.some((d) => d.texto === novo)) P.desafios.push({ grupo: G, texto: novo, abordagens: ['conquistar', 'esov', 'emocao', 'continua'].map((k) => A[k]).filter(Boolean) });
+
+  const EXTRA = [
+    ['A marca é pouco lembrada', ['esov', 'distinta']],
+    ['A marca só é lembrada por quem já é cliente', ['esov']],
+    ['Um concorrente maior ocupa a posição de referência', ['esov']],
+    ['A comunicação é irregular', ['esov', 'distinta']],
+    ['O cliente não vê diferença', ['distinta']],
+    ['Todos os concorrentes fazem igual', ['distinta']],
+  ];
+  EXTRA.forEach(([ini, ks]) => { const d = P.desafios.find((x) => x.texto.startsWith(ini)); if (d) d.abordagens = [...new Set([...(d.abordagens || []), ...ks.map((k) => A[k]).filter(Boolean)])]; });
+
+  // Diagnóstico
+  add('resumosDiagnostico', [
+    'A marca falava só com quem já estava procurando o serviço naquele momento e era desconhecida para a maioria que ia comprar nos meses seguintes.',
+  ]);
+  add('causas', [
+    'A comunicação fala só com quem já está pronto para comprar agora',
+    'As campanhas duram pouco tempo e passam por poucos canais',
+    'O preço aparece sozinho, sem uma referência para o cliente comparar',
+    'A primeira coisa que o cliente vê é a lista de serviços, e não o principal motivo para escolher a marca',
+    'Cobranças avulsas e taxas extras fazem o cliente sentir que está pagando o tempo todo',
+  ]);
+})();
