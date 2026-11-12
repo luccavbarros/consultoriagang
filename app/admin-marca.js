@@ -336,11 +336,17 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     const meta = /^\s*([+\-]?\d+[\d.,]*\s*%|crescer|aumentar|faturar|vender mais|dobrar)/i;
     const floreio = /(excel[êe]ncia|inova[çc][ãa]o|sinergia|refer[êe]ncia|l[íi]der|melhor (empresa|do mercado)|qualidade total|valor agregado)/i;
     const nObj = (obs || []).filter((o) => o.nivel !== 'comunicacao').length;
+    // tática: começa por um verbo de tarefa (abrir, criar, publicar…); a abordagem é uma escolha, não uma tarefa
+    const tatica = /^\s*(abrir|criar|publicar|postar|fazer|montar|lan[çc]ar|treinar|contratar|anunciar|produzir|escrever|investir|melhorar|aumentar a presen|padronizar|transformar cada|responder|enviar|ligar|cadastrar|refazer|reformular)\b/i;
+    const renuncia = /(abr(e|imos|ir|indo) m[ãa]o|deixa(mos|r)? de|em vez de|n[ãa]o vamos|n[ãa]o atendemos|sem disputar|recusa)/i;
+    const cv = P.como_vencer || '';
     const T = [
       [!!P.desafio, 'Nomeia o desafio', P.desafio ? 'O obstáculo principal está escrito.' : 'Sem o desafio, não dá para saber se a estratégia resolve alguma coisa. Escreva o que impede a marca de crescer.'],
       [!!P.como_vencer && !meta.test(P.como_vencer), 'Tem uma abordagem, não só uma meta', !P.como_vencer ? 'Falta dizer como a marca vai vencer o desafio.' : meta.test(P.como_vencer) ? 'A abordagem parece uma meta ("crescer", "+30%"). Meta é aonde ir; a abordagem é o caminho.' : 'A abordagem diz o caminho, não só o destino.'],
       [!!P.como_vencer && !floreio.test(P.como_vencer), 'Sem floreio', !P.como_vencer ? 'Escreva a abordagem em palavras concretas.' : floreio.test(P.como_vencer) ? 'Troque palavras vagas ("excelência", "referência", "inovação") pelo que a marca faz de fato.' : 'A abordagem usa palavras concretas.'],
-      [(esc || []).some((e) => e.tipo === 'deixa_de_lado'), 'Faz escolhas', (esc || []).some((e) => e.tipo === 'deixa_de_lado') ? 'Diz o que fica de fora.' : 'Estratégia também é dizer não. Cadastre o que a marca deixa de lado.'],
+      [!!cv && !tatica.test(cv), 'É uma escolha, não uma ação', !cv ? 'A abordagem é a escolha que orienta as ações: onde jogar e por que a marca vence ali.' : tatica.test(cv) ? 'A abordagem parece uma tarefa. Tarefas vão para Ações; aqui fica a escolha que explica por que elas existem.' : 'A abordagem é uma escolha que orienta as ações.'],
+      [!!cv && renuncia.test(cv), 'Diz do que abre mão', !cv ? 'Uma boa abordagem diz o que a marca deixa de fazer por causa dela.' : renuncia.test(cv) ? 'A abordagem diz o que fica de fora.' : 'Se a abordagem não obriga a dizer não para nada, ainda não é estratégia. Complete com "Abrimos mão de…".'],
+      [(esc || []).some((e) => e.tipo === 'deixa_de_lado'), 'Faz escolhas', (esc || []).some((e) => e.tipo === 'deixa_de_lado') ? 'Há clientes, serviços ou canais em "Deixamos de lado".' : 'Estratégia também é dizer não. Cadastre o que a marca deixa de lado.'],
       [nObj > 0 && nObj <= 3, 'Foco', nObj === 0 ? 'Cadastre de 1 a 3 objetivos de negócio e marca.' : nObj <= 3 ? nObj + (nObj === 1 ? ' objetivo de negócio e marca.' : ' objetivos de negócio e marca.') : nObj + ' objetivos dividem o esforço. Fique com até 3.'],
     ];
     const ok = T.filter((x) => x[0]).length;
