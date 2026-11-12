@@ -4405,9 +4405,110 @@
 (function () {
   const P = window.GangPresets; if (!P) return;
   const G = 'Da biblioteca';
+  // cada ideia já vem com o que ela significa na prática (o consultor ajusta ao cliente)
   P.identidadeCentral = [
-    'Resultado sem retrabalho', 'Método próprio, testado e explicado', 'Cuidado em cada detalhe', 'Feito para durar',
-    'Atendimento de perto, por quem entende', 'Preço claro, sem surpresa', 'Especialista no que faz, e só nisso', 'Da região, para a região',
-    'Prazo cumprido como regra', 'Simples de comprar e de usar', 'Qualidade que dá para ver', 'Honestidade, mesmo quando custa uma venda',
-  ].map((texto) => ({ grupo: G, texto }));
+    ['Resultado sem retrabalho', 'Nenhum trabalho é entregue sem conferência final; se algo volta, a correção é prioridade e sem custo.'],
+    ['Método próprio, testado e explicado', 'Todo cliente recebe o passo a passo antes de começar e sabe em que etapa está.'],
+    ['Cuidado em cada detalhe', 'Acabamento, limpeza e pontualidade são conferidos em toda entrega, não só no que o cliente pediu.'],
+    ['Feito para durar', 'Só usamos materiais e soluções que aguentam o uso real; não vendemos o que vai dar problema depois.'],
+    ['Atendimento de perto, por quem entende', 'Quem atende o cliente é quem conhece o trabalho; nada de repassar de pessoa em pessoa.'],
+    ['Preço claro, sem surpresa', 'O valor é fechado antes de começar e o que está incluído fica por escrito.'],
+    ['Especialista no que faz, e só nisso', 'Dizemos não ao que está fora da nossa especialidade e indicamos quem faz bem.'],
+    ['Da região, para a região', 'Conhecemos o dia a dia de quem mora e trabalha aqui, e isso aparece em como atendemos.'],
+    ['Prazo cumprido como regra', 'Prazo é combinado com folga e, se algo atrasar, o cliente sabe antes e sabe por quê.'],
+    ['Simples de comprar e de usar', 'Do primeiro contato ao pós-venda, cada passo é fácil e sem burocracia para o cliente.'],
+    ['Qualidade que dá para ver', 'Mostramos o processo, os materiais e o resultado, para o cliente enxergar a diferença.'],
+    ['Honestidade, mesmo quando custa uma venda', 'Se não for o melhor para o cliente, dizemos, mesmo que ele deixe de comprar.'],
+  ].map(([texto, explicacao]) => ({ grupo: G, texto, explicacao }));
+})();
+
+// ===== Narrativa: mensagem central e mensagens de apoio (a ideia que a marca repete e as provas que sustentam) =====
+(function () {
+  const P = window.GangPresets; if (!P) return;
+  const G = 'Da biblioteca';
+  const g = (itens) => itens.map((texto) => ({ grupo: G, texto }));
+  // uma ideia simples, repetida em todo ponto de contato; diz o benefício, não a lista de serviços
+  P.mensagensCentrais = g([
+    'Resultado sem retrabalho, com método.',
+    'Você sabe o que vai receber antes de começar.',
+    'Feito por quem entende, do jeito certo.',
+    'Simples de contratar, do começo ao fim.',
+    'O cuidado que a sua empresa merece.',
+    'Qualidade que dá para ver.',
+    'Do bairro, para quem é do bairro.',
+    'Sem surpresa no preço nem no prazo.',
+    'A escolha segura para quem não pode errar.',
+    'Especialistas no que você precisa, e só nisso.',
+  ]);
+  // provas: fatos, números, processo, garantia, gente real (substituem adjetivos)
+  P.mensagensApoio = g([
+    'Um método próprio, testado em muitos projetos',
+    'Você recebe o plano completo antes de começar',
+    'Preço fechado antes de começar, sem surpresa no fim',
+    'Prazo combinado por escrito, e cumprido',
+    'Garantia por escrito sobre o que entregamos',
+    'Quem atende é quem faz o trabalho',
+    'Você acompanha cada etapa e sabe o que vem depois',
+    'Clientes que voltam e indicam a empresa',
+    'Avaliações reais de clientes, publicadas no Google',
+    'Anos de experiência no mesmo segmento',
+    'Resposta rápida em todos os canais',
+    'Cada detalhe é conferido antes da entrega',
+    'Atendimento depois da compra, não só antes',
+    'Equipe própria e treinada no nosso jeito de trabalhar',
+    'Casos reais de clientes, com antes e depois',
+    'Materiais de qualidade, escolhidos com critério',
+    'Explicamos sem jargão, do jeito que você fala',
+    'Se não for para você, dizemos na primeira conversa',
+    'Formas de pagamento que facilitam a decisão',
+    'Somos da região e conhecemos o seu dia a dia',
+  ]);
+})();
+
+// ===== Estratégia pelo cerne: o desafio (diagnóstico), a abordagem (política orientadora) e o próximo marco (objetivo próximo) =====
+(function () {
+  const P = window.GangPresets; if (!P) return;
+  const G = 'Da biblioteca';
+  const g = (itens) => itens.map((texto) => ({ grupo: G, texto }));
+  // o desafio: o obstáculo principal, dito com franqueza; não é meta nem desejo
+  P.desafios = g([
+    'A marca é pouco lembrada quando o cliente precisa do serviço, então perde para quem aparece primeiro',
+    'O cliente não vê diferença entre a marca e os concorrentes, então decide pelo preço',
+    'A marca só é lembrada por quem já é cliente; quem nunca comprou não a conhece',
+    'A proposta começa pelo preço, e o cliente compara item por item com os concorrentes',
+    'A experiência muda de pessoa para pessoa, e a promessa da marca não se sustenta na entrega',
+    'Os clientes compram uma vez e não voltam, então todo mês é preciso começar do zero',
+    'A marca depende de um único canal de clientes, e qualquer mudança nele derruba as vendas',
+    'Um concorrente maior ocupa a posição de referência e a marca fica como segunda opção',
+    'A marca tenta atender todo mundo e não convence ninguém em especial',
+    'A empresa tem qualidade, mas não tem provas visíveis: casos, números e avaliações',
+    'É difícil achar e comprar da empresa: pouca presença onde o cliente procura',
+    'A comunicação é irregular e some por meses, então a lembrança cai',
+  ]);
+  // a abordagem: o caminho para vencer o desafio; diz o que fazer e, por consequência, o que não fazer
+  P.abordagens = g([
+    'Ser a especialista em um tipo de cliente e mostrar provas disso em todo contato, em vez de competir por preço',
+    'Estar presente nas situações em que o cliente decide comprar, com os mesmos sinais visuais sempre',
+    'Vender pelo método e pelo resultado, deixando o preço para depois do valor',
+    'Padronizar a experiência para que todo cliente receba a mesma promessa, do contato ao pós-venda',
+    'Transformar clientes satisfeitos em indicação, com um processo simples e constante',
+    'Alcançar quem ainda não compra da marca, com presença contínua e não só ofertas',
+    'Concentrar o esforço em uma região e um serviço até virar a referência, antes de expandir',
+    'Abrir um segundo canal de clientes para não depender de um só',
+    'Mostrar o que só a marca faz, com nome próprio, para sair da comparação direta',
+    'Ser a opção mais fácil de comprar: resposta rápida, preço claro e poucos passos',
+  ]);
+  // o próximo marco: alcançável em poucos meses e que destrava o resto
+  P.marcos = g([
+    'Proposta comercial nova em uso em todas as vendas',
+    'Identidade aplicada em todos os pontos de contato principais',
+    'Primeira rodada da pesquisa de marca com 30 respostas',
+    'Perfil no Google completo e com 30 avaliações',
+    '3 casos de clientes publicados e usados nas vendas',
+    'Equipe treinada na mensagem central',
+    'Um canal novo trazendo clientes todo mês',
+    'Processo de indicação funcionando com os clientes atuais',
+    'Site novo no ar, com contato em um clique',
+    'Comunicação de marca constante por 3 meses seguidos',
+  ]);
 })();
