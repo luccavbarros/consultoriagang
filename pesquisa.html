@@ -119,14 +119,24 @@
       };
       lembra.append(novoCampo(true));
       const lembrados = () => [...lembra.querySelectorAll('input')].map((x) => x.value.trim()).filter(Boolean);
+      const outraUlt = el('input', { class: 'field sv-outra', id: 'q-outra-ult', maxlength: 60, autocomplete: 'off', placeholder: 'Qual empresa?', hidden: true, 'aria-label': 'Qual outra empresa' });
+      let ultimaQ; // montada no lugar certo do formulário, para a numeração seguir a ordem
+      const mkUltima = () => el('fieldset', { class: 'survey__q', hidden: true }, perg('Na última vez, de qual empresa você comprou ou contratou?'),
+        el('div', 'opts', (P.opcoes || []).map((o) => radio('ult', o, o)), radio('ult', 'Outra', 'Outra empresa'), radio('ult', 'Não lembro', 'Não lembro')),
+        outraUlt);
       const outraPref = el('input', { class: 'field sv-outra', id: 'q-outra', maxlength: 60, autocomplete: 'off', placeholder: 'Qual empresa?', hidden: true, 'aria-label': 'Qual outra empresa' });
       const msg = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite' });
       const form = el('form', { class: 'survey', novalidate: true, style: 'padding:0;width:100%' },
         el('div', 'sv-topo', el('div', 'sv-topo__l', el('span', null, 'Pesquisa rápida · anônima'), el('span', { id: 'sv-cont' }, '')), el('div', { class: 'sv-barra', 'aria-hidden': 'true' }, el('span', { id: 'sv-barra' }))),
         // o título fala da categoria, não da marca: o nome da marca só aparece depois das perguntas de lembrança
         el('div', 'sv-cab', el('h1', null, 'Queremos ouvir você'), el('p', null, 'Uma pesquisa rápida sobre ' + P.categoria + '.\nLeva 2 minutos e é anônima.\nNão existe resposta certa.')),
+        // triagem pelo comportamento (um fato do passado, não opinião): quem nunca comprou a categoria não é o mercado
+        el('fieldset', 'survey__q', perg('Quando foi a última vez que você comprou ou contratou ' + P.categoria + '?'),
+          el('div', 'opts', [['3m', 'Nos últimos 3 meses'], ['12m', 'Nos últimos 12 meses'], ['mais', 'Há mais de um ano'], ['nunca', 'Nunca comprei']].map(([v, t]) => radio('rec', v, t)))),
         el('div', 'survey__q', perg('Quando você pensa em ' + P.categoria + ', que marcas vêm à cabeça?', 'label', { for: 'q-lembra' }),
           lembra),
+        // de quem comprou da última vez: o que a pessoa fez, e não o que diz que faria
+        (ultimaQ = mkUltima()),
         el('fieldset', 'survey__q', perg('Se fosse contratar hoje, qual escolheria?'),
           el('div', 'opts', (P.opcoes || []).map((o) => radio('pref', o, o)), radio('pref', 'Outra', 'Outra empresa'), radio('pref', 'Ainda não sei', 'Ainda não sei')),
           outraPref),
@@ -156,12 +166,15 @@
       const qs = [...form.querySelectorAll('.survey__q')];
       const progresso = () => {
         let ok = 0;
-        qs.forEach((q) => { const r = [...q.querySelectorAll('input')].some((x) => (x.type === 'radio' || x.type === 'checkbox') ? x.checked : x.value.trim()); q.classList.toggle('is-ok', r); if (r) ok += 1; });
-        document.getElementById('sv-barra').style.width = Math.round((ok / qs.length) * 100) + '%';
-        document.getElementById('sv-cont').textContent = ok + ' de ' + qs.length;
+        qs.filter((q) => !q.hidden).forEach((q) => { const r = [...q.querySelectorAll('input')].some((x) => (x.type === 'radio' || x.type === 'checkbox') ? x.checked : x.value.trim()); q.classList.toggle('is-ok', r); if (r) ok += 1; });
+        const vis = qs.filter((q) => !q.hidden).length;
+        document.getElementById('sv-barra').style.width = Math.round((ok / vis) * 100) + '%';
+        document.getElementById('sv-cont').textContent = ok + ' de ' + vis;
       };
       form.addEventListener('change', (ev) => {
         const t = ev.target;
+        if (t.name === 'rec') { ultimaQ.hidden = t.value === 'nunca'; if (ultimaQ.hidden) ultimaQ.querySelectorAll('input').forEach((x) => { x.checked = false; }); }
+        if (t.name === 'ult') { outraUlt.hidden = t.value !== 'Outra'; if (!outraUlt.hidden) outraUlt.focus(); }
         if (t.name === 'pref') { outraPref.hidden = t.value !== 'Outra'; if (!outraPref.hidden) outraPref.focus(); }
         if (/^c\d+$/.test(t.name) && t.checked) {
           const grupoC = form.querySelectorAll('input[name=' + t.name + ']');
@@ -175,6 +188,10 @@
         const prefIn = form.querySelector('input[name=pref]:checked');
         const pref = prefIn && prefIn.value === 'Outra' && outraPref.value.trim() ? { value: 'Outra: ' + outraPref.value.trim() } : prefIn;
         const notas = (P.afirmacoes || []).map((_, i) => { const r = form.querySelector('input[name=a' + i + ']:checked'); return r ? Number(r.value) : null; });
+        const rec = form.querySelector('input[name=rec]:checked');
+        if (!rec) return say(msg, 'Responda quando foi a última vez que comprou ou contratou.', 'error');
+        const ultIn = form.querySelector('input[name=ult]:checked');
+        const ult = !ultIn ? null : ultIn.value === 'Outra' ? (outraUlt.value.trim() ? 'Outra: ' + outraUlt.value.trim() : 'Outra') : ultIn.value;
         if (!pref || notas.some((n) => n == null)) return say(msg, 'Responda a escolha e todas as frases de 1 a 5.', 'error');
         const frase = form.querySelector('input[name=frase]:checked');
         if ((P.frases || []).length && !frase) return say(msg, 'Escolha a frase que melhor descreve a empresa.', 'error');
@@ -185,6 +202,7 @@
         const { error: e2 } = await sb.rpc('pesquisa_responder', {
           p_token: token, p_lembranca: lembrados().join(', '), p_preferencia: pref.value,
           p_notas: notas, p_palavra: document.getElementById('q-palavra').value.trim(), p_ceps: ceps, p_ativos: ativos, p_frase: frase ? frase.value : null,
+          p_recencia: rec.value, p_ultima: ult,
           p_ja_cliente: (() => { const c = form.querySelector('input[name=cliente]:checked'); return c ? (c.value === 'sim' ? true : c.value === 'nao' ? false : null) : null; })(),
         });
         if (e2) { btn.disabled = false; return say(msg, 'Não foi possível enviar. Tente de novo.', 'error'); }
