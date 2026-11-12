@@ -346,10 +346,10 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   const CON_T = Object.fromEntries(CON);
   montar('pane-estrategia', [
     [ficha, { icone: 'mapa', titulo: 'O cerne da estratégia', nota: 'O desafio que a marca precisa vencer, a abordagem para vencê-lo e o próximo marco. As ações do plano saem daqui.', tabela: 'planos', pasta: 'estrategia', fields: [
-      { k: 'desafio', label: '1. O desafio: o obstáculo principal, em uma frase', full: true, type: 'preset', presets: 'desafios' },
-      { k: 'como_vencer', label: '2. A abordagem: como vamos vencer esse desafio', full: true, type: 'preset', presets: 'abordagens' },
-      { k: 'objetivo_proximo', label: '3. O próximo marco: algo alcançável que destrava o resto', type: 'preset', presets: 'marcos' },
-      { k: 'objetivo_proximo_ate', label: 'Até', type: 'date' },
+      { k: 'desafio', label: '1. O desafio (o obstáculo principal)', full: true, type: 'preset', presets: 'desafios' },
+      { k: 'como_vencer', label: '2. A abordagem (como vencer o desafio)', full: true, type: 'preset', presets: 'abordagens' },
+      { k: 'objetivo_proximo', label: '3. O próximo marco', full: true, type: 'preset', presets: 'marcos' },
+      { k: 'objetivo_proximo_ate', label: 'Marco até', type: 'date' },
       { k: 'estrategia_aprovada_em', label: 'Aprovada em', type: 'date' }, { k: 'proxima_revisao_estrategia', label: 'Próxima revisão', type: 'date' },
       { k: 'estrategia_pdf', label: 'Plano completo (PDF)', type: 'file', accept: 'application/pdf' }] }],
     [testeEstrategia, {}],
