@@ -4572,3 +4572,72 @@
     'A comunicação vinha em campanhas soltas, com pausas longas, por isso a lembrança subia e caía a cada mês.',
   ].map((texto) => ({ grupo: G, texto }));
 })();
+
+// ===== Cerne da estratégia, rodada 2: mais desafios e abordagens (alavancagem, ondas de mudança, inércia, onde jogar e como vencer,
+// ser o único, marcas que fazem o oposto, custos de troca, quadro de referência, foco e escolhas) =====
+(function () {
+  const P = window.GangPresets; if (!P || !P.desafios || !P.abordagens) return;
+  const G = 'Da biblioteca';
+  const A = {
+    especialista: 'Ser a especialista em um tipo de cliente e mostrar provas disso em todo contato, em vez de competir por preço',
+    presente: 'Estar presente nas situações em que o cliente decide comprar, com os mesmos sinais visuais sempre',
+    metodo: 'Vender pelo método e pelo resultado, deixando o preço para depois do valor',
+    padrao: 'Padronizar a experiência para que todo cliente receba a mesma promessa, do contato ao pós-venda',
+    indicacao: 'Transformar clientes satisfeitos em indicação, com um processo simples e constante',
+    alcance: 'Alcançar quem ainda não compra da marca, com presença contínua e não só ofertas',
+    foco: 'Concentrar o esforço em uma região e um serviço até virar a referência, antes de expandir',
+    canal: 'Abrir um segundo canal de clientes para não depender de um só',
+    nome: 'Mostrar o que só a marca faz, com nome próprio, para sair da comparação direta',
+    facil: 'Ser a opção mais fácil de comprar: resposta rápida, preço claro e poucos passos',
+    voltar: 'Criar motivos para voltar: acompanhamento depois da compra e oferta do próximo passo',
+    prova: 'Transformar cada entrega em prova: casos, números e avaliações em todo contato',
+    constante: 'Manter presença constante o ano todo com poucos sinais sempre iguais, em vez de campanhas soltas',
+    // novas
+    onda: 'Aproveitar a mudança no jeito de comprar: chegar antes dos concorrentes ao canal e ao hábito novo',
+    cortar: 'Cortar o que dispersa: poucos serviços, poucos clientes-alvo e uma mensagem só, até a marca ser lembrada por isso',
+    premium: 'Assumir o preço mais alto e mostrar em tudo o que o justifica: processo, materiais, atendimento e garantia',
+    subirValor: 'Subir o valor percebido antes do preço: apresentação, provas e um serviço mais completo para o cliente certo',
+    quadro: 'Escolher contra quem a marca quer ser comparada e dizer isso com clareza logo na primeira frase',
+    subcategoria: 'Criar e nomear uma subcategoria em que a marca é a primeira, para não disputar a categoria inteira',
+    naoCopia: 'Apostar no que não se copia: nome, sinais visuais, relacionamento e reputação acumulados com o tempo',
+    oposto: 'Fazer o oposto do que a categoria inteira faz, de propósito, para ser a alternativa óbvia',
+    confianca: 'Emprestar confiança enquanto não há história: garantias claras, primeiros casos bem documentados e parcerias conhecidas',
+    proximo: 'Manter o jeito próximo como regra escrita: quem atende, como atende e em quanto tempo, igual para todos',
+    vinculo: 'Aumentar o que se perde ao trocar de fornecedor: histórico, acompanhamento e benefícios para quem fica',
+    doisPublicos: 'Falar com quem decide e com quem usa, com motivos diferentes para cada um, dentro da mesma mensagem central',
+    base: 'Ampliar a base de clientes menores e recorrentes para o resultado não depender de poucos grandes',
+    alinhar: 'Alinhar venda e comunicação: um roteiro de conversa com a mesma promessa, as mesmas provas e os mesmos limites',
+    reposicionar: 'Mudar o que a marca representa aos poucos: um novo foco repetido em todos os pontos de contato, sem apagar o que já é conhecido',
+    unico: 'Escolher uma coisa em que a marca pode ser a única da região e organizar o negócio inteiro em torno dela',
+  };
+  Object.values(A).forEach((texto) => { if (!P.abordagens.some((a) => a.texto === texto)) P.abordagens.push({ grupo: G, texto }); });
+  // desafios novos, cada um com as abordagens que fazem sentido
+  const NOVOS = [
+    ['O jeito de comprar da categoria mudou (novos canais, novos hábitos) e a marca continua vendendo do jeito antigo', ['onda', 'canal', 'facil']],
+    ['A empresa faz de tudo um pouco e a equipe não sabe o que é prioridade', ['cortar', 'foco', 'especialista']],
+    ['A marca é vista como a mais cara sem que o cliente entenda o porquê', ['premium', 'metodo', 'prova']],
+    ['A marca é vista como barata e não consegue cobrar mais pelo que entrega', ['subirValor', 'especialista', 'prova']],
+    ['O cliente não entende em que categoria a empresa se encaixa e a compara com as empresas erradas', ['quadro', 'subcategoria']],
+    ['Os concorrentes copiam rápido tudo o que a marca lança', ['naoCopia', 'vinculo', 'oposto']],
+    ['A empresa é nova e o cliente desconfia de quem ainda não tem história', ['confianca', 'foco', 'especialista']],
+    ['A marca cresceu e perdeu o jeito próximo que fazia os clientes escolherem ela', ['proximo', 'padrao']],
+    ['O cliente troca de fornecedor com facilidade, porque nada o prende à marca', ['vinculo', 'voltar', 'indicacao']],
+    ['Quem decide a compra não é quem usa o serviço, e a marca só fala com um dos dois', ['doisPublicos', 'prova']],
+    ['Todos os concorrentes fazem igual e a categoria virou uma coisa só', ['oposto', 'unico', 'subcategoria']],
+    ['A empresa depende de poucos clientes grandes, e perder um deles derruba o mês', ['base', 'alcance', 'canal']],
+    ['A equipe de vendas promete coisas diferentes do que a comunicação da marca diz', ['alinhar', 'padrao']],
+    ['A marca é lembrada por um produto ou fase antiga, não pelo que a empresa faz hoje', ['reposicionar', 'nome', 'constante']],
+  ];
+  NOVOS.forEach(([texto, ks]) => { if (!P.desafios.some((d) => d.texto === texto)) P.desafios.push({ grupo: G, texto, abordagens: ks.map((k) => A[k]) }); });
+  // os desafios antigos ganham as abordagens novas que também servem para eles
+  const EXTRA = [
+    ['O cliente não vê diferença', ['oposto', 'quadro', 'unico']],
+    ['Um concorrente maior ocupa a posição de referência', ['oposto', 'subcategoria']],
+    ['A marca tenta atender todo mundo', ['cortar', 'unico']],
+    ['A proposta começa pelo preço', ['subirValor']],
+    ['Os clientes compram uma vez e não voltam', ['vinculo']],
+    ['A empresa tem qualidade, mas não tem provas visíveis', ['confianca']],
+    ['A marca é pouco lembrada', ['unico']],
+  ];
+  EXTRA.forEach(([ini, ks]) => { const d = P.desafios.find((x) => x.texto.startsWith(ini)); if (d) d.abordagens = [...new Set([...(d.abordagens || []), ...ks.map((k) => A[k])])]; });
+})();
