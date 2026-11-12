@@ -892,6 +892,19 @@
     const t = data && data.como_vencer;
     return { texto: t || null, ab: t ? (P.abordagens || []).find((a) => a.texto === t && a.acoes) || null : null };
   };
+  // a fase de cada ação, como numa consultoria: 1) a base (posicionamento, proposta, preço, venda, padrão de atendimento,
+  // identidade aplicada) vem primeiro, porque todo o resto depende dela; 2) presença e prova; 3) otimização e auditoria, depois de ter o que medir
+  const RECORRENTE = /(por semana|toda semana|todo mês|a cada|uma vez por ano|por ano com|Medir|Avisar o aumento|ativação com prazo|pouco movimento|lista de espera|Ouvir uma conversa|Registrar o motivo)/i;
+  const BASE = /^(Lançar a pesquisa de partida|Escrever|Reescrever o modelo|Reescrever o site|Reescrever os textos|Definir|Escolher a especialidade|Escolher a palavra|Combinar|Listar as|Refazer a tabela|Revisar o caminho|Montar a proposta|Montar e ensaiar|Trocar propostas|Cobrar|Padronizar|Treinar a equipe na|Aplicar a identidade|Trocar a fachada|Atualizar redes|Fazer uma oficina|Dar um nome|Dar nome|Completar a proposta|Criar uma garantia|Criar uma versão premium|Organizar os serviços|Cortar um item|Calcular com o cliente|Explicar o tratamento|Deixar o preço|Publicar o método|Mandar o guia de tom|Responder todas as avaliações)/;
+  const PROVA = /(estudo de caso|caso curto|depoimentos|avaliação)/i; // prova vem depois da base, mesmo quando começa por "Escrever"
+  const OTIMIZA = /(auditoria|clube de clientes|conselho com|grupo de clientes|marcos da relação|data própria|programa próprio|uma vez por ano)/i;
+  const faseDe = (t) => {
+    const x = (P.acoes || []).find((a) => a.texto === t) || {};
+    if (OTIMIZA.test(t) || (x.tema === 'medicao' && /^(Testar|Comparar|Revisar a cada|Acompanhar)/.test(t))) return 3;
+    if (PROVA.test(t)) return 2;
+    if (BASE.test(t) || (x.tema === 'posicionamento' && !RECORRENTE.test(t))) return 1;
+    return 2;
+  };
   const montaModelo = (m, ab) => {
     const foraDaEstrategia = new Set(ab ? ab.fora || [] : []);
     const dur = p.duracao_meses || 18; const ini = U.ref(p.inicio); const fim = U.addRef(ini, dur - 1);
@@ -911,36 +924,51 @@
     const vaga = (desde, t) => meses.slice(desde).find((mm) => carga(mm) + (t ? ptsT(t) : 2) <= LIM && nMes(mm) < LIM_N) || meses.slice(desde).reduce((a, b) => (carga(b) < carga(a) ? b : a), meses[Math.min(desde, meses.length - 1)]);
     const libDe = (t) => (P.acoes || []).find((a) => a.texto === t) || { texto: t };
     const daLib = (t, peso) => { const x = libDe(t); return { peso, promessa: x.promessa || null, esforco: x.esforco || null, titulo: t, porque: x.porque || null, metrica: x.metrica || null }; };
-    const marco = (t) => /^(Revisão|Chegada|Segunda rodada da pesquisa|Pesquisa de marca de)/.test(t);
+    const marco = (t) => /^(Revisão|Chegada|Lançar a pesquisa de partida|Segunda rodada da pesquisa|Pesquisa de marca de)/.test(t);
+    // janelas das fases nos meses que faltam: a base nos primeiros ~20%, presença e prova a partir de ~15%, otimização da metade em diante
+    const nM = meses.length; const f2 = Math.max(1, Math.round(nM * 0.15)); const f3 = Math.round(nM * 0.5);
+    const desdeFase = (t, prop) => { const f = faseDe(t); return Math.min(nM - 1, f === 1 ? 0 : f === 3 ? Math.max(prop, f3) : Math.max(prop, f2)); };
+    // 0. a pesquisa de partida é a linha de base: se ainda não foi feita e o mês dela passou, entra já no primeiro mês
+    doModelo.filter((x) => /^Lançar a pesquisa de partida/.test(x.titulo) && nRef(x.mes) < nRef(de) && !ja(x.titulo)).forEach((x) => novas.push({ ...x, peso: 'essencial', mes: meses[0] }));
     // 1. marcos no mês certo do plano
     doModelo.filter((x) => marco(x.titulo) && nRef(x.mes) >= nRef(de) && !ja(x.titulo)).forEach((x) => novas.push(x));
-    // 2. fundação: a identidade nos canais próprios e o caminho de compra, a partir do mês atual
+    // a ordem de encaixe é a ordem de prioridade: quem entra primeiro pega os primeiros meses
+    // 2. a estratégia: as ações que executam a abordagem viram essenciais nos 3 primeiros meses (até 3 por mês)
+    if (ab) (ab.acoes || []).filter((t) => !ja(t) && (doSetor(libDe(t)) || doModelo.some((x) => x.titulo === t))).forEach((t, k) => {
+      // se não couber, vai para o mês mais leve dos 3 primeiros: a estratégia nunca escorrega para depois do início
+      const alvo = vaga(Math.min(Math.floor(k / 3), meses.length - 1), t);
+      const ini3 = meses.slice(0, Math.min(3, meses.length));
+      novas.push({ ...daLib(t, 'essencial'), executa: ab.curto, mes: ini3.includes(alvo) ? alvo : ini3.reduce((x, y) => (carga(y) < carga(x) ? y : x), ini3[0]) });
+    });
+    // 3. fundação: a identidade nos canais próprios e o caminho de compra, a partir do mês atual
     (P.FUNDACAO || []).forEach((t) => {
-      if (acoes.some((a) => a.titulo === t) || !doSetor(libDe(t))) return;
+      if (ja(t) || acoes.some((a) => a.titulo === t) || !doSetor(libDe(t))) return;
       const doMod = doModelo.find((x) => x.titulo === t);
       novas.push({ ...(doMod || daLib(t, 'essencial')), mes: vaga(0, t) });
     });
-    // 2b. a estratégia: as ações que executam a abordagem viram essenciais nos primeiros meses (duas por mês, em ordem)
-    if (ab) (ab.acoes || []).filter((t) => !ja(t) && doSetor(libDe(t))).forEach((t, k) => {
-      novas.push({ ...daLib(t, 'essencial'), executa: ab.curto, mes: vaga(Math.min(Math.floor(k / 2), meses.length - 1), t) });
-    });
-    // 3. o que ficou para trás no modelo: essenciais primeiro, a partir do mês atual
-    doModelo.filter((x) => nRef(x.mes) < nRef(de) && !marco(x.titulo)).sort((a, b) => (b.peso === 'essencial') - (a.peso === 'essencial'))
+    // 4. a base do esqueleto do setor (posicionamento, proposta, preço, roteiro de venda), mesmo que o esqueleto a coloque mais tarde
+    const naoMarco = doModelo.filter((x) => !marco(x.titulo));
+    naoMarco.filter((x) => faseDe(x.titulo) === 1).sort((a, b) => (b.peso === 'essencial') - (a.peso === 'essencial') || nRef(a.mes) - nRef(b.mes))
       .forEach((x) => { if (!ja(x.titulo)) novas.push({ ...x, mes: vaga(0, x.titulo) }); });
-    // 4. presença: prova e avaliações, a partir do 3º mês
+    // 5. presença: prova e avaliações, a partir do 3º mês
     (P.PRESENCA || []).forEach((t) => {
       if (ja(t) || !doSetor(libDe(t))) return;
       const doMod = doModelo.find((x) => x.titulo === t);
-      novas.push({ ...(doMod || daLib(t, 'ajuda')), mes: vaga(Math.min(2, meses.length - 1), t) });
+      novas.push({ ...(doMod || daLib(t, 'ajuda')), mes: vaga(Math.min(f2, meses.length - 1), t) });
     });
-    // 5. o resto do modelo no mês proporcional; se o mês lotou, vai para o próximo com espaço
-    doModelo.filter((x) => nRef(x.mes) >= nRef(de) && !marco(x.titulo)).forEach((x) => { if (!ja(x.titulo)) novas.push({ ...x, mes: vaga(idx(x.mes), x.titulo) }); });
+    // 6. o resto do esqueleto: o que ficou para trás entra a partir da janela da fase; o que vem pela frente, no mês proporcional (nunca antes da fase)
+    naoMarco.filter((x) => faseDe(x.titulo) !== 1).sort((a, b) => (b.peso === 'essencial') - (a.peso === 'essencial') || nRef(a.mes) - nRef(b.mes))
+      .forEach((x) => { if (!ja(x.titulo)) novas.push({ ...x, mes: vaga(desdeFase(x.titulo, nRef(x.mes) < nRef(de) ? 0 : idx(x.mes)), x.titulo) }); });
     // continuidade: ações da biblioteca do setor, sem manutenção, alternando marca e venda e os temas
     const pool = (P.acoes || []).filter((x) => !x.manutencao && doSetor(x) && x.tam !== 'G' || (!x.manutencao && doSetor(x) && x.esforco === 'marca'))
       .filter((x, k, arr) => arr.findIndex((y) => y.texto === x.texto) === k)
-      .sort((a, b) => (taxaDe(b.texto) - taxaDe(a.texto)) || ((TAM[a.tam] || [, , 2])[2] - (TAM[b.tam] || [, , 2])[2]));
-    const pega = (filtro) => { const k = pool.findIndex((x) => filtro(x) && !ja(x.texto)); return k < 0 ? null : pool.splice(k, 1)[0]; };
-    meses.forEach((mes) => {
+      .sort((a, b) => (faseDe(a.texto) - faseDe(b.texto)) || (taxaDe(b.texto) - taxaDe(a.texto)) || ((TAM[a.tam] || [, , 2])[2] - (TAM[b.tam] || [, , 2])[2]));
+    // na continuidade, cada mês só recebe ações da fase dele: base só no primeiro terço, otimização só da metade em diante
+    let kMes = 0;
+    const naFase = (x) => { const f = faseDe(x.texto); return f === 1 ? kMes < Math.max(3, Math.round(nM / 3)) : f === 3 ? kMes >= f3 : true; };
+    const pega = (filtro) => { const k = pool.findIndex((x) => filtro(x) && naFase(x) && !ja(x.texto)); return k < 0 ? null : pool.splice(k, 1)[0]; };
+    meses.forEach((mes, km) => {
+      kMes = km;
       const doMes = () => acoes.filter((a) => a.mes_previsto === mes).concat(novas.filter((x) => x.mes === mes));
       const add = (x, peso) => novas.push({ mes, peso, promessa: x.promessa || null, esforco: x.esforco || null, titulo: x.texto, porque: x.porque || null, metrica: x.metrica || null });
       if (!doMes().some((a) => a.esforco === 'marca')) { const x = pega((y) => y.esforco === 'marca'); if (x) add(x, 'ajuda'); }
@@ -950,12 +978,22 @@
       // um essencial por mês: a primeira ação nova do mês vira a essencial, se ainda não houver
       if (!doMes().some((a) => a.peso === 'essencial')) { const x = novas.find((y) => y.mes === mes); if (x) x.peso = 'essencial'; }
     });
+    // a pesquisa de partida é a linha de base: as rodadas seguintes vêm pelo menos 5 e 11 meses depois dela
+    const partida = novas.find((x) => /^Lançar a pesquisa de partida/.test(x.titulo)) || acoes.find((a) => /^Lançar a pesquisa de partida/.test(a.titulo));
+    if (partida) {
+      const mP = partida.mes || partida.mes_previsto;
+      [[/^Segunda rodada da pesquisa/, 5], [/^Pesquisa de marca de 12/, 11]].forEach(([re, dist]) => {
+        const r = novas.find((x) => re.test(x.titulo));
+        if (r && nRef(r.mes) < nRef(mP) + dist) { const alvo = U.addRef(mP, dist); r.mes = nRef(alvo) > nRef(meses[meses.length - 1]) ? meses[meses.length - 1] : alvo; }
+      });
+    }
     // o que já vinha do setor e também executa a abordagem ganha o selo
     if (ab) novas.forEach((x) => { if ((ab.acoes || []).includes(x.titulo)) x.executa = ab.curto; });
     // no máximo 2 essenciais por mês: o que passar disso vira ajuda (foco, não lista de urgências); as da estratégia têm a vez
     meses.forEach((mes) => {
       let n = acoes.filter((a) => a.mes_previsto === mes && a.peso === 'essencial').length;
-      novas.filter((x) => x.mes === mes && x.peso === 'essencial').sort((a, b) => !!b.executa - !!a.executa).forEach((x) => { n += 1; if (n > 2) x.peso = 'ajuda'; });
+      // as da estratégia continuam essenciais: são o motivo do plano
+      novas.filter((x) => x.mes === mes && x.peso === 'essencial').sort((a, b) => !!b.executa - !!a.executa).forEach((x) => { n += 1; if (n > 2 && !x.executa && !marco(x.titulo)) x.peso = 'ajuda'; });
     });
     return novas.sort((a, b) => nRef(a.mes) - nRef(b.mes));
   };
