@@ -4749,3 +4749,145 @@
   if (P.acoes) NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
   if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
 })();
+
+// ===== Rodada 14: mais opções para Diagnóstico, Estratégia e Narrativa, vindas da biblioteca do Drive
+// (marcas desafiantes, vantagens de demanda e de nicho, trabalhos que o cliente quer resolver, relevância e subcategorias,
+// posicionamento de especialistas, cordialidade e competência, preço pelo valor). Cada abordagem nova só aparece
+// nos desafios em que ela é uma resposta coerente; nenhum desafio ganha opção só para encher a lista. =====
+(function () {
+  const P = window.GangPresets; if (!P || !P.desafios || !P.abordagens) return;
+  const G = 'Da biblioteca';
+  const add = (lista, itens) => { if (!P[lista]) P[lista] = []; itens.forEach((texto) => { if (!P[lista].some((x) => x.texto === texto)) P[lista].push({ grupo: G, texto }); }); };
+  const achar = (ini) => (P.abordagens.find((a) => a.texto.startsWith(ini)) || {}).texto;
+
+  // ---- Estratégia: abordagens novas (onde jogar, por que vence ali, do que abre mão) ----
+  const N = {
+    farol: 'Ter um ponto de vista claro sobre a categoria e assumi-lo em público, vencendo por ser a marca de quem todos sabem o que pensa. Abrimos mão de agradar a todos e de soar neutra.',
+    conversa: 'Puxar a conversa da categoria, dizendo o que está errado nela e para onde ela deve ir, vencendo por ser vista como quem define as regras, e não quem as segue. Abrimos mão de falar só de nós e das nossas ofertas.',
+    concentrar: 'Concentrar quase todo o esforço em poucas frentes, com intensidade, vencendo por parecer maior do que é onde aparece. Abrimos mão de estar em todo canal com pouca força.',
+    emocao: 'Trazer para a categoria uma emoção que nenhum concorrente oferece, como alívio, orgulho ou prazer, vencendo por ser a marca que faz o cliente se sentir diferente. Abrimos mão de falar só de características técnicas, como todos falam.',
+    habito: 'Tornar a compra um hábito, com recorrência, agenda fixa ou reposição combinada, vencendo pela fidelidade que nasce da repetição. Abrimos mão das vendas avulsas com desconto que não criam rotina.',
+    custoBusca: 'Ser a fornecedora de confiança em um serviço complexo e feito sob medida, vencendo porque trocar exigiria procurar, explicar e testar tudo de novo. Abrimos mão dos serviços padronizados que o cliente compara com facilidade.',
+    trabalho: 'Organizar a oferta em torno do progresso que o cliente quer fazer em uma situação específica, e não em torno do serviço, vencendo por resolver também o lado emocional e social da compra. Abrimos mão de vender o catálogo inteiro para todo mundo.',
+    naoConsumo: 'Competir com a não compra, ou seja, com quem adia, improvisa ou faz sozinho, vencendo por ser simples e acessível o bastante para quem hoje não compra de ninguém. Abrimos mão de disputar de frente os clientes que já compram dos concorrentes.',
+    beneficio: 'Ser dona de um benefício que o cliente considera indispensável, vencendo por ser a marca ligada a ele antes de qualquer outra. Abrimos mão de comunicar vários benefícios ao mesmo tempo.',
+    conhecimento: 'Vender conhecimento e diagnóstico, e não só execução, vencendo por pensar o problema do cliente antes dele. Abrimos mão de ser apenas a mão de obra que executa o que pedem.',
+    humana: 'Mostrar as pessoas por trás da marca e agir sempre a favor do cliente, vencendo pela confiança que vem de ser cordial e competente ao mesmo tempo. Abrimos mão de ganhos de curto prazo que exploram o cliente, como letras miúdas, taxas escondidas e pressão para fechar.',
+    niveis: 'Ter ofertas em níveis diferentes para clientes que valorizam coisas diferentes, vencendo por cobrar de cada um pelo valor que ele percebe. Abrimos mão de um preço único para todos e de descontos sem contrapartida.',
+    valorEconomico: 'Cobrar pela diferença de valor em relação à alternativa do cliente, vencendo por mostrar quanto ele ganha ou deixa de perder. Abrimos mão de calcular o preço só pelo custo mais a margem.',
+  };
+  add('abordagens', Object.values(N));
+  const A = (k) => N[k] || achar({ simples: 'Ser a opção simples', coerente: 'Ter uma só promessa', comprovada: 'Ser a mais comprovada', nicho: 'Começar por um nicho', premium: 'Ser a opção premium',
+    resultado: 'Vender o resultado', especialista: 'Ser a especialista', confiavel: 'Prometer menos', momento: 'Ser a marca dona', onda: 'Liderar o jeito novo', continua: 'Construir a marca de forma contínua',
+    oposto: 'Ser a alternativa ao jeito', conveniente: 'Ser a escolha mais conveniente', parceira: 'Ser a parceira', continuo: 'Trocar a venda única', subcategoria: 'Criar uma subcategoria', quadro: 'Escolher contra quem' }[k]);
+
+  // ---- Estratégia: desafios novos ----
+  const NOVOS = [
+    ['O maior concorrente é o cliente não comprar: ele adia, improvisa ou resolve sozinho', ['naoConsumo', 'trabalho', 'conveniente', 'simples']],
+    ['A marca não tem opinião nem jeito próprio, e soa igual a qualquer outra da categoria', ['farol', 'conversa', 'emocao', 'oposto']],
+    ['A categoria só fala do lado técnico e a marca não desperta nenhum sentimento no cliente', ['emocao', 'trabalho', 'farol']],
+    ['A venda depende do dono: quando ele não está na conversa, o cliente não fecha', ['humana', 'confiavel', 'coerente', 'conhecimento']],
+    ['A empresa dá desconto para fechar quase toda venda e a margem desaparece', ['valorEconomico', 'niveis', 'premium', 'resultado']],
+    ['O cliente vê quanto paga, mas não percebe quanto ganha com o serviço', ['valorEconomico', 'resultado', 'comprovada', 'conhecimento']],
+    ['A marca investe um pouco em muitos canais e não é forte em nenhum', ['concentrar', 'momento', 'continua']],
+  ];
+  NOVOS.forEach(([texto, ks]) => { if (!P.desafios.some((d) => d.texto === texto)) P.desafios.push({ grupo: G, texto, abordagens: ks.map(A).filter(Boolean) }); });
+
+  // ---- os desafios que já existiam ganham as abordagens novas que de fato respondem a eles ----
+  const EXTRA = [
+    ['A marca é pouco lembrada', ['concentrar', 'beneficio']],
+    ['O cliente não vê diferença', ['beneficio', 'emocao', 'farol']],
+    ['A marca só é lembrada por quem já é cliente', ['concentrar']],
+    ['A proposta começa pelo preço', ['valorEconomico', 'conhecimento', 'niveis']],
+    ['A experiência muda de pessoa para pessoa', ['coerente', 'simples']],
+    ['Os clientes compram uma vez e não voltam', ['habito', 'custoBusca']],
+    ['Um concorrente maior ocupa a posição de referência', ['farol', 'conversa', 'concentrar']],
+    ['A marca tenta atender todo mundo', ['trabalho', 'nicho']],
+    ['A empresa tem qualidade, mas não tem provas visíveis', ['conhecimento', 'conversa']],
+    ['É difícil achar e comprar da empresa', ['simples', 'onda']],
+    ['A comunicação é irregular', ['concentrar', 'farol', 'momento']],
+    ['O jeito de comprar da categoria mudou', ['simples', 'trabalho']],
+    ['A empresa faz de tudo um pouco', ['trabalho', 'nicho']],
+    ['A marca é vista como a mais cara', ['valorEconomico', 'niveis', 'comprovada']],
+    ['A marca é vista como barata', ['valorEconomico', 'niveis', 'conhecimento']],
+    ['O cliente não entende em que categoria', ['trabalho', 'beneficio', 'especialista']],
+    ['Os concorrentes copiam rápido', ['custoBusca', 'beneficio', 'farol', 'conhecimento']],
+    ['A empresa é nova', ['humana', 'comprovada', 'naoConsumo']],
+    ['A marca cresceu e perdeu o jeito próximo', ['humana', 'coerente']],
+    ['O cliente troca de fornecedor com facilidade', ['habito', 'custoBusca', 'humana']],
+    ['Quem decide a compra não é quem usa', ['valorEconomico', 'trabalho']],
+    ['Todos os concorrentes fazem igual', ['emocao', 'farol', 'beneficio']],
+    ['A empresa depende de poucos clientes grandes', ['niveis', 'naoConsumo']],
+    ['A marca é lembrada por um produto ou fase antiga', ['farol', 'conversa']],
+  ];
+  EXTRA.forEach(([ini, ks]) => { const d = P.desafios.find((x) => x.texto.startsWith(ini)); if (d) d.abordagens = [...new Set([...(d.abordagens || []), ...ks.map(A).filter(Boolean)])]; });
+
+  // ---- Diagnóstico ----
+  add('resumosDiagnostico', [
+    'O maior concorrente da marca era a não compra: muita gente adiava ou resolvia sozinha, e a comunicação falava só com quem já tinha decidido comprar.',
+    'A marca não tinha opinião sobre nada da categoria, então não dava ao cliente nenhum motivo para lembrar dela ou falar dela.',
+    'A empresa vendia o serviço, mas o cliente comprava o alívio de resolver um problema, e a marca nunca falava disso.',
+    'A marca era competente, mas fria: o cliente confiava no trabalho, mas não sentia que a empresa estava do lado dele.',
+    'O preço era calculado pelo custo, e não pelo que o cliente ganhava, por isso a empresa cobrava menos do que entregava.',
+    'Um único preço para todos fazia a empresa perder os clientes que pagariam mais e também os que só podiam pagar menos.',
+    'O esforço de comunicação estava espalhado em muitos canais, e a marca não era forte o bastante em nenhum para ser lembrada.',
+    'Nada prendia o cliente à marca: trocar de fornecedor era fácil, e o cliente trocava na primeira oferta.',
+  ]);
+  add('causas', [
+    'A marca não tem um ponto de vista sobre a categoria',
+    'A comunicação só fala com quem já decidiu comprar e ignora quem adia ou resolve sozinho',
+    'A empresa não sabe que progresso o cliente quer fazer quando procura o serviço',
+    'A marca só mostra competência e esquece de mostrar que se importa com o cliente',
+    'O preço é calculado pelo custo, não pelo valor para o cliente',
+    'Há um único preço e uma única oferta para clientes muito diferentes',
+    'O esforço está espalhado em canais demais, sem força em nenhum',
+    'Nada na relação faz o cliente perder algo ao trocar de fornecedor',
+    'A categoria só fala de características técnicas e ninguém fala do que o cliente sente',
+  ]);
+  add('notam', ['Fala só de características técnicas', 'Muitos canais, pouco movimento em cada um', 'Ninguém da equipe aparece', 'Opinião clara sobre o mercado']);
+  add('acreditam', ['Competente, mas não se importa comigo', 'Próxima, mas não sei se é boa', 'Não sei quanto custa nem o que está incluído', 'Faz só o que pedem, não pensa junto', 'Sabe muito sobre o meu tipo de negócio']);
+  add('sentem', ['Alívio', 'Vontade de adiar a decisão', 'Respeito', 'Sensação de ser só mais um cliente', 'Gratidão']);
+  add('motivadores', ['Saber quanto custa antes de pedir orçamento', 'Não precisar explicar tudo de novo a cada contato', 'Sentir que a empresa está do lado do cliente']);
+  add('discriminadores', ['Tem opinião clara sobre o mercado', 'Pensa o problema junto antes de orçar', 'Oferece níveis de serviço para cada necessidade', 'Mostra quanto o cliente ganha, não só quanto paga', 'Conhece o histórico do cliente e não precisa perguntar de novo']);
+
+  // ---- Narrativa: mensagem central, provas e ideias que não mudam ----
+  add('mensagensCentrais', [
+    'A gente pensa o problema com você antes de começar.',
+    'Do seu lado, do primeiro contato ao fim.',
+    'O resultado que você quer, sem precisar acompanhar tudo.',
+    'Feito para quem não pode parar para resolver isso.',
+    'Para quem já tentou de outro jeito e não deu certo.',
+    'Menos preocupação, mais resultado.',
+    'A gente diz o que pensa, mesmo quando não é o que você quer ouvir.',
+    'Quem entende do seu tipo de negócio.',
+    'Você paga pelo resultado, não pelas horas.',
+    'Uma vez com a gente, você não precisa procurar de novo.',
+  ]);
+  add('mensagensApoio', [
+    'Mostramos quanto você ganha ou deixa de perder antes do preço',
+    'Opções em níveis diferentes, para você escolher o que faz sentido',
+    'Guardamos o seu histórico: você nunca precisa explicar tudo de novo',
+    'Um diagnóstico antes de qualquer orçamento',
+    'Você sabe quem são as pessoas que cuidam do seu caso',
+    'Dizemos com clareza o que pensamos sobre o mercado',
+    'Sem letras miúdas, taxas escondidas ou pressão para fechar',
+    'Atendemos só o tipo de cliente que conhecemos a fundo',
+  ]);
+  add('identidadeCentral', ['Do lado do cliente, sempre', 'Pensar antes de fazer', 'Opinião própria, dita com respeito', 'Conhecimento que o cliente não precisa ter']);
+})();
+
+// ===== Rodada 14b: abordagens antigas reescritas para passar no próprio Teste da estratégia
+// (sem "referência" ou "líder", sem começar por meta nem por tarefa); o sentido e a renúncia continuam os mesmos =====
+(function () {
+  const P = window.GangPresets; if (!P || !P.abordagens) return;
+  const TROCA = [
+    ['Ser a referência em uma região e em um serviço', 'Ser a mais lembrada em uma região e em um serviço antes de expandir, vencendo pela concentração de casos, indicações e lembrança no mesmo lugar. Abrimos mão de expandir para outras regiões e serviços por enquanto.'],
+    ['Criar uma subcategoria e ser a primeira nela', 'Ser a primeira em uma subcategoria nova, com nome próprio, vencendo por não ter com quem ser comparada. Abrimos mão de disputar a categoria inteira de frente.'],
+    ['Crescer conquistando quem ainda não compra', 'Ganhar mercado conquistando quem ainda não compra, vencendo por ser a marca que vem à cabeça primeiro em toda a categoria. Abrimos mão de concentrar o esforço só em quem já é cliente.'],
+    ['Liderar o jeito novo de comprar', 'Sair na frente no jeito novo de comprar da categoria, vencendo por chegar antes ao canal e ao hábito que estão crescendo. Abrimos mão de proteger o modelo antigo à custa do novo.'],
+    ['Ser a desafiante declarada da líder', 'Ser a desafiante declarada da marca mais forte da categoria, vencendo pelo que a maior não muda por ser grande. Abrimos mão de imitar a maior em versão menor.'],
+  ];
+  const novo = (t) => { const m = TROCA.find(([ini]) => t && t.startsWith(ini)); return m ? m[1] : t; };
+  P.abordagens.forEach((a) => { a.texto = novo(a.texto); });
+  (P.desafios || []).forEach((d) => { if (d.abordagens) d.abordagens = d.abordagens.map(novo); });
+})();
