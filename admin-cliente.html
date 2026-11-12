@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="app/app.css?v=25" />
   <link rel="stylesheet" href="app/portal.css?v=65" />
-  <link rel="stylesheet" href="app/tema.css?v=103" />
+  <link rel="stylesheet" href="app/tema.css?v=113" />
   <script src="app/entrada.js?v=2"></script>
 </head>
 <body class="portal-body">
@@ -130,7 +130,7 @@
             <div><label class="label" for="p-consultor">Consultor</label><select class="field" id="p-consultor"></select></div>
             <div><label class="label" for="p-meta">Meta de faturamento (%)</label><select class="field" id="p-meta" data-num><option value="">Sem meta</option><option value="10">+10%</option><option value="15">+15%</option><option value="20">+20%</option><option value="25">+25%</option><option value="30">+30%</option><option value="40">+40%</option><option value="50">+50%</option><option value="100">+100% (dobrar)</option></select></div>
             <div><label class="label" for="p-base">Faturamento de partida</label><input class="field" id="p-base" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" aria-describedby="p-base-d" /><p class="field-hint" id="p-base-d">Média mensal dos 12 meses antes do plano</p></div>
-            <div><label class="label" for="p-esforco">Divisão do esforço (Binet & Field)</label><select class="field" id="p-esforco" data-num><option value="40">40% marca · 60% vendas</option><option value="50">50% · 50%</option><option value="60">60% marca · 40% vendas (padrão)</option><option value="70">70% marca · 30% vendas</option></select></div>
+            <div><label class="label" for="p-esforco">Divisão do esforço</label><select class="field" id="p-esforco" data-num><option value="40">40% marca · 60% vendas</option><option value="50">50% · 50%</option><option value="60">60% marca · 40% vendas (padrão)</option><option value="70">70% marca · 30% vendas</option></select></div>
             <div><label class="label" for="p-revis">Revisões de peça por mês</label><input class="field" id="p-revis" type="number" min="0" max="50" step="1" placeholder="2" /></div>
             <div><label class="label" for="p-dias">Dias em que responde mensagens</label><input class="field" id="p-dias" maxlength="60" placeholder="terças e quintas" /></div>
             <div><label class="label" for="p-prazo">Resposta de revisão (dias úteis)</label><select class="field" id="p-prazo" data-num><option value="1">1 dia útil</option><option value="2">2 dias úteis</option><option value="3">3 dias úteis</option><option value="5">5 dias úteis</option></select></div>
@@ -387,7 +387,7 @@
 
       <div class="bloco" id="res-pesq">
       <div class="app-section__head">
-        <div><h2 class="title-sm">Pesquisa de marca</h2><p class="small">Um link anônimo que o cliente manda para os clientes dele. Mede em quais situações de compra a marca é lembrada e se os ativos distintivos são reconhecidos. Faça uma rodada no início e repita a cada 6 meses.</p></div>
+        <div><h2 class="title-sm">Pesquisa de marca</h2><p class="small">Link anônimo para os clientes do cliente. Uma rodada no início e outra a cada 6 meses.</p></div>
         <button class="btn btn--light btn--sm" id="open-pesq" aria-expanded="false" aria-controls="pesq-form">Nova rodada</button>
       </div>
       <form class="card" id="pesq-form" novalidate hidden>
@@ -550,8 +550,8 @@
   <script src="app/auth.js?v=2"></script>
   <script src="app/ui.js?v=21"></script>
   <script src="app/cerebro.js?v=1"></script>
-  <script src="app/admin-marca.js?v=16"></script>
+  <script src="app/admin-marca.js?v=22"></script>
   <script src="app/saude.js?v=9"></script>
-  <script src="app/admin-cliente.js?v=70"></script>
+  <script src="app/admin-cliente.js?v=75"></script>
 </body>
 </html>
