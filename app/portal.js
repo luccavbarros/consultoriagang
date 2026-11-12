@@ -1104,7 +1104,7 @@
     const out = [head(ultimo ? 'Último mês informado: ' + U.nomeMes(ultimo.mes_ref) : 'Estamos chegando lá?', 'Resultados',
       'Vendas mudam em semanas; a percepção da marca, em meses. Por isso medimos os dois, em ritmos diferentes.',
       el('a', { class: 'btn btn--ghost', href: '#relatorio' }, 'Relatório do mês')),
-    cartoesNumeros(), veredito(), quando(), funil(), parte('Negócio', 'O que o plano já devolveu e o que falta para a meta.'), pontoPartida('resultados'), metaHero(), lado(planoPagou(), simulador())].filter(Boolean);
+    cartoesNumeros(), veredito(), funil(), parte('Negócio', 'O que o plano já devolveu e o que falta para a meta.'), pontoPartida('resultados'), metaHero(), lado(planoPagou(), simulador())].filter(Boolean);
 
     // formulário do mês passado (ou a confirmação depois de enviar); fica ao lado do gráfico
     let numBox = null;
@@ -1267,13 +1267,17 @@
   const quando = () => {
     if (!inicioRef || D.numeros.some((x) => x.mes_ref > inicioRef)) return null;
     const prox = U.addRef(inicioRef, 1);
-    const linha = (t, d) => el('li', null, el('p', 'start__t', t), el('p', 'start__d', d));
-    return el('section', { class: 'box when', 'aria-labelledby': 'when-t' },
-      el('h2', { class: 'box__title', id: 'when-t' }, 'O que vai aparecer aqui, e quando'),
-      el('ul', 'when__list',
-        linha('Faturamento, clientes e ticket', 'A partir dos números de ' + U.nomeMes(prox) + ', enviados no começo de ' + U.nomeMes(U.addRef(prox, 1)) + '.'),
-        linha('O plano pagou?', 'Com 3 meses de números, em ' + U.nomeMes(U.addRef(inicioRef, 3)) + '.'),
-        linha('Como a marca é vista', D.respostas.length ? 'Já com as primeiras respostas da pesquisa, logo abaixo.' : 'Assim que a pesquisa de partida receber respostas.')));
+    // linha do tempo do começo: o que aparece, quando, e o que já chegou (como os passos do "Get started" do designer)
+    const temResp = D.respostas.length > 0;
+    const itens = [
+      [quad('grafico'), 'Faturamento, clientes e ticket', 'Com os números de ' + U.nomeMes(prox) + ', enviados no começo de ' + U.nomeMes(U.addRef(prox, 1)) + '.', U.cap(U.nomeMesCurto(U.addRef(prox, 1))), false],
+      [quad('ok'), 'O plano pagou?', 'Precisa de 3 meses de números para comparar com o ponto de partida.', U.cap(U.nomeMesCurto(U.addRef(inicioRef, 3))), false],
+      [quad('alvo'), 'Como a marca é vista', temResp ? 'As primeiras respostas da pesquisa já estão na aba Marca.' : 'Assim que a pesquisa de partida receber respostas.', temResp ? 'Já disponível' : 'Com as respostas', temResp],
+    ];
+    return secN('when-t', 'O que vai aparecer aqui', itens.length, 'Os resultados chegam aos poucos. Assim fica fácil saber o que esperar.',
+      el('ul', 'gl quando', itens.map(([q, t, d, quando, ok]) => el('li', 'gl__i',
+        q, el('div', 'gl__m', el('p', 'gl__t', t), el('p', 'gl__s', d)),
+        el('span', 'quando__chip' + (ok ? ' is-ok' : ''), quando)))));
   };
   // o veredito do mês: uma frase do consultor respondendo "estamos mais perto da meta?"
   const veredito = () => {
