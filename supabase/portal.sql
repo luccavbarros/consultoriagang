@@ -1156,3 +1156,66 @@ grant execute on function public.portal_lembretes(boolean) to authenticated;
 alter table public.planos add column if not exists desafio text;             -- o diagnóstico: o obstáculo principal que a estratégia precisa vencer
 alter table public.planos add column if not exists objetivo_proximo text;    -- o próximo marco: algo alcançável que destrava o resto
 alter table public.planos add column if not exists objetivo_proximo_ate date;
+
+-- ===================== Pesquisa de marca: quem responde e como pergunta =====================
+-- 1) triagem pelo comportamento: quando a pessoa comprou a categoria pela última vez (quem nunca comprou não é o mercado)
+-- 2) de quem comprou na última vez: um fato do passado, mais confiável do que "escolheria hoje"
+alter table public.respostas add column if not exists recencia text check (recencia in ('3m', '12m', 'mais', 'nunca'));
+alter table public.respostas add column if not exists ultima text;
+
+drop function if exists public.pesquisa_responder(uuid, text, text, jsonb, text, jsonb, jsonb, text, boolean);
+create or replace function public.pesquisa_responder(p_token uuid, p_lembranca text, p_preferencia text, p_notas jsonb, p_palavra text,
+                                                     p_ceps jsonb default '{}'::jsonb, p_ativos jsonb default '{}'::jsonb, p_frase text default null,
+                                                     p_ja_cliente boolean default null, p_recencia text default null, p_ultima text default null)
+returns void
+language plpgsql security definer set search_path = public
+as $$
+declare p public.pesquisas; n int; i int;
+begin
+  select * into p from public.pesquisas where token = p_token and aberta;
+  if p.id is null then raise exception 'Esta pesquisa não está aberta.'; end if;
+  n := jsonb_array_length(p.afirmacoes);
+  if jsonb_typeof(p_notas) <> 'array' or jsonb_array_length(p_notas) <> n then raise exception 'Responda todas as frases.'; end if;
+  for i in 0 .. n - 1 loop
+    if jsonb_typeof(p_notas -> i) <> 'number' or (p_notas ->> i)::int not between 1 and 5 then raise exception 'Notas de 1 a 5.'; end if;
+  end loop;
+  if jsonb_typeof(coalesce(p_ceps, '{}')) <> 'object' or jsonb_typeof(coalesce(p_ativos, '{}')) <> 'object' then raise exception 'Respostas inválidas.'; end if;
+  if length(coalesce(p_ceps, '{}')::text) > 20000 or length(coalesce(p_ativos, '{}')::text) > 5000 then raise exception 'Respostas grandes demais.'; end if;
+  if p_recencia is not null and p_recencia not in ('3m', '12m', 'mais', 'nunca') then raise exception 'Resposta inválida.'; end if;
+  insert into public.respostas (pesquisa_id, empresa_id, lembranca, preferencia, notas, palavra, ceps, ativos, frase, entende, ja_cliente, recencia, ultima)
+  values (p.id, p.empresa_id, left(coalesce(p_lembranca, ''), 300), left(coalesce(p_preferencia, ''), 120), p_notas, left(coalesce(p_palavra, ''), 60),
+          coalesce(p_ceps, '{}'), coalesce(p_ativos, '{}'), left(p_frase, 300),
+          case when p_frase is null then null
+               else p_frase = (select mensagem_central from public.plataformas where empresa_id = p.empresa_id) end,
+          p_ja_cliente, p_recencia, left(p_ultima, 120));
+end;
+$$;
+grant execute on function public.pesquisa_responder(uuid, text, text, jsonb, text, jsonb, jsonb, text, boolean, text, text) to anon, authenticated;
+
+-- 3) a pergunta "qual frase descreve a marca" compara a mensagem central com o que os concorrentes passam (do Diagnóstico),
+--    e não com frases que ninguém escolheria; sem concorrentes cadastrados, ficam as alternativas genéricas
+create or replace function public.pesquisa_publica(p_token uuid)
+returns json
+language sql stable security definer set search_path = public
+as $$
+  select json_build_object('titulo', p.titulo, 'categoria', p.categoria, 'afirmacoes', p.afirmacoes,
+                           'opcoes', (select jsonb_build_array(e.nome) || p.concorrentes), 'marca', e.nome,
+                           'situacoes', p.situacoes,
+                           'frases', (select case when coalesce(pl.mensagem_central, '') = '' then '[]'::jsonb
+                                        else jsonb_build_array(pl.mensagem_central) || coalesce(
+                                          (select case when count(*) >= 2 then jsonb_agg(x.t) end
+                                             from (select distinct i.acreditam as t from public.impressoes i
+                                                    where i.empresa_id = e.id and not i.eh_cliente and coalesce(trim(i.acreditam), '') <> ''
+                                                      and i.acreditam <> pl.mensagem_central limit 3) x),
+                                          jsonb_build_array('Oferece o menor preço da região.', 'Faz de tudo um pouco, como as outras.')) end
+                                        from public.plataformas pl where pl.empresa_id = e.id),
+                           'ativos', (select coalesce(jsonb_agg(jsonb_build_object('id', a ->> 'id', 'tipo', a ->> 'tipo', 'texto', a ->> 'texto', 'imagem_url', a ->> 'imagem_url')), '[]'::jsonb)
+                                        from jsonb_array_elements(p.ativos) a))
+    from public.pesquisas p join public.empresas e on e.id = p.empresa_id
+   where p.token = p_token and p.aberta;
+$$;
+grant execute on function public.pesquisa_publica(uuid) to anon, authenticated;
+
+-- ===================== Plano pela estratégia =====================
+-- a ação guarda qual abordagem ela executa (nome curto), para o consultor e o cliente verem a ligação com a estratégia
+alter table public.acoes add column if not exists executa text;
