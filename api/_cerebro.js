@@ -4666,3 +4666,86 @@
     'A empresa era nova e sem histórico, e o cliente preferia arriscar menos escolhendo quem já conhecia.',
   ].forEach((texto) => { if (!P.resumosDiagnostico.some((x) => x.texto === texto)) P.resumosDiagnostico.push({ grupo: G, texto }); });
 })();
+
+// ===== Cerne da estratégia, rodada 3: a abordagem é uma escolha, não uma ação.
+// Cada uma diz onde jogar, por que a marca vence ali e do que ela abre mão. As táticas de antes viraram ações da biblioteca. =====
+(function () {
+  const P = window.GangPresets; if (!P || !P.desafios) return;
+  const G = 'Da biblioteca';
+  const A = {
+    especialista: 'Ser a especialista em um tipo de cliente e em um problema, vencendo por conhecer esse problema melhor que qualquer generalista. Abrimos mão de atender quem está fora desse perfil, mesmo quando pede orçamento.',
+    foco: 'Ser a referência em uma região e em um serviço antes de crescer, vencendo pela concentração de casos, indicações e lembrança no mesmo lugar. Abrimos mão de expandir para outras regiões e serviços por enquanto.',
+    cortar: 'Concentrar a empresa no que ela faz melhor e dá mais margem, vencendo pela qualidade que só o foco permite. Abrimos mão dos serviços e clientes que dão trabalho e pouco retorno.',
+    premium: 'Ser a opção premium da categoria, vencendo por um nível de entrega que os concorrentes não querem bancar. Abrimos mão do cliente que decide só pelo preço e de dar desconto para fechar.',
+    subirValor: 'Sair da faixa de preço baixo e escolher clientes que valorizam resultado, vencendo por uma entrega mais completa. Abrimos mão dos clientes que só ficam pelo preço.',
+    simples: 'Ser a opção simples e acessível da categoria, vencendo por um modelo enxuto que custa menos para operar. Abrimos mão de personalizar e de fazer serviços sob medida.',
+    conveniente: 'Ser a escolha mais conveniente da categoria, vencendo por ser fácil em cada passo, da procura ao pós-venda. Abrimos mão de ser a mais barata ou a mais sofisticada.',
+    subcategoria: 'Criar uma subcategoria e ser a primeira nela, vencendo por não ter com quem ser comparada. Abrimos mão de disputar a categoria inteira de frente.',
+    oposto: 'Ser a alternativa ao jeito como a categoria inteira trabalha, vencendo por fazer de propósito o que os concorrentes não conseguem copiar sem se contradizer. Abrimos mão das convenções que o mercado acha obrigatórias.',
+    quadro: 'Escolher contra quem a marca é comparada, vencendo em uma comparação em que ela é claramente melhor. Abrimos mão de convencer quem procura outra coisa.',
+    naoCopia: 'Competir pelo que leva tempo para construir: reputação, relacionamento e sinais próprios, vencendo porque isso não se copia em um lançamento. Abrimos mão de correr atrás de cada novidade dos concorrentes.',
+    parceira: 'Ser a parceira de longo prazo do cliente, vencendo pelo que ele perderia ao trocar: histórico, conhecimento do negócio e continuidade. Abrimos mão das vendas avulsas que não levam a uma relação.',
+    continuo: 'Trocar a venda única pelo acompanhamento contínuo, vencendo por estar presente em cada etapa do cliente. Abrimos mão de vender só o projeto pontual.',
+    conquistar: 'Crescer conquistando quem ainda não compra, vencendo por ser a marca que vem à cabeça primeiro em toda a categoria. Abrimos mão de concentrar o esforço só em quem já é cliente.',
+    momento: 'Ser a marca dona de uma situação de compra, vencendo por aparecer sempre que ela acontece. Abrimos mão de tentar estar em todo momento e em todo canal.',
+    onda: 'Liderar o jeito novo de comprar da categoria, vencendo por chegar antes ao canal e ao hábito que estão crescendo. Abrimos mão de proteger o modelo antigo à custa do novo.',
+    direto: 'Ter uma relação direta com o cliente, vencendo por não depender de intermediários nem de uma única plataforma. Abrimos mão de parte das vendas fáceis que o intermediário traz.',
+    base: 'Atender muitos clientes médios em vez de poucos grandes, vencendo por um serviço que se repete bem. Abrimos mão de projetos gigantes que ocupam a equipe inteira.',
+    nicho: 'Começar por um nicho pequeno em que a empresa consegue provar resultado rápido, vencendo pela atenção que os grandes não dão. Abrimos mão de clientes grandes enquanto não há história.',
+    proxima: 'Ser a empresa próxima, em que o cliente fala com quem decide, vencendo pela atenção pessoal que as maiores perderam. Abrimos mão de crescer em um ritmo que tire essa proximidade.',
+    confiavel: 'Prometer menos e entregar sempre igual, vencendo pela confiança de que o resultado não depende de sorte. Abrimos mão de exceções e promessas sob medida que a equipe não sustenta.',
+    dentro: 'Conquistar quem usa para que ele defenda a marca para quem decide, vencendo por ser a preferida dentro do cliente. Abrimos mão de vender só para quem assina.',
+    hoje: 'Assumir o que a empresa é hoje e deixar a fase antiga para trás, vencendo por uma marca que mostra o negócio atual. Abrimos mão do público que só conhece a empresa antiga.',
+    unica: 'Ser a única da região em uma coisa que o cliente valoriza, vencendo por organizar o negócio inteiro em torno dela. Abrimos mão de fazer bem o que todos fazem.',
+    resultado: 'Vender o resultado, e não horas ou itens, vencendo por assumir parte do risco do cliente. Abrimos mão de concorrer em orçamentos item por item.',
+    comprovada: 'Ser a mais comprovada da categoria, vencendo por deixar o resultado falar antes da venda. Abrimos mão de prometer o que ainda não conseguimos provar.',
+    coerente: 'Ter uma só promessa que guia venda, atendimento e comunicação, vencendo pela coerência que o cliente sente em todo contato. Abrimos mão de mensagens diferentes para cada canal ou vendedor.',
+    continua: 'Construir a marca de forma contínua, e não por campanhas, vencendo pela lembrança que se acumula mês a mês. Abrimos mão dos picos de campanha que somem depois.',
+    desafiante: 'Ser a desafiante declarada da líder, vencendo pelo que a líder não muda por ser grande. Abrimos mão de imitar a líder em versão menor.',
+  };
+  P.abordagens = Object.values(A).map((texto) => ({ grupo: G, texto }));
+  const MAPA = [
+    ['A marca é pouco lembrada', ['conquistar', 'momento', 'continua', 'unica']],
+    ['O cliente não vê diferença', ['especialista', 'oposto', 'unica', 'subcategoria']],
+    ['A marca só é lembrada por quem já é cliente', ['conquistar', 'momento', 'continua']],
+    ['A proposta começa pelo preço', ['resultado', 'premium', 'quadro']],
+    ['A experiência muda de pessoa para pessoa', ['confiavel', 'proxima']],
+    ['Os clientes compram uma vez e não voltam', ['continuo', 'parceira']],
+    ['A marca depende de um único canal', ['direto', 'onda', 'momento']],
+    ['Um concorrente maior ocupa a posição de referência', ['desafiante', 'oposto', 'especialista', 'foco']],
+    ['A marca tenta atender todo mundo', ['especialista', 'cortar', 'foco']],
+    ['A empresa tem qualidade, mas não tem provas visíveis', ['comprovada', 'especialista', 'resultado']],
+    ['É difícil achar e comprar da empresa', ['conveniente', 'direto', 'momento']],
+    ['A comunicação é irregular', ['continua', 'coerente']],
+    ['O jeito de comprar da categoria mudou', ['onda', 'conveniente', 'direto']],
+    ['A empresa faz de tudo um pouco', ['cortar', 'especialista', 'foco']],
+    ['A marca é vista como a mais cara', ['premium', 'resultado', 'quadro']],
+    ['A marca é vista como barata', ['subirValor', 'especialista', 'simples']],
+    ['O cliente não entende em que categoria', ['quadro', 'subcategoria']],
+    ['Os concorrentes copiam rápido', ['naoCopia', 'parceira', 'oposto']],
+    ['A empresa é nova', ['nicho', 'especialista', 'foco']],
+    ['A marca cresceu e perdeu o jeito próximo', ['proxima', 'confiavel']],
+    ['O cliente troca de fornecedor com facilidade', ['parceira', 'continuo']],
+    ['Quem decide a compra não é quem usa', ['dentro', 'resultado']],
+    ['Todos os concorrentes fazem igual', ['oposto', 'unica', 'subcategoria']],
+    ['A empresa depende de poucos clientes grandes', ['base', 'conquistar']],
+    ['A equipe de vendas promete coisas diferentes', ['coerente', 'confiavel']],
+    ['A marca é lembrada por um produto ou fase antiga', ['hoje', 'especialista', 'continua']],
+  ];
+  P.desafios.forEach((d) => { const m = MAPA.find(([ini]) => d.texto.startsWith(ini)); d.abordagens = m ? m[1].map((k) => A[k]) : []; });
+  // as táticas que estavam como abordagem viram ações da biblioteca (as que ainda não existiam)
+  const NOVAS = [
+    { texto: 'Escrever o roteiro da conversa de venda com a mesma promessa, as mesmas provas e os mesmos limites da comunicação', esforco: 'venda', promessa: 'vendas', tema: 'venda',
+      porque: 'Quando o vendedor promete uma coisa e a marca diz outra, o cliente desconfia. Um roteiro comum faz a venda confirmar o que a comunicação já disse.', metrica: 'Vendedores usando o mesmo roteiro' },
+    { texto: 'Escrever o padrão de atendimento: quem responde, como responde e em quanto tempo, do primeiro contato ao pós-venda', esforco: 'venda', promessa: 'pessoas', tema: 'experiencia',
+      porque: 'Se cada pessoa atende de um jeito, a promessa da marca vira sorte. Um padrão escrito faz todo cliente viver a mesma experiência.', metrica: 'Atendimentos dentro do padrão' },
+    { texto: 'Montar o acompanhamento depois da compra, com um contato marcado e a oferta do próximo passo', esforco: 'venda', promessa: 'valor', tema: 'relacao',
+      porque: 'O cliente que não ouve mais falar da empresa esquece dela. Um contato planejado depois da entrega abre caminho para a segunda compra.', metrica: 'Clientes que voltam a comprar' },
+    { texto: 'Transformar cada entrega concluída em um caso curto: o problema, o que foi feito e o resultado em número', esforco: 'marca', promessa: 'valor', tema: 'conteudo',
+      porque: 'Qualidade que ninguém vê não ajuda a vender. Um caso por entrega cria, com o tempo, um acervo de provas para todo contato.', metrica: 'Casos publicados por mês' },
+    { texto: 'Deixar o preço de partida e o próximo passo visíveis em todos os canais da marca', esforco: 'venda', promessa: 'vendas', tema: 'experiencia',
+      porque: 'Quem não sabe quanto custa nem o que fazer depois desiste antes de falar com a empresa. Clareza no começo encurta a compra.', metrica: 'Contatos que chegam já sabendo o preço de partida' },
+  ];
+  if (P.acoes) NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+})();
