@@ -955,7 +955,8 @@
     const emFalta = () => { const m = pesoPlano('marca'); const a = pesoPlano('ativacao'); return m + a === 0 || m / (m + a) < alvo ? 'marca' : 'ativacao'; };
     // a ordem de encaixe é a ordem de prioridade: quem entra primeiro pega os primeiros meses
     // 2. a estratégia: as ações que executam a abordagem viram essenciais nos 3 primeiros meses (até 3 por mês)
-    if (ab) (ab.acoes || []).filter((t) => !ja(t) && (doSetor(libDe(t)) || doModelo.some((x) => x.titulo === t))).forEach((t, k) => {
+    // no máximo 8: estratégia é foco, e mais que isso não cabe nos 3 primeiros meses junto com a fundação
+    if (ab) (ab.acoes || []).filter((t) => !ja(t) && (doSetor(libDe(t)) || doModelo.some((x) => x.titulo === t))).slice(0, 8).forEach((t, k) => {
       // se não couber, vai para o mês mais leve dos 3 primeiros: a estratégia nunca escorrega para depois do início
       const alvo = vaga(Math.min(Math.floor(k / 3), meses.length - 1), t);
       const ini3 = meses.slice(0, Math.min(3, meses.length));
