@@ -70,7 +70,7 @@
   // ===== dados =====
   const hoje = U.ref();
   const mesPassado = U.addRef(hoje, -1);
-  const [emp, plano, cons, objs, acoes, desc, nums, encs, diag, ori, peds, mets] = await Promise.all([
+  const [emp, plano, cons, objs, acoes, desc, nums, encs, diag, ori, peds, mets, futs] = await Promise.all([
     sb.from('empresas').select('id, nome, logo_url').maybeSingle(),
     sb.from('planos').select('*').maybeSingle(),
     sb.rpc('portal_consultor'),
@@ -83,11 +83,14 @@
     sb.from('orientacoes').select('*').eq('mes_ref', hoje).order('publicada_em', { ascending: false }).limit(1),
     sb.from('pedidos_revisao').select('*').order('enviado_em', { ascending: false }),
     sb.from('metricas').select('*').order('ordem'),
+    sb.rpc('portal_acoes_futuras'),
   ]);
   const D = {
     empresa: emp.data, plano: plano.data, consultor: (cons.data || [])[0], objetivos: objs.data || [],
     acoes: acoes.data || [], descartadas: desc.data || [], numeros: nums.data || [], encontros: encs.data || [],
     diagnostico: diag.data, foco: (ori.data || [])[0], pedidos: peds.data || [], metricas: mets.data || [],
+    // meses mais à frente: só a contagem (as ações em si chegam no mês anterior)
+    futuras: (futs && !futs.error && futs.data) || [],
   };
   // o material entregue (somente leitura)
   const MARCA = ['escolhas', 'condicoes', 'impressoes', 'fatores', 'causas', 'mensagens_apoio', 'tom_atributos', 'tom_exemplos',
@@ -438,7 +441,7 @@
     const lista = el('ul', { class: 'tasks', id: 'acoes-lista', role: 'tabpanel' });
     const tabs = el('div', { class: 'tabs', role: 'tablist', 'aria-label': 'Ações por período' }, Object.keys(grupos).map((k) =>
       el('button', { class: 'tabs__btn', role: 'tab', type: 'button', 'aria-selected': String(k === abaAcoes), 'aria-controls': 'acoes-lista',
-        onclick: () => { abaAcoes = k; render(); } }, nomes[k], el('span', 'tabs__n', String(grupos[k].filter((x) => k === 'feitas' || x.status !== 'feita').length)))));
+        onclick: () => { abaAcoes = k; render(); } }, nomes[k], el('span', 'tabs__n', String(grupos[k].filter((x) => k === 'feitas' || x.status !== 'feita').length + (k === 'proximos' ? D.futuras.reduce((m, f) => m + f.n, 0) : 0))))));
     tabs.addEventListener('keydown', (ev) => {
       const ks = Object.keys(grupos); const i = ks.indexOf(abaAcoes);
       if (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') {
@@ -448,7 +451,7 @@
     });
 
     const doGrupo = grupos[abaAcoes];
-    if (!doGrupo.length) lista.append(el('li', 'tasks__empty', { mes: 'Nenhuma ação pendente neste mês.', proximos: 'Nenhuma ação prevista para os próximos meses.', feitas: 'Nenhuma ação concluída ainda.' }[abaAcoes]));
+    if (!doGrupo.length && !(abaAcoes === 'proximos' && D.futuras.length)) lista.append(el('li', 'tasks__empty', { mes: 'Nenhuma ação pendente neste mês.', proximos: 'Nenhuma ação prevista para os próximos meses.', feitas: 'Nenhuma ação concluída ainda.' }[abaAcoes]));
     const primeira = abaAcoes === 'mes' ? doGrupo.find((a) => a.responsavel !== 'gang') : null;
     if (abaAcoes === 'proximos') {
       // próximos meses: um bloco por mês, fechado; o próximo mês já vem aberto (sem lista gigante)
@@ -474,6 +477,11 @@
         });
         lista.append(el('li', 'tasks__mesli', det));
       });
+      D.futuras.filter((f) => !porMes[f.mes_previsto]).forEach((f) => lista.append(el('li', 'tasks__mesli',
+        el('div', 'tasks__mes tasks__mes--fechado',
+          el('div', 'tasks__fech', el('span', 'tasks__mes-t', U.cap(U.nomeMes(f.mes_previsto)) + ' ' + f.mes_previsto.slice(0, 4)),
+            el('span', 'tasks__mes-n', f.n + (f.n === 1 ? ' ação' : ' ações') + (f.essenciais ? ' · ' + f.essenciais + (f.essenciais === 1 ? ' essencial' : ' essenciais') : '')),
+            el('span', 'tasks__cad', 'Abre em ' + U.nomeMes(U.addRef(f.mes_previsto, -1))))))));
     } else doGrupo.forEach((a) => {
       const card = cartaoAcao(a);
       if (a === primeira) { card.classList.add('is-prioridade'); card.querySelector('.task__sub').prepend(el('span', 'task__flag', 'Faça agora'), ' '); }
@@ -1215,7 +1223,28 @@
     if (parEsf) out.push(el('details', 'mais mais--res', el('summary', null, el('span', null, 'Mais sobre a marca'), el('span', 'mais__sub', 'onde vai o esforço e buscas pelo nome no Google')), parEsf));
     const apr = aprendizados(); const voz = vozDoCliente();
     if (apr.length || voz) out.push(parte('Aprendizados', 'O que funcionou, o que não funcionou e o que seus clientes dizem.'), lado(apr, [voz]));
-    return out;
+    return emAbas(out.filter(Boolean));
+  };
+  // Resultados em abas: o resumo (números, veredito) fica em cima; Negócio, Marca e Aprendizados ficam cada um na sua aba
+  let abaRes = 'Negócio';
+  const emAbas = (out) => {
+    const idx = out.map((n, i) => (n && n.classList && n.classList.contains('res-part') ? i : -1)).filter((i) => i >= 0);
+    if (idx.length < 2) return out;
+    const topo = out.slice(0, idx[0]);
+    const partes = idx.map((i, k) => ({ t: out[i].querySelector('.res-part__t').textContent, cab: out[i], corpo: out.slice(i + 1, idx[k + 1] || out.length) }));
+    if (!partes.some((x) => x.t === abaRes)) abaRes = partes[0].t;
+    const painel = el('div', { class: 'res-painel', id: 'res-painel', role: 'tabpanel' });
+    const mostra = () => {
+      const x = partes.find((y) => y.t === abaRes);
+      const d = x.cab.querySelector('.res-part__d');
+      painel.replaceChildren(...(d ? [el('p', 'res-painel__d', d.textContent)] : []), ...x.corpo);
+    };
+    const abas = el('div', { class: 'tabs res-abas', role: 'tablist', 'aria-label': 'Resultados por assunto' }, partes.map((x) =>
+      el('button', { class: 'tabs__btn', role: 'tab', type: 'button', 'aria-selected': String(x.t === abaRes), 'aria-controls': 'res-painel', onclick: (ev) => {
+        abaRes = x.t; abas.querySelectorAll('.tabs__btn').forEach((b) => b.setAttribute('aria-selected', 'false')); ev.currentTarget.setAttribute('aria-selected', 'true'); mostra();
+      } }, x.t)));
+    mostra();
+    return [...topo, el('div', 'res-abas-wrap', abas, painel)];
   };
 
   // dois blocos lado a lado (no celular, um embaixo do outro); se só um existir, ele ocupa a linha
@@ -2226,13 +2255,17 @@
     const visual = (a) => (a.tipo === 'cor' && /^#[0-9a-f]{6}$/i.test(a.texto || '') ? el('span', { class: 'asset-mini', style: 'background:' + a.texto })
       : a.imagem_url ? el('span', 'asset-mini', el('img', { src: a.imagem_url, alt: '' })) : el('span', 'asset-mini asset-mini--txt', a.texto ? '“' + a.texto + '”' : a.nome));
     const comDado = itens.filter((x) => x.m);
+    const nMax = Math.max(0, ...comDado.map((x) => x.m.n));
+    const preliminar = comDado.length && nMax < 30;
     return sec('dist-t', 'O que faz reconhecerem a marca',
       el('p', 'box__text', 'O que faz as pessoas reconhecerem a marca sem ler o nome. Na pesquisa, mostramos cada um sem a marca e perguntamos de quem é.'),
+      preliminar ? el('p', 'prelim', el('span', { class: 'chip chip--doing' }, 'Leitura preliminar'),
+        el('span', null, 'Com ' + nMax + (nMax === 1 ? ' resposta' : ' respostas') + ', leia como tendência. A partir de 30 respostas, os números ficam firmes.')) : null,
       el('div', comDado.length >= 2 ? 'dist-grid' : 'dist-solo', comDado.length >= 2 ? graficoDispersao(comDado) : null,
       el('ul', 'todo', itens.map(({ a, m }) => el('li', 'piece',
         el('div', 'asset-row', visual(a), el('div', 'todo__text', el('span', 'todo__title', a.nome),
-          el('span', 'todo__sub', m ? 'Fama ' + m.fama + '% · exclusividade ' + m.excl + '% · ' + m.n + ' respostas' : 'Ainda sem medição: entra na próxima rodada da pesquisa'))),
-        m ? chip(...QUAD(m)) : chip('todo', 'Sem dados'))))));
+          el('span', 'todo__sub', m ? 'Fama ' + m.fama + '% · exclusividade ' + m.excl + '% · ' + m.n + ' respostas' + (m.n < 30 ? ' · tendência' : '') : 'Ainda sem medição: entra na próxima rodada da pesquisa'))),
+        m ? chip(...(m.n < 30 ? ['todo', 'Poucas respostas'] : QUAD(m))) : chip('todo', 'Sem dados'))))));
   };
   // dispersão fama × exclusividade, com os quatro quadrantes
   const graficoDispersao = (itens) => grafico('chart--scatter', 'Ativos por fama e exclusividade: ' + itens.map(({ a, m }) => a.nome + ' fama ' + m.fama + '% exclusividade ' + m.excl + '%').join('; '), (W, tip, box) => {
@@ -2354,6 +2387,22 @@
   const botoesFormato = (a) => (a.formatos || []).map((f) => (f.link
     ? el('a', { class: 'btn btn--ghost btn--sm', href: f.link, target: '_blank', rel: 'noopener' }, f.formato || 'Abrir')
     : baixar(f.caminho, f.formato || 'Baixar', 'btn btn--ghost btn--sm')));
+  // no celular, telas longas viram blocos que abrem um de cada vez (o primeiro já vem aberto)
+  const dobraNoCelular = (out) => {
+    if (!window.matchMedia('(max-width: 700px)').matches) return out;
+    const caixas = []; out.forEach((n) => { if (!n || !n.querySelectorAll) return; if (n.matches('section.box')) caixas.push(n); else caixas.push(...n.querySelectorAll('section.box')); });
+    caixas.forEach((c, i) => {
+      const t = c.querySelector(':scope > .box__title, :scope > .gh > .box__title, :scope > .box__head > .box__title');
+      if (!t) return;
+      const d = el('details', { class: 'dobra', open: i === 0 });
+      const sum = el('summary', 'dobra__s', el('span', null, t.textContent));
+      const cab = t.closest('.gh, .box__head'); (cab && cab.parentElement === c ? cab : t).remove();
+      d.append(sum, el('div', 'dobra__c', ...c.childNodes));
+      d.addEventListener('toggle', () => { if (d.open) document.querySelectorAll('details.dobra[open]').forEach((o) => { if (o !== d) o.open = false; }); });
+      c.replaceChildren(d); c.classList.add('box--dobra');
+    });
+    return out;
+  };
   const telaIdentidade = () => {
     const I = D.identidade;
     const out = [head(I ? [I.entregue_em ? 'Entregue em ' + U.mesAno(I.entregue_em) : null, I.versao ? 'versão ' + I.versao : null].filter(Boolean).join(' · ') : '', 'Identidade visual',
@@ -2434,7 +2483,7 @@
         el('p', 'tone__name', a.ponto_contato), chip(AP[a.status] || 'todo', txt(a)))))));
     }
     if (fim.length) out.push(lado(fim));
-    return out;
+    return dobraNoCelular(out);
   };
 
   // Estratégia
@@ -2896,6 +2945,7 @@
   };
 
   // ===== Relatório do mês: uma página para mostrar aos sócios (imprimir ou salvar em PDF) =====
+  let relModo = 'completo';
   const telaRelatorio = () => {
     const nome = D.empresa ? D.empresa.nome : 'Sua empresa';
     const r0 = mesPassado; const r1 = hoje;
@@ -2918,10 +2968,35 @@
     const bloco = (t, ...k) => el('section', 'rel__sec', el('h2', 'rel__h', t), k);
     const lista = (arr, f) => (arr.length ? el('ul', 'rel__list', arr.map(f)) : el('p', 'rel__muted', 'Nada neste período.'));
     const essenciais = D.acoes.filter((a) => a.status !== 'feita' && a.peso === 'essencial' && a.mes_previsto <= U.addRef(r1, 1));
-    return [el('article', 'rel',
-      el('div', 'rel__bar no-print',
-        el('a', { class: 'link', href: '#resultados' }, '← Voltar'),
-        el('button', { class: 'btn btn--light btn--sm', type: 'button', onclick: () => window.print() }, 'Imprimir ou salvar em PDF')),
+    const troca = el('div', { class: 'rel__modo', role: 'group', 'aria-label': 'Formato do relatório' },
+      [['completo', 'Completo'], ['socios', '1 página para sócios']].map(([k, t]) => el('button', { class: 'fchip', type: 'button', 'aria-pressed': String(relModo === k), onclick: () => { relModo = k; render(); } }, t)));
+    const barra = el('div', 'rel__bar no-print',
+      el('a', { class: 'link', href: '#resultados' }, '← Voltar'), troca,
+      el('button', { class: 'btn btn--light btn--sm', type: 'button', onclick: () => window.print() }, 'Imprimir ou salvar em PDF'));
+    if (relModo === 'socios') {
+      // uma página: aonde vamos, onde estamos, o que o consultor diz e os próximos passos
+      const objNeg = D.objetivos.find((o) => o.nivel === 'negocio');
+      const ns = [...D.numeros].filter((n) => n.faturamento != null).sort((a, b) => a.mes_ref.localeCompare(b.mes_ref));
+      const ult = ns[ns.length - 1]; const ant = ns[ns.length - 2];
+      const var_ = (a, b) => (a != null && b ? U.pct(Math.round(((a / b) - 1) * 1000) / 10, 1) : null);
+      const kpis = [
+        ['Faturamento', ult ? U.reais(ult.faturamento) : '—', ult && ant ? var_(Number(ult.faturamento), Number(ant.faturamento)) + ' vs. ' + U.nomeMes(ant.mes_ref) : ult ? U.cap(U.nomeMes(ult.mes_ref)) : ''],
+        ['Clientes novos', ult && ult.clientes_novos != null ? String(ult.clientes_novos) : '—', ult ? U.cap(U.nomeMes(ult.mes_ref)) : ''],
+        ['Ações concluídas', D.acoes.filter((a) => a.status === 'feita').length + ' de ' + D.acoes.filter((a) => a.mes_previsto <= r1).length, 'até ' + U.nomeMes(r1)],
+        ['Mês do plano', mesN + ' de ' + dur, objNeg && objNeg.destaque ? 'meta ' + objNeg.destaque : ''],
+      ];
+      return [el('article', 'rel rel--socios', barra,
+        el('header', 'rel__head',
+          el('div', null, el('p', 'rel__eyebrow', 'Resumo de ' + U.nomeMes(r1) + ' de ' + r1.slice(0, 4)),
+            el('h1', 'rel__title', nome),
+            el('p', 'rel__sub', objNeg ? 'Meta: ' + ((objNeg.destaque ? objNeg.destaque + ' ' : '') + (objNeg.titulo || '')) : 'Consultoria de marca GANG')),
+          el('p', 'rel__by', 'Consultoria GANG')),
+        el('div', 'rel__grid rel__grid--4', kpis.map(([k, v, sub]) => el('div', 'rel__kpi', el('p', 'rel__k', k), el('p', 'rel__v', v), sub ? el('p', 'rel__muted', sub) : null))),
+        D.foco && D.foco.veredito ? bloco('O que o consultor diz', el('p', 'rel__p', D.foco.veredito)) : null,
+        bloco('Próximos passos', lista(essenciais.slice(0, 4), (a) => el('li', null, el('strong', null, a.titulo), ' · ' + U.cap(U.nomeMes(a.mes_previsto))))),
+        D.proximo ? el('p', 'rel__muted', 'Próximo encontro: ' + U.quando(D.proximo.inicio)) : null)];
+    }
+    return [el('article', 'rel', barra,
       el('header', 'rel__head',
         el('div', null, el('p', 'rel__eyebrow', 'Relatório de ' + U.nomeMes(r1) + ' de ' + r1.slice(0, 4) + ' · mês ' + mesN + ' de ' + dur),
           el('h1', 'rel__title', nome),

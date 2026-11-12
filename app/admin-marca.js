@@ -368,4 +368,106 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       { k: 'data', label: 'Data', type: 'date' }],
     resumo: (r) => [r.ponto_contato, AP_T[r.status] + (r.data ? ' · ' + U.dia(r.data) : '')] }],
   ]);
+
+  // ===== Implantação do cliente: o que já foi montado e o que falta (no topo de todas as abas, até ficar completo) =====
+  const PASSOS = [
+    ['diagnostico', 'Diagnóstico', 'O ponto de partida e a comparação com os concorrentes', async () => {
+      const [d, i] = await Promise.all([sb.from('diagnosticos').select('empresa_id').eq('empresa_id', id).maybeSingle(), sb.from('impressoes').select('id').limit(1).eq('empresa_id', id)]);
+      return !!d.data && (i.data || []).length > 0; }],
+    ['estrategia', 'Estratégia', 'Objetivos, onde jogamos e o que acompanhamos', async () => {
+      const [o, e] = await Promise.all([sb.from('objetivos').select('id').limit(1).eq('empresa_id', id), sb.from('escolhas').select('id').limit(1).eq('empresa_id', id)]);
+      return (o.data || []).length > 0 && (e.data || []).length > 0; }],
+    ['plataforma', 'Narrativa', 'Posicionamento, mensagem central e tom de voz', async () => {
+      const r = await sb.from('plataformas').select('posicionamento, mensagem_central').eq('empresa_id', id).maybeSingle();
+      return !!(r.data && r.data.posicionamento && r.data.mensagem_central); }],
+    ['identidade', 'Identidade visual', 'Logos, cores e fontes', async () => {
+      const [c, t] = await Promise.all([sb.from('cores').select('id').limit(1).eq('empresa_id', id), sb.from('tipografias').select('id').limit(1).eq('empresa_id', id)]);
+      return (c.data || []).length > 0 && (t.data || []).length > 0; }],
+    ['acoes', 'Plano de ações', 'As ações dos 18 meses', async () => {
+      const r = await sb.from('acoes').select('id').limit(1).eq('empresa_id', id); return (r.data || []).length > 0; }],
+    ['acessos', 'Acesso do cliente', 'O login para o cliente entrar no portal', async () => {
+      const r = await sb.from('profiles').select('id').limit(1).eq('empresa_id', id).eq('role', 'client'); return (r.data || []).length > 0; }],
+    ['resultados', 'Pesquisa de partida', 'A primeira rodada da pesquisa de marca', async () => {
+      const r = await sb.from('pesquisas').select('id').limit(1).eq('empresa_id', id); return (r.data || []).length > 0; }],
+  ];
+  let implAberta = null;
+  const implanta = async () => {
+    const box = $('implanta'); if (!box) return;
+    const feitos = await Promise.all(PASSOS.map(([, , , f]) => f().catch(() => false)));
+    const n = feitos.filter(Boolean).length;
+    if (n === PASSOS.length) { box.hidden = true; return; }
+    const aqui = location.hash.slice(1);
+    if (implAberta === null) implAberta = n < 3;
+    const det = el('details', { class: 'implanta__det', open: implAberta },
+      el('summary', 'implanta__s',
+        el('span', { class: 'implanta__t', id: 'impl-t' }, 'Implantação do cliente'),
+        el('span', 'implanta__n', n + ' de ' + PASSOS.length),
+        el('span', { class: 'implanta__barra', 'aria-hidden': 'true' }, el('span', { style: 'width:' + Math.round((n / PASSOS.length) * 100) + '%' })),
+        el('button', { class: 'btn btn--ghost btn--sm implanta__copia', type: 'button', onclick: (ev) => { ev.preventDefault(); abreCopia(); } }, 'Partir de outro cliente')),
+      el('ol', 'implanta__lista', PASSOS.map(([tab, t, d], i) => el('li', 'implanta__i' + (feitos[i] ? ' is-ok' : '') + (tab === aqui ? ' is-aqui' : ''),
+        el('span', 'implanta__q', feitos[i] ? '✓' : String(i + 1)),
+        el('div', 'implanta__m', el('p', 'implanta__it', t), el('p', 'implanta__id', d)),
+        feitos[i] ? el('span', 'implanta__ok', 'Pronto') : el('a', { class: 'btn btn--ghost btn--sm', href: '#' + tab }, tab === aqui ? 'Você está aqui' : 'Preencher')))));
+    det.addEventListener('toggle', () => { implAberta = det.open; });
+    box.replaceChildren(det); box.hidden = false;
+  };
+  implanta();
+  window.addEventListener('hashchange', implanta);
+
+  // ===== Partir de um cliente parecido: copia diagnóstico, estratégia e narrativa como ponto de partida =====
+  const COPIAS = [
+    ['Diagnóstico', [['fatores', 'O que todo cliente exige e o que faz escolher', (r) => ({ tipo: r.tipo, texto: r.texto, posicao: 'nao_entrega' })],
+      ['causas', 'As causas que o plano ataca', (r) => ({ texto: r.texto })]]],
+    ['Estratégia', [['objetivos', 'Objetivos', (r) => ({ nivel: r.nivel, titulo: r.titulo, destaque: r.destaque, notar: r.notar, acreditar: r.acreditar, sentir: r.sentir })],
+      ['situacoes', 'Situações de compra', (r) => ({ texto: r.texto })],
+      ['escolhas', 'Onde atuamos e o que deixamos de lado', (r) => ({ tipo: r.tipo, texto: r.texto })],
+      ['condicoes', 'O que acompanhamos', (r) => ({ texto: r.texto, como_verificar: r.como_verificar, status: 'sem_dados' })]]],
+    ['Narrativa', [['tom_atributos', 'Tom de voz', (r) => ({ nome: r.nome, descricao: r.descricao })],
+      ['tom_exemplos', 'A marca diz e nunca diz', (r) => ({ tipo: r.tipo, texto: r.texto })],
+      ['facetas', 'Quem a marca é (só as facetas vazias)', null]]],
+  ];
+  const abreCopia = async () => {
+    const [{ data: emps }, { data: eu }] = await Promise.all([sb.from('empresas').select('id, nome, setor').neq('id', id).order('nome'), sb.from('empresas').select('setor').eq('id', id).maybeSingle()]);
+    const setor = eu && eu.setor;
+    const lista = (emps || []).sort((a, b) => (b.setor === setor) - (a.setor === setor));
+    const nomeSet = (s) => ((window.GangPresets || {}).SETORES || {})[s] || s;
+    const msg = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite' });
+    const sel = el('select', { class: 'field', id: 'cp-de' }, lista.length ? lista.map((e) => el('option', { value: e.id }, e.nome + (e.setor ? ' · ' + nomeSet(e.setor) : '') + (setor && e.setor === setor ? ' (mesmo setor)' : ''))) : el('option', { value: '' }, 'Nenhum outro cliente'));
+    const caixas = COPIAS.map(([g, itens]) => el('fieldset', 'copia__g', el('legend', 'label', g), itens.map(([t, rot]) =>
+      el('label', 'copia__op', el('input', { type: 'checkbox', value: t, checked: true }), el('span', null, rot)))));
+    const dlg = el('dialog', { class: 'dialog copia', 'aria-labelledby': 'cp-t' },
+      el('form', { method: 'dialog', class: 'copia__f' },
+        el('h2', { class: 'title-sm', id: 'cp-t' }, 'Partir de outro cliente'),
+        el('p', 'small', 'Copia os itens como ponto de partida. Nada é apagado: o que já existe aqui fica, e itens iguais não se repetem. Depois, ajuste ao cliente.'),
+        el('div', null, el('label', { class: 'label', for: 'cp-de' }, 'Copiar de'), sel),
+        el('div', 'copia__gs', caixas),
+        el('div', 'new-client__foot',
+          el('button', { class: 'btn btn--light btn--sm', type: 'button', disabled: !lista.length, onclick: async (ev) => {
+            const de = sel.value; if (!de) return;
+            const marcadas = [...dlg.querySelectorAll('input[type=checkbox]:checked')].map((x) => x.value);
+            ev.currentTarget.disabled = true; say(msg, 'Copiando…');
+            let total = 0;
+            for (const [, itens] of COPIAS) for (const [tab, , map] of itens) {
+              if (!marcadas.includes(tab)) continue;
+              if (tab === 'facetas') {
+                const [{ data: src }, { data: dst }] = await Promise.all([sb.from('facetas').select('*').eq('empresa_id', de), sb.from('facetas').select('*').eq('empresa_id', id)]);
+                const tem = new Set((dst || []).filter((f) => f.texto).map((f) => f.chave));
+                const rows = (src || []).filter((f) => f.texto && !tem.has(f.chave)).map((f) => ({ empresa_id: id, chave: f.chave, texto: f.texto }));
+                if (rows.length) { await sb.from('facetas').upsert(rows, { onConflict: 'empresa_id,chave' }); total += rows.length; }
+                continue;
+              }
+              const [{ data: src }, { data: dst }] = await Promise.all([sb.from(tab).select('*').eq('empresa_id', de).order('ordem'), sb.from(tab).select('*').eq('empresa_id', id)]);
+              const chave = (r) => [r.tipo || r.nivel || '', (r.texto || r.titulo || r.nome || '').trim().toLowerCase()].join('|');
+              const ja = new Set((dst || []).map(chave));
+              let ordem = (dst || []).reduce((m, x) => Math.max(m, x.ordem || 0), 0);
+              const rows = (src || []).filter((r) => !ja.has(chave(r))).map((r) => ({ ...map(r), empresa_id: id, ordem: (ordem += 1) }));
+              if (rows.length) { const r = await sb.from(tab).insert(rows); if (!r.error) total += rows.length; }
+            }
+            say(msg, total ? total + (total === 1 ? ' item copiado.' : ' itens copiados.') + ' Atualizando…' : 'Nada novo para copiar.', total ? 'ok' : null);
+            if (total) setTimeout(() => location.reload(), 900); else ev.currentTarget.disabled = false;
+          } }, 'Copiar'),
+          el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => dlg.close() }, 'Cancelar'), msg)));
+    dlg.addEventListener('close', () => dlg.remove());
+    document.body.append(dlg); dlg.showModal();
+  };
 });
