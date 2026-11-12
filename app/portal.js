@@ -2248,8 +2248,8 @@
     if (D.tom_atributos.length) out.push(secN('tom-t', 'Tom de voz', D.tom_atributos.length, 'Como a marca soa em qualquer texto.',
       el('div', 'tone', D.tom_atributos.map((a) => el('div', 'tone__item', el('p', 'tone__name', a.nome), a.descricao ? el('p', 'box__text', a.descricao) : null)))));
     if (diz.length || nunca.length) out.push(el('div', 'grid grid--half',
-      diz.length ? secN('diz-t', 'A marca diz', diz.length, null, grupo(diz.map((x) => [quad('ok', 'ok'), aspas(x.texto)]))) : el('div'),
-      nunca.length ? secN('nunca-t', 'Nunca diz', nunca.length, null, grupo(nunca.map((x) => [quad('nao', 'bad'), aspas(x.texto)]))) : el('div')));
+      diz.length ? secN('diz-t', 'A marca diz', diz.length, null, grupo(diz.map((x) => [quad('ok', 'ok'), aspas(x.texto)]))) : null,
+      nunca.length ? secN('nunca-t', 'Nunca diz', nunca.length, null, grupo(nunca.map((x) => [quad('nao', 'bad'), aspas(x.texto)]))) : null));
 
     const facs = FACETAS.filter(([k]) => D.facetas[k]);
     if (facs.length) out.push(secN('who-t', 'Quem a marca é', facs.length + '/' + FACETAS.length, 'O jeito da marca, para decidir o que combina com ela.',
@@ -2694,8 +2694,8 @@
     const fatores = (idt, titulo, fs) => secN(idt, titulo, entregues(fs) + '/' + fs.length, null,
       grupo(fs.map((f) => { const P = POS[f.posicao] || POS.nao_entrega; return [quad(P[2], P[3]), f.texto, null, chip(P[0], P[1])]; })));
     if (mot.length || dis.length) out.push(el('div', 'grid grid--half',
-      mot.length ? fatores('mot-t', 'O que todo cliente exige', mot) : el('div'),
-      dis.length ? fatores('dis-t', 'O que faz escolher uma marca', dis) : el('div')));
+      mot.length ? fatores('mot-t', 'O que todo cliente exige', mot) : null,
+      dis.length ? fatores('dis-t', 'O que faz escolher uma marca', dis) : null));
 
     if (D.causas.length) out.push(secN('cau-t', 'As causas que o plano ataca', D.causas.length, 'Cada ação do plano ataca pelo menos uma delas.',
       grupo(D.causas.map((c, i) => [quad(String(i + 1), 'num'), c.texto]))));
@@ -2803,6 +2803,7 @@
   let caminhoSel = null; // o checkpoint aberto (mês); começa no mês atual
   let trilhaX = null;
   let cpTrocou = false; // o cliente clicou num checkpoint: o painel logo abaixo da trilha mostra a troca     // a rolagem da trilha, mantida enquanto se navega pelos checkpoints
+  const CADEADO = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
   const BANDEIRA = '<svg viewBox="0 0 28 32" width="28" height="32" aria-hidden="true"><rect x="3" y="2" width="2.4" height="29" rx="1.2" fill="currentColor"/>'
     + [0, 1, 2, 3].map((r) => [0, 1, 2, 3, 4].map((c) => ((r + c) % 2 ? '' : '<rect x="' + (6 + c * 4) + '" y="' + (3 + r * 4) + '" width="4" height="4" fill="currentColor"/>')).join('')).join('')
     + '<rect x="6" y="3" width="20" height="16" fill="none" stroke="currentColor" stroke-width="1"/></svg>';
@@ -2938,7 +2939,12 @@
       const b = el('button', { class: 'trail__node is-' + cls + (ultimo ? ' is-fim' : '') + (e.r === caminhoSel ? ' is-sel' : ''), type: 'button', 'aria-pressed': String(e.r === caminhoSel),
         'aria-label': U.cap(U.nomeMes(e.r)) + ', mês ' + n + ': ' + (k == null ? 'por vir' : k + ' de 5 estrelas' + (e.fase === 'agora' ? ', em andamento' : '')),
         onclick: () => { caminhoSel = e.r; cpTrocou = true; render(); } });
-      if (ultimo) { b.innerHTML = BANDEIRA; b.dataset.dica = 'Chegada · ' + U.nomeMes(e.r) + ' de ' + e.r.slice(0, 4); }
+      // meses mais à frente ficam trancados (as ações chegam no mês anterior), como em "Próximos meses"
+      const trancado = !ultimo && e.r > U.addRef(hoje, 1);
+      if (trancado) {
+        b.classList.add('is-trancado'); b.innerHTML = CADEADO; b.dataset.dica = U.cap(U.nomeMes(e.r)) + ' · abre em ' + U.nomeMes(U.addRef(e.r, -1));
+        b.setAttribute('aria-label', U.cap(U.nomeMes(e.r)) + ', mês ' + n + ': trancado, abre em ' + U.nomeMes(U.addRef(e.r, -1)));
+      } else if (ultimo) { b.innerHTML = BANDEIRA; b.dataset.dica = 'Chegada · ' + U.nomeMes(e.r) + ' de ' + e.r.slice(0, 4); }
       else if (k === 5) b.textContent = '★';
       else if (k != null && e.fase === 'passado') b.replaceChildren(String(k), el('span', 'trail__star', '★'));
       else b.textContent = String(n);
@@ -3004,7 +3010,7 @@
     const cpEl = el('section', { class: 'cp' + (cpTrocou ? ' cp--entra' : '') + (k === 5 ? ' is-5' : ''), 'aria-labelledby': 'cp-t', 'aria-live': 'polite' },
       el('div', 'cp__head',
         el('div', null, el('p', 'eyebrow', (ultimo ? 'Chegada · ' : 'Mês ' + n + ' · ') + U.cap(U.nomeMes(caminhoSel)) + ' ' + caminhoSel.slice(0, 4)),
-          el('h2', { class: 'cp__t', id: 'cp-t' }, futuro ? 'Este mês ainda vai começar' : k === 5 ? 'Mês 5 estrelas' : k + ' de 5 estrelas' + (e.fase === 'agora' ? ' até agora' : ''))),
+          el('h2', { class: 'cp__t', id: 'cp-t' }, futuro ? (caminhoSel > U.addRef(hoje, 1) && caminhoSel !== fim ? 'Trancado: abre em ' + U.nomeMes(U.addRef(caminhoSel, -1)) : 'Este mês ainda vai começar') : k === 5 ? 'Mês 5 estrelas' : k + ' de 5 estrelas' + (e.fase === 'agora' ? ' até agora' : ''))),
         futuro ? chip('todo', 'Por vir') : e.fase === 'agora' ? chip('doing', 'Em andamento') : chip(k === 5 ? 'done' : 'todo', 'Encerrado')),
       futuro ? null : el('p', { class: 'stars__row', role: 'img', 'aria-label': k + ' de 5 estrelas' }, st.map((x) => el('span', x[2] ? 'is-on' : null, x[2] ? '★' : '☆'))),
       el('ul', 'stars__chips' + (futuro ? ' is-futuro' : ''), st.map(([t, d, ok]) => {
