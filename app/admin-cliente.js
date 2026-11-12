@@ -1090,7 +1090,7 @@
       el('div', 'row__main', el('p', 'row__eyebrow', NIV_M[m.nivel] + ' · ' + FREQ[m.frequencia]), el('p', 'row__title', m.nome),
         el('p', 'row__text', m.valor_atual ? 'Agora: ' + m.valor_atual : (m.proxima_medicao ? '1ª medição em ' + U.mesAno(m.proxima_medicao) : 'Sem valor ainda'))),
       el('div', 'row__actions', rowBtn('Editar', () => abreMet(m)),
-        rowBtn('Excluir', async () => { if (!confirm('Excluir a métrica “' + m.nome + '”?')) return; await sb.from('metricas').delete().eq('id', m.id); loadMets(); }, true)))) : [el('li', 'clients__empty', 'Nenhuma métrica ainda.')]));
+        rowBtn('Excluir', async () => { if (!confirm('Excluir a métrica “' + m.nome + '”?')) return; await sb.from('metricas').delete().eq('id', m.id); loadMets(); }, true)))) : [el('li', 'ed-vazio', 'Nenhuma métrica ainda. Cadastre uma por objetivo em Nova métrica.')]));
     return data || [];
   };
   metForm.addEventListener('submit', async (ev) => {
@@ -1252,7 +1252,7 @@
     const { data } = await sb.from('buscas').select('*').eq('empresa_id', id).order('mes_ref', { ascending: false });
     $('buscas').replaceChildren(...((data || []).length ? data.map((b) => el('li', 'row',
       el('div', 'row__main', el('p', 'row__title', MESES(b.mes_ref) + ': ' + Number(b.marca_pct).toLocaleString('pt-BR') + '%')),
-      el('div', 'row__actions', rowBtn('Excluir', async () => { await sb.from('buscas').delete().eq('empresa_id', id).eq('mes_ref', b.mes_ref); loadBuscas(); }, true)))) : [el('li', 'clients__empty', 'Nenhum mês anotado.')]));
+      el('div', 'row__actions', rowBtn('Excluir', async () => { await sb.from('buscas').delete().eq('empresa_id', id).eq('mes_ref', b.mes_ref); loadBuscas(); }, true)))) : [el('li', 'ed-vazio', 'Nenhum mês anotado ainda.')]));
   };
   $('busca-form').addEventListener('submit', async (ev) => {
     ev.preventDefault();
@@ -1269,7 +1269,7 @@
     const { data } = await sb.from('vozes').select('*').eq('empresa_id', id).order('criada_em', { ascending: false });
     $('vozes-adm').replaceChildren(...((data || []).length ? data.map((v) => el('li', 'row',
       el('div', 'row__main', el('p', 'row__eyebrow', MESES(v.mes_ref)), el('p', 'row__title', v.texto)),
-      el('div', 'row__actions', rowBtn('Excluir', async () => { await sb.from('vozes').delete().eq('id', v.id); loadVozes(); }, true)))) : [el('li', 'clients__empty', 'Nada registrado ainda.')]));
+      el('div', 'row__actions', rowBtn('Excluir', async () => { await sb.from('vozes').delete().eq('id', v.id); loadVozes(); }, true)))) : [el('li', 'ed-vazio', 'Nada registrado ainda. As frases aparecem aqui quando o cliente escrever no portal.')]));
   };
   loadVozes();
 

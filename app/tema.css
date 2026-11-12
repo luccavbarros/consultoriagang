@@ -270,7 +270,6 @@ a.kpi:hover { background: #1f1f1f; }
 .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
 .grade3 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 28px; align-items: start; }
 .grade3 > #res-pesq { grid-column: 1 / -1; order: -1; }
-.grade3 > #res-voz { grid-column: 1 / -1; }
 .bloco { display: grid; gap: 14px; align-content: start; min-width: 0; scroll-margin-top: 20px; }
 .subnav { display: flex; flex-wrap: wrap; gap: 4px; padding: 3px; background: #111; border: 1px solid var(--line); border-radius: 11px; width: fit-content; max-width: 100%; margin-bottom: 8px; }
 .subnav a { padding: 7px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--ganggrey); text-decoration: none; }
@@ -1903,3 +1902,32 @@ td.clients__empty { color: var(--ganggrey); font-size: var(--t-ui); }
 .combo__op.is-on { background: #222; color: #fff; box-shadow: inset 2px 0 0 #ececec; }
 .combo__op--outro { color: var(--dim); }
 .combo--longo .combo__outro { margin-top: 8px; }
+
+/* ===== Resultados (consultor): blocos em cards do mesmo padrão, lado a lado e com a mesma altura em cada linha ===== */
+.grade3 { align-items: stretch; gap: 16px; }
+.bloco--card { background: var(--lightblack); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; gap: 12px; grid-template-rows: auto; }
+.bloco--card > .app-section__head { align-items: flex-start; flex-wrap: nowrap; }
+.bloco--card > .app-section__head > div { display: grid; gap: 3px; min-width: 0; }
+.bloco--card > .app-section__head .title-sm { margin: 0; font-size: 14px; }
+.bloco--card > .app-section__head .small { margin: 0; font-size: 12px; line-height: 1.5; }
+.bloco--card > .app-section__head > .btn { flex: none; }
+.bloco--card .rows { margin: 0; }
+.bloco--card .rows:empty { display: none; }
+.bloco--card .ed-vazio { list-style: none; padding: 10px 12px; border-radius: var(--r-sm); background: #161616; border: 1px solid var(--line); }
+.bloco--card .card { background: #161616; padding: 14px; }
+.bloco--card .new-client--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.bloco--card .new-client--4 > .span-3 { grid-column: 1 / -1; }
+.linha-add { display: grid; gap: 6px; }
+.linha-add .new-client__pass { flex-wrap: wrap; }
+.linha-add .new-client__pass > * { flex: 1 1 110px; }
+.linha-add .new-client__pass > .btn { flex: 0 0 auto; }
+.disp { display: grid; gap: 12px; }
+.bloco--card .disp__itens { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; }
+.bloco--card .disp__item { font-size: 13px; align-items: flex-start; }
+.disp .new-client__foot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0; }
+.disp .disp__mes { width: auto; flex: 0 1 260px; }
+@media (max-width: 640px) {
+  .bloco--card > .app-section__head { flex-wrap: wrap; }
+  .bloco--card .disp__itens, .bloco--card .new-client--4 { grid-template-columns: 1fr; }
+}
+.linha-add .msg:empty, .disp .msg:empty { display: none; }
