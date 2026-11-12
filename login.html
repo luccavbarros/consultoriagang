@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="app/app.css?v=25" />
   <link rel="stylesheet" href="app/login.css?v=6" />
+  <script src="app/entrada.js?v=1"></script>
 </head>
 <body>
   <main class="lg">
@@ -267,8 +268,12 @@ e a senha que a GANG enviou para você.</p>
         busy(forms.login, true); say($('msg-login'), 'Entrando…');
         const { error } = await sb.auth.signInWithPassword({ email, password });
         if (error) { busy(forms.login, false); return say($('msg-login'), 'E-mail ou senha incorretos.', 'error'); }
-        const profile = await goHome();
-        if (profile === 'saindo') return;
+        const profile = await getProfile();
+        if (profile && profile.active) {
+          // dados certos: a tela escurece, a frase de boas-vindas aparece e sai, e a plataforma surge
+          if (window.GangEntrada) await window.GangEntrada.tocar();
+          location.replace(HOME[profile.role] || 'cliente.html'); return;
+        }
         if (!profile || !profile.active) {
           await sb.auth.signOut(); busy(forms.login, false);
           say($('msg-login'), 'Este acesso está desativado. Fale com a GANG.', 'error');
