@@ -1959,20 +1959,20 @@ td.clients__empty { color: var(--ganggrey); font-size: var(--t-ui); }
 .dt__btn:focus-visible { outline: none; box-shadow: 0 0 0 2px #4a4a4a; }
 .dt__btn:disabled { opacity: .4; cursor: not-allowed; }
 .dt > .field--sm { padding-right: 36px; }
-.cal { position: fixed; z-index: 1000; width: 280px; padding: 12px; display: grid; gap: 8px; background: #161616; border: 1px solid var(--line-2); border-radius: var(--r-sm); box-shadow: 0 18px 40px rgba(0, 0, 0, .45); animation: dd-in .14s ease-out; }
-.cal__topo { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.cal__mes { margin: 0; font-size: 13px; font-weight: 600; color: #fff; }
-.cal__nav { width: 30px; height: 30px; border: 0; border-radius: 8px; background: transparent; color: #bdbdbd; font-size: 18px; line-height: 1; cursor: pointer; }
-.cal__nav:hover, .cal__nav:focus-visible { background: #1f1f1f; color: #fff; outline: none; }
-.cal__sem, .cal__dias { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-.cal__sem span { text-align: center; font-size: 11px; color: var(--dim); padding: 4px 0; }
-.cal__dia { height: 34px; border: 0; border-radius: 8px; background: transparent; color: #d6d6d6; font: inherit; font-size: 13px; font-variant-numeric: tabular-nums; cursor: pointer; }
-.cal__dia:hover, .cal__dia:focus-visible { background: #1f1f1f; color: #fff; outline: none; }
-.cal__dia.is-hoje { box-shadow: inset 0 0 0 1px var(--line-2); color: #fff; }
-.cal__dia.is-on { background: #ececec; color: #111; font-weight: 600; }
-.cal__pe { display: flex; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 8px; }
-.cal__link { border: 0; background: transparent; color: #bdbdbd; font: inherit; font-size: 12px; padding: 4px 6px; border-radius: 6px; cursor: pointer; }
-.cal__link:hover, .cal__link:focus-visible { color: #fff; background: #1f1f1f; outline: none; }
+.dtcal { position: fixed; z-index: 1000; width: 280px; padding: 12px; display: grid; gap: 8px; background: #161616; border: 1px solid var(--line-2); border-radius: var(--r-sm); box-shadow: 0 18px 40px rgba(0, 0, 0, .45); animation: dd-in .14s ease-out; }
+.dtcal__topo { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.dtcal__mes { margin: 0; font-size: 13px; font-weight: 600; color: #fff; }
+.dtcal__nav { width: 30px; height: 30px; border: 0; border-radius: 8px; background: transparent; color: #bdbdbd; font-size: 18px; line-height: 1; cursor: pointer; }
+.dtcal__nav:hover, .dtcal__nav:focus-visible { background: #1f1f1f; color: #fff; outline: none; }
+.dtcal__sem, .dtcal__dias { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.dtcal__sem span { text-align: center; font-size: 11px; color: var(--dim); padding: 4px 0; }
+.dtcal__dia { height: 34px; border: 0; border-radius: 8px; background: transparent; color: #d6d6d6; font: inherit; font-size: 13px; font-variant-numeric: tabular-nums; cursor: pointer; }
+.dtcal__dia:hover, .dtcal__dia:focus-visible { background: #1f1f1f; color: #fff; outline: none; }
+.dtcal__dia.is-hoje { box-shadow: inset 0 0 0 1px var(--line-2); color: #fff; }
+.dtcal__dia.is-on { background: #ececec; color: #111; font-weight: 600; }
+.dtcal__pe { display: flex; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 8px; }
+.dtcal__link { border: 0; background: transparent; color: #bdbdbd; font: inherit; font-size: 12px; padding: 4px 6px; border-radius: 6px; cursor: pointer; }
+.dtcal__link:hover, .dtcal__link:focus-visible { color: #fff; background: #1f1f1f; outline: none; }
 /* fechado, o campo fica numa linha só (mesma altura dos outros); o texto inteiro aparece só na lista aberta */
 .combo__btn, .combo .combo__btn { height: 42px; min-height: 42px; align-items: center; padding-block: 0; }
 .combo__btn.field--sm { height: auto; min-height: 0; padding-block: 6px; }
@@ -2016,3 +2016,5 @@ td.clients__empty { color: var(--ganggrey); font-size: var(--t-ui); }
 .combo__btn.field--sm .combo__seta { margin-top: -3px; }
 .combo__btn.field--sm[aria-expanded="true"] .combo__seta { margin-top: 3px; }
 @media (max-width: 760px) { .row__actions > .dt, .row__actions > .combo__btn.field--sm { flex: 1 1 110px; min-width: 0; } }
+.kc.is-vazio .kc__val { color: #5a5a5a; }
+.kc.is-vazio .kc__nota { color: var(--dim); line-height: 1.45; }

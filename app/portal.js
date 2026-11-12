@@ -1071,7 +1071,12 @@
       return sv;
     };
     const cards = defs.map(([rot, f, fmt]) => {
-      const v = f(ult); if (v == null) return null;
+      const v = f(ult);
+      // sem o número, o cartão fica no lugar (sem buraco na linha) e diz o que falta para ele aparecer
+      if (v == null) {
+        const falta = { 'Ticket médio': 'Precisa do faturamento e dos clientes atendidos.', 'Clientes novos': 'Informe os clientes novos do mês.', 'Taxa de fechamento': 'Precisa das propostas enviadas e fechadas.', Faturamento: 'Informe o faturamento do mês.' }[rot];
+        return el('div', 'kc is-vazio', el('p', 'kc__rot', rot), el('div', 'kc__linha', el('p', 'kc__val', '—')), el('div', 'kc__pe', el('p', 'kc__nota', falta)));
+      }
       const a = f(ant);
       const d = a ? (v / a - 1) * 100 : null;
       const ult6 = ns.slice(-6).map(f);
@@ -1079,7 +1084,8 @@
         el('p', 'kc__rot', rot),
         el('div', 'kc__linha', el('p', 'kc__val', fmt(v)), d != null && isFinite(d) ? el('span', 'kc__d ' + (d >= 0 ? 'is-up' : 'is-down'), (d >= 0 ? '+' : '−') + Math.abs(Math.round(d * 10) / 10).toString().replace('.', ',') + '%') : null),
         el('div', 'kc__pe', el('p', 'kc__nota', ant ? 'vs. ' + U.nomeMes(ant.mes_ref) : U.cap(U.nomeMes(ult.mes_ref))), spark(ult6)));
-    }).filter(Boolean);
+    });
+    if (cards.every((c) => c.classList.contains('is-vazio'))) return null;
     return cards.length ? el('section', { class: 'kcs', style: '--n:' + cards.length, 'aria-label': 'Números de ' + U.nomeMes(ult.mes_ref) }, cards) : null;
   };
   // do contato à venda no último mês: barras na mesma caixa, com a passagem de uma etapa para a outra
