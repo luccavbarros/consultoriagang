@@ -80,6 +80,17 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     }
     const wrap = el('div', f.full || ['textarea', 'formats', 'file', 'filepub'].includes(f.type) ? 'full' : null,
       f.type === 'formats' ? el('p', 'label', f.label) : el('label', { class: 'label', for: idc }, f.label), input);
+    // dica para quem está começando: aparece até o consultor dizer que entendeu (lembrado neste navegador)
+    if (f.dica) {
+      const chave = 'gang-dica-' + f.k;
+      let visto = false; try { visto = localStorage.getItem(chave) === '1'; } catch (e) { /* sem armazenamento */ }
+      if (!visto) {
+        const dica = el('div', 'campo-dica', el('span', { class: 'campo-dica__i', 'aria-hidden': 'true' }, 'i'),
+          el('p', 'campo-dica__t', f.dica),
+          el('button', { class: 'campo-dica__ok', type: 'button', onclick: () => { try { localStorage.setItem(chave, '1'); } catch (e) { /* ok */ } dica.remove(); } }, 'Entendi'));
+        wrap.append(dica);
+      }
+    }
     return wrap;
   };
 
@@ -368,7 +379,8 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   const CON_T = Object.fromEntries(CON);
   montar('pane-estrategia', [
     [ficha, { icone: 'mapa', titulo: 'O cerne da estratégia', nota: 'O desafio que a marca precisa vencer e a abordagem para vencê-lo.', tabela: 'planos', pasta: 'estrategia', fields: [
-      { k: 'desafio', label: '1. O desafio (o obstáculo principal)', full: true, longo: true, type: 'preset', presets: 'desafios' },
+      { k: 'desafio', label: '1. O desafio (o obstáculo principal)', full: true, longo: true, type: 'preset', presets: 'desafios',
+        dica: 'Vários problemas? Escolha o que, resolvido, destrava os outros. Os demais entram como causas no Diagnóstico.' },
       { k: 'como_vencer', label: '2. A abordagem (como vencer o desafio)', full: true, longo: true, type: 'preset', presets: 'abordagens', depende: { de: 'desafio', lista: 'desafios', chave: 'abordagens' } },
       { k: 'estrategia_aprovada_em', label: 'Aprovada em', type: 'date' }, { k: 'proxima_revisao_estrategia', label: 'Próxima revisão', type: 'date' },
       { k: 'estrategia_pdf', label: 'Plano completo (PDF)', type: 'file', accept: 'application/pdf' }] }],

@@ -2041,3 +2041,9 @@ td.clients__empty { color: var(--ganggrey); font-size: var(--t-ui); }
 .mc__dl dd.is-vazio { color: var(--ganggrey); }
 @media (max-width: 1000px) { .diag-topo { grid-template-columns: 1fr; } .diag-col:has(> .focus) { grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); align-items: start; } }
 @media (max-width: 640px) { .mcs { grid-template-columns: 1fr; } }
+
+/* dica de campo para consultores novos: some ao clicar em Entendi */
+.campo-dica { display: flex; align-items: flex-start; gap: 10px; margin-top: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.03); }
+.campo-dica__i { flex: none; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 600; color: #111; background: #e6e6e6; margin-top: 1px; }
+.campo-dica__t { flex: 1; min-width: 0; margin: 0; font-size: var(--t-leg); line-height: 1.5; color: #cfcfcf; }
+.campo-dica__ok { flex: none; border: 0; background: none; padding: 2px 4px; font: inherit; font-size: var(--t-leg); color: #fff; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
