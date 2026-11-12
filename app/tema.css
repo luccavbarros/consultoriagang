@@ -2053,3 +2053,7 @@ td.clients__empty { color: var(--ganggrey); font-size: var(--t-ui); }
 .mod__estr.is-falta { border-left-color: var(--warn, #e0b45a); }
 .mod__estr strong { color: #fff; font-weight: 500; }
 .mod__exec { margin-left: 8px; padding: 1px 7px; border-radius: 999px; font-size: 11px; color: #111; background: #e6e6e6; vertical-align: 1px; }
+
+/* Ações: "Montar o plano" e "Biblioteca" empilhados; cada um abre para baixo, no próprio lugar, sem empurrar o outro para o lado */
+.lib-pilha { display: grid; gap: 12px; }
+.lib-pilha > .lib { min-width: 0; }
