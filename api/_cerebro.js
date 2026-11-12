@@ -4641,3 +4641,28 @@
   ];
   EXTRA.forEach(([ini, ks]) => { const d = P.desafios.find((x) => x.texto.startsWith(ini)); if (d) d.abordagens = [...new Set([...(d.abordagens || []), ...ks.map((k) => A[k])])]; });
 })();
+
+// ===== Diagnóstico "em uma frase", rodada 2 (curto prazo x marca, lacuna entre expectativa e entrega, categoria sem diferença,
+// alternativa real do cliente, quadro de referência, ativos, preço, dependência, inércia) =====
+(function () {
+  const P = window.GangPresets; if (!P || !P.resumosDiagnostico) return;
+  const G = 'Da biblioteca';
+  [
+    'A empresa investia só em ofertas para vender no mês, sem construir a marca, por isso as vendas paravam quando as promoções paravam.',
+    'O cliente esperava uma coisa e recebia outra: a comunicação prometia mais do que a entrega mostrava, e a confiança caía depois da compra.',
+    'As empresas da categoria pareciam todas iguais, e a marca seguia o mesmo padrão, por isso era trocada pela primeira oferta melhor.',
+    'O maior concorrente da marca não era outra empresa, e sim o cliente resolver sozinho ou adiar, e a comunicação nunca falava disso.',
+    'O cliente comparava a marca com as empresas erradas, mais baratas e mais simples, por isso o preço parecia alto.',
+    'A marca não tinha sinais próprios (cor, símbolo, frase) que o cliente reconhecesse sem ler o nome, então cada peça começava do zero.',
+    'A marca era vista como a opção barata, e isso impedia de cobrar pelo que a empresa já entregava de melhor.',
+    'A marca cobrava como as melhores, mas não mostrava por quê, então o cliente achava caro e ia embora sem perguntar.',
+    'A maior parte do faturamento vinha de poucos clientes grandes, e qualquer perda colocava o mês em risco.',
+    'A empresa fazia tudo do jeito de sempre porque sempre tinha funcionado, mas o cliente e o mercado já tinham mudado.',
+    'A marca era conhecida pelo dono, não pela empresa: quando ele não estava na conversa, a venda não acontecia.',
+    'A empresa tinha clientes satisfeitos, mas nenhum processo para pedir indicação, então o melhor canal de vendas ficava parado.',
+    'Quem decidia a compra não era quem usava o serviço, e a marca só convencia um dos dois.',
+    'A marca era bonita, mas não dizia o que a empresa fazia, então chamava atenção e não gerava procura.',
+    'A equipe de vendas e a comunicação diziam coisas diferentes, e o cliente não sabia em qual versão acreditar.',
+    'A empresa era nova e sem histórico, e o cliente preferia arriscar menos escolhendo quem já conhecia.',
+  ].forEach((texto) => { if (!P.resumosDiagnostico.some((x) => x.texto === texto)) P.resumosDiagnostico.push({ grupo: G, texto }); });
+})();
