@@ -808,7 +808,7 @@
           loadAcoes();
 
         });
-        const quem = ({ essencial: 'Essencial', ajuda: 'Ajuda', reforco: 'Reforço' }[a.peso] || 'Ajuda') + ' · ' + RESP[a.responsavel] + (a.responsavel_nome ? ' · com ' + a.responsavel_nome : '');
+        const quem = ({ essencial: 'Essencial', ajuda: 'Ajuda', reforco: 'Reforço' }[a.peso] || 'Ajuda') + (a.responsavel && a.responsavel !== 'cliente' ? ' · ' + RESP[a.responsavel] : '') + (a.responsavel_nome ? ' · com ' + a.responsavel_nome : ''); // "Cliente" é o padrão: só aparece quem foge dele
         const prazo = a.status === 'feita' ? (a.concluida_em ? 'Concluída em ' + U.dia(a.concluida_em) : 'Concluída') : (a.prazo ? 'Prazo ' + U.dia(a.prazo) : 'Sem prazo');
         const mudou = a.atualizada_por && a.atualizada_por !== me.id && a.atualizada_em ? ' · cliente atualizou em ' + U.dia(a.atualizada_em) : '';
         const ps = Array.isArray(a.passos) ? a.passos : [];

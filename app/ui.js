@@ -101,45 +101,98 @@
     });
     set(valor);
     box.comboSet = set;
-    if (opts.longo) longo(box, sel, txt, itens, opts);
+    rico(sel, box);
     return box;
   };
-  // ===== frases longas: o select nativo corta o texto; aqui o consultor lê cada opção inteira, com quebra após o ponto =====
+  // ===== lista de opções da plataforma: troca a lista nativa do navegador (que corta frases e não segue o visual) por uma própria.
+  // O select continua no lugar, escondido: guarda o valor, dispara 'change' e funciona com formulários e com o código de sempre. =====
   const quebra = (s) => String(s || '').replace(/([.;]) (?=\S)/g, '$1\n');
-  const longo = (box, sel, txt, itens, opts) => {
-    box.classList.add('combo--longo');
+  const VP = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+  const IP = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'selectedIndex');
+  let aberto = null; // só uma lista aberta por vez
+  const rico = (sel, box) => {
+    if (sel._rico || sel.multiple || sel.size > 1 || sel.hasAttribute('data-nativo')) return;
+    sel._rico = true;
+    if (!box) { box = el('span', 'dd'); sel.before(box); box.append(sel); }
+    box.classList.add('dd-box');
     sel.classList.add('combo__nativo'); sel.tabIndex = -1; sel.setAttribute('aria-hidden', 'true');
-    const btn = el('button', { type: 'button', class: 'field combo__btn', 'aria-haspopup': 'listbox', 'aria-expanded': 'false' });
+    const btn = el('button', { type: 'button', 'aria-haspopup': 'listbox', 'aria-expanded': 'false' });
     const pain = el('div', { class: 'combo__lista', role: 'listbox', hidden: true });
+    const aria = sel.getAttribute('aria-label'); if (aria) btn.setAttribute('aria-label', aria);
+    if (sel.id) { const lbl = document.querySelector('label[for="' + sel.id + '"]'); if (lbl) lbl.addEventListener('click', (e) => { e.preventDefault(); btn.focus(); }); }
+    const placeholder = (o) => o.value === '' && /…$|^Escolha|^Mês$|^Ano$|^Selecione/.test(o.text.trim());
     const rotulo = () => {
-      const v = sel.value;
-      const vazio = !v;
-      btn.replaceChildren(el('span', 'combo__txt' + (vazio ? ' is-vazio' : ''), vazio ? (opts.vazio || 'Escolha…') : v === OUTRO ? 'Outro (escrever)' : quebra(v)), el('span', { class: 'combo__seta', 'aria-hidden': 'true' }));
+      const o = sel.options[IP.get.call(sel)];
+      const vazio = !o || placeholder(o);
+      const txt = !o ? '' : o.value === OUTRO ? 'Outro (escrever)' : quebra(o.text);
+      btn.className = (sel.className.replace(/\bcombo__nativo\b/, '') + ' combo__btn').trim();
+      if ([...sel.options].every((x) => x.text.length < 40)) btn.classList.add('is-curta');
+      btn.replaceChildren(el('span', 'combo__txt' + (vazio ? ' is-vazio' : ''), txt), el('span', { class: 'combo__seta', 'aria-hidden': 'true' }));
       btn.disabled = sel.disabled;
+      btn.hidden = sel.hidden;
+      if (sel.style.cssText) btn.style.cssText = sel.style.cssText;
     };
-    const fecha = () => { pain.hidden = true; btn.setAttribute('aria-expanded', 'false'); document.removeEventListener('pointerdown', fora, true); document.removeEventListener('keydown', tecla, true); };
-    const fora = (e) => { if (!box.contains(e.target)) fecha(); };
+    const posiciona = () => {
+      const r = btn.getBoundingClientRect(); const H = window.innerHeight;
+      const baixo = H - r.bottom - 12, cima = r.top - 12;
+      const praCima = baixo < 220 && cima > baixo;
+      pain.style.left = Math.max(8, Math.min(r.left, window.innerWidth - Math.max(r.width, 220) - 8)) + 'px';
+      pain.style.width = Math.max(r.width, 220) + 'px';
+      pain.style.maxHeight = Math.min(420, praCima ? cima : baixo) + 'px';
+      pain.style.top = praCima ? '' : r.bottom + 6 + 'px';
+      pain.style.bottom = praCima ? H - r.top + 6 + 'px' : '';
+    };
+    const fecha = () => {
+      if (pain.hidden) return;
+      pain.hidden = true; pain.remove(); btn.setAttribute('aria-expanded', 'false'); if (aberto === fecha) aberto = null;
+      document.removeEventListener('pointerdown', fora, true); document.removeEventListener('keydown', tecla, true);
+      window.removeEventListener('scroll', rola, true); window.removeEventListener('resize', fecha);
+    };
+    const fora = (e) => { if (!pain.contains(e.target) && !btn.contains(e.target)) fecha(); };
+    const rola = (e) => { if (!pain.contains(e.target)) fecha(); };
     const tecla = (e) => {
-      if (e.key === 'Escape') { fecha(); btn.focus(); return; }
+      if (e.key === 'Escape' || e.key === 'Tab') { fecha(); if (e.key === 'Escape') btn.focus(); return; }
       if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
       e.preventDefault();
       const os = [...pain.querySelectorAll('.combo__op')]; const i = os.indexOf(document.activeElement);
       (os[e.key === 'ArrowDown' ? Math.min(os.length - 1, i + 1) : Math.max(0, i - 1)] || os[0]).focus();
     };
-    const escolhe = (v) => { sel.value = v; sel.dispatchEvent(new Event('change', { bubbles: true })); rotulo(); fecha(); if (v !== OUTRO) btn.focus(); };
+    const escolhe = (v) => {
+      const mudou = VP.get.call(sel) !== v;
+      VP.set.call(sel, v); rotulo(); fecha();
+      if (mudou) { sel.dispatchEvent(new Event('input', { bubbles: true })); sel.dispatchEvent(new Event('change', { bubbles: true })); }
+      if (v !== OUTRO) btn.focus();
+    };
     const abre = () => {
       if (sel.disabled) return;
-      const op = (v, t, extra) => el('button', { type: 'button', role: 'option', class: 'combo__op' + (extra || '') + (sel.value === v ? ' is-on' : ''), 'aria-selected': String(sel.value === v), onclick: () => escolhe(v) }, t);
-      pain.replaceChildren(...itens.map((i) => op(i.texto, quebra(i.texto))), op(OUTRO, 'Outro (escrever)', ' combo__op--outro'));
-      pain.hidden = false; btn.setAttribute('aria-expanded', 'true');
+      if (aberto) aberto();
+      const atual = VP.get.call(sel);
+      const op = (o) => el('button', { type: 'button', role: 'option', class: 'combo__op' + (o.value === OUTRO ? ' combo__op--outro' : '') + (o.value === atual ? ' is-on' : ''),
+        'aria-selected': String(o.value === atual), disabled: o.disabled || null, onclick: () => escolhe(o.value) }, o.value === OUTRO ? 'Outro (escrever)' : quebra(o.text));
+      const itens = [];
+      [...sel.children].forEach((n) => {
+        if (n.tagName === 'OPTGROUP') { const os = [...n.children].filter((o) => !o.hidden); if (os.length) itens.push(el('p', 'combo__grupo', n.label), ...os.map(op)); }
+        else if (n.tagName === 'OPTION' && !n.hidden && !placeholder(n)) itens.push(op(n));
+      });
+      pain.replaceChildren(...itens);
+      pain.classList.toggle('is-curta', [...sel.options].every((o) => o.text.length < 40));
+      document.body.append(pain); pain.hidden = false; posiciona();
+      btn.setAttribute('aria-expanded', 'true'); aberto = fecha;
       document.addEventListener('pointerdown', fora, true); document.addEventListener('keydown', tecla, true);
-      (pain.querySelector('.is-on') || pain.firstChild).focus();
+      window.addEventListener('scroll', rola, true); window.addEventListener('resize', fecha);
+      const on = pain.querySelector('.is-on'); (on || pain.querySelector('.combo__op') || btn).focus({ preventScroll: true });
+      if (on) on.scrollIntoView({ block: 'nearest' });
     };
     btn.addEventListener('click', () => (pain.hidden ? abre() : fecha()));
+    btn.addEventListener('keydown', (e) => { if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && pain.hidden) { e.preventDefault(); abre(); } });
+    sel.addEventListener('focus', () => btn.focus());
     sel.addEventListener('change', rotulo);
-    new MutationObserver(rotulo).observe(sel, { attributes: true, attributeFilter: ['disabled'] });
-    const setOrig = box.comboSet; box.comboSet = (v) => { setOrig(v); rotulo(); };
-    box.prepend(btn); box.insertBefore(pain, txt);
+    // o código da plataforma muda o valor direto (sel.value = …): a etiqueta acompanha
+    Object.defineProperty(sel, 'value', { configurable: true, get() { return VP.get.call(sel); }, set(v) { VP.set.call(sel, v); rotulo(); } });
+    Object.defineProperty(sel, 'selectedIndex', { configurable: true, get() { return IP.get.call(sel); }, set(v) { IP.set.call(sel, v); rotulo(); } });
+    new MutationObserver(rotulo).observe(sel, { attributes: true, attributeFilter: ['disabled', 'hidden', 'class', 'style'], childList: true, subtree: true, characterData: true });
+    if (sel.form) sel.form.addEventListener('reset', () => setTimeout(rotulo));
+    sel.before(btn);
     rotulo();
   };
   const comboValue = (idc) => {
@@ -247,7 +300,10 @@
     });
   };
   traduzDatas(document);
-  new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach((x) => { if (x.nodeType === 1) traduzDatas(x.parentNode || x); }))).observe(document.documentElement, { childList: true, subtree: true });
+  // todas as listas da plataforma usam a lista própria (as que aparecem depois também)
+  const ricos = (raiz) => { if (!raiz.querySelectorAll) return; (raiz.tagName === 'SELECT' ? [raiz] : raiz.querySelectorAll('select')).forEach((s) => { if (!s.closest('.combo') || s.parentElement.classList.contains('combo')) rico(s, s.parentElement.classList.contains('combo') ? s.parentElement : null); }); };
+  new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach((x) => { if (x.nodeType === 1) { traduzDatas(x.parentNode || x); ricos(x); } }))).observe(document.documentElement, { childList: true, subtree: true });
+  ricos(document);
 
   // dinheiro: campos com data-moeda viram "R$ 2.500,00" enquanto se digita (os números entram pela direita, como numa calculadora)
   const moedaFmt = (v) => (v == null || v === '' || !Number.isFinite(Number(v)) ? '' : Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }));
