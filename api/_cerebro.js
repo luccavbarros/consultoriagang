@@ -4348,3 +4348,55 @@
   if (P.sentem) P.sentem.push(...[{"grupo": "Da biblioteca", "texto": "Medo de errar na escolha"}]);
   if (P.notam) P.notam.push(...[{"grupo": "Da biblioteca", "texto": "Demora para responder orçamento"}]);
 })();
+
+// ===== Rodada 10: ideias do Aaker que ainda não estavam aqui (energia e relevância da marca, qualidade percebida, histórias da equipe) =====
+(function () {
+  const P = window.GangPresets; if (!P) return;
+  const G = 'Da biblioteca';
+  const acao = (texto, esforco, promessa, porque, metrica, tema) => ({ grupo: G, texto, esforco, promessa, porque, metrica, tema });
+  P.acoes.push(
+    acao('Criar um programa próprio e recorrente que dê energia à marca (prêmio local, série de conteúdo ou encontro anual), sempre com o mesmo nome', 'marca', 'pessoas',
+      'Marcas conhecidas, mas sem energia, deixam de ser lembradas. Um programa próprio, repetido e associado à marca, dá motivo para falarem dela.', 'menções e participantes do programa a cada edição', 'presenca'),
+    acao('Revisar a cada semestre o que mudou na categoria: novos concorrentes, novos canais e novas exigências dos clientes', 'marca', 'pessoas',
+      'Marcas perdem espaço quando o jeito de comprar muda e elas não percebem. Olhar a categoria com regularidade evita ficar fora da lista do cliente.', 'revisão feita e mudanças levadas ao plano', 'medicao'),
+    acao('Escolher os sinais de qualidade que o cliente enxerga (pontualidade, acabamento, limpeza, resposta rápida) e padronizar esses primeiro', 'venda', 'valor',
+      'O cliente não avalia a qualidade técnica, avalia o que consegue ver. Cuidar dos sinais visíveis aumenta a qualidade percebida e sustenta o preço.', 'nota de qualidade percebida na pesquisa', 'experiencia'),
+    acao('Contar a história de alguém da equipe que mostre, na prática, como a empresa trabalha', 'marca', 'valor',
+      'Histórias reais de quem faz o trabalho tornam a promessa concreta e crível, e são lembradas mais do que listas de qualidades.', 'história publicada e usada nas conversas de venda', 'conteudo'),
+  );
+  const add = (k, itens) => { if (P[k]) P[k].push(...itens.map((x) => (typeof x === 'string' ? { grupo: G, texto: x } : { grupo: G, ...x }))); };
+  add('causas', ['A marca é conhecida, mas está parada: ninguém comenta nem indica', 'A categoria mudou e a marca não acompanhou', 'A qualidade existe, mas o cliente não enxerga os sinais dela']);
+  add('condicoes', ['A marca continua relevante para o que o cliente compra hoje', 'O programa próprio da marca continua atraindo atenção']);
+  add('discriminadores', ['Tem um programa ou evento próprio que as pessoas ligam à marca']);
+  add('objetivos', [{ texto: 'Ser vista como uma marca atual e com energia, não só conhecida', nivel: 'marca' }, { texto: 'Ser percebida como a de melhor qualidade da região', nivel: 'marca' }]);
+  add('metricas', [{ texto: 'Qualidade percebida (nota de 0 a 10)', nivel: 'marca', frequencia: 'semestral' }, { texto: 'Energia da marca (quantos acham a marca atual e diferente)', nivel: 'marca', frequencia: 'semestral' }]);
+  add('verificacoes', ['Pergunta na pesquisa: a marca parece atual e diferente das outras?']);
+  add('pauta', ['O que mudou na categoria e pode tirar a relevância da marca']);
+})();
+
+// ===== Rodada 11: Building Strong Brands (identidade central e ampliada, proposta de valor completa, armadilhas de identidade, medidas de valor da marca) =====
+(function () {
+  const P = window.GangPresets; if (!P) return;
+  const G = 'Da biblioteca';
+  const acao = (texto, esforco, promessa, porque, metrica, tema) => ({ grupo: G, texto, esforco, promessa, porque, metrica, tema });
+  P.acoes.push(
+    acao('Definir a identidade central da marca (de 2 a 4 ideias que não mudam) e usar como filtro para aprovar peças, parcerias e novos serviços', 'marca', 'valor',
+      'Sem um núcleo fixo, cada decisão puxa a marca para um lado. O que não muda dá direção e faz a marca ser reconhecida pelo mesmo motivo ao longo dos anos.', 'identidade central escrita e usada nas aprovações', 'posicionamento'),
+    acao('Completar a proposta de valor com os três benefícios: o que a marca resolve, como faz o cliente se sentir e o que a escolha diz sobre ele', 'marca', 'valor',
+      'Marcas que vendem só o benefício prático ficam fáceis de comparar e trocar. Somar o que o cliente sente e o que a escolha diz sobre ele cria preferência.', 'proposta de valor revisada e aplicada no site e na proposta', 'posicionamento'),
+    acao('Criar um clube de clientes com nome, encontros e pequenos benefícios para quem já compra', 'marca', 'pessoas',
+      'Clientes que se sentem parte de um grupo voltam, defendem a marca e trazem outros. O vínculo vai além da última compra.', 'clientes participando e indicações vindas do clube', 'relacao'),
+  );
+  const add = (k, itens) => { if (P[k]) P[k].push(...itens.map((x) => (typeof x === 'string' ? { grupo: G, texto: x } : { grupo: G, ...x }))); };
+  // as armadilhas de identidade, como causas do diagnóstico
+  add('causas', [
+    'A marca é descrita só pelo que os clientes acham hoje, sem dizer o que ela quer ser',
+    'A marca fala só do produto: ninguém conhece quem faz, a origem ou o jeito de atender',
+    'A marca se resume a um slogan, sem nada que guie as escolhas do dia a dia',
+  ]);
+  add('condicoes', ['A identidade central continua a mesma nas decisões do ano']);
+  add('metricas', [{ texto: 'Valor percebido (vale o que custa?)', nivel: 'marca', frequencia: 'semestral' }, { texto: 'Liderança percebida (vista como a líder da categoria)', nivel: 'marca', frequencia: 'semestral' }]);
+  add('verificacoes', ['Pergunta na pesquisa: o que a empresa entrega vale o que custa?']);
+  add('naoFazer', ['Mudar a identidade central para seguir a moda do momento']);
+  if (P.tom) P.tom.push({ grupo: G, texto: 'Robusta', descricao: 'Firme e durável, transmite que aguenta o uso pesado' });
+})();
