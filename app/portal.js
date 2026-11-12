@@ -2291,22 +2291,41 @@
     const prio = D.escolhas.filter((x) => x.tipo === 'prioridade');
     const lado = D.escolhas.filter((x) => x.tipo === 'deixa_de_lado');
     if (prio.length || lado.length || D.descartadas.length || p.como_vencer) {
-      out.push(el('div', 'grid grid--todo',
-        sec('onde-t', 'Onde atuamos', el('div', 'says',
-          el('div', 'says__col', el('p', 'eyebrow', 'Prioridade'), prio.map((x) => el('p', 'says__ok', x.texto))),
-          el('div', 'says__col', el('p', 'eyebrow', 'Deixamos de lado'), lado.map((x) => el('p', 'says__no', el('s', null, x.texto))),
-            D.descartadas.length ? [el('p', 'says__sub', 'Ações que decidimos não fazer'), D.descartadas.map((d) => el('p', 'says__no', el('s', null, d.texto))),
-              el('p', 'box__note', 'Se surgir a vontade, converse antes com o consultor.')] : null))),
-        p.como_vencer ? sec('vencer-t', 'Como vencemos', el('p', 'say__main', p.como_vencer)) : el('div')));
+      // grupos de opções no padrão das referências: ícone em quadradinho, texto e divisórias finas, sem texto riscado
+      const grupo = (idt, titulo, n, itens, tipo, extra) => el('section', { class: 'box est-grupo', 'aria-labelledby': idt },
+        el('div', 'est-grupo__head', el('h2', { class: 'box__title', id: idt }, titulo), el('span', 'est-n', String(n))),
+        el('ul', 'est-lista', itens.map((t) => el('li', 'est-item', el('span', { class: 'est-ico est-ico--' + tipo, 'aria-hidden': 'true' }, tipo === 'sim' ? '✓' : '–'), el('span', null, t)))),
+        extra);
+      if (p.como_vencer) out.push(el('section', { class: 'box est-vencer', 'aria-labelledby': 'vencer-t' }, el('p', { class: 'eyebrow', id: 'vencer-t' }, 'Como vencemos'), el('p', 'say__main', p.como_vencer)));
+      out.push(el('div', 'est-dois',
+        prio.length ? grupo('onde-t', 'Onde jogamos', prio.length, prio.map((x) => x.texto), 'sim') : null,
+        lado.length || D.descartadas.length ? grupo('lado-t', 'O que deixamos de lado', lado.length + D.descartadas.length, lado.map((x) => x.texto), 'nao',
+          D.descartadas.length ? [el('p', 'est-sub', 'Ações que decidimos não fazer'),
+            el('ul', 'est-lista', D.descartadas.map((d) => el('li', 'est-item', el('span', { class: 'est-ico est-ico--nao', 'aria-hidden': 'true' }, '–'), el('span', null, d.texto)))),
+            el('p', 'est-nota', el('span', { class: 'est-nota__i', 'aria-hidden': 'true' }, 'i'), 'Se surgir a vontade de fazer algo daqui, converse antes com o consultor.')] : null) : null));
     }
 
     if (D.condicoes.length) {
       const CON = { se_confirma: ['done', 'Se confirma'], em_observacao: ['doing', 'Em observação'], sem_dados: ['todo', 'Sem dados ainda'], nao_se_confirma: ['warn', 'Não se confirma'] };
       const quebradas = condicaoQuebrada();
       if (quebradas.length) out.splice(1, 0, alertaEstrategia(quebradas));
-      out.push(sec('cond-t', 'O que acompanhamos', el('p', 'box__text', 'Se uma destas condições deixar de ser verdade, revisamos a estratégia com você.'),
-        tabela(['Condição', 'Como verificamos', 'Quem checa', 'Próxima checagem', 'Hoje'], D.condicoes.map((c) => [c.texto, c.como_verificar || '—', c.dono || '—',
-          c.checar_em ? U.dia(c.checar_em) + (c.checar_em.slice(0, 4) !== hoje.slice(0, 4) ? ' ' + c.checar_em.slice(0, 4) : '') : '—', chip(...(CON[c.status] || CON.sem_dados))]))));
+      // em linha do tempo, como nas referências: o ponto de status, a condição, o selo à direita e os detalhes embaixo
+      const ponto = { done: 'ok', doing: 'warn', todo: 'nada', warn: 'mal' };
+      out.push(el('section', { class: 'box est-cond', 'aria-labelledby': 'cond-t' },
+        el('div', 'est-grupo__head', el('h2', { class: 'box__title', id: 'cond-t' }, 'O que acompanhamos'), el('span', 'est-n', String(D.condicoes.length))),
+        el('p', 'box__text', 'Se uma destas condições deixar de ser verdade, revisamos a estratégia com você.'),
+        el('ol', 'est-tl', D.condicoes.map((c) => {
+          const [k, t] = CON[c.status] || CON.sem_dados;
+          const quando = c.checar_em ? U.dia(c.checar_em) + (c.checar_em.slice(0, 4) !== hoje.slice(0, 4) ? ' ' + c.checar_em.slice(0, 4) : '') : null;
+          return el('li', 'est-tl__item',
+            el('span', { class: 'est-tl__ponto is-' + ponto[k], 'aria-hidden': 'true' }),
+            el('div', 'est-tl__corpo',
+              el('div', 'est-tl__linha', el('p', 'est-tl__t', c.texto), chip(k, t)),
+              el('dl', 'est-tl__meta',
+                c.como_verificar ? el('div', null, el('dt', null, 'Verificamos por'), el('dd', null, el('span', 'est-code', c.como_verificar))) : null,
+                c.dono ? el('div', null, el('dt', null, 'Quem checa'), el('dd', null, c.dono)) : null,
+                el('div', null, el('dt', null, 'Próxima checagem'), el('dd', null, quando || 'a combinar')))));
+        }))));
     }
     return out;
   };
