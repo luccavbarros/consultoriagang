@@ -368,6 +368,26 @@
   let mesesProxAbertos = null; // meses abertos na aba Próximos meses
   let revAberta = false;
   let abreAcao = null; // vindo do calendário: abre esta ação já expandida
+  // linha do tempo do que aconteceu no plano (como um histórico): concluídas, adiantadas, novas e peças revisadas
+  const atividade = () => {
+    const hojeISO = new Date().toLocaleDateString('sv-SE');
+    // as ações criadas junto com o plano não contam como "incluídas": só as que entraram 2 dias ou mais depois do primeiro lote
+    const datas = D.acoes.map((a) => a.criada_em).filter(Boolean).sort();
+    const lote = datas.length ? U.addDias(datas[0].slice(0, 10), 2) : '9999';
+    const ev = [];
+    D.acoes.forEach((a) => {
+      if (a.status === 'feita' && a.concluida_em) ev.push({ d: a.concluida_em, t: a.titulo, o: a.responsavel === 'gang' ? 'A GANG concluiu' : 'Concluída', k: 'ok' });
+      if (a.adiantada_de && a.status !== 'feita') ev.push({ d: (a.criada_em || '').slice(0, 10) || hojeISO, t: a.titulo, o: 'Adiantada para ' + U.nomeMes(a.mes_previsto), k: 'gang' });
+      if (a.criada_em && a.criada_em.slice(0, 10) > lote && !a.adiantada_de) ev.push({ d: a.criada_em.slice(0, 10), t: a.titulo, o: 'O consultor incluiu no plano', k: 'novo' });
+    });
+    D.pedidos.forEach((x) => { if (x.status === 'aprovado' && (x.respondido_em || x.enviado_em)) ev.push({ d: String(x.respondido_em || x.enviado_em).slice(0, 10), t: x.titulo || x.tipo_peca, o: 'Peça aprovada', k: 'ok' }); });
+    const xs = ev.filter((e) => e.d && e.d <= hojeISO).sort((a, b) => b.d.localeCompare(a.d)).slice(0, 8);
+    if (xs.length < 2) return null;
+    return secN('atv-t', 'Atividade recente', xs.length, 'O que aconteceu no plano, do mais novo para o mais antigo.',
+      el('ol', 'atv', xs.map((e) => el('li', 'atv__i',
+        el('span', 'atv__d', U.dia(e.d)), el('span', 'atv__p atv__p--' + e.k),
+        el('div', 'atv__m', el('p', 'atv__t', e.t), el('p', 'atv__o', e.o))))));
+  };
   const telaAcoes = () => {
     const total = D.acoes.length;
     const feitas = D.acoes.filter((a) => a.status === 'feita').length;
@@ -377,7 +397,14 @@
     const out = [head('Plano de execução · ' + dur + ' meses', 'Ações',
       'O que colocar em prática, mês a mês. Atualize o andamento do que está com você; o consultor ajusta o plano com você nos encontros.', sugerir)];
 
-    out.push(el('p', 'count', el('span', 'count__num', feitas + ' / ' + total), ' ações concluídas'));
+    const andN = D.acoes.filter((a) => a.status === 'em_andamento').length;
+    const feitasNoPrazo = D.acoes.filter((a) => a.status === 'feita' && (!a.prazo || (a.concluida_em && a.concluida_em <= a.prazo))).length;
+    const adiantadas = D.acoes.filter((a) => a.adiantada_de).length;
+    out.push(faixa([
+      ['Concluídas', feitas + ' de ' + total, total ? Math.round((feitas / total) * 100) + '% do plano' : null],
+      ['Em andamento', String(andN)],
+      ['No prazo', feitas ? Math.round((feitasNoPrazo / feitas) * 100) + '%' : '—', feitas ? feitasNoPrazo + ' de ' + feitas + ' concluídas' : 'aparece com a primeira'],
+      ['Adiantadas', String(adiantadas), adiantadas ? 'antes do mês previsto' : 'termine o mês e adiante uma']]));
     // barra segmentada: feitas · em andamento · a fazer (no lugar de uma pizza)
     if (total) {
       const and = D.acoes.filter((a) => a.status === 'em_andamento').length;
@@ -411,7 +438,7 @@
     const lista = el('ul', { class: 'tasks', id: 'acoes-lista', role: 'tabpanel' });
     const tabs = el('div', { class: 'tabs', role: 'tablist', 'aria-label': 'Ações por período' }, Object.keys(grupos).map((k) =>
       el('button', { class: 'tabs__btn', role: 'tab', type: 'button', 'aria-selected': String(k === abaAcoes), 'aria-controls': 'acoes-lista',
-        onclick: () => { abaAcoes = k; render(); } }, nomes[k] + ' (' + grupos[k].filter((x) => k === 'feitas' || x.status !== 'feita').length + ')')));
+        onclick: () => { abaAcoes = k; render(); } }, nomes[k], el('span', 'tabs__n', String(grupos[k].filter((x) => k === 'feitas' || x.status !== 'feita').length)))));
     tabs.addEventListener('keydown', (ev) => {
       const ks = Object.keys(grupos); const i = ks.indexOf(abaAcoes);
       if (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') {
@@ -482,6 +509,7 @@
 
     if (revAberta) out.splice(1, 0, formRevisao());
     const pcs = suasPecas(); if (pcs) out.push(pcs);
+    const atv = atividade(); if (atv) out.push(atv);
     if (D.descartadas.length) out.push(el('p', 'box__note nota-linha', 'O que decidimos não fazer está na ', el('a', { class: 'link', href: '#estrategia' }, 'Estratégia'), ', em “Deixamos de lado”.'));
     return out;
   };
@@ -1004,12 +1032,63 @@
   const podeCorrigir = (n) => !D.encontros.some((e) => new Date(e.inicio) > new Date(n.enviado_em) && new Date(e.inicio).getTime() <= agoraMs);
   let corrigindo = false;
 
+  // cartões de número (último mês informado): valor, variação contra o mês anterior e um minigráfico dos últimos meses
+  const cartoesNumeros = () => {
+    const ns = [...D.numeros].filter((n) => n.faturamento != null || n.leads != null || n.clientes_novos != null).sort((a, b) => a.mes_ref.localeCompare(b.mes_ref));
+    if (!ns.length) return null;
+    const ult = ns[ns.length - 1]; const ant = ns[ns.length - 2];
+    const tk = (n) => (n && n.faturamento != null && n.clientes_atendidos ? Number(n.faturamento) / n.clientes_atendidos : null);
+    const fx = (n) => (n && n.propostas ? (n.fechadas || 0) / n.propostas * 100 : null);
+    const defs = [
+      ['Faturamento', (n) => (n && n.faturamento != null ? Number(n.faturamento) : null), (v) => U.reais(v)],
+      ['Ticket médio', tk, (v) => U.reais(Math.round(v))],
+      ['Clientes novos', (n) => (n ? n.clientes_novos : null), (v) => String(v)],
+      ['Taxa de fechamento', fx, (v) => Math.round(v) + '%'],
+    ];
+    const spark = (vals) => {
+      const xs = vals.filter((v) => v != null); if (xs.length < 2) return null;
+      const mn = Math.min(...xs); const mx = Math.max(...xs); const W = 96; const H = 30;
+      const pts = vals.map((v, i) => (v == null ? null : [(i / (vals.length - 1)) * W, H - 3 - ((v - mn) / ((mx - mn) || 1)) * (H - 6)])).filter(Boolean);
+      const NS = 'http://www.w3.org/2000/svg'; const sv = document.createElementNS(NS, 'svg');
+      sv.setAttribute('viewBox', '0 0 ' + W + ' ' + H); sv.setAttribute('class', 'kc__spark'); sv.setAttribute('aria-hidden', 'true');
+      const pa = document.createElementNS(NS, 'path'); pa.setAttribute('d', pts.map((q, i) => (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1)).join(' ')); sv.append(pa);
+      return sv;
+    };
+    const cards = defs.map(([rot, f, fmt]) => {
+      const v = f(ult); if (v == null) return null;
+      const a = f(ant);
+      const d = a ? (v / a - 1) * 100 : null;
+      const ult6 = ns.slice(-6).map(f);
+      return el('div', 'kc',
+        el('p', 'kc__rot', rot),
+        el('div', 'kc__linha', el('p', 'kc__val', fmt(v)), d != null && isFinite(d) ? el('span', 'kc__d ' + (d >= 0 ? 'is-up' : 'is-down'), (d >= 0 ? '+' : '−') + Math.abs(Math.round(d * 10) / 10).toString().replace('.', ',') + '%') : null),
+        el('div', 'kc__pe', el('p', 'kc__nota', ant ? 'vs. ' + U.nomeMes(ant.mes_ref) : U.cap(U.nomeMes(ult.mes_ref))), spark(ult6)));
+    }).filter(Boolean);
+    return cards.length ? el('section', { class: 'kcs', style: '--n:' + cards.length, 'aria-label': 'Números de ' + U.nomeMes(ult.mes_ref) }, cards) : null;
+  };
+  // do contato à venda no último mês: barras na mesma caixa, com a passagem de uma etapa para a outra
+  const funil = () => {
+    const n = [...D.numeros].filter((x) => x.leads != null || x.propostas != null).sort((a, b) => a.mes_ref.localeCompare(b.mes_ref)).pop();
+    if (!n) return null;
+    const et = [['Contatos (leads)', n.leads], ['Propostas enviadas', n.propostas], ['Fechadas', n.fechadas], ['Fechadas sem desconto', n.sem_desconto]].filter(([, v]) => v != null);
+    if (et.length < 2) return null;
+    const mx = Math.max(...et.map(([, v]) => v), 1);
+    return secN('fun-t', 'Do contato à venda', null, U.cap(U.nomeMes(n.mes_ref)) + '. Onde mais gente se perde é onde vale agir primeiro.',
+      el('ul', 'gl funil', et.map(([t, v], i) => {
+        const prev = i ? et[i - 1][1] : null;
+        const pas = prev ? Math.round((v / prev) * 100) : null;
+        return el('li', 'gl__i funil__i',
+          el('div', 'funil__m', el('p', 'gl__t', t), el('div', 'funil__barra', el('span', { style: 'width:' + Math.max(2, (v / mx) * 100) + '%' }))),
+          el('p', 'funil__v', String(v)),
+          el('p', 'funil__p', pas != null ? pas + '% da etapa anterior' : ''));
+      })));
+  };
   const telaResultados = () => {
     const ultimo = [...D.numeros].reverse()[0];
     const out = [head(ultimo ? 'Último mês informado: ' + U.nomeMes(ultimo.mes_ref) : 'Estamos chegando lá?', 'Resultados',
       'Vendas mudam em semanas; a percepção da marca, em meses. Por isso medimos os dois, em ritmos diferentes.',
       el('a', { class: 'btn btn--ghost', href: '#relatorio' }, 'Relatório do mês')),
-    veredito(), quando(), parte('Negócio', 'O que o plano já devolveu e o que falta para a meta.'), pontoPartida('resultados'), metaHero(), lado(planoPagou(), simulador())].filter(Boolean);
+    cartoesNumeros(), veredito(), quando(), funil(), parte('Negócio', 'O que o plano já devolveu e o que falta para a meta.'), pontoPartida('resultados'), metaHero(), lado(planoPagou(), simulador())].filter(Boolean);
 
     // formulário do mês passado (ou a confirmação depois de enviar); fica ao lado do gráfico
     let numBox = null;
@@ -1844,6 +1923,7 @@
     window.open(data.signedUrl, '_blank', 'noopener');
   };
 
+  let filtroHist = 'todos';
   const telaConsultoria = () => {
     const p = D.plano;
     const ativo = !p || p.status === 'ativo';
@@ -1870,21 +1950,59 @@
           e.status === 'agendado' ? el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => abrirRemarcar(e) }, 'Remarcar') : null)].filter(Boolean));
     } else meet.append(el('p', 'box__text', 'Nenhum encontro marcado ainda. O consultor agenda o próximo com você.'));
 
-    out.push(meet, ...telaCalendario().slice(1));
+    // o consultor como um perfil, ao lado do próximo encontro
+    const c = D.consultor;
+    const perfilC = c ? el('section', { class: 'box perfil', 'aria-labelledby': 'cons-t' },
+      el('div', 'perfil__topo', (() => { const a = el('span', 'perfil__logo perfil__logo--pessoa'); U.avatar(a, c.nome, c.foto_url); return a; })(),
+        el('div', null, el('p', 'eyebrow', 'Seu consultor'), el('h2', { class: 'perfil__nome', id: 'cons-t' }, c.nome))),
+      el('dl', 'perfil__dl',
+        el('div', null, el('dt', null, 'Com vocês desde'), el('dd', null, p && p.inicio ? U.mesAno(p.inicio) : '—')),
+        el('div', null, el('dt', null, 'Encontros realizados'), el('dd', null, String(D.encontros.filter((x) => x.status === 'realizado' || new Date(x.inicio).getTime() <= agoraMs).length))),
+        el('div', null, el('dt', null, 'Revisão de peças'), el('dd', null, 'Resposta em até ' + ((p && p.prazo_revisao_dias) || 2) + ' dias úteis'))),
+      el('div', 'meet__btns',
+        el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => abrirConversa() }, 'Mandar mensagem'),
+        c.whatsapp ? el('a', { class: 'btn btn--ghost btn--sm', href: 'https://wa.me/' + String(c.whatsapp).replace(/\D/g, ''), target: '_blank', rel: 'noopener' }, 'WhatsApp') : null)) : null;
+    out.push(perfilC ? el('div', 'grid perfil-grid', perfilC, meet) : meet);
 
-    // encontros anteriores
-    const passados = D.encontros.filter((x) => x.status === 'realizado' || new Date(x.inicio).getTime() <= agoraMs).reverse();
-    if (passados.length) {
-      out.push(el('section', { class: 'box box--line', 'aria-labelledby': 'past-t' },
-        el('h2', { class: 'box__title', id: 'past-t' }, 'Encontros anteriores'),
-        el('div', 'past', passados.map((x, i) => {
-          const dec = (x.decisoes || []).length ? x.decisoes : null;
-          return el('details', { class: 'past__item', open: i === 0 },
-            el('summary', null, U.cap(U.nomeMes(U.ref(x.inicio))) + ' · ' + (TIPO_ENCONTRO[x.tipo] || 'encontro').toLowerCase() + ' · ' + U.dia(x.inicio)),
-            dec ? [el('p', 'eyebrow', 'Decidimos'), el('ul', 'past__list', dec.map((d) => el('li', null, d)))]
-              : el('p', 'box__text', (x.pauta || []).length ? 'Pauta: ' + x.pauta.join('; ') : 'Sem decisões registradas.'));
-        }))));
+    // histórico: encontros, prazos e revisões numa linha do tempo, com filtro
+    const passados = D.encontros.filter((x) => x.status === 'realizado' || new Date(x.inicio).getTime() <= agoraMs);
+    const hojeD = new Date().toLocaleDateString('sv-SE');
+    const itensH = [
+      ...passados.map((x) => ({ k: 'encontros', d: x.inicio.slice(0, 10), t: (TIPO_ENCONTRO[x.tipo] || 'Encontro') + ' de ' + U.nomeMes(U.ref(x.inicio)), o: 'Encontro · ' + x.duracao_min + ' min', x })),
+      ...D.acoes.filter((a) => comCliente(a) && a.prazo && a.prazo <= hojeD).map((a) => ({ k: 'prazos', d: a.prazo, t: a.titulo,
+        o: a.status === 'feita' ? (a.concluida_em && a.concluida_em > a.prazo ? 'Prazo · feita com atraso' : 'Prazo · feita a tempo') : 'Prazo · ainda aberta', st: a.status === 'feita' ? (a.concluida_em && a.concluida_em > a.prazo ? 'warn' : 'ok') : 'bad' })),
+      ...D.pedidos.map((x) => ({ k: 'revisoes', d: String(x.respondido_em || x.enviado_em).slice(0, 10), t: x.titulo || x.tipo_peca,
+        o: 'Revisão · ' + ({ em_analise: 'em análise', ajustar: 'pediu ajuste', aprovado: 'aprovada' }[x.status] || x.status), st: x.status === 'aprovado' ? 'ok' : x.status === 'ajustar' ? 'warn' : null })),
+    ].sort((a, b) => b.d.localeCompare(a.d));
+    if (itensH.length) {
+      const FIL = [['todos', 'Todos'], ['encontros', 'Encontros'], ['prazos', 'Prazos'], ['revisoes', 'Revisões']];
+      const corpo = el('ol', 'hist');
+      const desenha = () => {
+        const xs = itensH.filter((x) => filtroHist === 'todos' || x.k === filtroHist).slice(0, 30);
+        corpo.replaceChildren(...(xs.length ? xs.map((x) => {
+          const det = x.x ? [
+            (x.x.pauta || []).length ? el('div', 'hist__bloco', el('p', 'hist__rot', 'Pauta'), el('ul', 'hist__lista', x.x.pauta.map((t) => el('li', null, t)))) : null,
+            (x.x.decisoes || []).length ? el('div', 'hist__bloco', el('p', 'hist__rot', 'Decidimos'), el('ul', 'hist__lista', x.x.decisoes.map((t) => el('li', null, t)))) : null].filter(Boolean) : [];
+          const linha = [el('span', 'hist__d', U.dia(x.d)), el('span', 'hist__p' + (x.st ? ' hist__p--' + x.st : x.k === 'encontros' ? ' hist__p--enc' : '')),
+            el('div', 'hist__m', el('p', 'hist__t', x.t), el('p', 'hist__o', x.o))];
+          return det.length ? el('li', 'hist__i', el('details', { class: 'hist__det', open: x === itensH.find((y) => y.k === 'encontros') },
+            el('summary', 'hist__linha', linha), el('div', 'hist__mais', det)))
+            : el('li', 'hist__i', el('div', 'hist__linha', linha));
+        }) : [el('li', 'hist__vazio', 'Nada por aqui ainda.')]));
+      };
+      const chips = el('div', { class: 'fchips', role: 'group', 'aria-label': 'Filtrar histórico' }, FIL.map(([k, t]) => {
+        const n = k === 'todos' ? itensH.length : itensH.filter((x) => x.k === k).length;
+        return el('button', { class: 'fchip', type: 'button', 'aria-pressed': String(filtroHist === k), onclick: (ev) => {
+          filtroHist = k; chips.querySelectorAll('.fchip').forEach((b) => b.setAttribute('aria-pressed', 'false')); ev.currentTarget.setAttribute('aria-pressed', 'true'); desenha(); } },
+          t, el('span', 'fchip__n', String(n)));
+      }));
+      desenha();
+      out.push(el('section', { class: 'box', 'aria-labelledby': 'hist-t' },
+        el('div', 'gh', el('h2', { class: 'box__title', id: 'hist-t' }, 'Histórico'), el('p', 'gh__nota', 'Encontros, prazos e revisões de peças, do mais recente para o mais antigo.')),
+        chips, corpo));
     }
+
+    out.push(...telaCalendario().slice(1));
 
     // rodapé: o plano de consultoria
     if (p) {
@@ -2009,6 +2127,24 @@
   const baixar = (caminho, rotulo, cls) => el('button', { class: cls || 'btn btn--ghost', type: 'button', onclick: () => abreArquivo(caminho) }, rotulo);
   const vazio = (txt) => el('div', 'soon', txt || 'O consultor ainda não publicou esta parte. Ela aparece aqui assim que estiver pronta.');
   const sec = (idt, titulo, ...kids) => el('section', { class: 'box', 'aria-labelledby': idt }, el('h2', { class: 'box__title', id: idt }, titulo), kids);
+  // ----- peças das telas da marca (estilo de painel: faixa de números, listas agrupadas, ícones em quadrinho) -----
+  const ICP = {
+    ok: 'M20 6 9 17l-5-5', nao: 'M6 6l12 12 M18 6 6 18', meio: 'M6 12h12', alerta: 'M12 8v5 M12 16.5v.5 M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z',
+    arquivo: 'M14 3H6v18h12V7Z M14 3v4h4', balao: 'M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12Z', peca: 'M4 5h16v14H4Z M4 15l5-5 4 4 3-3 4 4',
+  };
+  const icp = (nome) => { const NS = 'http://www.w3.org/2000/svg'; const sv = document.createElementNS(NS, 'svg'); sv.setAttribute('viewBox', '0 0 24 24'); sv.setAttribute('aria-hidden', 'true');
+    ICP[nome].split(' M').forEach((d, i) => { const pa = document.createElementNS(NS, 'path'); pa.setAttribute('d', (i ? 'M' : '') + d); sv.append(pa); }); return sv; };
+  const quad = (conteudo, tom) => el('span', 'gq' + (tom ? ' gq--' + tom : ''), typeof conteudo === 'string' && ICP[conteudo] ? icp(conteudo) : conteudo);
+  // faixa de números no topo da tela: rótulo pequeno, valor, nota
+  const faixa = (itens) => { const xs = itens.filter(Boolean); return xs.length ? el('div', { class: 'faixa', style: '--n:' + xs.length },
+    xs.map(([rot, val, nota]) => el('div', 'faixa__c', el('p', 'faixa__rot', rot), el('p', 'faixa__val', val), nota ? el('p', 'faixa__nota', nota) : null))) : null; };
+  // lista agrupada: [quadrinho, título, linha de apoio, à direita]
+  const grupo = (linhas, cls) => el('ul', 'gl' + (cls ? ' ' + cls : ''), linhas.map(([q, t, sub, dir]) => el('li', 'gl__i',
+    q, el('div', 'gl__m', el('p', 'gl__t', t), sub ? (typeof sub === 'string' ? el('p', 'gl__s', sub) : sub) : null), dir || null)));
+  const secN = (idt, titulo, n, nota, ...kids) => el('section', { class: 'box', 'aria-labelledby': idt },
+    el('div', 'gh', el('h2', { class: 'box__title', id: idt }, titulo), n != null ? el('span', 'gh__n', String(n)) : null, nota ? el('p', 'gh__nota', nota) : null), kids);
+  const aspas = (t) => '“' + String(t || '').trim().replace(/^["“”']+|["“”']+$/g, '') + '”';
+  const metaPares = (pares) => el('dl', 'gmeta', pares.filter(([, v]) => v).map(([k, v]) => el('div', null, el('dt', null, k), el('dd', null, v))));
 
   // Plataforma de marca
   const FACETAS = [['aparencia', 'Aparência'], ['personalidade', 'Personalidade'], ['valores', 'Valores'], ['relacao', 'Relação com o cliente'],
@@ -2019,6 +2155,13 @@
       'Quem sua marca é e como ela fala. Consulte antes de escrever um post, uma proposta ou um anúncio.',
       P && P.pdf ? baixar(P.pdf, 'Baixar em PDF') : null)];
     if (!P) return out.concat(vazio());
+    const facN = FACETAS.filter(([k]) => D.facetas[k]).length;
+    const exN = D.pedidos.filter((x) => x.exemplo && x.status === 'aprovado').length;
+    out.push(faixa([
+      ['Mensagens de apoio', String(D.mensagens_apoio.length)],
+      ['Tom de voz', String(D.tom_atributos.length), D.tom_atributos.length === 1 ? 'atributo' : 'atributos'],
+      ['Quem a marca é', facN + ' de ' + FACETAS.length, 'facetas definidas'],
+      ['Exemplos aprovados', String(exN), exN ? 'para usar de referência' : 'aparecem quando houver']]));
 
     if (P.posicionamento) out.push(el('section', { class: 'focus focus--single', 'aria-labelledby': 'pos-t' },
       el('div', 'focus__text', el('p', { class: 'eyebrow', id: 'pos-t' }, 'Posicionamento'), el('p', 'focus__title focus__title--long', P.posicionamento))));
@@ -2026,7 +2169,7 @@
     const dizer = sec('say-t', 'O que dizer',
       P.mensagem_central ? [el('p', 'eyebrow', 'Mensagem central'), el('p', 'say__main', P.mensagem_central)] : null,
       D.mensagens_apoio.length ? [el('p', 'eyebrow', 'Mensagens de apoio'),
-        el('ol', 'say__list', D.mensagens_apoio.map((m) => el('li', null, m.texto)))] : null);
+        grupo(D.mensagens_apoio.map((m, i) => [quad(String(i + 1), 'num'), m.texto]), 'gl--say')] : null);
 
     // checklist "antes de publicar": só uma ajuda visual, não salva
     const itens = ['Fala com o cliente que escolhemos atender', 'Reforça a mensagem central', 'Soa como a marca (tom de voz)', 'Usa a cor, o símbolo e a frase da marca'];
@@ -2043,23 +2186,21 @@
 
     const diz = D.tom_exemplos.filter((x) => x.tipo === 'diz');
     const nunca = D.tom_exemplos.filter((x) => x.tipo === 'nunca_diz');
-    if (D.tom_atributos.length || diz.length || nunca.length) {
-      out.push(sec('tom-t', 'Tom de voz',
-        D.tom_atributos.length ? el('div', 'tone', D.tom_atributos.map((a) => el('div', 'tone__item', el('p', 'tone__name', a.nome), a.descricao ? el('p', 'box__text', a.descricao) : null))) : null,
-        (diz.length || nunca.length) ? el('div', 'says',
-          el('div', 'says__col', el('p', 'eyebrow', 'A marca diz'), diz.map((x) => el('p', 'says__ok', x.texto))),
-          el('div', 'says__col', el('p', 'eyebrow', 'Nunca diz'), nunca.map((x) => el('p', 'says__no', el('s', null, x.texto))))) : null));
-    }
+    if (D.tom_atributos.length) out.push(secN('tom-t', 'Tom de voz', D.tom_atributos.length, 'Como a marca soa em qualquer texto.',
+      el('div', 'tone', D.tom_atributos.map((a) => el('div', 'tone__item', el('p', 'tone__name', a.nome), a.descricao ? el('p', 'box__text', a.descricao) : null)))));
+    if (diz.length || nunca.length) out.push(el('div', 'grid grid--half',
+      diz.length ? secN('diz-t', 'A marca diz', diz.length, null, grupo(diz.map((x) => [quad('ok', 'ok'), aspas(x.texto)]))) : el('div'),
+      nunca.length ? secN('nunca-t', 'Nunca diz', nunca.length, null, grupo(nunca.map((x) => [quad('nao', 'bad'), aspas(x.texto)]))) : el('div')));
 
     const facs = FACETAS.filter(([k]) => D.facetas[k]);
-    if (facs.length) out.push(sec('who-t', 'Quem a marca é', el('div', 'facets', facs.map(([k, t]) => el('div', 'facet', el('p', 'eyebrow', t), el('p', 'facet__text', D.facetas[k]))))));
+    if (facs.length) out.push(secN('who-t', 'Quem a marca é', facs.length + '/' + FACETAS.length, 'O jeito da marca, para decidir o que combina com ela.',
+      el('dl', 'gdef', facs.map(([k, t]) => el('div', null, el('dt', null, t), el('dd', null, D.facetas[k]))))));
     // peças aprovadas que o consultor marcou como exemplo: o jeito certo, para copiar
     const ex = D.pedidos.filter((x) => x.exemplo && x.status === 'aprovado');
-    if (ex.length) out.push(sec('ex-t', 'Exemplos aprovados', el('p', 'box__text', 'Peças que seguiram a plataforma. Use como referência para as próximas.'),
-      el('ul', 'todo', ex.map((x) => el('li', 'piece', el('div', 'todo__text', el('span', 'todo__title', x.titulo || x.tipo_peca),
-        el('span', 'todo__sub', x.tipo_peca + (x.resposta ? ' · “' + x.resposta + '”' : ''))),
+    if (ex.length) out.push(secN('ex-t', 'Exemplos aprovados', ex.length, 'Peças que seguiram a plataforma. Use como referência para as próximas.',
+      grupo(ex.map((x) => [quad('peca'), x.titulo || x.tipo_peca, x.tipo_peca + (x.resposta ? ' · “' + x.resposta + '”' : ''),
         x.arquivo ? el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => abreArquivo(x.arquivo) }, 'Abrir')
-          : (x.link ? el('a', { class: 'btn btn--ghost btn--sm', href: x.link, target: '_blank', rel: 'noopener' }, 'Abrir') : null))))));
+          : (x.link ? el('a', { class: 'btn btn--ghost btn--sm', href: x.link, target: '_blank', rel: 'noopener' }, 'Abrir') : null)]))));
     return out;
   };
 
@@ -2214,6 +2355,15 @@
       'A marca para usar, não só para ler: copie as cores certas, veja as fontes e teste logo, combinações e títulos antes de publicar.',
       I && I.zip ? baixar(I.zip, 'Baixar tudo (.zip)') : null)];
     if (!I && !D.arquivos_marca.length && !D.cores.length && !(D.elementos_marca || []).length) return out.concat(vazio());
+    const nLogos = D.arquivos_marca.filter((a) => a.categoria === 'logo').length;
+    const nDocs = D.arquivos_marca.length - nLogos;
+    const aplicada = D.aplicacoes.filter((a) => a.status === 'aplicada').length;
+    out.push(faixa([
+      nLogos ? ['Logos', String(nLogos)] : null,
+      D.cores.length ? ['Cores', String(D.cores.length)] : null,
+      D.tipografias.length ? ['Fontes', String(D.tipografias.length)] : null,
+      nDocs ? ['Modelos e manuais', String(nDocs)] : null,
+      D.aplicacoes.length ? ['Marca aplicada', aplicada + ' de ' + D.aplicacoes.length, 'pontos de contato'] : null]));
 
     const logos = D.arquivos_marca.filter((a) => a.categoria === 'logo');
     if (logos.length) out.push(sec('logo-t', 'Logo', el('div', 'logos', logos.map((a, i) => el('figure', 'logo',
@@ -2264,11 +2414,11 @@
 
     const docs = D.arquivos_marca.filter((a) => a.categoria !== 'logo');
     const fim = [];
-    if (docs.length) fim.push(sec('doc-t', 'Modelos e manuais', el('ul', 'todo', docs.map((a) => el('li', 'piece',
-      el('div', 'todo__text', el('span', 'todo__title', a.nome), a.descricao ? el('span', 'todo__sub', a.descricao) : null),
-      el('div', 'logo__btns', (a.formatos || []).length ? botoesFormato(a) : el('span', 'box__note', 'Em breve')))))));
+    if (docs.length) fim.push(secN('doc-t', 'Modelos e manuais', docs.length, null,
+      grupo(docs.map((a) => [quad('arquivo'), a.nome, a.descricao || null,
+        el('div', 'logo__btns', (a.formatos || []).length ? botoesFormato(a) : el('span', 'box__note', 'Em breve'))]))));
 
-    if ((D.ativos || []).length) out.splice(1, 0, ativosDistintivos());
+    if ((D.ativos || []).length) out.splice(out[1] && out[1].classList && out[1].classList.contains('faixa') ? 2 : 1, 0, ativosDistintivos());
 
     if (D.aplicacoes.length) {
       const AP = { aplicada: 'done', em_andamento: 'doing', prevista: 'todo' };
@@ -2290,6 +2440,12 @@
     'Estratégia', 'Aonde a marca vai e as escolhas que fizemos para chegar lá. Toda ação do plano liga a um destes objetivos.',
     p.estrategia_pdf ? baixar(p.estrategia_pdf, 'Baixar plano completo (PDF)') : null)];
     if (!D.objetivos.length && !D.escolhas.length && !p.como_vencer && !D.condicoes.length) return out.concat(vazio());
+    const conf = D.condicoes.filter((c) => c.status === 'se_confirma').length;
+    out.push(faixa([
+      D.objetivos.length ? ['Objetivos', String(D.objetivos.length)] : null,
+      D.metricas.length ? ['Métricas acompanhadas', String(D.metricas.length)] : null,
+      D.condicoes.length ? ['Condições que se confirmam', conf + ' de ' + D.condicoes.length] : null,
+      p.proxima_revisao_estrategia ? ['Próxima revisão', U.mesAno(p.proxima_revisao_estrategia)] : null]));
 
     if (D.objetivos.length) {
       const card = (o) => {
@@ -2307,7 +2463,7 @@
       const NIV = { negocio: 'Negócio', marketing: 'Marketing', marca: 'Marca' };
       const FREQ = { mensal: 'Todo mês', semestral: 'A cada 6 meses', anual: 'Todo ano' };
       out.push(sec('met-t', 'Como medimos cada objetivo',
-        tabela(['Nível', 'Métrica', 'Medimos', 'Agora'], D.metricas.map((m) => [NIV[m.nivel] || m.nivel, m.nome, FREQ[m.frequencia] || m.frequencia,
+        tabela(['Nível', 'Métrica', 'Medimos', 'Agora'], D.metricas.map((m) => [el('span', 'nivel nivel--' + m.nivel, NIV[m.nivel] || m.nivel), m.nome, FREQ[m.frequencia] || m.frequencia,
           m.valor_atual || el('span', 'muted', m.proxima_medicao ? '1ª em ' + U.mesAno(m.proxima_medicao) : '—')]))));
     }
 
@@ -2361,22 +2517,42 @@
       G && G.proximo ? el('p', 'box__note', 'Novo diagnóstico em ' + U.mesAno(G.proximo)) : null)];
     if (!G) return out.concat(vazio());
 
+    const POS = { entrega: ['done', 'Entregava', 'ok', 'ok'], entrega_mal: ['doing', 'Entregava mal', 'meio', 'warn'], nao_entrega: ['warn', 'Não entregava', 'alerta', 'bad'] };
+    const mot = D.fatores.filter((f) => f.tipo === 'motivador');
+    const dis = D.fatores.filter((f) => f.tipo === 'discriminador');
+    const entregues = (fs) => fs.filter((f) => f.posicao === 'entrega').length;
+    const cli = D.impressoes.find((x) => x.eh_cliente);
+    const conc = D.impressoes.filter((x) => !x.eh_cliente);
+    out.push(faixa([
+      conc.length ? ['Concorrentes comparados', String(conc.length)] : null,
+      mot.length ? ['O que todo cliente exige', entregues(mot) + ' de ' + mot.length, 'a marca entregava'] : null,
+      dis.length ? ['O que faz escolher', entregues(dis) + ' de ' + dis.length, 'a marca entregava'] : null,
+      D.causas.length ? ['Causas que o plano ataca', String(D.causas.length)] : null]));
+
     if (G.resumo) out.push(el('section', { class: 'focus focus--single', 'aria-labelledby': 'res-t' },
       el('div', 'focus__text', el('p', { class: 'eyebrow', id: 'res-t' }, 'Em uma frase'), el('p', 'focus__title focus__title--long', G.resumo))));
 
-    if (D.impressoes.length) out.push(sec('imp-t', 'Como as pessoas viam a marca',
-      tabela(['Marca', 'O que notavam', 'O que acreditavam', 'O que sentiam'], D.impressoes.map((i) => [
-        i.eh_cliente ? el('strong', null, i.marca_nome) : i.marca_nome, i.notam || '—', i.acreditam || '—', i.sentem || '—']))));
+    // a marca do cliente como um perfil à esquerda; os concorrentes em lista à direita, com as mesmas três perguntas
+    const PERG = (i) => [['Notavam', i.notam], ['Acreditavam', i.acreditam], ['Sentiam', i.sentem]];
+    const sigla = (n) => { const a = el('span', 'gq gq--sigla'); U.avatar(a, n || '?'); return a; };
+    if (cli || conc.length) {
+      const perfil = cli ? el('section', { class: 'box perfil', 'aria-labelledby': 'imp-cli-t' },
+        el('div', 'perfil__topo', (() => { const a = el('span', 'perfil__logo'); U.avatar(a, cli.marca_nome, D.empresa && D.empresa.logo_url); return a; })(),
+          el('div', null, el('p', 'eyebrow', 'Sua marca, no começo'), el('h2', { class: 'perfil__nome', id: 'imp-cli-t' }, cli.marca_nome))),
+        el('dl', 'perfil__dl', PERG(cli).map(([k, v]) => el('div', null, el('dt', null, k), el('dd', null, v || '—'))))) : null;
+      const lista = conc.length ? secN('imp-t', 'Concorrentes', conc.length, 'As mesmas perguntas, para comparar.',
+        grupo(conc.map((c) => [sigla(c.marca_nome), c.marca_nome, metaPares(PERG(c))]))) : null;
+      out.push(perfil && lista ? el('div', 'grid perfil-grid', perfil, lista) : perfil || lista);
+    }
 
-    const POS = { entrega: ['done', 'Entregava'], entrega_mal: ['doing', 'Entregava mal'], nao_entrega: ['warn', 'Não entregava'] };
-    const lista = (fs) => el('ul', 'todo', fs.map((f) => el('li', 'piece', el('span', 'todo__title', f.texto), chip(...(POS[f.posicao] || POS.nao_entrega)))));
-    const mot = D.fatores.filter((f) => f.tipo === 'motivador');
-    const dis = D.fatores.filter((f) => f.tipo === 'discriminador');
+    const fatores = (idt, titulo, fs) => secN(idt, titulo, entregues(fs) + '/' + fs.length, null,
+      grupo(fs.map((f) => { const P = POS[f.posicao] || POS.nao_entrega; return [quad(P[2], P[3]), f.texto, null, chip(P[0], P[1])]; })));
     if (mot.length || dis.length) out.push(el('div', 'grid grid--half',
-      mot.length ? sec('mot-t', 'O que todo cliente exige', lista(mot)) : el('div'),
-      dis.length ? sec('dis-t', 'O que faz escolher uma marca', lista(dis)) : el('div')));
+      mot.length ? fatores('mot-t', 'O que todo cliente exige', mot) : el('div'),
+      dis.length ? fatores('dis-t', 'O que faz escolher uma marca', dis) : el('div')));
 
-    if (D.causas.length) out.push(sec('cau-t', 'As causas que o plano ataca', el('ol', 'causes', D.causas.map((c) => el('li', null, c.texto)))));
+    if (D.causas.length) out.push(secN('cau-t', 'As causas que o plano ataca', D.causas.length, 'Cada ação do plano ataca pelo menos uma delas.',
+      grupo(D.causas.map((c, i) => [quad(String(i + 1), 'num'), c.texto]))));
     return out;
   };
 
@@ -2510,6 +2686,17 @@
         el('div', { class: 'goal__segs', role: 'img', 'aria-label': 'Mês ' + mesAgora + ' de ' + dur + ' do plano', style: '--n:' + dur },
           Array.from({ length: dur }, (_, i) => el('span', i < mesAgora - 1 ? 'is-ok' : i === mesAgora - 1 ? 'is-now' : null))),
         el('div', 'goal__ends', el('span', null, U.cap(U.nomeMesCurto(inicioRef)) + ' ' + inicioRef.slice(2, 4)), el('span', null, 'Chegada · ' + U.nomeMesCurto(fimRef) + ' ' + fimRef.slice(2, 4)))) : null)];
+    if (inicioRef) {
+      const minhas = D.acoes.filter(comCliente);
+      const ate = minhas.filter((a) => a.mes_previsto <= hoje);
+      const feitasP = minhas.filter((a) => a.status === 'feita');
+      const noPrazo = feitasP.filter((a) => !a.prazo || (a.concluida_em && a.concluida_em <= a.prazo)).length;
+      out.push(faixa([
+        ['Ações do plano até agora', ate.filter((a) => a.status === 'feita').length + ' de ' + ate.length, 'concluídas'],
+        feitasP.length ? ['Feitas no prazo', Math.round((noPrazo / feitasP.length) * 100) + '%', noPrazo + ' de ' + feitasP.length] : ['Feitas no prazo', '—', 'aparece com a primeira ação'],
+        D.pedidos.length ? ['Peças revisadas', D.pedidos.filter((x) => x.status === 'aprovado').length + ' de ' + D.pedidos.length, 'aprovadas'] : null,
+        ['Próximo encontro', D.proximo ? U.dia(D.proximo.inicio) : 'A marcar', D.proximo ? U.cap(U.fmt(D.proximo.inicio, { weekday: 'long' })) + ' · ' + U.hora(D.proximo.inicio) : null]]));
+    }
     if (precisaPartida()) out.push(pontoPartida('plano'));
     const bm = bannerMensagem(); if (bm) out.push(bm);
     if (!inicioRef) return out.concat(vazio('A trilha aparece assim que o consultor cadastrar o plano.'));

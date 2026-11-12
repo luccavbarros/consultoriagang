@@ -4,6 +4,7 @@
 window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   const U = window.GangUI;
   const { $, el, say } = U;
+  const nomeEmpresa = sb.from('empresas').select('nome').eq('id', id).maybeSingle().then((r) => (r.data ? r.data.nome : ''));
 
   const safeName = (n) => n.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.-]+/g, '-').slice(-80);
   const sobe = async (file, pasta) => {
@@ -171,7 +172,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   };
 
   // ----- lista: vários itens com ordem -----
-  const lista = async (mount, { titulo, nota, tabela, fields, fixo = {}, resumo, pasta, vazio, ordem = true, icone, tom, largo }) => {
+  const lista = async (mount, { titulo, nota, tabela, fields, fixo = {}, resumo, pasta, vazio, ordem = true, icone, tom, largo, max, aoAbrir }) => {
     if (largo) mount.classList.add('is-largo');
     const pre = 'li-' + tabela + '-' + Object.values(fixo).join('-') + '-';
     let q = sb.from(tabela).select('*').eq('empresa_id', id);
@@ -191,7 +192,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
           f.type === 'preset' && (f.req || f.k === 'titulo') ? rows.filter((x) => x !== r).map((x) => x[f.k]).filter(Boolean) : null))),
         el('div', 'new-client__foot',
           el('button', { class: 'btn btn--light btn--sm', type: 'submit' }, 'Salvar'),
-          el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => { formBox.replaceChildren(); addBtn.hidden = false; } }, 'Cancelar'), msg));
+          el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => { formBox.replaceChildren(); addBtn.hidden = !!(max && rows.length >= max); } }, 'Cancelar'), msg));
       form.addEventListener('submit', async (ev) => {
         ev.preventDefault();
         const btn = form.querySelector('[type=submit]'); btn.disabled = true; say(msg, 'Salvando…');
@@ -204,6 +205,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
         } catch (err) { say(msg, err.message, 'error'); btn.disabled = false; }
       });
       formBox.replaceChildren(form); addBtn.hidden = true;
+      if (aoAbrir && !r) aoAbrir(pre);
       form.querySelector('input, textarea, select').focus();
     };
     const addBtn = el('button', { class: 'ed-add', type: 'button', onclick: () => abreForm(null) }, ico('mais'), 'Adicionar');
@@ -230,7 +232,8 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
             btn('lapis', 'Editar', () => abreForm(r)),
             btn('lixo', 'Excluir', async () => { if (!confirm('Excluir “' + (typeof t === 'string' ? t : 'este item') + '”?')) return; await sb.from(tabela).delete().eq('id', r.id); lista(mount, cfg); }, ' ed-acao--bad')));
       }) : el('li', 'ed-vazio', vazio || 'Nada cadastrado ainda.'))));
-    const cfg = { titulo, nota, tabela, fields, fixo, resumo, pasta, vazio, ordem, icone, tom, largo };
+    const cfg = { titulo, nota, tabela, fields, fixo, resumo, pasta, vazio, ordem, icone, tom, largo, max, aoAbrir };
+    if (max && rows.length >= max) addBtn.hidden = true;
   };
 
   // ----- seções de cada aba -----
@@ -246,11 +249,18 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     [ficha, { icone: 'pulso', titulo: 'Diagnóstico', nota: 'O ponto de partida da marca, como o cliente vê em Diagnóstico.', tabela: 'diagnosticos', fields: [
       { k: 'data', label: 'Data do diagnóstico', type: 'date' }, { k: 'proximo', label: 'Próximo diagnóstico', type: 'date' },
       { k: 'resumo', label: 'Em uma frase', type: 'textarea' }] }],
-    [lista, { icone: 'olho', largo: true, titulo: 'Como as pessoas viam a marca', nota: 'A marca do cliente e os concorrentes.', tabela: 'impressoes', fields: [
-      { k: 'marca_nome', label: 'Marca', req: true }, { k: 'eh_cliente', label: 'É a marca do cliente?', type: 'bool', def: false },
+    [lista, { icone: 'olho', tom: 'gang', titulo: 'A marca do cliente', nota: 'Como as pessoas viam a marca antes do trabalho.', tabela: 'impressoes', fixo: { eh_cliente: true }, max: 1,
+      vazio: 'Ainda sem a leitura da marca do cliente.', aoAbrir: (pre) => nomeEmpresa.then((n) => { const i = $(pre + 'marca_nome'); if (i && !i.value) i.value = n || ''; }), fields: [
+      { k: 'marca_nome', label: 'Marca', req: true },
       { k: 'notam', label: 'O que notavam', type: 'preset', presets: 'notam' }, { k: 'acreditam', label: 'O que acreditavam', type: 'preset', presets: 'acreditam' },
       { k: 'sentem', label: 'O que sentiam', type: 'preset', presets: 'sentem' }],
-    resumo: (r) => [r.marca_nome + (r.eh_cliente ? ' (cliente)' : ''), [r.notam, r.acreditam, r.sentem].filter(Boolean).join(' · ')] }],
+    resumo: (r) => [r.marca_nome, [r.notam, r.acreditam, r.sentem].filter(Boolean).join(' · ')] }],
+    [lista, { icone: 'olho', titulo: 'Concorrentes', nota: 'As mesmas perguntas para cada concorrente, para comparar com a marca do cliente.', tabela: 'impressoes', fixo: { eh_cliente: false },
+      vazio: 'Nenhum concorrente ainda.', fields: [
+      { k: 'marca_nome', label: 'Concorrente', req: true, placeholder: 'Nome do concorrente' },
+      { k: 'notam', label: 'O que notavam', type: 'preset', presets: 'notam' }, { k: 'acreditam', label: 'O que acreditavam', type: 'preset', presets: 'acreditam' },
+      { k: 'sentem', label: 'O que sentiam', type: 'preset', presets: 'sentem' }],
+    resumo: (r) => [r.marca_nome, [r.notam, r.acreditam, r.sentem].filter(Boolean).join(' · ')] }],
     [lista, { icone: 'check', titulo: 'O que todo cliente exige', nota: 'Motivadores: o mínimo da categoria.', tabela: 'fatores', fixo: { tipo: 'motivador' }, fields: [
       { k: 'texto', label: 'Item', req: true, type: 'preset', presets: 'motivadores' }, { k: 'posicao', label: 'A marca…', type: 'select', options: POS }],
     resumo: (r) => [r.texto, POS_T[r.posicao]] }],
