@@ -1716,7 +1716,9 @@
       const chave = semAcento(nome).split(/\s+/).filter((w) => w.length > 2).pop() || semAcento(nome);
       const temGrupo = D.respostas.some((r) => r.ja_cliente != null);
       if (!temGrupo) grupoPesq = 'todos';
-      const doGrupo = (r) => grupoPesq === 'todos' || (grupoPesq === 'novos' ? r.ja_cliente === false : r.ja_cliente === true);
+      // "ainda não compram" = quem compra a categoria e não é cliente; quem diz que nunca comprou a categoria não é o mercado
+      const doMercado = (r) => r.recencia !== 'nunca';
+      const doGrupo = (r) => grupoPesq === 'todos' || (grupoPesq === 'novos' ? r.ja_cliente === false && doMercado(r) : r.ja_cliente === true);
       const stats = pesq.map((q) => {
         const rs = D.respostas.filter((r) => r.pesquisa_id === q.id && doGrupo(r));
         const n = rs.length;
@@ -1741,7 +1743,10 @@
             return { texto: st.texto, sua, rival: Math.round((rivalN / n) * 100), rivalNome };
           });
         }
-        return { q, n, lemb, pref, medias, ment, rede, fatia, porSit };
+        // de quem compraram na última vez (fato do passado): entre quem comprou a categoria e lembra de quem
+        const comUlt = rs.filter((r) => r.ultima && r.ultima !== 'Não lembro');
+        const ult = comUlt.length ? Math.round((comUlt.filter((r) => r.ultima === nome).length / comUlt.length) * 100) : null;
+        return { q, n, lemb, pref, medias, ment, rede, fatia, porSit, ult };
       });
       // resultados: a última rodada com respostas (comparada à anterior com respostas); o link: a rodada aberta
       const comResp = stats.filter((x) => x.n > 0);
@@ -1758,11 +1763,11 @@
             : el('p', 'box__note', atual.q.titulo + ' · ' + atual.n + (atual.n === 1 ? ' resposta' : ' respostas'))),
         el('p', 'box__text', 'O que seus clientes responderam na pesquisa ' + (atual.q.titulo ? '“' + atual.q.titulo + '”' : '') + '.'));
       if (temGrupo) {
-        const nG = (g) => D.respostas.filter((r) => r.pesquisa_id === atual.q.id && (g === 'todos' || (g === 'novos' ? r.ja_cliente === false : r.ja_cliente === true))).length;
+        const nG = (g) => D.respostas.filter((r) => r.pesquisa_id === atual.q.id && (g === 'todos' || (g === 'novos' ? r.ja_cliente === false && r.recencia !== 'nunca' : r.ja_cliente === true))).length;
         box.append(el('div', 'grupo',
           el('div', { class: 'tabs tabs--mini', role: 'tablist', 'aria-label': 'Quem respondeu' }, [['novos', 'Ainda não compram'], ['todos', 'Todos'], ['clientes', 'Clientes']].map(([g, t]) =>
             el('button', { class: 'tabs__btn', role: 'tab', type: 'button', 'aria-selected': String(grupoPesq === g), onclick: () => { grupoPesq = g; render(); } }, t + ' (' + nG(g) + ')'))),
-          el('p', 'box__note', grupoPesq === 'novos' ? 'O número que mostra crescimento: a marca sendo lembrada por quem ainda não é cliente.' : grupoPesq === 'clientes' ? 'Clientes lembram mais da marca; use para ver a experiência, não o crescimento.' : 'Clientes e não clientes juntos.')));
+          el('p', 'box__note', grupoPesq === 'novos' ? 'O número que mostra crescimento: a marca sendo lembrada por quem compra a categoria e ainda não é cliente.' : grupoPesq === 'clientes' ? 'Clientes lembram mais da marca; use para ver a experiência, não o crescimento.' : 'Clientes e não clientes juntos.')));
       }
       const resumo = el('div', 'vista-resumo'); box.append(resumo);
       const colA = el('div', 'vista__col'); const colB = el('div', 'vista__col');
@@ -1786,6 +1791,7 @@
           atual.fatia != null ? tile('Das marcas lembradas, quantas são vocês', atual.fatia, delta(atual.fatia, ant && ant.fatia)) : null,
           atual.ment != null ? tile('Lembram de vocês na hora de comprar', atual.ment, delta(atual.ment, ant && ant.ment)) : null,
           tile('Lembram do nome sozinhos', atual.lemb, delta(atual.lemb, ant && ant.lemb)),
+          atual.ult != null && grupoPesq !== 'novos' ? tile('Compraram de vocês na última vez', atual.ult, delta(atual.ult, ant && ant.ult)) : null,
           tile('Escolheriam vocês hoje', atual.pref, delta(atual.pref, ant && ant.pref))));
         // fatia nas lembranças × participação de mercado: lembrada acima do tamanho tende a crescer
         if (atual.fatia != null && D.plano && D.plano.participacao_mercado != null) {

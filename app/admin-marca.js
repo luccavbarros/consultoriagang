@@ -82,7 +82,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       f.type === 'formats' ? el('p', 'label', f.label) : el('label', { class: 'label', for: idc }, f.label), input);
     // dica para quem está começando: aparece até o consultor dizer que entendeu (lembrado neste navegador)
     if (f.dica) {
-      const chave = 'gang-dica-' + f.k;
+      const chave = 'gang-dica-' + (f.dicaId || f.k);
       let visto = false; try { visto = localStorage.getItem(chave) === '1'; } catch (e) { /* sem armazenamento */ }
       if (!visto) {
         const dica = el('div', 'campo-dica', el('span', { class: 'campo-dica__i', 'aria-hidden': 'true' }, 'i'),
@@ -391,7 +391,8 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       { k: 'notar', label: 'Notar (comunicação)', type: 'preset', presets: 'notar' }, { k: 'acreditar', label: 'Acreditar (comunicação)', type: 'preset', presets: 'acreditar' }, { k: 'sentir', label: 'Sentir (comunicação)', type: 'preset', presets: 'sentir' }],
     resumo: (r) => [NIV_T[r.nivel] + ': ' + (r.destaque ? r.destaque + ' ' : '') + (r.titulo || ''), r.nivel === 'comunicacao' ? ['Notar ' + (r.notar || '—'), 'acreditar ' + (r.acreditar || '—'), 'sentir ' + (r.sentir || '—')].join(' · ') : null] }],
     [lista, { icone: 'pin', titulo: 'Situações de compra', nota: 'Os momentos em que alguém pensa na categoria. Ex.: “vou reformar antes de alugar”, “apareceu uma infiltração”. Entram na pesquisa e nas ações.', tabela: 'situacoes', fields: [
-      { k: 'texto', label: 'Situação', req: true, full: true, type: 'preset', presets: 'situacoes' }], resumo: (r) => [r.texto] }],
+      { k: 'texto', label: 'Situação', req: true, full: true, type: 'preset', presets: 'situacoes', dicaId: 'situacao',
+        dica: 'Escreva um momento da vida de quem compra (quando, onde, por quê), não um motivo. Use de 5 a 10, sempre as mesmas: são elas que a pesquisa mede.' }], resumo: (r) => [r.texto] }],
     [lista, { icone: 'check', tom: 'ok', titulo: 'Onde atuamos: prioridade', tabela: 'escolhas', fixo: { tipo: 'prioridade' }, fields: [{ k: 'texto', label: 'Prioridade', req: true, full: true, type: 'preset', presets: 'prioridades' }], resumo: (r) => [r.texto] }],
     [lista, { icone: 'menos', titulo: 'Onde atuamos: deixamos de lado', tabela: 'escolhas', fixo: { tipo: 'deixa_de_lado' }, fields: [{ k: 'texto', label: 'Deixamos de lado', req: true, full: true, type: 'preset', presets: 'deixados' }], resumo: (r) => [r.texto] }],
     [lista, { icone: 'radar', largo: true, titulo: 'O que acompanhamos', nota: 'Condições que precisam continuar verdadeiras. Quando uma vira “Não se confirma”, o cliente vê o aviso e o tema entra na pauta do próximo encontro.', tabela: 'condicoes', fields: [

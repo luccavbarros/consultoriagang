@@ -240,7 +240,7 @@
     ]],
     ['Lembretes', [
       ['Próximo encontro', 'Lembrete: nosso próximo encontro é {encontro}.\nSe quiser levar algum assunto para a pauta, escreva no portal, em Encontros.'],
-      ['Pesquisa de marca', 'A pesquisa de marca está aberta.\nQuanto mais clientes responderem, mais confiável fica o retrato.\nQue tal mandar o link para a sua lista hoje?'],
+      ['Pesquisa de marca', 'A pesquisa de marca está aberta.\nO mais importante é ouvir quem compra {categoria} e ainda não é seu cliente.\nQue tal mandar o link para grupos do bairro, parceiros e conhecidos, além da sua lista?'],
       ['Peça revisada', 'Revisei a peça e deixei os comentários no portal, em Peças.\nSe fizer sentido, é só ajustar e mandar a nova versão.'],
     ]],
     ['Conquistas', [
@@ -253,7 +253,9 @@
     const mesAnt = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toLocaleString('pt-BR', { month: 'long' });
     const { data: prox } = await sb.from('encontros').select('inicio').eq('empresa_id', id).gte('inicio', new Date().toISOString()).order('inicio').limit(1);
     const enc = prox && prox[0] ? U.quando(prox[0].inicio).replace(/^./, (c) => c.toLowerCase()) : 'em breve';
-    const preenche = (s) => s.replace('{mes}', mesAnt).replace('{encontro}', enc);
+    const { data: pq } = await sb.from('pesquisas').select('categoria').eq('empresa_id', id).order('criada_em', { ascending: false }).limit(1);
+    const cat = (pq && pq[0] && pq[0].categoria) || 'o que vocês vendem';
+    const preenche = (s) => s.replace('{mes}', mesAnt).replace('{encontro}', enc).replace('{categoria}', cat);
     $('prontas-n').textContent = PRONTAS.reduce((n, [, l]) => n + l.length, 0);
     $('prontas').replaceChildren(...PRONTAS.map(([g, lista]) => el('div', 'prontas__grupo',
       el('p', 'prontas__g', g),
@@ -1227,9 +1229,11 @@
   const loadPesqs = async () => {
     const [{ data: ps }, { data: rs }] = await Promise.all([
       sb.from('pesquisas').select('*').eq('empresa_id', id).order('criada_em', { ascending: false }),
-      sb.from('respostas').select('pesquisa_id').eq('empresa_id', id),
+      sb.from('respostas').select('pesquisa_id, ja_cliente, recencia').eq('empresa_id', id),
     ]);
     const n = (pid) => (rs || []).filter((r) => r.pesquisa_id === pid).length;
+    // o que mede crescimento: respostas de quem compra a categoria e ainda não é cliente (meta de 30 por rodada)
+    const nMercado = (pid) => (rs || []).filter((r) => r.pesquisa_id === pid && r.ja_cliente === false && r.recencia && r.recencia !== 'nunca').length;
     if (p && p.inicio && window.GangSaude) {
       const dur = p.duracao_meses || 18; const ini = U.ref(p.inicio);
       const rodadas = window.GangSaude.MESES_PESQUISA(dur).map((m) => ({ m, ref: U.addRef(ini, m - 1) }));
@@ -1241,7 +1245,7 @@
       const url = location.origin + '/pesquisa.html?t=' + q.token;
       return el('li', 'row',
         el('div', 'row__main', el('p', 'row__eyebrow', (q.aberta ? 'Aberta' : 'Fechada') + ' · criada em ' + U.diaAno(q.criada_em)), el('p', 'row__title', q.titulo),
-          el('p', 'row__text', n(q.id) + ' respostas · ' + q.categoria + ' · ' + (q.situacoes || []).length + ' situações · ' + (q.ativos || []).length + ' ativos')),
+          el('p', 'row__text', n(q.id) + ' respostas · ' + nMercado(q.id) + ' de 30 de quem compra a categoria e não é cliente · ' + q.categoria + ' · ' + (q.situacoes || []).length + ' situações · ' + (q.ativos || []).length + ' ativos')),
         el('div', 'row__actions',
           q.aberta ? rowBtn('Copiar link', async (e) => { try { await navigator.clipboard.writeText(url); e.target.textContent = 'Copiado'; } catch (er) { window.prompt('Link da pesquisa:', url); } }) : null,
           rowBtn('Editar', () => editaPesq(q, n(q.id))),
