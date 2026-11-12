@@ -5593,3 +5593,76 @@
 ];
   L.forEach((x) => { const a = P.abordagens.find((y) => y.texto.startsWith(x.ini)); if (a) { a.curto = x.curto; a.acoes = x.acoes; a.fora = x.fora; } });
 })();
+
+// ===== Rodada 19: ações novas que a biblioteca ainda não cobria (posicionamento a partir dos melhores clientes, custo de troca,
+// marcas desafiantes, posicionamento reverso, participação no gasto do cliente, preço de referência, dor de pagar, conselheiro de confiança).
+// Cada uma já vem ligada às abordagens que ela executa. =====
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'Listar os 10 melhores clientes (compraram rápido, pagaram sem negociar, indicaram) e escrever o que eles têm em comum', esforco: 'marca', promessa: 'valor', tema: 'posicionamento', tam: 'M', ler: 60,
+      porque: 'O posicionamento sai mais certeiro a partir de quem já ama a empresa do que de um público imaginado. O que esses clientes têm em comum mostra para quem a marca é a escolha óbvia.',
+      metrica: 'Clientes novos parecidos com os melhores', passos: ['Escolher os 10 melhores clientes do último ano', 'Anotar por que compraram e o que valorizam', 'Achar o que se repete entre eles', 'Usar isso no perfil do cliente ideal e na comunicação'] },
+    { texto: 'Mandar ao cliente, no mesmo dia, um resumo escrito de cada reunião: o que foi decidido, quem faz o quê e até quando', esforco: 'venda', promessa: 'vendas', tema: 'relacao', tam: 'P', ler: 60,
+      porque: 'Confiança nasce de cumprir o combinado, e o combinado só existe se estiver escrito. O resumo evita mal-entendidos e mostra que a empresa cuida do cliente entre um contato e outro.',
+      metrica: 'Reuniões com resumo enviado no mesmo dia', passos: ['Criar um modelo curto de resumo', 'Preencher logo depois da reunião', 'Enviar no mesmo dia', 'Começar a reunião seguinte pelo que foi combinado'] },
+    { texto: 'Tirar o trabalho de quem quer trocar o concorrente pela empresa: a empresa faz a mudança, leva o histórico e cuida da transição', esforco: 'venda', promessa: 'pessoas', tema: 'experiencia', tam: 'M', ler: 90,
+      porque: 'Muita gente insatisfeita com o fornecedor atual não troca por causa do trabalho de mudar. Quando a empresa assume esse trabalho, a barreira some e o cliente do concorrente fica ao alcance.',
+      metrica: 'Clientes vindos de concorrentes', passos: ['Listar o que dá trabalho para quem troca de fornecedor', 'Definir o que a empresa assume na mudança', 'Escrever a oferta de transição em uma frase', 'Usar nas conversas com quem compra do concorrente'] },
+    { texto: 'Fazer um gesto público que mostre que a marca mudou: tirar algo que a categoria inteira faz e explicar por quê', esforco: 'marca', promessa: 'pessoas', tema: 'posicionamento', tam: 'M', ler: 90,
+      porque: 'Marcas desafiantes crescem quando as pessoas são obrigadas a reavaliar o que pensavam delas. Um gesto visível e explicado faz mais por essa reavaliação do que uma campanha dizendo que a marca mudou.',
+      metrica: 'Pessoas que comentam ou perguntam sobre a mudança', passos: ['Listar o que todos na categoria fazem por costume', 'Escolher um item que a marca vai abandonar', 'Escrever o porquê em poucas linhas', 'Comunicar a mudança em todos os canais'] },
+    { texto: 'Levantar o que os clientes atuais ainda compram de outros fornecedores e oferecer o que faz sentido', esforco: 'venda', promessa: 'vendas', tema: 'relacao', tam: 'M', ler: 90,
+      porque: 'Crescer com quem já confia na empresa custa menos do que conquistar um cliente novo. Saber o que o cliente ainda compra fora mostra onde há espaço para atendê-lo melhor.',
+      metrica: 'Participação da empresa no gasto do cliente', passos: ['Perguntar aos principais clientes o que mais compram na categoria', 'Anotar o que a empresa poderia atender', 'Escolher as ofertas que fazem sentido', 'Oferecer na próxima conversa, sem pressão'] },
+    { texto: 'Antes de cada reunião com cliente, escrever 3 hipóteses sobre o problema dele e testá-las com perguntas', esforco: 'venda', promessa: 'valor', tema: 'venda', tam: 'P', ler: 60,
+      porque: 'Quem chega com hipóteses conduz a conversa como especialista; quem chega só para ouvir vira fornecedor. As perguntas certas mostram conhecimento antes de qualquer proposta.',
+      metrica: 'Reuniões que viram proposta', passos: ['Pesquisar o cliente antes da reunião', 'Escrever 3 hipóteses sobre o problema', 'Transformar cada uma em pergunta', 'Anotar quais se confirmaram'] },
+    { texto: 'Tirar da oferta algo que todos acham obrigatório e o cliente não valoriza, e acrescentar algo que ninguém oferece', esforco: 'marca', promessa: 'valor', tema: 'posicionamento', tam: 'M', ler: 90,
+      porque: 'Melhorar o que todos já fazem deixa as marcas cada vez mais parecidas. Tirar o que sobra e acrescentar o inesperado cria uma diferença que o cliente percebe e lembra.',
+      metrica: 'Clientes que citam o item novo como motivo de escolha', passos: ['Listar o que toda a categoria oferece', 'Perguntar a clientes o que eles não usam', 'Escolher o que tirar e o que acrescentar', 'Comunicar a nova oferta com clareza'] },
+    { texto: 'Mostrar ao lado do preço uma referência para o cliente comparar: o custo do problema ou o da alternativa que ele usaria', esforco: 'venda', promessa: 'valor', tema: 'preco', tam: 'P', ler: 60,
+      porque: 'Ninguém avalia um preço sozinho: ele é sempre comparado com algo. Se a empresa não dá a referência, o cliente usa a do concorrente mais barato.',
+      metrica: 'Pedidos de desconto por proposta', passos: ['Calcular o custo do problema ou da alternativa', 'Escrever a comparação em uma linha', 'Colocar ao lado do preço na proposta e no site', 'Acompanhar os pedidos de desconto'] },
+    { texto: 'Juntar cobranças pequenas e avulsas em um valor único e tirar as taxas que o cliente não espera', esforco: 'venda', promessa: 'valor', tema: 'preco', tam: 'P', ler: 60,
+      porque: 'Cada cobrança separada faz o cliente sentir de novo que está pagando. Um valor único e sem surpresa deixa a compra mais leve e a marca mais confiável.',
+      metrica: 'Reclamações sobre cobrança', passos: ['Listar todas as cobranças e taxas atuais', 'Marcar as que o cliente não espera', 'Montar um valor único ou um pacote', 'Avisar os clientes da mudança'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+  // ligar às abordagens que elas executam
+  const T = (ini) => (NOVAS.find((x) => x.texto.startsWith(ini)) || {}).texto;
+  const LIGA = [
+    ['Listar os 10 melhores', ['Ser a especialista', 'Começar por um nicho', 'Organizar a oferta em torno do progresso']],
+    ['Mandar ao cliente, no mesmo dia', ['Prometer menos e entregar', 'Ser a parceira de longo prazo', 'Ser a fornecedora de confiança', 'Ser a empresa próxima']],
+    ['Tirar o trabalho de quem quer trocar', ['Ganhar mercado conquistando', 'Ser a desafiante declarada', 'Ser a escolha mais conveniente']],
+    ['Fazer um gesto público', ['Ter um ponto de vista claro', 'Ser a alternativa ao jeito', 'Assumir o que a empresa é hoje', 'Ser a desafiante declarada']],
+    ['Levantar o que os clientes atuais', ['Ser a parceira de longo prazo', 'Trocar a venda única']],
+    ['Antes de cada reunião com cliente', ['Vender conhecimento e diagnóstico', 'Ser a especialista']],
+    ['Tirar da oferta algo que todos', ['Ser a alternativa ao jeito', 'Ser a primeira em uma subcategoria', 'Ser a única da região']],
+    ['Mostrar ao lado do preço', ['Cobrar pela diferença de valor', 'Ser a opção premium', 'Sair da faixa de preço baixo']],
+    ['Juntar cobranças pequenas', ['Ser a opção simples', 'Ser a escolha mais conveniente']],
+  ];
+  LIGA.forEach(([ini, abs]) => { const t = T(ini); if (!t) return; abs.forEach((a) => { const ab = (P.abordagens || []).find((y) => y.texto.startsWith(a)); if (ab && ab.acoes && !ab.acoes.includes(t)) ab.acoes.push(t); }); });
+})();
+
+
+// ===== Rodada 20: o tipo de esforço de cada ação, como nos estudos de eficácia de marca.
+// Marca = comunicação de longo prazo, ampla, para ser lembrada (anúncio de alcance, conteúdo, presença com os ativos, comunidade).
+// Ativação = comunicação de curto prazo para quem já está comprando (oferta, busca, remarketing, reativação, novos canais de venda).
+// Base = o que não é comunicação: posicionamento, proposta, preço, venda, atendimento, equipe e medição. Fica fora da conta marca × ativação. =====
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const PROMO = /(ativação com prazo|condição melhor|urgência|parcelas|brinde ou um extra|pacote que junte|teste gratuito|amostra gratuita|degustação)/i;
+  P.acoes.forEach((x) => {
+    if (x.esforco === 'marca' && ['anuncio', 'conteudo', 'presenca', 'relacao'].includes(x.tema)) x.tipo = 'marca';
+    else if (x.esforco === 'venda' && ['anuncio', 'conteudo', 'relacao', 'distribuicao'].includes(x.tema)) x.tipo = 'ativacao';
+    else if (PROMO.test(x.texto)) x.tipo = 'ativacao';
+    else x.tipo = 'base';
+  });
+  // revisão uma a uma: operação e atendimento não são comunicação (base); campanha de data e respostas para quem já compara são ativação
+  const BASE = /^(Revisar o site e os anúncios trocando|Listar todos os lugares|Ampliar o horário|Garantir que o produto|Separar os clientes em níveis|Fazer uma revisão de resultados|Pedir uma conversa por ano|Revisar o site com uma regra|Permitir agendar|Levar o serviço até|Começar todo relatório|Mandar ao cliente, no mesmo dia|Acompanhar de perto o cliente|Montar o calendário de comunicação|Responder todas as avaliações|Escrever o plano em 3 passos)/;
+  const ATIV = /^(Responder no site as 5 perguntas|Planejar uma campanha para as datas)/;
+  P.acoes.forEach((x) => { if (BASE.test(x.texto)) x.tipo = 'base'; else if (ATIV.test(x.texto)) x.tipo = 'ativacao'; });
+})();

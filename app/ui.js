@@ -386,6 +386,18 @@
   });
   // qual parte da promessa a ação move. Usa o que o consultor marcou; sem isso, deduz pelo texto da ação.
   const PROMESSAS = { vendas: 'Venda mais', pessoas: 'Para mais pessoas', valor: 'Com mais valor' };
+  // tipo de esforço pelos estudos de eficácia: marca (comunicação de longo prazo, ampla), ativação (comunicação de curto prazo,
+  // para quem já está comprando) e base (proposta, preço, atendimento, processo, medição: fora da conta marca × ativação)
+  const tipoEsforco = (a) => {
+    if (!a) return null;
+    if (a.tipo) return a.tipo;
+    const lib = ((window.GangPresets || {}).acoes || []).find((x) => x.texto === a.titulo);
+    if (lib && lib.tipo) return lib.tipo;
+    // revisões, rodadas da pesquisa e a chegada são medição: base, fora da conta marca × ativação
+    if (/^(Revisão|Chegada|Lançar a pesquisa de partida|Segunda rodada da pesquisa|Pesquisa de marca de)/.test(a.titulo || '')) return 'base';
+    return a.esforco === 'marca' ? 'marca' : a.esforco === 'venda' ? 'ativacao' : null;
+  };
+  const pesoTamanho = (a) => ({ P: 1, M: 2, G: 4 }[a && (a.tamanho || a.tam)] || 2);
   const promessaDe = (a) => {
     if (a && PROMESSAS[a.promessa]) return a.promessa;
     const t = String([a && a.titulo, a && a.porque, a && a.metrica_sucesso].join(' ')).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -513,5 +525,5 @@
     // o menu muda de altura quando entram avisos, o consultor ou o nome: reavalia
     if (side && window.MutationObserver) new MutationObserver(ajusta).observe(side, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
   });
-  window.GangUI = { buscaFonte, addDias, moedaFmt, moedaValor, moedaSet, PROMESSAS, promessaDe, combo, comboValue, comboSet, multi, multiValue, avatar, iniciais, $, el, say, day, fmt, cap, dia, diaAno, mesAno, hora, quando, ref, refDate, addRef, nomeMes, nomeMesCurto, mesesEntre, mesDoPlano, diasAte, reais, pct };
+  window.GangUI = { buscaFonte, addDias, moedaFmt, moedaValor, moedaSet, PROMESSAS, promessaDe, tipoEsforco, pesoTamanho, combo, comboValue, comboSet, multi, multiValue, avatar, iniciais, $, el, say, day, fmt, cap, dia, diaAno, mesAno, hora, quando, ref, refDate, addRef, nomeMes, nomeMesCurto, mesesEntre, mesDoPlano, diasAte, reais, pct };
 })();

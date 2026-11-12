@@ -372,8 +372,8 @@
   const detalheDe = (titulo) => {
     const x = ((window.GangPresets || {}).acoes || []).find((a) => a.texto === titulo);
     // sempre as mesmas colunas: numa gravação em lote, a coluna que falta numa linha vira vazio (e passos não aceita vazio)
-    if (!x) return { passos: [], tamanho: null, ler_em_dias: null, modelo: null };
-    return { passos: (x.passos || []).map((t) => ({ t, ok: false })), tamanho: x.tam || null, ler_em_dias: x.ler || null, modelo: x.modelo || null };
+    if (!x) return { passos: [], tamanho: null, ler_em_dias: null, modelo: null, tipo: null };
+    return { passos: (x.passos || []).map((t) => ({ t, ok: false })), tamanho: x.tam || null, ler_em_dias: x.ler || null, modelo: x.modelo || null, tipo: x.tipo || null };
   };
   const TAM = (window.GangPresets && window.GangPresets.TAMANHO) || { P: ['P', '', 1], M: ['M', '', 2], G: ['G', '', 4] };
   const doSetor = (x) => !emp.setor || !x.setores || x.setores.includes(emp.setor);
@@ -717,7 +717,7 @@
     box.replaceChildren(
       el('div', 'equil__head', el('h2', { class: 'title-sm', id: 'equil-t' }, 'Equilíbrio do plano'), el('p', 'small', avisos.length ? avisos.length + (avisos.length === 1 ? ' ponto de atenção' : ' pontos de atenção') : 'Plano equilibrado')),
       el('div', 'equil__barras',
-        E.marcaPct != null ? el('div', 'equil__barra', el('p', 'equil__lbl', 'Marca e venda nas ações'), el('div', 'equil__track', el('span', { class: 'is-marca', style: 'width:' + E.marcaPct + '%' }), el('span', { class: 'is-alvo', style: 'left:' + E.planejado + '%' })), el('p', 'equil__num', E.marcaPct + '% marca · planejado ' + E.planejado + '%')) : null,
+        E.marcaPct != null ? el('div', 'equil__barra', el('p', 'equil__lbl', 'Marca e ativação, pelo tamanho das ações'), el('div', 'equil__track', el('span', { class: 'is-marca', style: 'width:' + E.marcaPct + '%' }), el('span', { class: 'is-alvo', style: 'left:' + E.planejado + '%' })), el('p', 'equil__num', E.marcaPct + '% marca · ' + (100 - E.marcaPct) + '% ativação · planejado ' + E.planejado + '%' + (E.nBase ? ' · ' + E.nBase + (E.nBase === 1 ? ' ação de base fora da conta' : ' ações de base fora da conta') : ''))) : null,
         el('div', 'equil__barra', el('p', 'equil__lbl', 'Ações por parte da promessa'), el('div', 'equil__track equil__track--3', Object.keys(PR).map((k) => el('span', { class: 'is-' + k, style: 'width:' + (tot ? Math.round(E.porPromessa[k] / tot * 100) : 0) + '%' }))),
           el('p', 'equil__num', Object.entries(PR).map(([k, t]) => t + ' ' + E.porPromessa[k]).join(' · ')))),
       avisos.length ? el('ul', 'equil__avisos', avisos.map((t) => el('li', null, t))) : null);
@@ -967,14 +967,22 @@
     let kMes = 0;
     const naFase = (x) => { const f = faseDe(x.texto); return f === 1 ? kMes < Math.max(3, Math.round(nM / 3)) : f === 3 ? kMes >= f3 : true; };
     const pega = (filtro) => { const k = pool.findIndex((x) => filtro(x) && naFase(x) && !ja(x.texto)); return k < 0 ? null : pool.splice(k, 1)[0]; };
+    // equilíbrio marca × ativação pelo peso das ações (P=1, M=2, G=4), como nos estudos de eficácia; a base não entra na conta
+    const alvo = (p.esforco_marca_pct ?? 60) / 100;
+    const tipoLib = (y) => y.tipo || (y.esforco === 'marca' ? 'marca' : 'ativacao');
+    const pesoPlano = (t) => acoes.filter((a) => U.tipoEsforco(a) === t).reduce((s2, a) => s2 + U.pesoTamanho(a), 0)
+      + novas.filter((x) => U.tipoEsforco({ titulo: x.titulo, esforco: x.esforco }) === t).reduce((s2, x) => s2 + ptsT(x.titulo), 0);
+    const emFalta = () => { const m = pesoPlano('marca'); const a = pesoPlano('ativacao'); return m + a === 0 || m / (m + a) < alvo ? 'marca' : 'ativacao'; };
     meses.forEach((mes, km) => {
       kMes = km;
       const doMes = () => acoes.filter((a) => a.mes_previsto === mes).concat(novas.filter((x) => x.mes === mes));
       const add = (x, peso) => novas.push({ mes, peso, promessa: x.promessa || null, esforco: x.esforco || null, titulo: x.texto, porque: x.porque || null, metrica: x.metrica || null });
-      if (!doMes().some((a) => a.esforco === 'marca')) { const x = pega((y) => y.esforco === 'marca'); if (x) add(x, 'ajuda'); }
-      while (doMes().length < 2) { const x = pega((y) => y.esforco === 'venda') || pega(() => true); if (!x) break; add(x, 'ajuda'); }
+      // a marca aparece todo mês: sumir da comunicação derruba as vendas, e mais rápido nas marcas pequenas
+      if (!doMes().some((a) => U.tipoEsforco({ titulo: a.titulo, tipo: a.tipo, esforco: a.esforco }) === 'marca')) { const x = pega((y) => tipoLib(y) === 'marca'); if (x) add(x, 'ajuda'); }
+      // o resto do mês vai para o tipo que está abaixo da meta do cliente, sem cota fixa por mês
+      while (doMes().length < 2) { const t = emFalta(); const x = pega((y) => tipoLib(y) === t) || pega((y) => tipoLib(y) !== 'base') || pega(() => true); if (!x) break; add(x, 'ajuda'); }
       // mês leve (só ações rápidas): completa até uns 5 pontos com ações que caibam, para o cliente não ficar parado no resto do mês
-      while (carga(mes) < 5 && nMes(mes) < LIM_N) { const cabe = LIM - carga(mes); const x = pega((y) => (TAM[y.tam] || [, , 2])[2] <= cabe && (TAM[y.tam] || [, , 2])[2] >= 2) || pega((y) => (TAM[y.tam] || [, , 2])[2] <= cabe); if (!x) break; add(x, 'ajuda'); }
+      while (carga(mes) < 5 && nMes(mes) < LIM_N) { const cabe = LIM - carga(mes); const t = emFalta(); const x = pega((y) => tipoLib(y) === t && (TAM[y.tam] || [, , 2])[2] <= cabe && (TAM[y.tam] || [, , 2])[2] >= 2) || pega((y) => (TAM[y.tam] || [, , 2])[2] <= cabe && (TAM[y.tam] || [, , 2])[2] >= 2) || pega((y) => (TAM[y.tam] || [, , 2])[2] <= cabe); if (!x) break; add(x, 'ajuda'); }
       // um essencial por mês: a primeira ação nova do mês vira a essencial, se ainda não houver
       if (!doMes().some((a) => a.peso === 'essencial')) { const x = novas.find((y) => y.mes === mes); if (x) x.peso = 'essencial'; }
     });

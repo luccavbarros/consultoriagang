@@ -1219,3 +1219,8 @@ grant execute on function public.pesquisa_publica(uuid) to anon, authenticated;
 -- ===================== Plano pela estratégia =====================
 -- a ação guarda qual abordagem ela executa (nome curto), para o consultor e o cliente verem a ligação com a estratégia
 alter table public.acoes add column if not exists executa text;
+
+-- ===================== Equilíbrio pelos estudos de eficácia =====================
+-- tipo de esforço da ação: marca (comunicação de longo prazo), ativação (comunicação de curto prazo) ou base (proposta, preço,
+-- atendimento, processo e medição, que ficam fora da conta marca × ativação)
+alter table public.acoes add column if not exists tipo text check (tipo in ('marca', 'ativacao', 'base'));

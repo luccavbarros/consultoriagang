@@ -136,8 +136,11 @@
   // ===== equilíbrio do plano (aparece em Ações) =====
   function equilibrio(b) {
     const acs = b.acoes;
-    const comEsforco = acs.filter((a) => a.esforco);
-    const marcaPct = comEsforco.length ? Math.round(comEsforco.filter((a) => a.esforco === 'marca').length / comEsforco.length * 100) : null;
+    // marca × ativação pelo peso das ações (P=1, M=2, G=4); a base (proposta, preço, atendimento, processo) não entra na conta
+    const pesoDe = (t) => acs.filter((a) => U.tipoEsforco(a) === t).reduce((s, a) => s + U.pesoTamanho(a), 0);
+    const pM = pesoDe('marca'); const pA = pesoDe('ativacao');
+    const marcaPct = pM + pA ? Math.round((pM / (pM + pA)) * 100) : null;
+    const nBase = acs.filter((a) => U.tipoEsforco(a) === 'base').length;
     const planejado = b.plano ? (b.plano.esforco_marca_pct ?? 60) : 60;
     const porPromessa = { vendas: 0, pessoas: 0, valor: 0 };
     acs.forEach((a) => { porPromessa[U.promessaDe(a)] += 1; });
@@ -145,9 +148,9 @@
     const semMarca = [];
     // só os meses já planejados (o que ainda não foi planejado aparece como "nada planejado" na visão geral)
     const ultimoPlanejado = acs.map((a) => a.mes_previsto).sort().pop();
-    if (ini && ultimoPlanejado) for (let k = 0, r = ini; k < dur && r <= ultimoPlanejado; k += 1, r = U.addRef(r, 1)) { if (r >= hoje() && !acs.some((a) => a.mes_previsto === r && a.esforco === 'marca')) semMarca.push(r); }
+    if (ini && ultimoPlanejado) for (let k = 0, r = ini; k < dur && r <= ultimoPlanejado; k += 1, r = U.addRef(r, 1)) { if (r >= hoje() && !acs.some((a) => a.mes_previsto === r && U.tipoEsforco(a) === 'marca')) semMarca.push(r); }
     return {
-      marcaPct, planejado, porPromessa, semMarca: semMarca.slice(0, 6), semMarcaTotal: semMarca.length,
+      marcaPct, planejado, porPromessa, nBase, semMarca: semMarca.slice(0, 6), semMarcaTotal: semMarca.length,
       causasSemAcao: b.causas.filter((c) => !acs.some((a) => a.causa_id === c.id)),
       objetivosSemAcao: b.objetivos.filter((o) => o.nivel !== 'comunicacao' && !acs.some((a) => a.objetivo_id === o.id)),
     };

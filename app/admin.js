@@ -24,7 +24,7 @@
   let clientesBusca = [];
   U.buscaFonte(() => clientesBusca.map((e) => ({ grupo: 'Clientes', titulo: e.nome, href: 'admin-cliente.html?id=' + e.id })));
   const load = async () => {
-    const [emp, planos, perfis, sug, ped, enc, msg] = await Promise.all([
+    const [emp, planos, perfis, sug, ped, enc, msg, resp] = await Promise.all([
       sb.from('empresas').select('id, nome, created_at, setor, logo_url').order('nome'),
       sb.from('planos').select('empresa_id, inicio, duracao_meses, status, tipo'),
       sb.from('profiles').select('id, name, email, active, empresa_id').eq('role', 'client'),
@@ -32,7 +32,12 @@
       sb.from('pedidos_revisao').select('empresa_id, titulo, tipo_peca, enviado_em').eq('status', 'em_analise'),
       sb.from('encontros').select('empresa_id, inicio, remarcar_motivo').eq('status', 'remarcar_solicitado'),
       sb.from('mensagens').select('empresa_id, texto, criada_em').eq('de', 'cliente').eq('lida', false).order('criada_em', { ascending: false }),
+      sb.from('mensagens').select('empresa_id, criada_em').eq('de', 'consultor').order('criada_em', { ascending: false }),
     ]);
+    // mensagem do cliente só é pendência se ninguém respondeu depois dela (respondida = resolvida, mesmo sem abrir a aba)
+    const ultResp = {};
+    (resp.data || []).forEach((m) => { if (!ultResp[m.empresa_id] || m.criada_em > ultResp[m.empresa_id]) ultResp[m.empresa_id] = m.criada_em; });
+    if (msg.data) msg.data = msg.data.filter((m) => !ultResp[m.empresa_id] || m.criada_em > ultResp[m.empresa_id]);
     const erro = [emp, planos, perfis, sug, ped, enc, msg].find((r) => r.error);
     if (erro) return say($('list-msg'), 'Não foi possível carregar os clientes. Rodou o supabase/portal.sql?', 'error');
     say($('list-msg'), '');

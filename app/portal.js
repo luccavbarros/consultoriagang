@@ -1220,7 +1220,7 @@
         el('h2', { class: 'box__title', id: 'eff-t' }, 'Onde vai o esforço'),
         el('div', 'esf__legend',
           el('div', 'esf__item esf__item--marca', el('span', 'esf__lbl', 'Marca'), el('strong', 'esf__v', marca + '%'), el('span', 'esf__sub', 'Ser lembrada antes da compra')),
-          el('div', 'esf__item esf__item--vendas', el('span', 'esf__lbl', 'Vendas'), el('strong', 'esf__v', (100 - marca) + '%'), el('span', 'esf__sub', 'Converter quem já quer comprar'))),
+          el('div', 'esf__item esf__item--vendas', el('span', 'esf__lbl', 'Ativação'), el('strong', 'esf__v', (100 - marca) + '%'), el('span', 'esf__sub', 'Converter quem já quer comprar'))),
         el('div', 'esf__rows', esfLinha('Planejado', marca), esforcoReal(marca))));
     }
     const mv = marcaVista();
@@ -1314,21 +1314,22 @@
 
   // o esforço na prática: ações feitas ou em andamento, marcadas como marca ou venda
   // uma linha da divisão marca × vendas: barra fina em dois pedaços, com os números à direita
-  const esfLinha = (rot, m, extra) => el('div', { class: 'esf__row', role: 'img', 'aria-label': rot + ': ' + m + '% marca e ' + (100 - m) + '% vendas' },
+  const esfLinha = (rot, m, extra) => el('div', { class: 'esf__row', role: 'img', 'aria-label': rot + ': ' + m + '% marca e ' + (100 - m) + '% ativação' },
     el('span', 'esf__rot', rot),
     el('span', 'esf__bar', m ? el('span', { class: 'esf__seg esf__seg--marca', style: 'flex-grow:' + m }) : null, 100 - m ? el('span', { class: 'esf__seg esf__seg--vendas', style: 'flex-grow:' + (100 - m) }) : null),
     el('span', 'esf__num', m + ' / ' + (100 - m)), extra || null);
   const esforcoReal = (planejado) => {
-    const feitas = D.acoes.filter((a) => a.esforco && a.status !== 'a_fazer');
+    const feitas = D.acoes.filter((a) => ['marca', 'ativacao'].includes(U.tipoEsforco(a)) && a.status !== 'a_fazer');
     // alcance contínuo: cada mês do plano até agora precisa de pelo menos uma ação de marca
     const semMarca = [];
-    if (inicioRef) for (let r = inicioRef; r <= hoje; r = U.addRef(r, 1)) { if (!D.acoes.some((a) => a.esforco === 'marca' && a.mes_previsto === r)) semMarca.push(r); }
+    if (inicioRef) for (let r = inicioRef; r <= hoje; r = U.addRef(r, 1)) { if (!D.acoes.some((a) => U.tipoEsforco(a) === 'marca' && a.mes_previsto === r)) semMarca.push(r); }
     const alcance = semMarca.length ? el('p', 'insight', el('span', 'insight__lbl', 'Alcance'), el('span', null, 'Nenhuma ação de marca em ' + semMarca.map((r) => U.nomeMes(r)).join(', ') + '. A marca precisa aparecer todo mês.')) : null;
     if (feitas.length < 2) return alcance;
-    const m = Math.round((feitas.filter((a) => a.esforco === 'marca').length / feitas.length) * 100);
+    const pesoT = (t) => feitas.filter((a) => U.tipoEsforco(a) === t).reduce((s, a) => s + U.pesoTamanho(a), 0);
+    const m = Math.round((pesoT('marca') / ((pesoT('marca') + pesoT('ativacao')) || 1)) * 100);
     const longe = Math.abs(m - planejado) >= 15;
     return [esfLinha('Na prática', m, el('span', { class: 'esf__n', title: feitas.length + ' ações feitas ou em andamento' }, feitas.length + ' ações')),
-      longe ? el('p', 'insight', el('span', 'insight__lbl', 'Fora do plano'), el('span', null, m < planejado ? 'A marca está recebendo menos esforço que o planejado.' : 'Vendas estão recebendo menos esforço que o planejado.')) : null,
+      longe ? el('p', 'insight', el('span', 'insight__lbl', 'Fora do plano'), el('span', null, m < planejado ? 'A marca está recebendo menos esforço que o planejado.' : 'A ativação está recebendo menos esforço que o planejado.')) : null,
       alcance];
   };
 
