@@ -1944,3 +1944,75 @@ td.clients__empty { color: var(--ganggrey); font-size: var(--t-ui); }
 .mes-pt { grid-template-columns: minmax(124px, 1fr) minmax(96px, auto); }
 .mes-pt .combo__btn { padding-right: 12px; }
 .combo__btn.is-curta .combo__txt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ===== campo de data com calendário ===== */
+.dt { position: relative; display: block; min-width: 0; }
+.dt[hidden] { display: none; }
+.new-client__pass > .dt { flex: 1; }
+.dt > .field { width: 100%; padding-right: 44px; }
+.dt__btn { position: absolute; top: 50%; right: 6px; width: 32px; height: 32px; transform: translateY(-50%); border: 0; border-radius: 8px; background: transparent; cursor: pointer; display: grid; place-items: center; }
+.dt__btn::before { content: ''; width: 16px; height: 16px; background: #8a8a8a; transition: background .2s;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='3'/%3E%3Cpath d='M3 10h18M8 3v4M16 3v4'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='3'/%3E%3Cpath d='M3 10h18M8 3v4M16 3v4'/%3E%3C/svg%3E") center / contain no-repeat; }
+.dt__btn:hover, .dt__btn[aria-expanded="true"] { background: #1f1f1f; }
+.dt__btn:hover::before, .dt__btn[aria-expanded="true"]::before { background: #fff; }
+.dt__btn:focus-visible { outline: none; box-shadow: 0 0 0 2px #4a4a4a; }
+.dt__btn:disabled { opacity: .4; cursor: not-allowed; }
+.field--sm + .dt__btn, .dt > .field--sm { padding-right: 36px; }
+.cal { position: fixed; z-index: 1000; width: 280px; padding: 12px; display: grid; gap: 8px; background: #161616; border: 1px solid var(--line-2); border-radius: var(--r-sm); box-shadow: 0 18px 40px rgba(0, 0, 0, .45); animation: dd-in .14s ease-out; }
+.cal__topo { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cal__mes { margin: 0; font-size: 13px; font-weight: 600; color: #fff; }
+.cal__nav { width: 30px; height: 30px; border: 0; border-radius: 8px; background: transparent; color: #bdbdbd; font-size: 18px; line-height: 1; cursor: pointer; }
+.cal__nav:hover, .cal__nav:focus-visible { background: #1f1f1f; color: #fff; outline: none; }
+.cal__sem, .cal__dias { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.cal__sem span { text-align: center; font-size: 11px; color: var(--dim); padding: 4px 0; }
+.cal__dia { height: 34px; border: 0; border-radius: 8px; background: transparent; color: #d6d6d6; font: inherit; font-size: 13px; font-variant-numeric: tabular-nums; cursor: pointer; }
+.cal__dia:hover, .cal__dia:focus-visible { background: #1f1f1f; color: #fff; outline: none; }
+.cal__dia.is-hoje { box-shadow: inset 0 0 0 1px var(--line-2); color: #fff; }
+.cal__dia.is-on { background: #ececec; color: #111; font-weight: 600; }
+.cal__pe { display: flex; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 8px; }
+.cal__link { border: 0; background: transparent; color: #bdbdbd; font: inherit; font-size: 12px; padding: 4px 6px; border-radius: 6px; cursor: pointer; }
+.cal__link:hover, .cal__link:focus-visible { color: #fff; background: #1f1f1f; outline: none; }
+/* fechado, o campo fica numa linha só (mesma altura dos outros); o texto inteiro aparece só na lista aberta */
+.combo__btn, .combo .combo__btn { height: 42px; min-height: 42px; align-items: center; padding-block: 0; }
+.combo__btn.field--sm { height: auto; min-height: 0; padding-block: 6px; }
+.combo__txt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.combo__seta { margin-top: -3px; }
+.combo__btn[aria-expanded="true"] .combo__seta { margin-top: 3px; }
+.combo__btn { min-width: 0; max-width: 100%; }
+.combo, .dd-box, .ed-campos > *, .new-client > *, .new-client__pass > * { min-width: 0; }
+
+/* ===== Mensagens (consultor): conversa à esquerda, mensagens prontas à direita, mesma altura ===== */
+.conv-grade { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: stretch; }
+.conv-grade .conv { max-width: none; grid-template-rows: auto 1fr auto auto; }
+.conv-grade .conv__fio.chat--panel { max-height: none; min-height: 360px; }
+.prontas { min-width: 0; border: 1px solid var(--line); border-radius: var(--r); background: var(--lightblack); display: grid; grid-template-rows: auto 1fr; overflow: hidden; }
+.prontas__topo { padding: 14px 16px; border-bottom: 1px solid var(--line); display: grid; gap: 3px; }
+.prontas__t { margin: 0; font-size: var(--t-txt); font-weight: 600; color: #fff; display: flex; align-items: center; gap: 8px; }
+.prontas__d { margin: 0; font-size: var(--t-leg); line-height: 1.5; color: var(--ganggrey); }
+.prontas__lista { overflow-y: auto; max-height: 520px; padding: 8px; display: grid; gap: 10px; align-content: start; }
+.prontas__grupo { display: grid; border: 1px solid var(--line); border-radius: var(--r-sm); overflow: hidden; background: #171717; }
+.prontas__g { margin: 0; padding: 8px 12px 6px; font-size: 11px; color: var(--dim); letter-spacing: .02em; }
+.prontas__i { display: grid; gap: 2px; width: 100%; padding: 10px 12px; border: 0; border-top: 1px solid var(--line); background: transparent; text-align: left; cursor: pointer; font: inherit; color: inherit; transition: background .15s; }
+.prontas__i:hover, .prontas__i:focus-visible { background: #1f1f1f; outline: none; }
+.prontas__it { font-size: var(--t-ui); color: #ececec; }
+.prontas__ip { font-size: 12px; line-height: 1.45; color: var(--ganggrey); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+@media (max-width: 1100px) { .conv-grade { grid-template-columns: 1fr; } .prontas__lista { max-height: none; } }
+.prontas { grid-template-rows: auto minmax(0, 1fr); }
+.prontas__lista { display: flex; flex-direction: column; min-height: 0; max-height: none; }
+.prontas__grupo { flex: none; }
+.conv-grade { max-height: none; }
+@media (min-width: 1101px) { .conv-grade { height: min(640px, calc(100vh - 200px)); min-height: 520px; } .conv-grade .conv__fio.chat--panel { min-height: 0; } }
+/* linha da ação: prazo, andamento e botões numa linha só, mesma altura */
+.row__actions { flex-wrap: nowrap; }
+.row__actions > .dt { display: block; flex: none; width: 140px; }
+.row__actions .field--sm, .row__actions .combo__btn.field--sm { height: 34px; min-height: 34px; padding-block: 0; font-size: 12.5px; }
+.row__actions > .dt > .field--sm { width: 100%; padding-left: 12px; padding-right: 36px; }
+.row__actions .dt__btn { width: 26px; height: 26px; right: 4px; }
+.row__actions .dt__btn::before { width: 14px; height: 14px; }
+.row__actions > .combo__btn.field--sm { flex: none; width: 140px; align-items: center; }
+.row__actions > .btn--sm, .row__actions > .btn { height: 34px; }
+@media (max-width: 760px) { .row__actions { flex-wrap: wrap; } .row__actions > .dt, .row__actions > .combo__btn.field--sm { flex: 1 1 140px; width: auto; } }
+.combo__btn.field--sm .combo__seta { margin-top: -3px; }
+.combo__btn.field--sm[aria-expanded="true"] .combo__seta { margin-top: 3px; }
+@media (max-width: 760px) { .row__actions > .dt, .row__actions > .combo__btn.field--sm { flex: 1 1 110px; min-width: 0; } }

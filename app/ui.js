@@ -124,9 +124,9 @@
     const rotulo = () => {
       const o = sel.options[IP.get.call(sel)];
       const vazio = !o || placeholder(o);
-      const txt = !o ? '' : o.value === OUTRO ? 'Outro (escrever)' : quebra(o.text);
+      const txt = !o ? '' : o.value === OUTRO ? 'Outro (escrever)' : o.text; // fechado: uma linha só; a frase inteira aparece ao abrir
       btn.className = (sel.className.replace(/\bcombo__nativo\b/, '') + ' combo__btn').trim();
-      if ([...sel.options].every((x) => x.text.length < 40)) btn.classList.add('is-curta');
+      btn.title = vazio ? '' : txt;
       btn.replaceChildren(el('span', 'combo__txt' + (vazio ? ' is-vazio' : ''), txt), el('span', { class: 'combo__seta', 'aria-hidden': 'true' }));
       btn.disabled = sel.disabled;
       btn.hidden = sel.hidden;
@@ -240,6 +240,75 @@
       set(v) { const m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})/); setN(n, m ? m[3] + '/' + m[2] + '/' + m[1] : ''); },
     });
     mascara(n, [2, 2, 4], '/'); n.value = iso;
+    calendario(n);
+  };
+  // ===== calendário: ícone dentro do campo de data; abre no mês da data escolhida (ou no mês atual) =====
+  const SEM = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+  const isoDe = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  let calAberto = null;
+  const calendario = (n) => {
+    if (n._cal) return; n._cal = true;
+    const caixa = el('span', 'dt'); n.before(caixa); caixa.append(n);
+    const btn = el('button', { type: 'button', class: 'dt__btn', 'aria-label': 'Abrir calendário', 'aria-haspopup': 'dialog', 'aria-expanded': 'false' });
+    caixa.append(btn);
+    const pain = el('div', { class: 'cal', role: 'dialog', 'aria-label': 'Escolher data' });
+    let vis; // primeiro dia do mês mostrado
+    const escolhe = (iso) => {
+      n.value = iso; n.dispatchEvent(new Event('input', { bubbles: true })); n.dispatchEvent(new Event('change', { bubbles: true }));
+      fecha(); n.focus();
+    };
+    const desenha = () => {
+      const hoje = isoDe(new Date()); const sel = n.value;
+      const ini = new Date(vis.getFullYear(), vis.getMonth(), 1);
+      const pula = ini.getDay(); const total = new Date(vis.getFullYear(), vis.getMonth() + 1, 0).getDate();
+      const dias = [];
+      for (let i = 0; i < pula; i += 1) dias.push(el('span', 'cal__vazio'));
+      for (let d = 1; d <= total; d += 1) {
+        const iso = isoDe(new Date(vis.getFullYear(), vis.getMonth(), d));
+        dias.push(el('button', { type: 'button', class: 'cal__dia' + (iso === hoje ? ' is-hoje' : '') + (iso === sel ? ' is-on' : ''), 'aria-label': d + ' de ' + MESES_PT[vis.getMonth()], 'aria-pressed': String(iso === sel), onclick: () => escolhe(iso) }, String(d)));
+      }
+      const muda = (k) => { vis = new Date(vis.getFullYear(), vis.getMonth() + k, 1); desenha(); };
+      pain.replaceChildren(
+        el('div', 'cal__topo',
+          el('button', { type: 'button', class: 'cal__nav', 'aria-label': 'Mês anterior', onclick: () => muda(-1) }, '‹'),
+          el('p', 'cal__mes', MESES_PT[vis.getMonth()] + ' ' + vis.getFullYear()),
+          el('button', { type: 'button', class: 'cal__nav', 'aria-label': 'Próximo mês', onclick: () => muda(1) }, '›')),
+        el('div', 'cal__sem', SEM.map((s) => el('span', null, s))),
+        el('div', 'cal__dias', dias),
+        el('div', 'cal__pe',
+          el('button', { type: 'button', class: 'cal__link', onclick: () => escolhe(hoje) }, 'Hoje'),
+          n.value ? el('button', { type: 'button', class: 'cal__link', onclick: () => escolhe('') }, 'Limpar') : null));
+    };
+    const posiciona = () => {
+      const r = caixa.getBoundingClientRect(); const H = window.innerHeight; const W = 280;
+      const praCima = H - r.bottom < 340 && r.top > H - r.bottom;
+      pain.style.left = Math.max(8, Math.min(r.right - W, window.innerWidth - W - 8)) + 'px';
+      pain.style.top = praCima ? '' : r.bottom + 6 + 'px';
+      pain.style.bottom = praCima ? H - r.top + 6 + 'px' : '';
+    };
+    const fora = (e) => { if (!pain.contains(e.target) && !caixa.contains(e.target)) fecha(); };
+    const tecla = (e) => { if (e.key === 'Escape') { fecha(); btn.focus(); } };
+    const rola = (e) => { if (!pain.contains(e.target)) fecha(); };
+    const fecha = () => {
+      if (!pain.isConnected) return;
+      pain.remove(); btn.setAttribute('aria-expanded', 'false'); if (calAberto === fecha) calAberto = null;
+      document.removeEventListener('pointerdown', fora, true); document.removeEventListener('keydown', tecla, true);
+      window.removeEventListener('scroll', rola, true); window.removeEventListener('resize', fecha);
+    };
+    const abre = () => {
+      if (n.disabled || n.readOnly) return;
+      if (calAberto) calAberto();
+      const atual = n.value ? new Date(n.value + 'T12:00') : new Date();
+      vis = new Date(atual.getFullYear(), atual.getMonth(), 1);
+      desenha(); document.body.append(pain); posiciona();
+      btn.setAttribute('aria-expanded', 'true'); calAberto = fecha;
+      document.addEventListener('pointerdown', fora, true); document.addEventListener('keydown', tecla, true);
+      window.addEventListener('scroll', rola, true); window.addEventListener('resize', fecha);
+      (pain.querySelector('.cal__dia.is-on') || pain.querySelector('.cal__dia.is-hoje') || pain.querySelector('.cal__dia')).focus({ preventScroll: true });
+    };
+    btn.addEventListener('click', () => (pain.isConnected ? fecha() : abre()));
+    n.addEventListener('keydown', (e) => { if (e.key === 'ArrowDown' && e.altKey) { e.preventDefault(); abre(); } });
+    new MutationObserver(() => { btn.disabled = n.disabled || n.readOnly; caixa.hidden = n.hidden; }).observe(n, { attributes: true, attributeFilter: ['disabled', 'readonly', 'hidden'] });
   };
   const viraHora = (n) => {
     const v0 = getN(n); n.type = 'text'; n.inputMode = 'numeric'; n.autocomplete = 'off'; n.placeholder = n.placeholder || '00:00'; n.maxLength = 5;

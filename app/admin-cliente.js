@@ -230,6 +230,39 @@
   const caixa = $('adm-chat-txt');
   caixa.addEventListener('input', () => { caixa.style.height = 'auto'; caixa.style.height = Math.min(caixa.scrollHeight, 160) + 'px'; });
   caixa.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); $('adm-chat-form').requestSubmit(); } });
+  // ===== mensagens prontas (follow-up): o consultor clica, a mensagem entra no campo já com o mês e o próximo encontro =====
+  const PRONTAS = [
+    ['Acompanhamento', [
+      ['Como estão as ações', 'Olá! Passando para saber como estão as ações deste mês.\nAlguma travou? Me conta que a gente resolve junto.'],
+      ['Números do mês', 'Olá! Os números de {mes} ainda não chegaram.\nQuando puder, envie pelo portal, em Resultados.\nLeva 2 minutos e deixa o próximo encontro muito mais produtivo.'],
+      ['Depois do encontro', 'Obrigado pelo encontro de hoje!\nOs combinados já estão no portal, em Ações.\nQualquer dúvida, é só responder aqui.'],
+      ['Ficamos sem conversar', 'Oi! Vi que ficamos um tempo sem conversar. Está tudo bem por aí?\nSe a rotina apertou, me diz o que dá para fazer este mês e eu ajusto o plano.'],
+    ]],
+    ['Lembretes', [
+      ['Próximo encontro', 'Lembrete: nosso próximo encontro é {encontro}.\nSe quiser levar algum assunto para a pauta, escreva no portal, em Encontros.'],
+      ['Pesquisa de marca', 'A pesquisa de marca está aberta.\nQuanto mais clientes responderem, mais confiável fica o retrato.\nQue tal mandar o link para a sua lista hoje?'],
+      ['Peça revisada', 'Revisei a peça e deixei os comentários no portal, em Peças.\nSe fizer sentido, é só ajustar e mandar a nova versão.'],
+    ]],
+    ['Conquistas', [
+      ['Ação concluída', 'Parabéns por concluir mais uma ação!\nÉ a constância que faz a marca crescer.\nVamos para a próxima.'],
+      ['Resultado melhorou', 'Os números do último mês mostram avanço.\nVale olhar com calma em Resultados, no portal.\nNo próximo encontro, vemos juntos o que puxou isso.'],
+    ]],
+  ];
+  const montaProntas = async () => {
+    if (!$('prontas')) return;
+    const mesAnt = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toLocaleString('pt-BR', { month: 'long' });
+    const { data: prox } = await sb.from('encontros').select('inicio').eq('empresa_id', id).gte('inicio', new Date().toISOString()).order('inicio').limit(1);
+    const enc = prox && prox[0] ? U.quando(prox[0].inicio).replace(/^./, (c) => c.toLowerCase()) : 'em breve';
+    const preenche = (s) => s.replace('{mes}', mesAnt).replace('{encontro}', enc);
+    $('prontas-n').textContent = PRONTAS.reduce((n, [, l]) => n + l.length, 0);
+    $('prontas').replaceChildren(...PRONTAS.map(([g, lista]) => el('div', 'prontas__grupo',
+      el('p', 'prontas__g', g),
+      ...lista.map(([titulo, texto]) => el('button', { type: 'button', class: 'prontas__i', onclick: () => {
+        caixa.value = preenche(texto); caixa.dispatchEvent(new Event('input')); caixa.focus();
+        caixa.setSelectionRange(caixa.value.length, caixa.value.length);
+      } }, el('span', 'prontas__it', titulo), el('span', 'prontas__ip', preenche(texto).replace(/\n/g, ' ')))))));
+  };
+  montaProntas();
   const naAbaMensagens = () => location.hash === '#mensagens';
   loadMsgs(naAbaMensagens());
   window.addEventListener('hashchange', () => { if (naAbaMensagens()) loadMsgs(true); });
