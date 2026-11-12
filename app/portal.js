@@ -588,6 +588,7 @@
     const objTxt = U.cap(a.serve_para || (o ? o.titulo : '')) || (a.esforco === 'marca' && !a.promessa ? 'Fazer a marca ser lembrada na hora da compra' : OBJ_PROM[kProm]);
     const porque = [
       ['Objetivo', objTxt, o ? NIVEL[o.nivel] : U.PROMESSAS[kProm] || null],
+      ['Estratégia', a.executa ? 'Executa a abordagem da marca: ' + a.executa.charAt(0).toLowerCase() + a.executa.slice(1) : null, null],
       ['Por que funciona', a.porque ? U.cap(a.porque) : null, null],
       ['Momento de compra', situacaoDe(a) ? 'Lembrarem da marca quando “' + situacaoDe(a) + '”' : null, null],
       ['Sucesso se', a.metrica_sucesso ? U.cap(a.metrica_sucesso) : null, null],

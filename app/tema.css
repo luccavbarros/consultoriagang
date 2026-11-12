@@ -2047,3 +2047,9 @@ td.clients__empty { color: var(--ganggrey); font-size: var(--t-ui); }
 .campo-dica__i { flex: none; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 600; color: #111; background: #e6e6e6; margin-top: 1px; }
 .campo-dica__t { flex: 1; min-width: 0; margin: 0; font-size: var(--t-leg); line-height: 1.5; color: #cfcfcf; }
 .campo-dica__ok { flex: none; border: 0; background: none; padding: 2px 4px; font: inherit; font-size: var(--t-leg); color: #fff; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
+/* modelo de plano: a estratégia no topo e o selo nas ações que executam a abordagem */
+.mod__estr { border-left: 2px solid #e6e6e6; padding-left: 12px; }
+.mod__estr.is-falta { border-left-color: var(--warn, #e0b45a); }
+.mod__estr strong { color: #fff; font-weight: 500; }
+.mod__exec { margin-left: 8px; padding: 1px 7px; border-radius: 999px; font-size: 11px; color: #111; background: #e6e6e6; vertical-align: 1px; }

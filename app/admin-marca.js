@@ -339,8 +339,9 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   // ===== Teste de estratégia ruim: o que costuma faltar numa estratégia que é só desejo =====
   const testeEstrategia = async (mount) => {
     mount.classList.add('is-largo');
-    const [{ data: p }, { data: obs }, { data: esc }] = await Promise.all([
+    const [{ data: p }, { data: acs }, { data: obs }, { data: esc }] = await Promise.all([
       sb.from('planos').select('desafio, como_vencer').eq('empresa_id', id).maybeSingle(),
+      sb.from('acoes').select('titulo, executa, status').eq('empresa_id', id),
       sb.from('objetivos').select('nivel').eq('empresa_id', id),
       sb.from('escolhas').select('tipo').eq('empresa_id', id),
     ]);
@@ -352,12 +353,23 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     const tatica = /^\s*(abrir|criar|publicar|postar|fazer|montar|lan[çc]ar|treinar|contratar|anunciar|produzir|escrever|investir|melhorar|aumentar a presen|padronizar|transformar cada|responder|enviar|ligar|cadastrar|refazer|reformular)\b/i;
     const renuncia = /(abr(e|imos|ir|indo) m[ãa]o|deixa(mos|r)? de|em vez de|n[ãa]o vamos|n[ãa]o atendemos|sem disputar|recusa)/i;
     const cv = P.como_vencer || '';
+    // ações coerentes: o plano tem ações que executam a abordagem e nenhuma pendente que contradiga a renúncia
+    const ab = cv ? ((window.GangPresets || {}).abordagens || []).find((a) => a.texto === cv && a.acoes) : null;
+    const lista = acs || [];
+    const nExec = ab ? lista.filter((a) => a.executa || ab.acoes.includes(a.titulo)).length : lista.filter((a) => a.executa).length;
+    const contra = ab ? lista.filter((a) => a.status !== 'feita' && a.status !== 'descartada' && (ab.fora || []).includes(a.titulo)) : [];
+    const coerente = [!!cv && nExec >= 4 && !contra.length, 'Ações coerentes',
+      !cv ? 'Escolha a abordagem: é dela que saem as ações do plano.'
+        : contra.length ? 'Há ' + (contra.length === 1 ? 'uma ação que contradiz' : contra.length + ' ações que contradizem') + ' o que a abordagem deixa de lado: “' + contra[0].titulo + '”. Tire do plano ou reveja a abordagem.'
+          : nExec >= 4 ? nExec + ' ações do plano executam a abordagem.'
+            : (nExec ? 'Só ' + nExec + (nExec === 1 ? ' ação executa' : ' ações executam') : 'Nenhuma ação executa') + ' a abordagem. Use “Montar o plano a partir de um modelo” ou o Planejar o mês para incluir as da estratégia.'];
     const T = [
       [!!P.desafio, 'Nomeia o desafio', P.desafio ? 'O obstáculo principal está escrito.' : 'Sem o desafio, não dá para saber se a estratégia resolve alguma coisa. Escreva o que impede a marca de crescer.'],
       [!!P.como_vencer && !meta.test(P.como_vencer), 'Tem uma abordagem, não só uma meta', !P.como_vencer ? 'Falta dizer como a marca vai vencer o desafio.' : meta.test(P.como_vencer) ? 'A abordagem parece uma meta ("crescer", "+30%"). Meta é aonde ir; a abordagem é o caminho.' : 'A abordagem diz o caminho, não só o destino.'],
       [!!P.como_vencer && !floreio.test(P.como_vencer), 'Sem floreio', !P.como_vencer ? 'Escreva a abordagem em palavras concretas.' : floreio.test(P.como_vencer) ? 'Troque palavras vagas ("excelência", "referência", "inovação") pelo que a marca faz de fato.' : 'A abordagem usa palavras concretas.'],
       [!!cv && !tatica.test(cv), 'É uma escolha, não uma ação', !cv ? 'A abordagem é a escolha que orienta as ações: onde jogar e por que a marca vence ali.' : tatica.test(cv) ? 'A abordagem parece uma tarefa. Tarefas vão para Ações; aqui fica a escolha que explica por que elas existem.' : 'A abordagem é uma escolha que orienta as ações.'],
       [!!cv && renuncia.test(cv), 'Diz do que abre mão', !cv ? 'Uma boa abordagem diz o que a marca deixa de fazer por causa dela.' : renuncia.test(cv) ? 'A abordagem diz o que fica de fora.' : 'Se a abordagem não obriga a dizer não para nada, ainda não é estratégia. Complete com "Abrimos mão de…".'],
+      coerente,
       [(esc || []).some((e) => e.tipo === 'deixa_de_lado'), 'Faz escolhas', (esc || []).some((e) => e.tipo === 'deixa_de_lado') ? 'Há clientes, serviços ou canais em "Deixamos de lado".' : 'Estratégia também é dizer não. Cadastre o que a marca deixa de lado.'],
       [nObj > 0 && nObj <= 3, 'Foco', nObj === 0 ? 'Cadastre de 1 a 3 objetivos de negócio e marca.' : nObj <= 3 ? nObj + (nObj === 1 ? ' objetivo de negócio e marca.' : ' objetivos de negócio e marca.') : nObj + ' objetivos dividem o esforço. Fique com até 3.'],
     ];
@@ -425,8 +437,10 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   montar('pane-plataforma', [
     [ficha, { icone: 'forma', titulo: 'Plataforma de marca', tabela: 'plataformas', pasta: 'plataforma', fields: [
       { k: 'entregue_em', label: 'Entregue em', type: 'date' }, { k: 'pdf', label: 'Plataforma em PDF', type: 'file', accept: 'application/pdf' },
-      { k: 'posicionamento', label: 'Posicionamento', type: 'textarea', rows: 3, placeholder: 'Para [quem], [marca] é [o quê] que [benefício], porque [prova], ao contrário de [alternativa].' },
-      { k: 'mensagem_central', label: 'Mensagem central', full: true, type: 'preset', presets: 'mensagensCentrais' }] }],
+      { k: 'posicionamento', label: 'Posicionamento', type: 'textarea', rows: 3, placeholder: 'Para [quem], [marca] é [o quê] que [benefício], porque [prova], ao contrário de [alternativa].',
+        dica: 'Comece pela alternativa real: o que o cliente faria se a marca não existisse. Depois, o que só a marca tem, o valor disso e quem se importa muito com esse valor. Por último, escolha a categoria em que ela vira a escolha óbvia.' },
+      { k: 'mensagem_central', label: 'Mensagem central', full: true, type: 'preset', presets: 'mensagensCentrais',
+        dica: 'Uma ideia só, que o cliente entende em segundos. Teste: troque o nome da marca pelo de um concorrente. Se a frase continuar verdadeira, ainda não é a mensagem.' }] }],
     [lista, { icone: 'alvo', largo: true, titulo: 'Identidade central', nota: 'De 2 a 4 ideias que não mudam com o tempo. Servem de filtro para aprovar peças, parcerias e serviços novos.', tabela: 'identidade_central', max: 4,
       vazio: 'Ainda sem a identidade central.', fields: [
       { k: 'texto', label: 'Ideia que não muda', req: true, full: true, type: 'preset', presets: 'identidadeCentral', fill: { explicacao: 'explicacao' } },

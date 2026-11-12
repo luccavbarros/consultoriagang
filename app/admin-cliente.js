@@ -843,7 +843,7 @@
           loadAcoes();
 
         });
-        const quem = ({ essencial: 'Essencial', ajuda: 'Ajuda', reforco: 'Reforço' }[a.peso] || 'Ajuda') + (a.responsavel && a.responsavel !== 'cliente' ? ' · ' + RESP[a.responsavel] : '') + (a.responsavel_nome ? ' · com ' + a.responsavel_nome : ''); // "Cliente" é o padrão: só aparece quem foge dele
+        const quem = ({ essencial: 'Essencial', ajuda: 'Ajuda', reforco: 'Reforço' }[a.peso] || 'Ajuda') + (a.responsavel && a.responsavel !== 'cliente' ? ' · ' + RESP[a.responsavel] : '') + (a.responsavel_nome ? ' · com ' + a.responsavel_nome : '') + (a.executa ? ' · executa a estratégia' : ''); // "Cliente" é o padrão: só aparece quem foge dele
         const prazo = a.status === 'feita' ? (a.concluida_em ? 'Concluída em ' + U.dia(a.concluida_em) : 'Concluída') : (a.prazo ? 'Prazo ' + U.dia(a.prazo) : 'Sem prazo');
         const mudou = a.atualizada_por && a.atualizada_por !== me.id && a.atualizada_em ? ' · cliente atualizou em ' + U.dia(a.atualizada_em) : '';
         const ps = Array.isArray(a.passos) ? a.passos : [];
@@ -886,13 +886,20 @@
   // 2. o que cairia no passado vai para o mês atual e o seguinte (nada nasce atrasado);
   // 3. todo mês que sobrar recebe ações de continuidade da biblioteca: pelo menos 2 por mês, 1 de marca (presença contínua) e 1 essencial.
   const nRef = (r) => +r.slice(0, 4) * 12 + +r.slice(5, 7);
-  const montaModelo = (m) => {
+  // a abordagem escolhida em Estratégia (só as da biblioteca têm ações ligadas; texto próprio do consultor = só o setor)
+  const abordagemAtual = async () => {
+    const { data } = await sb.from('planos').select('como_vencer').eq('empresa_id', id).maybeSingle();
+    const t = data && data.como_vencer;
+    return { texto: t || null, ab: t ? (P.abordagens || []).find((a) => a.texto === t && a.acoes) || null : null };
+  };
+  const montaModelo = (m, ab) => {
+    const foraDaEstrategia = new Set(ab ? ab.fora || [] : []);
     const dur = p.duracao_meses || 18; const ini = U.ref(p.inicio); const fim = U.addRef(ini, dur - 1);
     const de = ini > U.ref() ? ini : U.ref();
     const meses = []; for (let r = de; nRef(r) <= nRef(fim); r = U.addRef(r, 1)) meses.push(r);
     if (!meses.length) return [];
     const doModelo = m.acoes.map(([mes, peso, promessa, esforco, titulo, porque, metrica]) => ({ mes: U.addRef(ini, Math.round((mes - 1) * (dur - 1) / 17)), peso, promessa, esforco, titulo, porque, metrica }));
-    const ja = (t) => acoes.some((a) => a.titulo === t) || novas.some((x) => x.titulo === t);
+    const ja = (t) => foraDaEstrategia.has(t) || acoes.some((a) => a.titulo === t) || novas.some((x) => x.titulo === t);
     const novas = [];
     // carga do mês em pontos (P=1, M=2, G=4): 7 pontos ou 5 ações. Um mês de ações rápidas recebe mais; um mês com uma ação grande, menos
     const LIM = 7; const LIM_N = 5;
@@ -912,6 +919,10 @@
       if (acoes.some((a) => a.titulo === t) || !doSetor(libDe(t))) return;
       const doMod = doModelo.find((x) => x.titulo === t);
       novas.push({ ...(doMod || daLib(t, 'essencial')), mes: vaga(0, t) });
+    });
+    // 2b. a estratégia: as ações que executam a abordagem viram essenciais nos primeiros meses (duas por mês, em ordem)
+    if (ab) (ab.acoes || []).filter((t) => !ja(t) && doSetor(libDe(t))).forEach((t, k) => {
+      novas.push({ ...daLib(t, 'essencial'), executa: ab.curto, mes: vaga(Math.min(Math.floor(k / 2), meses.length - 1), t) });
     });
     // 3. o que ficou para trás no modelo: essenciais primeiro, a partir do mês atual
     doModelo.filter((x) => nRef(x.mes) < nRef(de) && !marco(x.titulo)).sort((a, b) => (b.peso === 'essencial') - (a.peso === 'essencial'))
@@ -939,34 +950,47 @@
       // um essencial por mês: a primeira ação nova do mês vira a essencial, se ainda não houver
       if (!doMes().some((a) => a.peso === 'essencial')) { const x = novas.find((y) => y.mes === mes); if (x) x.peso = 'essencial'; }
     });
-    // no máximo 2 essenciais por mês: o que passar disso vira ajuda (foco, não lista de urgências)
+    // o que já vinha do setor e também executa a abordagem ganha o selo
+    if (ab) novas.forEach((x) => { if ((ab.acoes || []).includes(x.titulo)) x.executa = ab.curto; });
+    // no máximo 2 essenciais por mês: o que passar disso vira ajuda (foco, não lista de urgências); as da estratégia têm a vez
     meses.forEach((mes) => {
       let n = acoes.filter((a) => a.mes_previsto === mes && a.peso === 'essencial').length;
-      novas.filter((x) => x.mes === mes && x.peso === 'essencial').forEach((x) => { n += 1; if (n > 2) x.peso = 'ajuda'; });
+      novas.filter((x) => x.mes === mes && x.peso === 'essencial').sort((a, b) => !!b.executa - !!a.executa).forEach((x) => { n += 1; if (n > 2) x.peso = 'ajuda'; });
     });
     return novas.sort((a, b) => nRef(a.mes) - nRef(b.mes));
   };
-  const desenhaModelo = () => {
+  // o aviso de como a estratégia entrou no modelo
+  const notaEstrategia = (E, plano) => {
+    if (!E.texto) return el('li', 'lib__item mod__estr is-falta', el('p', 'row__text', 'Sem estratégia: o plano segue só o setor. Escolha o desafio e a abordagem em Estratégia para ele sair alinhado.'));
+    if (!E.ab) return el('li', 'lib__item mod__estr is-falta', el('p', 'row__text', 'A abordagem foi escrita à mão, então o modelo não sabe quais ações a executam: o plano segue o setor. Marque as ações da estratégia no Planejar o mês.'));
+    const n = plano.filter((x) => x.executa).length;
+    const fora = (E.ab.fora || []).length;
+    return el('li', 'lib__item mod__estr', el('p', 'row__text', el('strong', null, 'Alinhado à estratégia: ' + E.ab.curto + '. '),
+      n + (n === 1 ? ' ação executa' : ' ações executam') + ' a abordagem e ' + (n === 1 ? 'vem' : 'vêm') + ' primeiro.' + (fora ? ' ' + fora + (fora === 1 ? ' ação ficou' : ' ações ficaram') + ' de fora por contradizer a renúncia.' : '')));
+  };
+  const desenhaModelo = async () => {
     const m = MOD[$('mod-setor').value]; if (!m) return;
     if (!p.inicio) return $('mod-list').replaceChildren(el('li', 'lib__item', el('p', 'row__text', 'Cadastre o início do plano (em Plano) para ver o modelo distribuído nos meses.')));
-    const plano = montaModelo(m);
+    const E = await abordagemAtual();
+    const plano = montaModelo(m, E.ab);
     // o plano já cobre todos os meses com este modelo: não há o que mostrar (e nada a montar)
     if (!plano.length) return $('mod-list').replaceChildren(el('li', 'lib__item', el('p', 'row__text', 'O plano já cobre todos os meses com este modelo. Para mudar um mês, use o Planejar o mês.')));
     const meses = [...new Set(plano.map((x) => x.mes))];
-    $('mod-list').replaceChildren(
+    $('mod-list').replaceChildren(notaEstrategia(E, plano),
       el('li', 'lib__item mod__resumo', el('p', 'row__text', plano.length + ' ações em ' + meses.length + ' meses, de ' + U.nomeMes(meses[0]) + ' de ' + meses[0].slice(0, 4) + ' a ' + U.nomeMes(meses[meses.length - 1]) + ' de ' + meses[meses.length - 1].slice(0, 4) + '. Nenhum mês fica vazio; ajuste mês a mês no Planejar o mês, conforme os resultados.')),
       ...meses.map((mm) => el('li', 'lib__item mod__mes',
         el('div', 'lib__main', el('p', 'row__eyebrow', U.cap(U.nomeMes(mm)) + ' ' + mm.slice(0, 4)),
           el('ul', 'mod__acs', plano.filter((x) => x.mes === mm).map((x) => el('li', null,
             el('span', 'mod__peso' + (x.peso === 'essencial' ? ' is-ess' : ''), x.peso === 'essencial' ? 'Essencial' : 'Ajuda'),
-            el('span', null, x.titulo.split(':')[0]), el('span', 'mod__esf', x.esforco === 'marca' ? 'marca' : 'venda'))))))));
+            el('span', null, x.titulo.split(':')[0], x.executa ? el('span', 'mod__exec', 'Estratégia') : null), el('span', 'mod__esf', x.esforco === 'marca' ? 'marca' : 'venda'))))))));
   };
   $('mod-setor').addEventListener('change', desenhaModelo);
   $('acoes-modelo').addEventListener('toggle', desenhaModelo);
   $('mod-go').addEventListener('click', async () => {
     if (!p.inicio) return say($('acoes-msg'), 'Cadastre o início do plano (em Plano) antes de montar as ações.', 'error');
     const m = MOD[$('mod-setor').value]; if (!m) return;
-    const novas = montaModelo(m);
+    const E = await abordagemAtual();
+    const novas = montaModelo(m, E.ab);
     if (!novas.length) return say($('acoes-msg'), 'O plano já cobre todos os meses com este modelo.', 'ok');
     const nMeses = new Set(novas.map((x) => x.mes)).size;
     if (!confirm('Montar o plano “' + m.nome + '” até o fim do prazo: ' + novas.length + ' ações em ' + nMeses + ' meses. As que já existem não se repetem.')) return;
@@ -977,7 +1001,7 @@
       Object.assign(prz, Object.fromEntries(Object.entries(distribuiPrazos(mm, doM)).map(([t, d]) => [mm + '|' + t, d])));
     });
     const r = await sb.from('acoes').insert(novas.map((x) => ({ ...detalheDe(x.titulo), prazo: prz[x.mes + '|' + x.titulo] || null, empresa_id: id, titulo: x.titulo, mes_previsto: x.mes, peso: x.peso, promessa: x.promessa, esforco: x.esforco,
-      porque: x.porque, metrica_sucesso: x.metrica, responsavel: 'cliente', status: 'a_fazer', atualizada_por: me.id, atualizada_em: new Date().toISOString() })));
+      porque: x.porque, metrica_sucesso: x.metrica, ...(x.executa ? { executa: x.executa } : {}), responsavel: 'cliente', status: 'a_fazer', atualizada_por: me.id, atualizada_em: new Date().toISOString() })));
     $('mod-go').disabled = false;
     if (r.error) {
       const m = String(r.error.message || '');
