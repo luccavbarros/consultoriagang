@@ -6,7 +6,7 @@
   const CHAVE = 'gang-entrada';
   const calmo = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const css = `
-  .gx{position:fixed;inset:0;z-index:2147483000;background:#000;display:grid;place-items:center;padding:24px;opacity:0;transition:opacity .6s ease;pointer-events:all}
+  .gx{position:fixed;inset:0;z-index:2147483000;background:#000;visibility:visible;display:grid;place-items:center;padding:24px;opacity:0;transition:opacity .6s ease;pointer-events:all}
   .gx.is-on{opacity:1}
   .gx.is-saindo{opacity:0;transition:opacity .9s ease}
   .gx__f{margin:0;max-width:min(92vw,720px);text-align:center;font:500 clamp(18px,2.1vw,24px)/1.35 "Inter",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:-.01em;color:#f3f3f3}
@@ -48,19 +48,22 @@
     if (!veio) return;
     estilo();
     const ov = document.createElement('div'); ov.className = 'gx is-on'; ov.style.transition = 'none';
-    const pÕe = () => (document.body ? document.body.appendChild(ov) : document.documentElement.appendChild(ov));
-    pÕe();
-    const pronta = () => document.querySelector('.screen, #pane-title:not(:empty), .admin-main .app-section:not([hidden]), .portal-empty');
+    document.documentElement.appendChild(ov);
+    const pronta = () => document.documentElement.classList.contains('is-ready')
+      && document.querySelector('.screen, #pane-title:not(:empty), .admin-main .app-section:not([hidden]), .portal-empty');
     const inicio = Date.now();
     const tenta = () => {
       if (!(pronta() || Date.now() - inicio > 5000)) return setTimeout(tenta, 80);
       setTimeout(() => {
         ov.style.transition = '';
         ov.classList.add('is-saindo');
-        setTimeout(() => ov.remove(), 1000);
+        setTimeout(() => { ov.remove(); limpa(); }, 1000);
       }, 150);
     };
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { if (ov.parentNode !== document.body && document.body) document.body.appendChild(ov); tenta(); });
+    // fica fora do <body>: enquanto a página confere o login, o body fica escondido, e o preto não pode sumir junto (era a piscada cinza)
+    document.documentElement.style.backgroundColor = '#000';
+    const limpa = () => { document.documentElement.style.backgroundColor = ''; };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tenta);
     else tenta();
   };
 
