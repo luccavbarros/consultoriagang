@@ -5666,3 +5666,45 @@
   const ATIV = /^(Responder no site as 5 perguntas|Planejar uma campanha para as datas)/;
   P.acoes.forEach((x) => { if (BASE.test(x.texto)) x.tipo = 'base'; else if (ATIV.test(x.texto)) x.tipo = 'ativacao'; });
 })();
+
+// ===== Rodada 21: quem usa nem sempre é quem decide (paciente e família, aluno e pais, equipe e dono).
+// Ações que servem a qualquer setor, para "Conquistar quem usa" não depender só das ações de B2B. =====
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'Dar a quem usa o serviço um resumo simples do resultado, pronto para mostrar a quem paga ou decide', esforco: 'venda', promessa: 'vendas', tema: 'relacao', tipo: 'ativacao', tam: 'P', ler: 60,
+      porque: 'Quem usa vira defensor da marca quando tem como mostrar o resultado. Um resumo pronto faz essa conversa acontecer sem a empresa estar presente.',
+      metrica: 'Renovações e indicações vindas de quem usa', passos: ['Escolher os 3 números ou fatos que mostram o resultado', 'Montar um resumo de uma página', 'Entregar a quem usa ao fim de cada etapa', 'Perguntar se ele mostrou a quem decide'] },
+    { texto: 'Ouvir quem usa o serviço no dia a dia e levar o que ele pede para a conversa com quem decide', esforco: 'venda', promessa: 'valor', tema: 'relacao', tipo: 'base', tam: 'P', ler: 90,
+      porque: 'Quem decide confia mais no que vem de dentro da própria casa. Levar a voz de quem usa mostra que a empresa conhece a rotina dele e transforma o usuário em aliado.',
+      metrica: 'Pedidos de quem usa atendidos', passos: ['Marcar uma conversa curta com quem usa', 'Anotar o que ele mais pede ou reclama', 'Levar os pontos à conversa com quem decide', 'Contar a quem usa o que foi feito'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+  const ab = (P.abordagens || []).find((y) => y.texto.startsWith('Conquistar quem usa'));
+  if (ab && ab.acoes) NOVAS.forEach((x) => { if (!ab.acoes.includes(x.texto)) ab.acoes.push(x.texto); });
+})();
+
+// ===== Rodada 22: no varejo e na alimentação, "Vender o resultado" e "Conquistar quem usa" ficavam com poucas ações,
+// porque parte delas é de serviços ou B2B. Ligadas aqui ações gerais que de fato executam essas escolhas. =====
+(function () {
+  const P = window.GangPresets; if (!P || !P.abordagens) return;
+  const liga = (ini, titulos) => { const ab = P.abordagens.find((y) => y.texto.startsWith(ini)); if (!ab || !ab.acoes) return;
+    titulos.forEach((t) => { if (P.acoes.some((a) => a.texto === t) && !ab.acoes.includes(t)) ab.acoes.push(t); }); };
+  liga('Vender o resultado', ['Coletar e publicar depoimentos com nomes e números reais',
+    'Mostrar ao lado do preço uma referência para o cliente comparar: o custo do problema ou o da alternativa que ele usaria']);
+  liga('Conquistar quem usa', ['Criar algo que o cliente queira mostrar: um certificado, uma foto ou uma frase da marca']);
+})();
+
+// ===== Rodada 23: em B2B e tecnologia, "Sair na frente no jeito novo de comprar" e "Ter relação direta com o cliente"
+// ficavam com 3 ações. Ligadas as ações desses setores que executam as duas escolhas (canal próprio, teste gratuito, relação com quem decide). =====
+(function () {
+  const P = window.GangPresets; if (!P || !P.abordagens) return;
+  const liga = (ini, titulos) => { const ab = P.abordagens.find((y) => y.texto.startsWith(ini)); if (!ab || !ab.acoes) return;
+    titulos.forEach((t) => { if (P.acoes.some((a) => a.texto === t) && !ab.acoes.includes(t)) ab.acoes.push(t); }); };
+  liga('Sair na frente no jeito novo', ['Publicar toda semana no LinkedIn da empresa e dos sócios, sempre com os mesmos ativos da marca',
+    'Oferecer teste gratuito com acompanhamento nos primeiros 7 dias']);
+  liga('Ter uma relação direta', ['Publicar toda semana no LinkedIn da empresa e dos sócios, sempre com os mesmos ativos da marca',
+    'Pedir uma conversa por ano com o dono ou o diretor de cada cliente B2B importante']);
+})();
