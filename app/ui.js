@@ -101,7 +101,46 @@
     });
     set(valor);
     box.comboSet = set;
+    if (opts.longo) longo(box, sel, txt, itens, opts);
     return box;
+  };
+  // ===== frases longas: o select nativo corta o texto; aqui o consultor lê cada opção inteira, com quebra após o ponto =====
+  const quebra = (s) => String(s || '').replace(/([.;]) (?=\S)/g, '$1\n');
+  const longo = (box, sel, txt, itens, opts) => {
+    box.classList.add('combo--longo');
+    sel.classList.add('combo__nativo'); sel.tabIndex = -1; sel.setAttribute('aria-hidden', 'true');
+    const btn = el('button', { type: 'button', class: 'field combo__btn', 'aria-haspopup': 'listbox', 'aria-expanded': 'false' });
+    const pain = el('div', { class: 'combo__lista', role: 'listbox', hidden: true });
+    const rotulo = () => {
+      const v = sel.value;
+      const vazio = !v;
+      btn.replaceChildren(el('span', 'combo__txt' + (vazio ? ' is-vazio' : ''), vazio ? (opts.vazio || 'Escolha…') : v === OUTRO ? 'Outro (escrever)' : quebra(v)), el('span', { class: 'combo__seta', 'aria-hidden': 'true' }));
+      btn.disabled = sel.disabled;
+    };
+    const fecha = () => { pain.hidden = true; btn.setAttribute('aria-expanded', 'false'); document.removeEventListener('pointerdown', fora, true); document.removeEventListener('keydown', tecla, true); };
+    const fora = (e) => { if (!box.contains(e.target)) fecha(); };
+    const tecla = (e) => {
+      if (e.key === 'Escape') { fecha(); btn.focus(); return; }
+      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      e.preventDefault();
+      const os = [...pain.querySelectorAll('.combo__op')]; const i = os.indexOf(document.activeElement);
+      (os[e.key === 'ArrowDown' ? Math.min(os.length - 1, i + 1) : Math.max(0, i - 1)] || os[0]).focus();
+    };
+    const escolhe = (v) => { sel.value = v; sel.dispatchEvent(new Event('change', { bubbles: true })); rotulo(); fecha(); if (v !== OUTRO) btn.focus(); };
+    const abre = () => {
+      if (sel.disabled) return;
+      const op = (v, t, extra) => el('button', { type: 'button', role: 'option', class: 'combo__op' + (extra || '') + (sel.value === v ? ' is-on' : ''), 'aria-selected': String(sel.value === v), onclick: () => escolhe(v) }, t);
+      pain.replaceChildren(...itens.map((i) => op(i.texto, quebra(i.texto))), op(OUTRO, 'Outro (escrever)', ' combo__op--outro'));
+      pain.hidden = false; btn.setAttribute('aria-expanded', 'true');
+      document.addEventListener('pointerdown', fora, true); document.addEventListener('keydown', tecla, true);
+      (pain.querySelector('.is-on') || pain.firstChild).focus();
+    };
+    btn.addEventListener('click', () => (pain.hidden ? abre() : fecha()));
+    sel.addEventListener('change', rotulo);
+    new MutationObserver(rotulo).observe(sel, { attributes: true, attributeFilter: ['disabled'] });
+    const setOrig = box.comboSet; box.comboSet = (v) => { setOrig(v); rotulo(); };
+    box.prepend(btn); box.insertBefore(pain, txt);
+    rotulo();
   };
   const comboValue = (idc) => {
     const sel = document.getElementById(idc);

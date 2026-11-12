@@ -41,6 +41,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       const ja = new Set(usados || []);
       input = U.combo(idc, ja.size ? todas.filter((i) => !ja.has(i.texto) || i.texto === valor) : todas, valor, {
         semGrupos: true, // a fonte de cada resposta pronta fica só por trás
+        longo: !!f.longo, // frases longas: lista própria que mostra o texto inteiro
         onPick: (item) => Object.entries(f.fill || {}).forEach(([de, para]) => {
           if (item[de] == null) return;
           const alvo = $(pre + para);
@@ -182,7 +183,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
         // só libera depois que o campo de origem (o desafio) tem valor; sem ele, fica desativado e vazio
         const livre = !!U.comboValue(idDe);
         const valor = !livre ? null : manter || (atualV && lista.some((a) => a.texto === atualV)) ? atualV : null;
-        const novo = U.combo(idc, lista, valor, { semGrupos: true, vazio: livre ? 'Escolha…' : 'Escolha o desafio primeiro' });
+        const novo = U.combo(idc, lista, valor, { semGrupos: true, longo: !!f.longo, vazio: livre ? 'Escolha…' : 'Escolha o desafio primeiro' });
         novo.querySelectorAll('select, input').forEach((x) => { x.disabled = !livre; });
         novo.classList.toggle('is-travado', !livre);
         velho.replaceWith(novo);
@@ -367,8 +368,8 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   const CON_T = Object.fromEntries(CON);
   montar('pane-estrategia', [
     [ficha, { icone: 'mapa', titulo: 'O cerne da estratégia', nota: 'O desafio que a marca precisa vencer e a abordagem para vencê-lo.', tabela: 'planos', pasta: 'estrategia', fields: [
-      { k: 'desafio', label: '1. O desafio (o obstáculo principal)', full: true, type: 'preset', presets: 'desafios' },
-      { k: 'como_vencer', label: '2. A abordagem (como vencer o desafio)', full: true, type: 'preset', presets: 'abordagens', depende: { de: 'desafio', lista: 'desafios', chave: 'abordagens' } },
+      { k: 'desafio', label: '1. O desafio (o obstáculo principal)', full: true, longo: true, type: 'preset', presets: 'desafios' },
+      { k: 'como_vencer', label: '2. A abordagem (como vencer o desafio)', full: true, longo: true, type: 'preset', presets: 'abordagens', depende: { de: 'desafio', lista: 'desafios', chave: 'abordagens' } },
       { k: 'estrategia_aprovada_em', label: 'Aprovada em', type: 'date' }, { k: 'proxima_revisao_estrategia', label: 'Próxima revisão', type: 'date' },
       { k: 'estrategia_pdf', label: 'Plano completo (PDF)', type: 'file', accept: 'application/pdf' }] }],
     [testeEstrategia, {}],
