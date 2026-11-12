@@ -1879,3 +1879,5 @@ td.clients__empty { color: var(--ganggrey); font-size: var(--t-ui); }
 /* telas que se reorganizam com o que existe: se um par tem só um lado, ele ocupa a linha toda */
 .grid--half > :only-child, .est-dois > :only-child, .pair > :only-child, .perfil-grid > :only-child, .ed-grade > .editor-block:only-child { grid-column: 1 / -1; }
 .grid--half:empty, .est-dois:empty, .pair:empty { display: none; }
+.trail__node.is-trancado { cursor: not-allowed; }
+.trail__node.is-trancado:hover { color: #6b6b6b; }

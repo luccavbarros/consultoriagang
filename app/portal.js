@@ -2938,11 +2938,13 @@
       const cls = e.fase === 'futuro' ? 'futuro' : k === 5 ? 'conquistado' : e.fase === 'agora' ? 'agora' : k ? 'parcial' : 'pendente';
       const b = el('button', { class: 'trail__node is-' + cls + (ultimo ? ' is-fim' : '') + (e.r === caminhoSel ? ' is-sel' : ''), type: 'button', 'aria-pressed': String(e.r === caminhoSel),
         'aria-label': U.cap(U.nomeMes(e.r)) + ', mês ' + n + ': ' + (k == null ? 'por vir' : k + ' de 5 estrelas' + (e.fase === 'agora' ? ', em andamento' : '')),
-        onclick: () => { caminhoSel = e.r; cpTrocou = true; render(); } });
+        onclick: () => { if (!ultimo && e.r > U.addRef(hoje, 1)) return; caminhoSel = e.r; cpTrocou = true; render(); } });
       // meses mais à frente ficam trancados (as ações chegam no mês anterior), como em "Próximos meses"
       const trancado = !ultimo && e.r > U.addRef(hoje, 1);
       if (trancado) {
         b.classList.add('is-trancado'); b.innerHTML = CADEADO; b.dataset.dica = U.cap(U.nomeMes(e.r)) + ' · abre em ' + U.nomeMes(U.addRef(e.r, -1));
+        // trancado não abre: o clique não faz nada (a dica ao passar o mouse continua)
+        b.setAttribute('aria-disabled', 'true'); b.removeAttribute('aria-pressed');
         b.setAttribute('aria-label', U.cap(U.nomeMes(e.r)) + ', mês ' + n + ': trancado, abre em ' + U.nomeMes(U.addRef(e.r, -1)));
       } else if (ultimo) { b.innerHTML = BANDEIRA; b.dataset.dica = 'Chegada · ' + U.nomeMes(e.r) + ' de ' + e.r.slice(0, 4); }
       else if (k === 5) b.textContent = '★';
