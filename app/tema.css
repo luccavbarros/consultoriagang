@@ -2018,3 +2018,26 @@ td.clients__empty { color: var(--ganggrey); font-size: var(--t-ui); }
 @media (max-width: 760px) { .row__actions > .dt, .row__actions > .combo__btn.field--sm { flex: 1 1 110px; min-width: 0; } }
 .kc.is-vazio .kc__val { color: #5a5a5a; }
 .kc.is-vazio .kc__nota { color: var(--dim); line-height: 1.45; }
+
+/* Diagnóstico em grade: frase e causas | fatores; marcas em cartões lado a lado */
+.diag-topo { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.diag-topo > :only-child { grid-column: 1 / -1; }
+.diag-col { display: grid; gap: 16px; min-width: 0; }
+.mcs { display: grid; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); gap: 10px; }
+.mc { display: grid; gap: 14px; align-content: start; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.015); min-width: 0; }
+.mc--sua { border-color: rgba(255,255,255,.28); background: rgba(255,255,255,.045); }
+.mc__topo { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.mc__logo { flex: none; width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; background: #2a2a2a center / cover; color: #e6e6e6; font-size: 12px; font-weight: 600; }
+.mc__logo.tem-img { color: transparent; }
+.mc__nome { margin: 0; flex: 1; min-width: 0; font-size: var(--t-txt); font-weight: 600; color: #fff; line-height: 1.3; overflow-wrap: anywhere; }
+.diag-col .gl__m { min-width: 0; }
+.mc { position: relative; }
+.mc__selo { position: absolute; top: -9px; right: 12px; font-size: 11px; padding: 3px 8px; border-radius: 999px; color: #111; background: #f3f3f3; font-weight: 500; }
+.mc__dl { margin: 0; display: grid; }
+.mc__dl > div { display: grid; gap: 3px; padding: 9px 0; border-top: 1px solid var(--line); }
+.mc__dl > div:last-child { padding-bottom: 0; }
+.mc__dl dt { font-size: var(--t-leg); color: var(--ganggrey); }
+.mc__dl dd { margin: 0; font-size: var(--t-txt); color: #ececec; }
+.mc__dl dd.is-vazio { color: var(--ganggrey); }
+@media (max-width: 1000px) { .diag-topo { grid-template-columns: 1fr; } .diag-col:has(> .focus) { grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); align-items: start; } }
+@media (max-width: 640px) { .mcs { grid-template-columns: 1fr; } }

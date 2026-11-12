@@ -2672,30 +2672,33 @@
       dis.length ? ['O que faz escolher', entregues(dis) + ' de ' + dis.length, 'a marca entregava'] : null,
       D.causas.length ? ['Causas que o plano ataca', String(D.causas.length)] : null]));
 
-    if (G.resumo) out.push(el('section', { class: 'focus focus--single', 'aria-labelledby': 'res-t' },
-      el('div', 'focus__text', el('p', { class: 'eyebrow', id: 'res-t' }, 'Em uma frase'), el('p', 'focus__title focus__title--long', G.resumo))));
-
-    // a marca do cliente como um perfil à esquerda; os concorrentes em lista à direita, com as mesmas três perguntas
-    const PERG = (i) => [['Notavam', i.notam], ['Acreditavam', i.acreditam], ['Sentiam', i.sentem]];
-    const sigla = (n) => { const a = el('span', 'gq gq--sigla'); U.avatar(a, n || '?'); return a; };
-    if (cli || conc.length) {
-      const perfil = cli ? el('section', { class: 'box perfil', 'aria-labelledby': 'imp-cli-t' },
-        el('div', 'perfil__topo', (() => { const a = el('span', 'perfil__logo'); U.avatar(a, cli.marca_nome, D.empresa && D.empresa.logo_url); return a; })(),
-          el('div', null, el('p', 'eyebrow', 'Sua marca, no começo'), el('h2', { class: 'perfil__nome', id: 'imp-cli-t' }, cli.marca_nome))),
-        el('dl', 'perfil__dl', PERG(cli).map(([k, v]) => el('div', null, el('dt', null, k), el('dd', null, v || '—'))))) : null;
-      const lista = conc.length ? secN('imp-t', 'Concorrentes', conc.length, 'As mesmas perguntas, para comparar.',
-        grupo(conc.map((c) => [sigla(c.marca_nome), c.marca_nome, metaPares(PERG(c))]))) : null;
-      out.push(perfil && lista ? el('div', 'grid perfil-grid', perfil, lista) : perfil || lista);
-    }
-
+    // em grade, não em lista: à esquerda a frase e as causas; à direita o que pesa na escolha; embaixo as marcas lado a lado
     const fatores = (idt, titulo, fs) => secN(idt, titulo, entregues(fs) + '/' + fs.length, null,
       grupo(fs.map((f) => { const P = POS[f.posicao] || POS.nao_entrega; return [quad(P[2], P[3]), f.texto, null, chip(P[0], P[1])]; })));
-    if (mot.length || dis.length) out.push(el('div', 'grid grid--half',
-      mot.length ? fatores('mot-t', 'O que todo cliente exige', mot) : null,
-      dis.length ? fatores('dis-t', 'O que faz escolher uma marca', dis) : null));
+    const esq = [
+      G.resumo ? el('section', { class: 'focus focus--single', 'aria-labelledby': 'res-t' },
+        el('div', 'focus__text', el('p', { class: 'eyebrow', id: 'res-t' }, 'Em uma frase'), el('p', 'focus__title focus__title--long', G.resumo))) : null,
+      D.causas.length ? secN('cau-t', 'As causas que o plano ataca', D.causas.length, 'Cada ação do plano ataca pelo menos uma delas.',
+        grupo(D.causas.map((c, i) => [quad(String(i + 1), 'num'), c.texto]))) : null].filter(Boolean);
+    const dir = [mot.length ? fatores('mot-t', 'O que todo cliente exige', mot) : null,
+      dis.length ? fatores('dis-t', 'O que faz escolher uma marca', dis) : null].filter(Boolean);
+    if (esq.length || dir.length) out.push(el('div', 'diag-topo',
+      esq.length ? el('div', 'diag-col', esq) : null, dir.length ? el('div', 'diag-col', dir) : null));
 
-    if (D.causas.length) out.push(secN('cau-t', 'As causas que o plano ataca', D.causas.length, 'Cada ação do plano ataca pelo menos uma delas.',
-      grupo(D.causas.map((c, i) => [quad(String(i + 1), 'num'), c.texto]))));
+    // cada marca num cartão, com as mesmas três perguntas uma embaixo da outra: dá para comparar lendo na horizontal
+    const PERG = (i) => [['Notavam', i.notam], ['Acreditavam', i.acreditam], ['Sentiam', i.sentem]];
+    const cartao = (i, sua) => {
+      const a = el('span', 'mc__logo'); U.avatar(a, i.marca_nome || '?', sua && D.empresa && D.empresa.logo_url);
+      return el('article', 'mc' + (sua ? ' mc--sua' : ''),
+        el('div', 'mc__topo', a, el('p', 'mc__nome', i.marca_nome || 'Marca'), sua ? el('span', 'mc__selo', 'Sua marca') : null),
+        el('dl', 'mc__dl', PERG(i).map(([k, v]) => el('div', null, el('dt', null, k), el('dd', v ? null : 'is-vazio', v || 'Sem resposta')))));
+    };
+    if (cli || conc.length) {
+      const marcas = (cli ? [cartao(cli, true)] : []).concat(conc.map((c) => cartao(c, false)));
+      out.push(secN('imp-t', cli ? 'Como cada marca era vista' : 'Concorrentes', marcas.length,
+        cli ? 'Sua marca e os concorrentes, com as mesmas perguntas.' : 'As mesmas perguntas, para comparar.',
+        el('div', { class: 'mcs', style: '--n:' + Math.min(marcas.length, 4) }, marcas)));
+    }
     return out;
   };
 
