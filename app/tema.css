@@ -1881,3 +1881,6 @@ td.clients__empty { color: var(--ganggrey); font-size: var(--t-ui); }
 .grid--half:empty, .est-dois:empty, .pair:empty { display: none; }
 .trail__node.is-trancado { cursor: not-allowed; }
 .trail__node.is-trancado:hover { color: #6b6b6b; }
+.cerne { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 900px) { .cerne { grid-template-columns: 1fr; } }
+.combo.is-travado select { opacity: .45; cursor: not-allowed; }

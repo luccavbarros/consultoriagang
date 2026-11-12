@@ -2569,20 +2569,13 @@
       D.condicoes.length ? ['Condições que se confirmam', conf + ' de ' + D.condicoes.length] : null,
       p.proxima_revisao_estrategia ? ['Próxima revisão', U.mesAno(p.proxima_revisao_estrategia)] : null]));
 
-    // o cerne: o desafio (diagnóstico), a abordagem para vencê-lo e as ações que se reforçam
+    // o cerne: o desafio (diagnóstico) e a abordagem para vencê-lo; as ações ficam só na aba Ações
     if (p.desafio || p.como_vencer) {
-      const objNome = (oid) => { const o = D.objetivos.find((x) => x.id === oid); return o ? ((o.destaque ? o.destaque + ' ' : '') + (o.titulo || '')).trim() : null; };
-      const acs = D.acoes.filter((a) => a.peso === 'essencial' && a.status !== 'feita' && a.mes_previsto >= hoje)
-        .sort((a, b) => a.mes_previsto.localeCompare(b.mes_previsto)).slice(0, 4);
       const passo = (n, rot, ...corpo) => el('div', 'cerne__p', el('div', 'cerne__h', quad(String(n), 'num'), el('p', 'cerne__rot', rot)), corpo);
       out.push(secN('cerne-t', 'O cerne da estratégia', null, 'Sem um desafio claro, estratégia vira lista de desejos. Por isso ela começa por ele.',
         el('div', 'cerne',
           passo(1, 'O desafio', p.desafio ? el('p', 'cerne__t', p.desafio) : el('p', 'cerne__vazio', 'O consultor ainda vai escrever.')),
-          passo(2, 'Como vamos vencer', p.como_vencer ? el('p', 'cerne__t', p.como_vencer) : el('p', 'cerne__vazio', 'O consultor ainda vai escrever.')),
-          passo(3, 'Ações que se reforçam', acs.length
-            ? el('ul', 'cerne__acs', acs.map((a) => el('li', null, el('span', 'cerne__ac', a.titulo),
-              el('span', 'cerne__ac-m', U.cap(U.nomeMesCurto(a.mes_previsto)) + (objNome(a.objetivo_id) ? ' · ' + objNome(a.objetivo_id) : '')))))
-            : el('p', 'cerne__vazio', 'As ações essenciais dos próximos meses aparecem aqui.'))),
+          passo(2, 'Como vamos vencer', p.como_vencer ? el('p', 'cerne__t', p.como_vencer) : el('p', 'cerne__vazio', 'O consultor ainda vai escrever.'))),
         p.objetivo_proximo ? el('div', 'cerne__marco', el('span', 'cerne__marco-rot', 'Próximo marco'), el('span', 'cerne__marco-t', p.objetivo_proximo),
           p.objetivo_proximo_ate ? el('span', 'cerne__marco-d', 'até ' + U.dia(p.objetivo_proximo_ate)) : null) : null));
     }

@@ -170,6 +170,27 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       btn.disabled = false;
     });
     mount.replaceChildren(form);
+    // campos que dependem de outro (ex.: as abordagens coerentes com o desafio escolhido)
+    fields.filter((f) => f.depende).forEach((f) => {
+      const P = window.GangPresets || {}; const idc = pre + f.k; const idDe = pre + f.depende.de;
+      const filtra = (manter) => {
+        const fonte = (P[f.depende.lista] || []).find((x) => x.texto === U.comboValue(idDe));
+        const todas = P[f.presets] || [];
+        const lista = fonte && fonte[f.depende.chave] ? todas.filter((a) => fonte[f.depende.chave].includes(a.texto)) : todas;
+        const velho = $(idc) && $(idc).closest('.combo'); if (!velho) return;
+        const atualV = U.comboValue(idc);
+        const valor = manter || (atualV && lista.some((a) => a.texto === atualV)) ? atualV : null;
+        const novo = U.combo(idc, lista, valor, { semGrupos: true, vazio: U.comboValue(idDe) ? 'Escolha…' : 'Escolha o desafio primeiro' });
+        // só libera depois que o campo de origem (o desafio) tem valor
+        const livre = !!U.comboValue(idDe);
+        novo.querySelectorAll('select, input').forEach((x) => { x.disabled = !livre; });
+        novo.classList.toggle('is-travado', !livre);
+        velho.replaceWith(novo);
+      };
+      filtra(true);
+      const sel = $(idDe); if (sel) sel.addEventListener('change', () => filtra(false));
+      const outro = $(idDe + '-outro'); if (outro) outro.addEventListener('input', () => { clearTimeout(outro._t); outro._t = setTimeout(() => filtra(true), 250); });
+    });
   };
 
   // ----- lista: vários itens com ordem -----
@@ -306,16 +327,12 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   // ===== Teste de estratégia ruim: o que costuma faltar numa estratégia que é só desejo =====
   const testeEstrategia = async (mount) => {
     mount.classList.add('is-largo');
-    const [{ data: p }, { data: obs }, { data: esc }, { data: acs }] = await Promise.all([
+    const [{ data: p }, { data: obs }, { data: esc }] = await Promise.all([
       sb.from('planos').select('desafio, como_vencer, objetivo_proximo, objetivo_proximo_ate').eq('empresa_id', id).maybeSingle(),
       sb.from('objetivos').select('nivel').eq('empresa_id', id),
       sb.from('escolhas').select('tipo').eq('empresa_id', id),
-      sb.from('acoes').select('peso, objetivo_id, mes_previsto, status').eq('empresa_id', id),
     ]);
     const P = p || {};
-    const ref = U.ref(); const ate = U.addRef(ref, 3);
-    const ess = (acs || []).filter((a) => a.peso === 'essencial' && a.status !== 'feita' && a.mes_previsto >= ref && a.mes_previsto <= ate);
-    const ligadas = ess.filter((a) => a.objetivo_id).length;
     const meta = /^\s*([+\-]?\d+[\d.,]*\s*%|crescer|aumentar|faturar|vender mais|dobrar)/i;
     const floreio = /(excel[êe]ncia|inova[çc][ãa]o|sinergia|refer[êe]ncia|l[íi]der|melhor (empresa|do mercado)|qualidade total|valor agregado)/i;
     const nObj = (obs || []).filter((o) => o.nivel !== 'comunicacao').length;
@@ -325,7 +342,6 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       [!!P.como_vencer && !floreio.test(P.como_vencer), 'Sem floreio', !P.como_vencer ? 'Escreva a abordagem em palavras concretas.' : floreio.test(P.como_vencer) ? 'Troque palavras vagas ("excelência", "referência", "inovação") pelo que a marca faz de fato.' : 'A abordagem usa palavras concretas.'],
       [(esc || []).some((e) => e.tipo === 'deixa_de_lado'), 'Faz escolhas', (esc || []).some((e) => e.tipo === 'deixa_de_lado') ? 'Diz o que fica de fora.' : 'Estratégia também é dizer não. Cadastre o que a marca deixa de lado.'],
       [nObj > 0 && nObj <= 3, 'Foco', nObj === 0 ? 'Cadastre de 1 a 3 objetivos de negócio e marca.' : nObj <= 3 ? nObj + (nObj === 1 ? ' objetivo de negócio e marca.' : ' objetivos de negócio e marca.') : nObj + ' objetivos dividem o esforço. Fique com até 3.'],
-      [ess.length > 0 && ligadas === ess.length, 'Ações coerentes', !ess.length ? 'Não há ações essenciais nos próximos 3 meses.' : ligadas === ess.length ? 'As ' + ess.length + ' ações essenciais dos próximos 3 meses ligam a um objetivo.' : (ess.length - ligadas) + ' de ' + ess.length + ' ações essenciais dos próximos 3 meses não ligam a nenhum objetivo.'],
       [!!P.objetivo_proximo && !!P.objetivo_proximo_ate, 'Próximo marco com data', P.objetivo_proximo && P.objetivo_proximo_ate ? 'Até ' + U.dia(P.objetivo_proximo_ate) + '.' : 'Defina um marco alcançável e a data. Ele dá ritmo e mostra progresso cedo.'],
     ];
     const ok = T.filter((x) => x[0]).length;
@@ -345,9 +361,9 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   const CON = [['se_confirma', 'Se confirma'], ['em_observacao', 'Em observação'], ['sem_dados', 'Sem dados ainda'], ['nao_se_confirma', 'Não se confirma']];
   const CON_T = Object.fromEntries(CON);
   montar('pane-estrategia', [
-    [ficha, { icone: 'mapa', titulo: 'O cerne da estratégia', nota: 'O desafio que a marca precisa vencer, a abordagem para vencê-lo e o próximo marco. As ações do plano saem daqui.', tabela: 'planos', pasta: 'estrategia', fields: [
+    [ficha, { icone: 'mapa', titulo: 'O cerne da estratégia', nota: 'O desafio que a marca precisa vencer, a abordagem para vencê-lo e o próximo marco.', tabela: 'planos', pasta: 'estrategia', fields: [
       { k: 'desafio', label: '1. O desafio (o obstáculo principal)', full: true, type: 'preset', presets: 'desafios' },
-      { k: 'como_vencer', label: '2. A abordagem (como vencer o desafio)', full: true, type: 'preset', presets: 'abordagens' },
+      { k: 'como_vencer', label: '2. A abordagem (como vencer o desafio)', full: true, type: 'preset', presets: 'abordagens', depende: { de: 'desafio', lista: 'desafios', chave: 'abordagens' } },
       { k: 'objetivo_proximo', label: '3. O próximo marco', full: true, type: 'preset', presets: 'marcos' },
       { k: 'objetivo_proximo_ate', label: 'Marco até', type: 'date' },
       { k: 'estrategia_aprovada_em', label: 'Aprovada em', type: 'date' }, { k: 'proxima_revisao_estrategia', label: 'Próxima revisão', type: 'date' },
