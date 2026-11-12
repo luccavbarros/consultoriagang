@@ -320,6 +320,11 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       { k: 'entregue_em', label: 'Entregue em', type: 'date' }, { k: 'pdf', label: 'Plataforma em PDF', type: 'file', accept: 'application/pdf' },
       { k: 'posicionamento', label: 'Posicionamento', type: 'textarea', rows: 3, placeholder: 'Para [quem], [marca] é [o quê] que [benefício], porque [prova], ao contrário de [alternativa].' },
       { k: 'mensagem_central', label: 'Mensagem central', full: true }] }],
+    [lista, { icone: 'alvo', largo: true, titulo: 'Identidade central', nota: 'De 2 a 4 ideias que não mudam com o tempo. Servem de filtro para aprovar peças, parcerias e serviços novos.', tabela: 'identidade_central', max: 4,
+      vazio: 'Ainda sem a identidade central.', fields: [
+      { k: 'texto', label: 'Ideia que não muda', req: true, full: true, type: 'preset', presets: 'identidadeCentral' },
+      { k: 'explicacao', label: 'O que isso significa na prática', full: true, type: 'textarea', rows: 2, placeholder: 'Ex.: nenhum projeto começa sem o plano completo aprovado pelo cliente.' }],
+    resumo: (r) => [r.texto, r.explicacao] }],
     [lista, { icone: 'balao', titulo: 'Mensagens de apoio', tabela: 'mensagens_apoio', fields: [{ k: 'texto', label: 'Mensagem', req: true, full: true }], resumo: (r) => [r.texto] }],
     [lista, { icone: 'voz', titulo: 'Tom de voz: atributos', tabela: 'tom_atributos', fields: [{ k: 'nome', label: 'Atributo', req: true, type: 'preset', presets: 'tom', fill: { descricao: 'descricao' } }, { k: 'descricao', label: 'Descrição', placeholder: 'Preenchida ao escolher o atributo' }], resumo: (r) => [r.nome, r.descricao] }],
     [lista, { icone: 'check', tom: 'ok', titulo: 'A marca diz', tabela: 'tom_exemplos', fixo: { tipo: 'diz' }, fields: [{ k: 'texto', label: 'Exemplo', req: true, full: true, type: 'preset', presets: 'tomDiz' }], resumo: (r) => [r.texto] }],
@@ -439,7 +444,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       el('form', { method: 'dialog', class: 'copia__f' },
         el('h2', { class: 'title-sm', id: 'cp-t' }, 'Partir de outro cliente'),
         el('p', 'small', 'Copia os itens como ponto de partida. Nada é apagado: o que já existe aqui fica, e itens iguais não se repetem. Depois, ajuste ao cliente.'),
-        el('div', null, el('label', { class: 'label', for: 'cp-de' }, 'Copiar de'), sel),
+        el('div', null, el('label', { class: 'label', for: 'cp-de' }, 'Copiar de'), lista.length ? sel : el('p', 'copia__vazio', 'Ainda não há outro cliente para copiar. Assim que houver, ele aparece aqui.')),
         el('div', 'copia__gs', caixas),
         el('div', 'new-client__foot',
           el('button', { class: 'btn btn--light btn--sm', type: 'button', disabled: !lista.length, onclick: async (ev) => {

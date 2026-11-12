@@ -18,13 +18,21 @@
     const prev = el('span', { class: 'consultant__ini me-photo__view', 'aria-hidden': 'true' });
     const arq = el('input', { class: 'field field--file', id: 'mf-arq', type: 'file', accept: 'image/jpeg,image/png,image/webp' });
     const rm = el('button', { class: 'link', type: 'button' }, 'Remover a foto');
+    const avisos = el('input', { type: 'checkbox', id: 'mf-avisos', checked: me.aceita_lembretes !== false });
+    avisos.addEventListener('change', async () => {
+      const { error } = await sb.rpc('portal_lembretes', { p_on: avisos.checked });
+      if (error) { avisos.checked = !avisos.checked; U.say(msg, 'Não foi possível salvar.', 'error'); return; }
+      me.aceita_lembretes = avisos.checked; U.say(msg, avisos.checked ? 'Lembretes ligados.' : 'Lembretes desligados.', 'ok');
+    });
     const msg = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite' });
     const salvar = el('button', { class: 'btn btn--light btn--sm', type: 'submit' }, 'Salvar');
     const dlgF = el('dialog', { class: 'dialog', 'aria-labelledby': 'mf-t' });
     const formF = el('form', { class: 'dialog__body', method: 'dialog' },
-      el('h2', { class: 'title-sm', id: 'mf-t' }, 'Sua foto'),
-      el('p', 'small', 'Aparece ao lado do seu nome no menu. JPG ou PNG, até 5 MB.'),
+      el('h2', { class: 'title-sm', id: 'mf-t' }, 'Sua foto e avisos'),
+      el('p', 'small', 'A foto aparece ao lado do seu nome no menu. JPG ou PNG, até 5 MB.'),
       el('div', 'me-photo', prev, el('div', 'me-photo__ctl', el('label', { class: 'label', for: 'mf-arq' }, 'Escolher imagem'), arq, rm)),
+      el('label', 'aviso-tg', avisos, el('span', null, el('span', 'aviso-tg__t', 'Receber lembretes por e-mail'),
+        el('span', 'aviso-tg__d', 'Números do mês, encontro no dia seguinte, peça revisada e mensagem do consultor. No máximo um e-mail por dia.'))),
       msg,
       el('div', 'dialog__foot', el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => dlgF.close() }, 'Cancelar'), salvar));
     dlgF.append(formF); document.body.append(dlgF);
@@ -94,7 +102,7 @@
   };
   // o material entregue (somente leitura)
   const MARCA = ['escolhas', 'condicoes', 'impressoes', 'fatores', 'causas', 'mensagens_apoio', 'tom_atributos', 'tom_exemplos',
-    'arquivos_marca', 'cores', 'tipografias', 'aplicacoes', 'situacoes', 'ativos', 'elementos_marca'];
+    'arquivos_marca', 'cores', 'tipografias', 'aplicacoes', 'situacoes', 'ativos', 'elementos_marca', 'identidade_central'];
   const [plat, ident, facs, ...listas] = await Promise.all([
     sb.from('plataformas').select('*').maybeSingle(),
     sb.from('identidades').select('*').maybeSingle(),
@@ -1227,11 +1235,17 @@
   };
   // Resultados em abas: o resumo (números, veredito) fica em cima; Negócio, Marca e Aprendizados ficam cada um na sua aba
   let abaRes = 'Negócio';
+  let alvoRes = null; // id de um elemento que precisa aparecer (ex.: o convite da pesquisa): abre a aba onde ele está
   const emAbas = (out) => {
     const idx = out.map((n, i) => (n && n.classList && n.classList.contains('res-part') ? i : -1)).filter((i) => i >= 0);
     if (idx.length < 2) return out;
     const topo = out.slice(0, idx[0]);
     const partes = idx.map((i, k) => ({ t: out[i].querySelector('.res-part__t').textContent, cab: out[i], corpo: out.slice(i + 1, idx[k + 1] || out.length) }));
+    if (alvoRes) {
+      const comAlvo = partes.find((x) => x.corpo.some((n) => n && n.querySelector && (n.id === alvoRes || n.querySelector('#' + alvoRes))));
+      if (comAlvo) abaRes = comAlvo.t;
+      alvoRes = null;
+    }
     if (!partes.some((x) => x.t === abaRes)) abaRes = partes[0].t;
     const painel = el('div', { class: 'res-painel', id: 'res-painel', role: 'tabpanel' });
     const mostra = () => {
@@ -1435,7 +1449,7 @@
         el('ul', null, D.vereditos.filter((v) => v.mes_ref !== f.mes_ref).map((v) => el('li', null, el('span', null, U.cap(U.nomeMes(v.mes_ref)) + ' ' + v.mes_ref.slice(0, 4)), v.veredito)))) : null);
   };
   // cada estrela leva para onde o cliente resolve aquilo
-  const foca = (id) => setTimeout(() => { const f = document.getElementById(id); if (f) { f.scrollIntoView({ block: 'center', behavior: 'smooth' }); f.focus({ preventScroll: true }); } }, 450);
+  const foca = (id) => { alvoRes = id; return setTimeout(() => { const f = document.getElementById(id); if (f) { f.scrollIntoView({ block: 'center', behavior: 'smooth' }); f.focus({ preventScroll: true }); } }, 450); };
   const irParaEstrela = (t, e) => {
     if (/^Essenciais/.test(t)) {
       const alvo = e.alvo.find((a) => a.status !== 'feita' && comCliente(a)) || e.alvo[0];
@@ -1462,7 +1476,7 @@
     if (!semNumeros && inicioRef && mesPassado >= inicioRef) {
       const ok = !faltaNumeros();
       itens.push({ feita: ok, ord: ok ? '9' : '0', titulo: 'Enviar os números de ' + U.nomeMes(mesPassado), sub: ok ? 'Enviados' : 'Leva 2 minutos', hot: !ok, tipo: 'num', botao: 'Enviar',
-        href: '#resultados', onclick: () => { setTimeout(() => { const f = document.getElementById('n-fat'); if (f) { f.scrollIntoView({ block: 'center' }); f.focus({ preventScroll: true }); } }, 400); } });
+        href: '#resultados', onclick: () => { alvoRes = 'n-fat'; setTimeout(() => { const f = document.getElementById('n-fat'); if (f) { f.scrollIntoView({ block: 'center' }); f.focus({ preventScroll: true }); } }, 400); } });
     }
     const enc = D.encontros.filter((x) => x.inicio.slice(0, 7) === hoje).sort((x, y) => (x.inicio < y.inicio ? -1 : 1))[0];
     if (enc) {
@@ -1819,7 +1833,7 @@
         box.append(el('div', 'share',
           el('div', 'share__head', el('div', null, el('p', 'share__t', 'Convide mais pessoas'),
             el('p', 'box__note', 'Quanto mais respostas, mais confiável (o ideal é passar de 30). Vale mandar também para quem ainda não comprou.')),
-            el('div', 'share__btns', copia, wa, mail)),
+            el('div', 'share__btns', copia, wa, mail, el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => abreQR(url, nomeMarca) }, 'QR code'))),
           el('details', 'share__edit', el('summary', null, 'Ver e editar a mensagem'), convite, copiaLink)));
       }
       out.push(box);
@@ -2200,6 +2214,12 @@
     if (P.posicionamento) out.push(el('section', { class: 'focus focus--single', 'aria-labelledby': 'pos-t' },
       el('div', 'focus__text', el('p', { class: 'eyebrow', id: 'pos-t' }, 'Posicionamento'), el('p', 'focus__title focus__title--long', P.posicionamento))));
 
+    // o que nunca muda: o filtro para decidir se uma peça, parceria ou serviço combina com a marca
+    const IC = D.identidade_central || [];
+    if (IC.length) out.push(secN('ic-t', 'O que nunca muda', IC.length, 'Toda peça, parceria e serviço novo precisa combinar com isto.',
+      el('div', { class: 'ic', style: '--n:' + IC.length }, IC.map((x, i) => el('div', 'ic__i',
+        quad(String(i + 1), 'num'), el('p', 'ic__t', x.texto), x.explicacao ? el('p', 'ic__d', x.explicacao) : null)))));
+
     const dizer = sec('say-t', 'O que dizer',
       P.mensagem_central ? [el('p', 'eyebrow', 'Mensagem central'), el('p', 'say__main', P.mensagem_central)] : null,
       D.mensagens_apoio.length ? [el('p', 'eyebrow', 'Mensagens de apoio'),
@@ -2376,6 +2396,49 @@
       out.push(el('div', 'grid grid--half', cmb, tt));
     }
     return out;
+  };
+
+  // QR code da pesquisa: para o balcão, o recibo ou a embalagem (baixar a imagem ou imprimir um cartaz pronto)
+  const libQR = () => (window.qrcode ? Promise.resolve(window.qrcode) : new Promise((ok, erro) => {
+    const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
+    sc.onload = () => ok(window.qrcode); sc.onerror = erro; document.head.appendChild(sc);
+  }));
+  const svgQR = (qr, cor) => qr.createSvgTag({ cellSize: 8, margin: 2, scalable: true }).replace(/fill="black"/g, 'fill="' + (cor || '#111') + '"');
+  const abreQR = async (url, nomeMarca) => {
+    let qr;
+    try { const Q = await libQR(); qr = Q(0, 'M'); qr.addData(url); qr.make(); } catch (e) { anuncia('Não foi possível gerar o QR code agora.'); return; }
+    const svg = svgQR(qr);
+    const baixar = async () => {
+      const img = new Image(); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); await img.decode();
+      const c = document.createElement('canvas'); c.width = 1200; c.height = 1200; const x = c.getContext('2d');
+      x.fillStyle = '#fff'; x.fillRect(0, 0, 1200, 1200); x.drawImage(img, 0, 0, 1200, 1200);
+      const a = document.createElement('a'); a.download = 'qr-pesquisa.png'; a.href = c.toDataURL('image/png'); a.click();
+    };
+    const cartaz = () => {
+      const w = window.open('', '_blank'); if (!w) return;
+      const nome = String(nomeMarca).replace(/[<>&]/g, '');
+      w.document.write('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Cartaz da pesquisa</title><style>'
+        + '@page{size:A5;margin:0}body{margin:0;font-family:Inter,-apple-system,Helvetica,Arial,sans-serif;color:#111;background:#fff}'
+        + '.c{box-sizing:border-box;width:148mm;height:210mm;padding:16mm 14mm;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6mm}'
+        + '.e{font-size:11pt;color:#666;margin:0}.t{font-size:26pt;font-weight:600;letter-spacing:-.02em;line-height:1.1;margin:0}.d{font-size:12pt;color:#444;margin:0;max-width:100mm}'
+        + '.q{width:78mm;height:78mm;padding:4mm;border:1px solid #ddd;border-radius:6mm}.q svg{width:100%;height:100%}.p{font-size:10pt;color:#666;margin:0}'
+        + '</style></head><body><div class="c"><p class="e">' + nome + '</p><p class="t">Sua opinião<br>vale muito</p>'
+        + '<p class="d">Aponte a câmera do celular para o código e responda uma pesquisa rápida. Leva 2 minutos e é anônima.</p>'
+        + '<div class="q">' + svg + '</div><p class="p">Obrigado por ajudar a gente a melhorar.</p></div>'
+        + '<scr' + 'ipt>setTimeout(function(){window.print()},300)</scr' + 'ipt></body></html>');
+      w.document.close();
+    };
+    const dlg = el('dialog', { class: 'dialog qrdlg', 'aria-labelledby': 'qr-t' },
+      el('div', 'qrdlg__f',
+        el('h2', { class: 'qrdlg__t', id: 'qr-t' }, 'QR code da pesquisa'),
+        el('p', 'qrdlg__d', 'Coloque no balcão, no recibo, na embalagem ou no fim da proposta. Quem apontar a câmera do celular cai direto na pesquisa.'),
+        (() => { const q = el('div', { class: 'qrdlg__q', role: 'img', 'aria-label': 'QR code que abre a pesquisa' }); q.innerHTML = svg; return q; })(),
+        el('div', 'qrdlg__btns',
+          el('button', { class: 'btn btn--light btn--sm', type: 'button', onclick: cartaz }, 'Imprimir cartaz'),
+          el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: baixar }, 'Baixar imagem (PNG)'),
+          el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => dlg.close() }, 'Fechar'))));
+    dlg.addEventListener('close', () => dlg.remove());
+    document.body.append(dlg); dlg.showModal();
   };
 
   // Identidade visual
@@ -2776,12 +2839,12 @@
           (() => {
             // o convite só existe quando o consultor abre a pesquisa; até lá, o passo avisa e não leva a lugar nenhum
             const abertaP = D.pesquisas.some((x) => x.aberta);
-            const vaiConvite = () => setTimeout(() => {
+            const vaiConvite = () => { alvoRes = 'convite'; return setTimeout(() => {
               const sh = document.querySelector('.share'); if (!sh) return;
               const det = sh.querySelector('.share__edit'); if (det) det.open = true;
               sh.scrollIntoView({ block: 'center', behavior: 'smooth' });
               const t = document.getElementById('convite'); if (t) t.focus({ preventScroll: true });
-            }, 450);
+            }, 450); };
             return abertaP
               ? passo(D.respostas.length > 0, 'Convide clientes para a pesquisa de partida', 'É ela que mostra como a marca é vista hoje, para comparar depois. A mensagem já vem pronta.', '#resultados', 'Ver o convite', vaiConvite)
               : passo(false, 'Convide clientes para a pesquisa de partida', 'É ela que mostra como a marca é vista hoje. Assim que o consultor abrir a pesquisa, o convite pronto aparece aqui.');
