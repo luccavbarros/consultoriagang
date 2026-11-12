@@ -4400,3 +4400,14 @@
   add('naoFazer', ['Mudar a identidade central para seguir a moda do momento']);
   if (P.tom) P.tom.push({ grupo: G, texto: 'Robusta', descricao: 'Firme e durável, transmite que aguenta o uso pesado' });
 })();
+
+// ===== Identidade central: exemplos de ideias que não mudam (o consultor adapta ao cliente) =====
+(function () {
+  const P = window.GangPresets; if (!P) return;
+  const G = 'Da biblioteca';
+  P.identidadeCentral = [
+    'Resultado sem retrabalho', 'Método próprio, testado e explicado', 'Cuidado em cada detalhe', 'Feito para durar',
+    'Atendimento de perto, por quem entende', 'Preço claro, sem surpresa', 'Especialista no que faz, e só nisso', 'Da região, para a região',
+    'Prazo cumprido como regra', 'Simples de comprar e de usar', 'Qualidade que dá para ver', 'Honestidade, mesmo quando custa uma venda',
+  ].map((texto) => ({ grupo: G, texto }));
+})();
