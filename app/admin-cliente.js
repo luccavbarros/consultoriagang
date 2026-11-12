@@ -688,6 +688,55 @@
         const it = [...document.querySelectorAll('#lib-list .lib__item')].find((n) => n.textContent.includes(x.texto)); if (it) { it.scrollIntoView({ block: 'center', behavior: 'smooth' }); it.classList.add('is-destaque'); setTimeout(() => it.classList.remove('is-destaque'), 2200); } }, 300); } }))),
     ...outrosClientes.map((e) => ({ grupo: 'Clientes', titulo: e.nome, href: 'admin-cliente.html?id=' + e.id })),
   ]);
+  // ===== Limpar o plano: um mês ou o plano inteiro (as concluídas ficam, como histórico, a menos que o consultor escolha apagar) =====
+  $('limpar-plano').addEventListener('click', async () => {
+    const { data: todas } = await sb.from('acoes').select('id, mes_previsto, status').eq('empresa_id', id);
+    const lista = todas || [];
+    if (!lista.length) return say($('acoes-msg'), 'O plano já está vazio.', 'ok');
+    const porMes = {}; lista.forEach((a) => { (porMes[a.mes_previsto] = porMes[a.mes_previsto] || []).push(a); });
+    const meses = Object.keys(porMes).sort();
+    const nomeM = (m) => U.cap(U.nomeMes(m)) + ' ' + m.slice(0, 4);
+    const msg = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite' });
+    const opMes = el('input', { type: 'radio', name: 'lp-alc', value: 'mes', checked: true });
+    const opTudo = el('input', { type: 'radio', name: 'lp-alc', value: 'tudo' });
+    const selMes = el('select', { class: 'field', id: 'lp-mes', 'aria-label': 'Mês' }, meses.map((m) => el('option', { value: m }, nomeM(m) + ' (' + porMes[m].length + ')')));
+    const ref = U.ref(); const prox = meses.find((m) => m >= ref); if (prox) selMes.value = prox;
+    const manter = el('input', { type: 'checkbox', id: 'lp-manter', checked: true });
+    const btn = el('button', { class: 'btn btn--danger btn--sm', type: 'button' });
+    const alvo = () => {
+      const base = opTudo.checked ? lista : (porMes[selMes.value] || []);
+      return manter.checked ? base.filter((a) => a.status !== 'feita') : base;
+    };
+    const atualiza = () => {
+      const n = alvo().length; selMes.disabled = opTudo.checked;
+      btn.textContent = n ? 'Apagar ' + n + (n === 1 ? ' ação' : ' ações') : 'Nada para apagar';
+      btn.disabled = !n;
+    };
+    [opMes, opTudo, selMes, manter].forEach((x) => x.addEventListener('change', atualiza));
+    btn.addEventListener('click', async () => {
+      const ids = alvo().map((a) => a.id); if (!ids.length) return;
+      if (!btn.dataset.certeza) { btn.dataset.certeza = '1'; btn.textContent = 'Confirmar: apagar ' + ids.length + (ids.length === 1 ? ' ação' : ' ações'); say(msg, 'Não dá para desfazer. Clique de novo para confirmar.', 'error'); return; }
+      btn.disabled = true; say(msg, 'Apagando…');
+      let erro = null;
+      for (let i = 0; i < ids.length; i += 100) { const r = await sb.from('acoes').delete().in('id', ids.slice(i, i + 100)); if (r.error) { erro = r.error; break; } }
+      if (erro) { say(msg, 'Não foi possível apagar.', 'error'); btn.disabled = false; return; }
+      dlg.close();
+      say($('acoes-msg'), ids.length + (ids.length === 1 ? ' ação apagada' : ' ações apagadas') + (opTudo.checked ? ' do plano.' : ' de ' + nomeM(selMes.value) + '.'), 'ok');
+      loadAcoes();
+    });
+    const dlg = el('dialog', { class: 'dialog limpar', 'aria-labelledby': 'lp-t' },
+      el('div', 'limpar__f',
+        el('h2', { class: 'title-sm', id: 'lp-t' }, 'Limpar plano'),
+        el('p', 'small', 'Apaga as ações do cliente para montar de novo. Não dá para desfazer.'),
+        el('div', 'limpar__ops',
+          el('label', 'limpar__op', opMes, el('div', null, el('p', 'limpar__t', 'Um mês'), el('p', 'limpar__d', 'Só as ações do mês escolhido.')), selMes),
+          el('label', 'limpar__op', opTudo, el('div', null, el('p', 'limpar__t', 'O plano inteiro'), el('p', 'limpar__d', meses.length + ' meses · ' + lista.length + ' ações no total.')))),
+        el('label', 'copia__op', manter, el('span', null, 'Manter as ações já concluídas (histórico e resultados do cliente)')),
+        el('div', 'new-client__foot', btn, el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => dlg.close() }, 'Cancelar'), msg)));
+    dlg.addEventListener('close', () => dlg.remove());
+    document.body.append(dlg); atualiza(); dlg.showModal();
+  });
+
   const loadAcoes = async () => {
     desenhaEquilibrio();
     let { data, error } = await sb.from('acoes').select('*').eq('empresa_id', id).order('mes_previsto').order('prazo', { nullsFirst: false }).order('ordem');
