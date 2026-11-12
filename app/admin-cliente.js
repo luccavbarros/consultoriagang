@@ -1154,7 +1154,8 @@
       item(!!cat, cat ? 'Que marcas vêm à cabeça quando pensam em ' + cat : 'Que marcas vêm à cabeça na categoria (falta escrever a categoria)'),
       item(ns > 0, ns ? 'Em quais de ' + ns + (ns === 1 ? ' situação de compra' : ' situações de compra') + ' lembram da marca' : 'Nenhuma situação de compra cadastrada:', 'cadastrar em Estratégia', 'estrategia'),
       item(na > 0, na ? 'Se reconhecem ' + na + (na === 1 ? ' ativo da marca' : ' ativos da marca') + ' sem o nome' : 'Nenhum ativo distintivo cadastrado:', 'cadastrar em Identidade', 'identidade'),
-      item(true, conc.length ? 'Qual escolheriam entre a marca e ' + conc.length + (conc.length === 1 ? ' concorrente' : ' concorrentes') : 'Qual escolheriam (sem concorrentes, só a marca)'),
+      // sem concorrentes, as perguntas de escolha e de situações viram "só a marca": a pesquisa perde o sentido
+      item(conc.length >= 2, conc.length >= 2 ? 'Qual escolheriam entre a marca e ' + conc.length + ' concorrentes' : 'Faltam concorrentes (' + conc.length + ' de pelo menos 2): sem eles, a escolha e as situações só mostram a marca.', 'cadastrar em Diagnóstico', 'diagnostico'),
       af.length ? item(true, af.length + (af.length === 1 ? ' frase para dar nota' : ' frases para dar nota')) : null,
       item(true, 'Se já são clientes, para separar quem compra de quem ainda não compra')].filter(Boolean)); // replaceChildren escreveria "null"
   };
@@ -1177,6 +1178,7 @@
       sb.from('ativos').select('id, nome, tipo, texto, imagem_url').eq('empresa_id', id).order('ordem'),
     ]);
     if (!(sits || []).length && !(atv || []).length && !af.length) return say($('q-msg'), 'Cadastre as situações de compra (Estratégia) ou os ativos distintivos (Identidade) antes de abrir a rodada.', 'error');
+    if (conc.length < 2) { pesqForm.querySelector('.pq__mais').open = true; $('q-conc').focus(); return say($('q-msg'), 'Coloque pelo menos 2 concorrentes (um por linha). Sem eles, a pesquisa só mostra a marca e as respostas não dizem nada.', 'error'); }
     if (editPesq) {
       const r1 = await sb.from('pesquisas').update({ titulo: val('q-titulo'), categoria: val('q-cat'), afirmacoes: af, concorrentes: conc.slice(0, 8), situacoes: sits || [], ativos: atv || [] }).eq('id', editPesq.id);
       if (r1.error) return say($('q-msg'), 'Não foi possível salvar.', 'error');
