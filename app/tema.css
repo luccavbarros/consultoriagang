@@ -1415,3 +1415,24 @@ body { font-size: var(--t-txt); line-height: 1.5; }
 .row__text, .row__eyebrow { font-size: var(--t-leg); }
 h1, h2, h3, .screen__title, .title-xl, .title-sm, .box__title { letter-spacing: -0.015em; }
 .screen__title, .title-xl { letter-spacing: -0.022em; }
+
+/* Todos os campos de uma linha com a mesma altura (texto, data, lista, arquivo) */
+input.field, select.field, .combo .field, .field--file { height: 42px; min-height: 42px; box-sizing: border-box; line-height: 1.2; }
+input.field, select.field { padding-block: 0; }
+input[type=date].field { padding-block: 0; }
+input[type=date].field::-webkit-datetime-edit { padding: 0; line-height: 1.2; }
+input[type=date].field::-webkit-date-and-time-value { text-align: left; }
+.field--file { padding: 0 6px; display: flex; align-items: center; font-size: var(--t-ui); }
+.field--file::file-selector-button { height: 30px; padding: 0 10px; margin-right: 10px; font-size: var(--t-leg); }
+.dot--grad { width: 26px; border-radius: 6px; }
+
+/* Elementos da marca (portal): degradê, textura, mascote, embalagem… */
+.elems { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.elem { display: grid; gap: 4px; padding: 8px 8px 12px; border-radius: 12px; background: #171717; border: 1px solid var(--line); min-width: 0; align-content: start; }
+.elem__view { height: 132px; border-radius: 9px; background: #f3f3f3; display: grid; place-items: center; overflow: hidden; margin-bottom: 6px; }
+.elem__view img { max-width: 80%; max-height: 80%; object-fit: contain; }
+.elem__view--cheia img { width: 100%; height: 100%; max-width: none; max-height: none; object-fit: cover; }
+.elem__info { display: grid; gap: 3px; padding: 0 4px; }
+.elem--sem .elem__info { padding-top: 4px; }
+.elem__tipo { margin: 0; font-size: var(--t-leg); color: var(--ganggrey); }
+.elem__cores { margin: 2px 0 0; display: flex; flex-wrap: wrap; gap: 6px; font-size: var(--t-leg); }

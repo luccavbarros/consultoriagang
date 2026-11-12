@@ -91,7 +91,7 @@
   };
   // o material entregue (somente leitura)
   const MARCA = ['escolhas', 'condicoes', 'impressoes', 'fatores', 'causas', 'mensagens_apoio', 'tom_atributos', 'tom_exemplos',
-    'arquivos_marca', 'cores', 'tipografias', 'aplicacoes', 'situacoes', 'ativos'];
+    'arquivos_marca', 'cores', 'tipografias', 'aplicacoes', 'situacoes', 'ativos', 'elementos_marca'];
   const [plat, ident, facs, ...listas] = await Promise.all([
     sb.from('plataformas').select('*').maybeSingle(),
     sb.from('identidades').select('*').maybeSingle(),
@@ -2213,7 +2213,7 @@
     const out = [head(I ? [I.entregue_em ? 'Entregue em ' + U.mesAno(I.entregue_em) : null, I.versao ? 'versão ' + I.versao : null].filter(Boolean).join(' · ') : '', 'Identidade visual',
       'A marca para usar, não só para ler: copie as cores certas, veja as fontes e teste logo, combinações e títulos antes de publicar.',
       I && I.zip ? baixar(I.zip, 'Baixar tudo (.zip)') : null)];
-    if (!I && !D.arquivos_marca.length && !D.cores.length) return out.concat(vazio());
+    if (!I && !D.arquivos_marca.length && !D.cores.length && !(D.elementos_marca || []).length) return out.concat(vazio());
 
     const logos = D.arquivos_marca.filter((a) => a.categoria === 'logo');
     if (logos.length) out.push(sec('logo-t', 'Logo', el('div', 'logos', logos.map((a, i) => el('figure', 'logo',
@@ -2237,6 +2237,29 @@
         el('div', 'specimen__info', el('p', 'type__name', t.nome), t.uso ? el('p', 'box__text', t.uso) : null,
           el('p', { class: 'specimen__abc', style: 'font-family:' + familia(t.nome) }, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz 0123456789')))))));
     }
+    // elementos que a marca tiver (degradê, textura, mascote, embalagem…): só os cadastrados
+    const ELS = D.elementos_marca || [];
+    if (ELS.length) {
+      const TIPO_EL = { degrade: 'Degradê', textura: 'Textura', mascote: 'Mascote', personagem: 'Personagem', embalagem: 'Embalagem', simbolo: 'Símbolo',
+        ilustracao: 'Ilustração', icones: 'Ícones', foto: 'Estilo de foto', forma: 'Forma do produto', fonte_propria: 'Fonte própria', som: 'Som', cheiro: 'Cheiro', outro: 'Elemento' };
+      const vista = (x) => {
+        const hs = x.tipo === 'degrade' && x.cores ? x.cores.split(/[\s,;]+/).filter((h) => /^#[0-9a-f]{6}$/i.test(h)) : [];
+        if (hs.length > 1) return el('div', { class: 'elem__view', style: 'background:linear-gradient(120deg,' + hs.join(',') + ')' });
+        if (x.imagem) return el('div', 'elem__view' + (x.tipo === 'textura' ? ' elem__view--cheia' : ''), imgAssinada(x.imagem, x.nome));
+        return null;
+      };
+      out.push(sec('elem-t', 'Elementos da marca', el('div', 'elems', ELS.map((x) => {
+        const hs = x.tipo === 'degrade' && x.cores ? x.cores.split(/[\s,;]+/).filter(Boolean) : [];
+        return el('div', 'elem' + (vista(x) ? '' : ' elem--sem'),
+          vista(x),
+          el('div', 'elem__info',
+            el('p', 'elem__tipo', TIPO_EL[x.tipo] || 'Elemento'),
+            el('p', 'tone__name', x.nome),
+            hs.length ? el('p', 'elem__cores', hs.map((h) => copia(h.toUpperCase()))) : null,
+            x.descricao ? el('p', 'box__note', x.descricao) : null));
+      }))));
+    }
+
     out.push(...testeDaMarca());
 
     const docs = D.arquivos_marca.filter((a) => a.categoria !== 'logo');

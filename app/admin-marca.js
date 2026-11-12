@@ -111,6 +111,11 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       else {
         const v = $(idc).value.trim();
         if (f.type === 'color' && v && !/^#[0-9a-f]{6}$/i.test(v)) throw new Error('A cor precisa estar no formato #RRGGBB.');
+        if (f.type === 'cores' && v) {
+          const hs = v.split(/[\s,;]+/).filter(Boolean);
+          if (hs.length < 2 || hs.some((h) => !/^#[0-9a-f]{6}$/i.test(h))) throw new Error('O degradê precisa de duas cores ou mais, no formato #RRGGBB, separadas por vírgula.');
+          row[f.k] = hs.map((h) => h.toUpperCase()).join(', '); continue;
+        }
         row[f.k] = v === '' ? null : v;
       }
       if (f.req && (row[f.k] == null || row[f.k] === '')) throw new Error('Preencha “' + f.label + '”.');
@@ -279,7 +284,8 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     resumo: (r) => [r.texto, [r.como_verificar, CON_T[r.status], r.dono ? 'checa: ' + r.dono : null, r.checar_em ? 'próxima: ' + U.dia(r.checar_em) : null].filter(Boolean).join(' · ')] }],
   ]);
 
-  const FAC = [['aparencia', 'Aparência'], ['personalidade', 'Personalidade'], ['valores', 'Valores'], ['relacao', 'Relação com o cliente'], ['cliente_projetado', 'Cliente que projeta'], ['autoimagem', 'Como o cliente se sente']];
+  const FAC = [['aparencia', 'Aparência', 'facetaAparencia'], ['personalidade', 'Personalidade', 'facetaPersonalidade'], ['valores', 'Valores', 'facetaValores'],
+    ['relacao', 'Relação com o cliente', 'facetaRelacao'], ['cliente_projetado', 'Cliente que projeta', 'facetaClienteProjetado'], ['autoimagem', 'Como o cliente se sente', 'facetaAutoimagem']];
   const facetas = async (mount) => {
     const { data } = await sb.from('facetas').select('*').eq('empresa_id', id);
     const v = Object.fromEntries((data || []).map((f) => [f.chave, f.texto]));
@@ -288,11 +294,12 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     const form = el('form', { class: 'ed-card ed-card--ficha', novalidate: true },
       el('div', 'ed-head', tile('rosto'), el('div', 'ed-head__txt', el('h3', 'ed-head__t', 'Quem a marca é'), el('p', 'ed-head__n', 'As seis facetas da identidade.')),
         el('button', { class: 'btn btn--light btn--sm ed-head__btn', type: 'submit' }, 'Salvar')),
-      el('div', 'new-client new-client--3 ed-campos', FAC.map(([k, t]) => { const ta = el('textarea', { class: 'field', id: 'fa-' + k, rows: 2 }); ta.value = v[k] || ''; return el('div', null, el('label', { class: 'label', for: 'fa-' + k }, t), ta); })),
+      el('div', 'new-client new-client--3 ed-campos', FAC.map(([k, t, lista]) => el('div', null, el('label', { class: 'label', for: 'fa-' + k }, t),
+        U.combo('fa-' + k, (window.GangPresets || {})[lista] || [], v[k] || null, { semGrupos: true, placeholder: 'Escreva com as palavras da marca' })))),
       el('div', 'ed-foot', msg));
     form.addEventListener('submit', async (ev) => {
       ev.preventDefault();
-      const rows = FAC.map(([k]) => ({ empresa_id: id, chave: k, texto: $('fa-' + k).value.trim() || null }));
+      const rows = FAC.map(([k]) => ({ empresa_id: id, chave: k, texto: U.comboValue('fa-' + k) }));
       const r = await sb.from('facetas').upsert(rows, { onConflict: 'empresa_id,chave' });
       say(msg, r.error ? 'Não foi possível salvar.' : 'Facetas salvas.', r.error ? 'error' : 'ok');
     });
@@ -313,6 +320,10 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   const CAT = [['logo', 'Logo'], ['manual', 'Manual'], ['modelo', 'Modelo'], ['papelaria', 'Papelaria']];
   const AP = [['aplicada', 'Aplicada'], ['em_andamento', 'Em andamento'], ['prevista', 'Prevista']];
   const AP_T = Object.fromEntries(AP);
+  const EL = [['degrade', 'Degradê'], ['textura', 'Textura / padrão'], ['mascote', 'Mascote'], ['personagem', 'Personagem'], ['embalagem', 'Embalagem'],
+    ['simbolo', 'Símbolo'], ['ilustracao', 'Ilustração própria'], ['icones', 'Ícones'], ['foto', 'Estilo de foto'], ['forma', 'Forma do produto'],
+    ['fonte_propria', 'Fonte própria'], ['som', 'Som / jingle'], ['cheiro', 'Cheiro do ambiente'], ['outro', 'Outro']];
+  const EL_T = Object.fromEntries(EL);
   montar('pane-identidade', [
     [ficha, { icone: 'forma', titulo: 'Identidade visual', tabela: 'identidades', pasta: 'identidade', fields: [
       { k: 'entregue_em', label: 'Entregue em', type: 'date' }, { k: 'versao', label: 'Versão', placeholder: '1.0' },
@@ -334,6 +345,14 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       { k: 'cmyk', label: 'CMYK', placeholder: '0 0 0 93' }, { k: 'pantone', label: 'Pantone', placeholder: 'Pantone 172 C' }],
     resumo: (r) => [el('span', null, el('span', { class: 'dot', style: 'background:' + r.hex }), r.nome), [r.hex, r.cmyk ? 'CMYK ' + r.cmyk : null, r.pantone].filter(Boolean).join(' · ')] }],
     [lista, { icone: 'letra', titulo: 'Tipografia', tabela: 'tipografias', fields: [{ k: 'nome', label: 'Fonte', req: true }, { k: 'uso', label: 'Uso', type: 'preset', presets: 'usosFonte' }], resumo: (r) => [r.nome, r.uso] }],
+    [lista, { icone: 'forma', tom: 'gang', largo: true, titulo: 'Elementos da marca', nota: 'Degradê, textura, mascote, embalagem e o que mais a marca tiver. Só aparece para o cliente o que você cadastrar.', tabela: 'elementos_marca', pasta: 'identidade', fields: [
+      { k: 'tipo', label: 'Tipo', type: 'select', options: EL },
+      { k: 'nome', label: 'Nome', req: true, placeholder: 'Degradê principal' },
+      { k: 'cores', label: 'Cores do degradê (só para degradê)', type: 'cores', placeholder: '#E5482A, #FFB36B' },
+      { k: 'imagem', label: 'Imagem (textura, mascote, embalagem…)', type: 'file', accept: 'image/*' },
+      { k: 'descricao', label: 'Como usar', full: true, type: 'textarea', rows: 2, placeholder: 'Fundo de posts e capas; nunca atrás do logo.' }],
+    resumo: (r) => [el('span', null, r.tipo === 'degrade' && r.cores ? el('span', { class: 'dot dot--grad', style: 'background:linear-gradient(90deg,' + r.cores + ')' }) : null, r.nome),
+      [EL_T[r.tipo], r.cores, r.imagem ? 'com imagem' : null, r.descricao].filter(Boolean).join(' · ')] }],
     [lista, { icone: 'pin', largo: true, titulo: 'Onde a nova marca já está', tabela: 'aplicacoes', fields: [
       { k: 'ponto_contato', label: 'Ponto de contato', req: true, type: 'preset', presets: 'pontosContato' }, { k: 'status', label: 'Situação', type: 'select', options: AP, def: 'prevista' },
       { k: 'data', label: 'Data', type: 'date' }],

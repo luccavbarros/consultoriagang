@@ -4204,3 +4204,77 @@
     ['pontosContato', 'nomesAtivo', 'nomesCor', 'usosFonte', 'metricas'].forEach((k) => P[k].forEach((x) => { if (['Identidade', 'Lembrança e presença', 'Marca e vendas', 'Planejamento'].includes(x.grupo) && k !== 'metricas') x.grupo = 'Mais comuns'; }));
   })();
 })();
+
+// ===== Quem a marca é: respostas prontas para as seis facetas (prisma de identidade) =====
+(function () {
+  const P = window.GangPresets; if (!P) return;
+  const g = (grupo, itens) => itens.map((texto) => ({ grupo, texto }));
+  Object.assign(P, {
+    facetaAparencia: g('Mais comuns', [
+      'Limpa e organizada: muito espaço, poucos elementos, tudo no lugar',
+      'Técnica e precisa: números, detalhes e prova à vista',
+      'Calorosa e próxima: pessoas reais, cores quentes, fotos do dia a dia',
+      'Sofisticada e discreta: tons sóbrios, acabamento caprichado, nada em excesso',
+      'Ousada e chamativa: cor forte, contraste alto, impossível de ignorar',
+      'Natural e artesanal: texturas, materiais reais, feito à mão',
+      'Moderna e tecnológica: interfaces, linhas finas, sensação de novidade',
+      'Tradicional e sólida: elementos clássicos que passam história e segurança',
+      'Divertida e leve: ilustração, humor e cores alegres',
+      'Funcional antes de bonita: tudo serve para facilitar a escolha',
+    ]),
+    facetaPersonalidade: g('Mais comuns', [
+      'Especialista que explica sem complicar',
+      'Parceira confiável, que cumpre o que promete',
+      'Direta e objetiva, sem rodeio nem exagero',
+      'Acolhedora e paciente, que escuta antes de falar',
+      'Inquieta e inovadora, que sempre testa algo novo',
+      'Exigente com detalhes, quase perfeccionista',
+      'Bem-humorada, que não se leva a sério demais',
+      'Firme e corajosa, que diz o que os outros evitam',
+      'Discreta e elegante, que fala pouco e entrega muito',
+      'Mão na massa, prática e resolutiva',
+    ]),
+    facetaValores: g('Mais comuns', [
+      'Fazer certo da primeira vez',
+      'Transparência em preço, prazo e problemas',
+      'Respeito ao tempo do cliente',
+      'Qualidade acima de volume',
+      'Cuidado com cada pessoa, não com o “caso”',
+      'Aprender e melhorar sempre',
+      'Compromisso com a cidade e a comunidade local',
+      'Responsabilidade com o ambiente e com o que se descarta',
+      'Simplicidade: tirar o que não precisa',
+      'Honestidade, mesmo quando custa uma venda',
+    ]),
+    facetaRelacao: g('Mais comuns', [
+      'Conselheira: orienta e ajuda a decidir',
+      'Parceira de longo prazo: acompanha antes, durante e depois',
+      'Anfitriã: recebe bem e faz sentir em casa',
+      'Professora: ensina para o cliente decidir sozinho',
+      'Guardiã: protege de erro, risco e dor de cabeça',
+      'Resolvedora: chega, resolve e não deixa pendência',
+      'Cúmplice: está do lado do cliente, contra o problema',
+      'Exclusiva: atendimento sob medida, poucos clientes por vez',
+    ]),
+    facetaClienteProjetado: g('Mais comuns', [
+      'Quem valoriza fazer bem feito e não aceita gambiarra',
+      'Quem decide com informação e compara antes de comprar',
+      'Quem tem pouco tempo e quer alguém de confiança',
+      'Quem cuida da família e pensa no longo prazo',
+      'Quem gosta de estar à frente e testar o novo',
+      'Quem tem bom gosto e repara nos detalhes',
+      'Quem prefere apoiar empresas da região',
+      'Empresa séria, que investe para crescer',
+    ]),
+    facetaAutoimagem: g('Mais comuns', [
+      'Fiz uma escolha inteligente',
+      'Estou em boas mãos',
+      'Me sinto cuidado e respeitado',
+      'Faço parte de um grupo que entende do assunto',
+      'Investi em mim (ou na minha empresa) do jeito certo',
+      'Não preciso me preocupar com isso agora',
+      'Tenho bom gosto',
+      'Estou ajudando algo maior do que a compra',
+    ]),
+  });
+})();
