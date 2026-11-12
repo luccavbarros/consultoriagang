@@ -1074,3 +1074,22 @@ as $$
    where id = p_acao and empresa_id = public.minha_empresa() and vista_em is null;
 $$;
 grant execute on function public.portal_ver_acao(uuid) to authenticated;
+
+-- ===================== Elementos da identidade (degradê, textura, mascote, embalagem…) =====================
+-- Só aparecem para o cliente os que o consultor cadastrar.
+create table if not exists public.elementos_marca (
+  id uuid primary key default gen_random_uuid(),
+  empresa_id uuid not null references public.empresas (id) on delete cascade,
+  tipo text not null default 'outro' check (tipo in ('degrade', 'textura', 'mascote', 'personagem', 'embalagem', 'simbolo', 'ilustracao',
+    'icones', 'foto', 'forma', 'fonte_propria', 'som', 'cheiro', 'outro')),
+  nome text not null,
+  descricao text,      -- como usar
+  cores text,          -- degradê: "#E5482A, #FFB36B" (da primeira à última)
+  imagem text,         -- caminho no balde privado "portal"
+  ordem int not null default 0
+);
+alter table public.elementos_marca enable row level security;
+drop policy if exists "ler da propria empresa" on public.elementos_marca;
+drop policy if exists "admin escreve" on public.elementos_marca;
+create policy "ler da propria empresa" on public.elementos_marca for select using (public.pode_ver(empresa_id));
+create policy "admin escreve" on public.elementos_marca for all using (public.is_admin()) with check (public.is_admin());
