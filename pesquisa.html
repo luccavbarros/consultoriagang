@@ -54,6 +54,12 @@
     .section-t::after { content: ""; flex: 1; height: 1px; background: var(--line); }
     .survey .field { font-size: var(--t-ui); }
     .sv-lembra { display: grid; gap: 8px; }
+    .sv-sit { display: grid; gap: 2px; }
+    .sv-sit__rot { font-size: var(--t-leg); font-weight: 400; color: var(--ganggrey); }
+    .sv-sit__t { font-weight: 500; }
+    .chips label.is-nenhuma { border-style: dashed; color: var(--ganggrey); }
+    .chips label.is-nenhuma:has(input:checked) { background: #2b2b2b; color: #fff; border-color: #2b2b2b; border-style: solid; }
+    .sv-outra { margin-top: 2px; }
     .sv-lembra .field:not(:first-child) { animation: svEntra .25s ease; }
     @keyframes svEntra { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
     .survey > .btn { width: 100%; height: 44px; margin-top: 6px; }
@@ -113,6 +119,7 @@
       };
       lembra.append(novoCampo(true));
       const lembrados = () => [...lembra.querySelectorAll('input')].map((x) => x.value.trim()).filter(Boolean);
+      const outraPref = el('input', { class: 'field sv-outra', id: 'q-outra', maxlength: 60, autocomplete: 'off', placeholder: 'Qual empresa?', hidden: true, 'aria-label': 'Qual outra empresa' });
       const msg = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite' });
       const form = el('form', { class: 'survey', novalidate: true, style: 'padding:0;width:100%' },
         el('div', 'sv-topo', el('div', 'sv-topo__l', el('span', null, 'Pesquisa rápida · anônima'), el('span', { id: 'sv-cont' }, '')), el('div', { class: 'sv-barra', 'aria-hidden': 'true' }, el('span', { id: 'sv-barra' }))),
@@ -121,14 +128,15 @@
         el('div', 'survey__q', perg('Quando você pensa em ' + P.categoria + ', que marcas vêm à cabeça?', 'label', { for: 'q-lembra' }),
           lembra),
         el('fieldset', 'survey__q', perg('Se fosse contratar hoje, qual escolheria?'),
-          el('div', 'opts', (P.opcoes || []).map((o) => radio('pref', o, o)), radio('pref', 'Outra', 'Outra'))),
+          el('div', 'opts', (P.opcoes || []).map((o) => radio('pref', o, o)), radio('pref', 'Outra', 'Outra empresa'), radio('pref', 'Ainda não sei', 'Ainda não sei')),
+          outraPref),
         // a marca é entendida? a pessoa escolhe a frase que melhor a descreve (a ordem é embaralhada)
         (P.frases || []).length ? el('fieldset', 'survey__q', perg('Qual destas frases descreve melhor a ' + P.marca + '?'),
           el('div', 'opts', [...P.frases].sort(() => Math.random() - 0.5).map((f) => radio('frase', f, f)))) : null,
         // situações de compra: em quais marcas a pessoa pensaria em cada momento (disponibilidade mental)
-        (P.situacoes || []).length ? el('p', 'section-t', 'Em cada situação, marque as empresas que viriam à sua cabeça. Pode marcar várias ou nenhuma.') : null,
-        (P.situacoes || []).map((sit, i) => el('fieldset', 'survey__q', perg(sit.texto),
-          el('div', 'chips', (P.opcoes || []).map((o) => el('label', null, el('input', { type: 'checkbox', name: 'c' + i, value: o }), o))))),
+        (P.situacoes || []).length ? el('p', 'section-t', 'Agora imagine algumas situações. Em cada uma, marque as empresas que viriam à sua cabeça.') : null,
+        (P.situacoes || []).map((sit, i) => el('fieldset', 'survey__q', perg(el('span', 'sv-sit', el('span', 'sv-sit__rot', 'Quando você pensa'), el('span', 'sv-sit__t', '“' + sit.texto + '”'))),
+          el('div', 'chips', [...(P.opcoes || []), 'Outra empresa', 'Nenhuma'].map((o) => el('label', o === 'Nenhuma' ? 'is-nenhuma' : null, el('input', { type: 'checkbox', name: 'c' + i, value: o }), o))))),
         // ativos distintivos: de que marca é isto? (sem o nome)
         ATV.length ? el('p', 'section-t', 'De que empresa é isto? Responda sem pesquisar.') : null,
         ATV.map((a, i) => el('fieldset', 'survey__q', perg('De que empresa é isto?'),
@@ -152,11 +160,20 @@
         document.getElementById('sv-barra').style.width = Math.round((ok / qs.length) * 100) + '%';
         document.getElementById('sv-cont').textContent = ok + ' de ' + qs.length;
       };
+      form.addEventListener('change', (ev) => {
+        const t = ev.target;
+        if (t.name === 'pref') { outraPref.hidden = t.value !== 'Outra'; if (!outraPref.hidden) outraPref.focus(); }
+        if (/^c\d+$/.test(t.name) && t.checked) {
+          const grupoC = form.querySelectorAll('input[name=' + t.name + ']');
+          grupoC.forEach((x) => { if (t.value === 'Nenhuma' ? x !== t : x.value === 'Nenhuma') x.checked = false; });
+        }
+      });
       form.addEventListener('input', progresso); form.addEventListener('change', progresso); progresso();
 
       form.addEventListener('submit', async (ev) => {
         ev.preventDefault();
-        const pref = form.querySelector('input[name=pref]:checked');
+        const prefIn = form.querySelector('input[name=pref]:checked');
+        const pref = prefIn && prefIn.value === 'Outra' && outraPref.value.trim() ? { value: 'Outra: ' + outraPref.value.trim() } : prefIn;
         const notas = (P.afirmacoes || []).map((_, i) => { const r = form.querySelector('input[name=a' + i + ']:checked'); return r ? Number(r.value) : null; });
         if (!pref || notas.some((n) => n == null)) return say(msg, 'Responda a escolha e todas as frases de 1 a 5.', 'error');
         const frase = form.querySelector('input[name=frase]:checked');
