@@ -304,7 +304,7 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', buscaMenu); else buscaMenu();
 
   // ===== subtítulos de seção: uma frase por linha (quebra depois de cada ponto final) =====
-  const SUBT = '.verdict__q, .cmsg__q, .insight > span:last-child, .box__empty, .screen__lead, .res-part__d, .box__title + .box__text, .box__head + .box__text, .app-section__head .small, .app-section__head + .small, .app-section > .small, .lib summary .small';
+  const SUBT = '.verdict__q, .cmsg__q, .insight > span:last-child, .box__empty, .screen__lead, .res-part__d, .box__title + .box__text, .box__head + .box__text, .app-section__head .small, .app-section__head + .small, .app-section > .small, .lib summary .small, .box__text, .gh__nota, .vazio__d, .vz__d, .ed-head__n, .gl__s, .oc__sub, .cerne__vazio, .aviso-tg__d, .qrdlg__d, .implanta__id, .atencao__t, .sv-cab p, .field-hint, .clients__empty';
   const FIM = /([.!?…])\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ“"(0-9])/g;
   // sem palavra órfã: a última palavra de cada frase fica presa à anterior (espaço que não quebra)
   const semOrfa = (linha) => (linha.split(' ').length >= 3 ? linha.replace(/ (\S+)$/, '\u00a0$1') : linha);
