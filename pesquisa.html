@@ -10,41 +10,66 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="app/app.css?v=25" />
+  <link rel="stylesheet" href="app/tema.css?v=102" />
   <style>
-    .survey { width: min(560px, 100%); margin: 0 auto; padding: 64px 16px 96px; display: grid; gap: 36px; }
-    .survey__q { display: grid; gap: 12px; border: 0; margin: 0; padding: 0; min-width: 0; }
-    .survey__q legend, .survey__q > label { padding: 0; margin-bottom: 4px; font-size: 18px; line-height: 1.35; color: #fff; }
-    .opts { display: grid; gap: 8px; }
-    .opt { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 18px; border: 1px solid var(--darkgrey); border-radius: 10px; cursor: pointer; font-size: 16px; }
-    .opt:has(input:checked) { border-color: var(--white); color: #fff; }
-    .opt input { accent-color: var(--white); width: 18px; height: 18px; margin: 0; }
+    /* Pesquisa pública no padrão da plataforma: perguntas em cartões numerados, opções em lista agrupada e barra de progresso */
+    body { background: #111; }
+    .survey { width: min(600px, 100%); margin: 0 auto; padding: 0 16px 96px; display: grid; gap: 14px; }
+    .sv-topo { position: sticky; top: 0; z-index: 5; margin: 0 -16px; padding: 14px 16px 12px; background: rgba(17, 17, 17, .92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
+    .sv-topo__l { display: flex; justify-content: space-between; align-items: center; font-size: var(--t-leg); color: var(--ganggrey); }
+    .sv-barra { height: 4px; border-radius: 2px; background: #262626; overflow: hidden; }
+    .sv-barra span { display: block; height: 100%; width: 0; border-radius: 2px; background: #f3f3f3; transition: width .3s ease; }
+    .sv-cab { padding: 28px 0 10px; display: grid; gap: 6px; }
+    .sv-cab .eyebrow { margin: 0; }
+    .sv-cab h1 { margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.022em; color: #fff; }
+    .sv-cab p { margin: 0; font-size: var(--t-ui); color: var(--ganggrey); max-width: 44ch; }
+    .survey__q { margin: 0; padding: 16px; border: 1px solid var(--line); border-radius: var(--r); background: var(--lightblack); display: grid; gap: 12px; min-width: 0; }
+    .sv-q { display: flex; align-items: flex-start; gap: 10px; margin: 0; padding: 0; font-size: var(--t-txt); font-weight: 500; line-height: 1.4; color: #fff; }
+    .sv-q__n { flex: none; width: 24px; height: 24px; border-radius: 7px; display: grid; place-items: center; background: #242424; box-shadow: inset 0 0 0 1px var(--line-2); font-size: var(--t-micro); font-weight: 600; color: #cfcfcf; font-variant-numeric: tabular-nums; margin-top: -1px; }
+    .survey__q.is-ok .sv-q__n { background: #f3f3f3; color: #111; box-shadow: none; }
+    legend.sv-q { float: left; width: 100%; }
+    legend.sv-q + * { clear: both; }
+    .opts { display: grid; border: 1px solid var(--line); border-radius: 11px; background: #171717; overflow: hidden; }
+    .opt { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; cursor: pointer; font-size: var(--t-ui); color: #dcdcdc; transition: background-color .15s; }
+    .opt + .opt { border-top: 1px solid var(--line); }
+    .opt:hover { background: #1c1c1c; }
+    .opt:has(input:checked) { background: #222; color: #fff; }
+    .opt input { appearance: none; -webkit-appearance: none; flex: none; width: 16px; height: 16px; margin: 0; border-radius: 50%; border: 1px solid #4a4a4a; background: #111; display: grid; place-items: center; }
+    .opt input:checked { border-color: #f3f3f3; }
+    .opt input:checked::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #f3f3f3; }
+    .opt input:focus-visible { outline: 2px solid #f3f3f3; outline-offset: 2px; }
     .scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
-    .scale label { display: grid; place-items: center; min-height: 48px; border: 1px solid var(--darkgrey); border-radius: 8px; cursor: pointer; font-size: 16px; }
-    .scale label:has(input:checked) { background: var(--white); color: var(--black); border-color: var(--white); }
-    .scale input { position: absolute; opacity: 0; pointer-events: none; }
-    .scale label:has(input:focus-visible) { outline: 2px solid var(--ganggrey); outline-offset: 2px; }
-    .scale__ends { display: flex; justify-content: space-between; font-size: 12px; color: var(--ganggrey); }
-    .survey .btn { width: 100%; }
-    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-    .chips label { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border: 1px solid var(--darkgrey); border-radius: 999px; cursor: pointer; font-size: 14px; }
-    .chips label:has(input:checked) { background: var(--white); color: var(--black); border-color: var(--white); }
-    .chips input { position: absolute; opacity: 0; pointer-events: none; }
-    .chips label:has(input:focus-visible) { outline: 2px solid var(--ganggrey); outline-offset: 2px; }
-    .asset { display: grid; place-items: center; min-height: 140px; padding: 20px; border-radius: 12px; background: var(--white); color: var(--black); font-size: 20px; text-align: center; }
-    .asset img { max-width: 70%; max-height: 120px; object-fit: contain; }
-    .section-t { font-size: 13px; color: var(--ganggrey); margin-top: 12px; }
+    .scale label { position: relative; display: grid; place-items: center; min-height: 42px; border: 1px solid var(--line-2); border-radius: 9px; background: #171717; cursor: pointer; font-size: var(--t-ui); font-variant-numeric: tabular-nums; color: #dcdcdc; transition: background-color .15s; }
+    .scale label:hover { background: #1f1f1f; }
+    .scale label:has(input:checked) { background: #f3f3f3; color: #111; border-color: #f3f3f3; }
+    .scale input, .chips input { position: absolute; opacity: 0; pointer-events: none; }
+    .scale label:has(input:focus-visible), .chips label:has(input:focus-visible) { outline: 2px solid #f3f3f3; outline-offset: 2px; }
+    .scale__ends { display: flex; justify-content: space-between; font-size: var(--t-leg); color: var(--ganggrey); }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chips label { position: relative; display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border: 1px solid var(--line-2); border-radius: 8px; background: #171717; cursor: pointer; font-size: var(--t-ui); color: #dcdcdc; }
+    .chips label:has(input:checked) { background: #f3f3f3; color: #111; border-color: #f3f3f3; }
+    .asset { display: grid; place-items: center; min-height: 132px; padding: 20px; border-radius: 11px; background: #f3f3f3; color: #111; font-size: 18px; font-weight: 500; text-align: center; }
+    .asset img { max-width: 70%; max-height: 110px; object-fit: contain; }
+    .section-t { margin: 14px 0 0; display: flex; align-items: center; gap: 10px; font-size: var(--t-leg); color: var(--ganggrey); }
+    .section-t::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+    .survey .field { font-size: var(--t-ui); }
+    .survey > .btn { width: 100%; height: 44px; margin-top: 6px; }
+    .sv-fim { min-height: 70vh; display: grid; place-content: center; justify-items: center; gap: 8px; text-align: center; }
+    .sv-fim__q { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: #f3f3f3; color: #111; font-size: 20px; margin-bottom: 8px; }
+    .sv-fim h1 { margin: 0; font-size: 24px; font-weight: 600; color: #fff; }
+    .sv-fim p { margin: 0; font-size: var(--t-ui); color: var(--ganggrey); max-width: 36ch; }
     .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   </style>
 </head>
 <body>
   <main class="survey" id="app">
-    <p class="small">Carregando…</p>
+    <p class="small" style="padding-top:40px">Carregando…</p>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script src="app/config.js"></script>
   <script src="app/auth.js?v=2"></script>
-  <script src="app/ui.js?v=9"></script>
+  <script src="app/ui.js?v=21"></script>
   <script>
     /* Pesquisa de marca pública: quem responde são os clientes do cliente, sem login.
        O banco só entrega a pesquisa se ela estiver aberta e só aceita respostas válidas (supabase/portal.sql). */
@@ -54,48 +79,62 @@
       const app = document.getElementById('app');
       document.documentElement.classList.add('is-ready');
       const token = new URLSearchParams(location.search).get('t') || '';
-      const fim = (titulo, texto) => app.replaceChildren(el('h1', 'title-xl', titulo), el('p', 'small', texto));
+      const fim = (titulo, texto, ok) => app.replaceChildren(el('div', 'sv-fim', el('span', { class: 'sv-fim__q', 'aria-hidden': 'true' }, ok ? '✓' : 'i'), el('h1', null, titulo), el('p', null, texto)));
       if (!sb || !/^[0-9a-f-]{36}$/i.test(token)) return fim('Link inválido', 'Confira o endereço que você recebeu.');
 
       const { data: P, error } = await sb.rpc('pesquisa_publica', { p_token: token });
       if (error || !P) return fim('Pesquisa encerrada', 'Esta pesquisa não está mais recebendo respostas. Obrigado!');
       document.title = 'Pesquisa rápida · ' + P.marca;
 
-      const radio = (name, v, t) => el('label', 'opt', el('input', { type: 'radio', name, value: v }), t);
+      const radio = (name, v, t) => el('label', 'opt', el('input', { type: 'radio', name, value: v }), el('span', null, t));
+      let nq = 0;
+      const perg = (txt, tag, attrs) => el(tag || 'legend', { class: 'sv-q', ...(attrs || {}) }, el('span', 'sv-q__n', String(++nq)), el('span', null, txt));
+      // ativos sem imagem e sem texto não têm o que mostrar: ficam de fora
+      const ATV = (P.ativos || []).filter((a) => a.imagem_url || (a.texto && a.texto.trim()));
       const escala = (i, frase) => el('fieldset', 'survey__q',
-        el('legend', null, frase),
+        perg(frase),
         el('div', 'scale', [1, 2, 3, 4, 5].map((n) => el('label', null, el('input', { type: 'radio', name: 'a' + i, value: n, 'aria-label': n + ' de 5' }), String(n)))),
         el('div', 'scale__ends', el('span', null, 'Discordo'), el('span', null, 'Concordo totalmente')));
 
       const msg = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite' });
-      const form = el('form', { class: 'survey', novalidate: true, style: 'padding:0' },
-        el('div', null, el('h1', 'title-xl', 'Leva 2 minutos'), el('p', 'small', 'Sua opinião ajuda a melhorar o atendimento. As respostas são anônimas.')),
-        el('div', 'survey__q', el('label', { for: 'q-lembra' }, 'Quando você pensa em ' + P.categoria + ', que marcas vêm à cabeça?'),
+      const form = el('form', { class: 'survey', novalidate: true, style: 'padding:0;width:100%' },
+        el('div', 'sv-topo', el('div', 'sv-topo__l', el('span', null, 'Pesquisa rápida · anônima'), el('span', { id: 'sv-cont' }, '')), el('div', { class: 'sv-barra', 'aria-hidden': 'true' }, el('span', { id: 'sv-barra' }))),
+        el('div', 'sv-cab', el('h1', null, 'Leva 2 minutos'), el('p', null, 'Sua opinião ajuda a melhorar o atendimento. Não existe resposta certa, e ninguém sabe quem respondeu.')),
+        el('div', 'survey__q', perg('Quando você pensa em ' + P.categoria + ', que marcas vêm à cabeça?', 'label', { for: 'q-lembra' }),
           el('input', { class: 'field', id: 'q-lembra', maxlength: 300, autocomplete: 'off', placeholder: 'Escreva as que lembrar' })),
-        el('fieldset', 'survey__q', el('legend', null, 'Se fosse contratar hoje, qual escolheria?'),
+        el('fieldset', 'survey__q', perg('Se fosse contratar hoje, qual escolheria?'),
           el('div', 'opts', (P.opcoes || []).map((o) => radio('pref', o, o)), radio('pref', 'Outra', 'Outra'))),
         // a marca é entendida? a pessoa escolhe a frase que melhor a descreve (a ordem é embaralhada)
-        (P.frases || []).length ? el('fieldset', 'survey__q', el('legend', null, 'Qual destas frases descreve melhor a ' + P.marca + '?'),
+        (P.frases || []).length ? el('fieldset', 'survey__q', perg('Qual destas frases descreve melhor a ' + P.marca + '?'),
           el('div', 'opts', [...P.frases].sort(() => Math.random() - 0.5).map((f) => radio('frase', f, f)))) : null,
         // situações de compra: em quais marcas a pessoa pensaria em cada momento (disponibilidade mental)
         (P.situacoes || []).length ? el('p', 'section-t', 'Em cada situação, marque as empresas que viriam à sua cabeça. Pode marcar várias ou nenhuma.') : null,
-        (P.situacoes || []).map((sit, i) => el('fieldset', 'survey__q', el('legend', null, sit.texto),
+        (P.situacoes || []).map((sit, i) => el('fieldset', 'survey__q', perg(sit.texto),
           el('div', 'chips', (P.opcoes || []).map((o) => el('label', null, el('input', { type: 'checkbox', name: 'c' + i, value: o }), o))))),
         // ativos distintivos: de que marca é isto? (sem o nome)
-        (P.ativos || []).length ? el('p', 'section-t', 'De que empresa é isto? Responda sem pesquisar.') : null,
-        (P.ativos || []).map((a, i) => el('fieldset', 'survey__q', el('legend', { class: 'sr-only' }, 'De que empresa é este item ' + (i + 1) + '?'),
+        ATV.length ? el('p', 'section-t', 'De que empresa é isto? Responda sem pesquisar.') : null,
+        ATV.map((a, i) => el('fieldset', 'survey__q', perg('De que empresa é isto?'),
           a.tipo === 'cor' && /^#[0-9a-f]{6}$/i.test(a.texto || '') ? el('div', { class: 'asset', style: 'background:' + a.texto, 'aria-label': 'Uma cor' })
             : a.imagem_url ? el('div', 'asset', el('img', { src: a.imagem_url, alt: 'Imagem para identificar' }))
               : el('div', 'asset', '“' + (a.texto || '') + '”'),
           el('div', 'opts', [...(P.opcoes || []), 'Não sei'].map((o) => radio('v' + i, o, o))))),
         (P.afirmacoes || []).map((f, i) => escala(i, f)),
-        el('div', 'survey__q', el('label', { for: 'q-palavra' }, 'Uma palavra para descrever ' + P.marca + ':'),
+        el('div', 'survey__q', perg('Uma palavra para descrever ' + P.marca + ':', 'label', { for: 'q-palavra' }),
           el('input', { class: 'field', id: 'q-palavra', maxlength: 60, autocomplete: 'off' })),
         // no fim, para não lembrar o nome da marca antes das perguntas de lembrança
-        el('fieldset', 'survey__q', el('legend', null, 'Você já comprou ou contratou a ' + P.marca + '?'),
+        el('fieldset', 'survey__q', perg('Você já comprou ou contratou a ' + P.marca + '?'),
           el('div', 'opts', radio('cliente', 'sim', 'Sim'), radio('cliente', 'nao', 'Ainda não'), radio('cliente', 'ns', 'Não lembro'))),
         el('button', { class: 'btn btn--light', type: 'submit' }, 'Enviar respostas'), msg);
       app.replaceChildren(form);
+      // progresso: quantas perguntas já têm resposta
+      const qs = [...form.querySelectorAll('.survey__q')];
+      const progresso = () => {
+        let ok = 0;
+        qs.forEach((q) => { const r = [...q.querySelectorAll('input')].some((x) => (x.type === 'radio' || x.type === 'checkbox') ? x.checked : x.value.trim()); q.classList.toggle('is-ok', r); if (r) ok += 1; });
+        document.getElementById('sv-barra').style.width = Math.round((ok / qs.length) * 100) + '%';
+        document.getElementById('sv-cont').textContent = ok + ' de ' + qs.length;
+      };
+      form.addEventListener('input', progresso); form.addEventListener('change', progresso); progresso();
 
       form.addEventListener('submit', async (ev) => {
         ev.preventDefault();
@@ -106,7 +145,7 @@
         if ((P.frases || []).length && !frase) return say(msg, 'Escolha a frase que melhor descreve a empresa.', 'error');
         const ceps = Object.fromEntries((P.situacoes || []).map((sit, i) => [sit.id, [...form.querySelectorAll('input[name=c' + i + ']:checked')].map((x) => x.value)]));
         const ativos = {};
-        (P.ativos || []).forEach((a, i) => { const r = form.querySelector('input[name=v' + i + ']:checked'); ativos[a.id] = r ? r.value : 'Não sei'; });
+        ATV.forEach((a, i) => { const r = form.querySelector('input[name=v' + i + ']:checked'); ativos[a.id] = r ? r.value : 'Não sei'; });
         const btn = form.querySelector('[type=submit]'); btn.disabled = true; say(msg, 'Enviando…');
         const { error: e2 } = await sb.rpc('pesquisa_responder', {
           p_token: token, p_lembranca: document.getElementById('q-lembra').value.trim(), p_preferencia: pref.value,
@@ -114,7 +153,7 @@
           p_ja_cliente: (() => { const c = form.querySelector('input[name=cliente]:checked'); return c ? (c.value === 'sim' ? true : c.value === 'nao' ? false : null) : null; })(),
         });
         if (e2) { btn.disabled = false; return say(msg, 'Não foi possível enviar. Tente de novo.', 'error'); }
-        fim('Obrigado!', 'Suas respostas foram enviadas.');
+        fim('Obrigado!', 'Suas respostas foram enviadas. Elas ajudam a empresa a atender cada vez melhor.', true);
       });
     })();
   </script>
