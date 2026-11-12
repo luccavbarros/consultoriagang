@@ -2125,7 +2125,12 @@
 
   // ===== Sua marca (somente leitura) =====
   const baixar = (caminho, rotulo, cls) => el('button', { class: cls || 'btn btn--ghost', type: 'button', onclick: () => abreArquivo(caminho) }, rotulo);
-  const vazio = (txt) => el('div', 'soon', txt || 'O consultor ainda não publicou esta parte. Ela aparece aqui assim que estiver pronta.');
+  // estado vazio: compacto e centrado, com uma prévia em esqueleto (nada de faixa larga vazia)
+  const vazio = (txt) => el('div', { class: 'vazio', role: 'status' },
+    el('div', { class: 'vazio__previa', 'aria-hidden': 'true' },
+      el('span', 'vazio__l vazio__l--a'), el('span', 'vazio__l vazio__l--b'), el('span', 'vazio__l vazio__l--c')),
+    el('p', 'vazio__t', 'Em preparação'),
+    el('p', 'vazio__d', txt || 'O consultor ainda não publicou esta parte. Ela aparece aqui assim que estiver pronta.'));
   const sec = (idt, titulo, ...kids) => el('section', { class: 'box', 'aria-labelledby': idt }, el('h2', { class: 'box__title', id: idt }, titulo), kids);
   // ----- peças das telas da marca (estilo de painel: faixa de números, listas agrupadas, ícones em quadrinho) -----
   const ICP = {

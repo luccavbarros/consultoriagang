@@ -1567,3 +1567,12 @@ summary.hist__linha:hover, .hist__det[open] > summary { background: #1c1c1c; }
 .hist__lista { margin: 0; padding-left: 16px; display: grid; gap: 3px; font-size: var(--t-ui); color: #dcdcdc; }
 .hist__vazio { padding: 14px; font-size: var(--t-ui); color: var(--ganggrey); }
 @media (max-width: 600px) { .hist__linha { grid-template-columns: 50px 12px minmax(0, 1fr); } .hist__mais { padding-left: 14px; } }
+/* estado vazio (portal): pequeno, centrado, com prévia em esqueleto */
+.vazio { max-width: 380px; margin: 24px auto; padding: 28px 24px 24px; display: grid; justify-items: center; gap: 6px; text-align: center; border-radius: var(--r); border: 1px dashed var(--line-2); background: var(--lightblack); }
+.vazio__previa { width: 168px; margin-bottom: 14px; padding: 14px; display: grid; gap: 8px; border-radius: 12px; border: 1px solid var(--line-2); background: #171717; box-shadow: 0 10px 30px rgba(0, 0, 0, .35); }
+.vazio__l { display: block; height: 6px; border-radius: 3px; background: #2e2e2e; }
+.vazio__l--a { width: 46%; background: #E5482A; opacity: .85; }
+.vazio__l--b { width: 88%; }
+.vazio__l--c { width: 64%; }
+.vazio__t { margin: 0; font-size: var(--t-txt); font-weight: 600; color: #fff; }
+.vazio__d { margin: 0; max-width: 32ch; font-size: var(--t-ui); line-height: 1.5; color: var(--ganggrey); }
