@@ -323,6 +323,19 @@
     if (n && n.tagName === 'SELECT' && !ehCombo(f) && p[k] != null && ![...n.options].some((o) => o.value === String(p[k]))) n.append(el('option', { value: p[k] }, String(p[k])));
     setv(f, p[k]);
   });
+  // a divisão de referência para este cliente: setor + estratégia (compra recorrente, preço baixo); o consultor decide
+  const refEsforco = () => {
+    const r = U.esforcoReferencia(emp.setor, p.como_vencer);
+    const nome = ((window.GangPresets || {}).SETORES || {})[emp.setor] || 'média geral';
+    const usar = el('button', { class: 'link', type: 'button', onclick: () => {
+      const sel = $('p-esforco'); if (![...sel.options].some((o) => o.value === String(r.pct))) sel.append(el('option', { value: r.pct }, r.pct + '% marca · ' + (100 - r.pct) + '% ativação (referência deste cliente)'));
+      sel.value = String(r.pct); refEsforco();
+    } }, 'Usar ' + r.pct + '%');
+    $('p-esforco-d').replaceChildren('Referência para este cliente: ' + r.pct + '% de marca (' + nome.toLowerCase() + ' ' + r.base + (r.partes.length ? ', ' + r.partes.join(', ') : '') + '). '
+      + 'Na opção de lançamento, a divisão vira sozinha para 57% no 13º mês. Proposta, preço e atendimento ficam fora da conta. ',
+      Number($('p-esforco').value) === r.pct || Number($('p-esforco').value) === 35 ? '' : usar);
+  };
+  refEsforco(); $('p-esforco').addEventListener('change', refEsforco);
 
   $('plan-form').addEventListener('submit', async (ev) => {
     ev.preventDefault();
@@ -957,11 +970,13 @@
       });
     }
     // equilíbrio marca × ativação pelo peso das ações (P=1, M=2, G=4), como nos estudos de eficácia; a base não entra na conta
-    const alvo = (p.esforco_marca_pct ?? U.esforcoPadrao(emp && emp.setor)) / 100;
+    const pMeta = { ...p, esforco_marca_pct: p.esforco_marca_pct ?? U.esforcoPadrao(emp && emp.setor) };
+    const alvo = U.metaMarcaPlano(pMeta) / 100; // a média do plano inteiro (no lançamento, 35% no 1º ano e 57% depois)
+    const alvoDe = (mm) => (mm ? U.metaMarcaMes(pMeta, mm) / 100 : alvo); // a meta do mês: no lançamento, a virada acontece no 13º mês
     const tipoLib = (y) => y.tipo || (y.esforco === 'marca' ? 'marca' : 'ativacao');
     const pesoPlano = (t) => acoes.filter((a) => U.tipoEsforco(a) === t).reduce((s2, a) => s2 + U.pesoTamanho(a), 0)
       + novas.filter((x) => U.tipoEsforco({ titulo: x.titulo, esforco: x.esforco }) === t).reduce((s2, x) => s2 + ptsT(x.titulo), 0);
-    const emFalta = () => { const m = pesoPlano('marca'); const a = pesoPlano('ativacao'); return m + a === 0 || m / (m + a) < alvo ? 'marca' : 'ativacao'; };
+    const emFalta = (mm) => { const m = pesoPlano('marca'); const a = pesoPlano('ativacao'); return m + a === 0 || m / (m + a) < alvoDe(mm) ? 'marca' : 'ativacao'; };
     // a ordem de encaixe é a ordem de prioridade: quem entra primeiro pega os primeiros meses
     // 2. a estratégia: as ações que executam a abordagem viram essenciais nos 3 primeiros meses (até 3 por mês)
     // no máximo 8: estratégia é foco, e mais que isso não cabe nos 3 primeiros meses junto com a fundação
@@ -1040,7 +1055,7 @@
           const prox = sai && meses.slice(km + 1).find((mm) => nMes(mm) < LIM_N - 1 && carga(mm) + ptsT(sai.titulo) <= LIM);
           if (sai && prox) sai.mes = prox;
         }
-        const sobra = emFalta() === 'ativacao';
+        const sobra = emFalta(mes) === 'ativacao';
         const x = (noPlano(ALC) < 2 && pega((y) => tipoLib(y) === 'marca' && ALC.test(y.texto)))
           || (noPlano(CEP) < 1 && pega((y) => tipoLib(y) === 'marca' && CEP.test(y.texto)))
           || (sobra && pega((y) => tipoLib(y) === 'marca' && y.tam === 'P'))
@@ -1048,9 +1063,9 @@
         if (x) add(x, 'ajuda');
       }
       // o resto do mês vai para o tipo que está abaixo da meta do cliente, sem cota fixa por mês
-      while (doMes().length < 2) { const t = emFalta(); const x = (t === 'ativacao' && pega((y) => tipoLib(y) === t && y.tam !== 'P' && (TAM[y.tam] || [, , 2])[2] <= LIM - carga(mes))) || pega((y) => tipoLib(y) === t) || pega((y) => tipoLib(y) !== 'base') || pega(() => true); if (!x) break; add(x, 'ajuda'); }
+      while (doMes().length < 2) { const t = emFalta(mes); const x = (t === 'ativacao' && pega((y) => tipoLib(y) === t && y.tam !== 'P' && (TAM[y.tam] || [, , 2])[2] <= LIM - carga(mes))) || pega((y) => tipoLib(y) === t) || pega((y) => tipoLib(y) !== 'base') || pega(() => true); if (!x) break; add(x, 'ajuda'); }
       // mês leve (só ações rápidas): completa até uns 5 pontos com ações que caibam, para o cliente não ficar parado no resto do mês
-      while (carga(mes) < 5 && nMes(mes) < LIM_N) { const cabe = LIM - carga(mes); const t = emFalta(); const x = pega((y) => tipoLib(y) === t && (TAM[y.tam] || [, , 2])[2] <= cabe && (TAM[y.tam] || [, , 2])[2] >= 2) || pega((y) => (TAM[y.tam] || [, , 2])[2] <= cabe && (TAM[y.tam] || [, , 2])[2] >= 2) || pega((y) => (TAM[y.tam] || [, , 2])[2] <= cabe); if (!x) break; add(x, 'ajuda'); }
+      while (carga(mes) < 5 && nMes(mes) < LIM_N) { const cabe = LIM - carga(mes); const t = emFalta(mes); const x = pega((y) => tipoLib(y) === t && (TAM[y.tam] || [, , 2])[2] <= cabe && (TAM[y.tam] || [, , 2])[2] >= 2) || pega((y) => (TAM[y.tam] || [, , 2])[2] <= cabe && (TAM[y.tam] || [, , 2])[2] >= 2) || pega((y) => (TAM[y.tam] || [, , 2])[2] <= cabe); if (!x) break; add(x, 'ajuda'); }
       // um essencial por mês: a primeira ação nova do mês vira a essencial, se ainda não houver
       if (!doMes().some((a) => a.peso === 'essencial')) { const x = novas.find((y) => y.mes === mes); if (x) x.peso = 'essencial'; }
     });
@@ -1061,28 +1076,40 @@
     // no piso de alcance e de situação de compra, nem deixa um mês sem marca
     const ehMarca = (y) => U.tipoEsforco({ titulo: y.titulo, tipo: y.tipo, esforco: y.esforco }) === 'marca';
     const marcasNoMes = (mes) => acoes.filter((a) => a.mes_previsto === mes && ehMarca(a)).length + novas.filter((y) => y.mes === mes && ehMarca(y)).length;
-    const desvioMarca = () => { const m = pesoPlano('marca'); const a = pesoPlano('ativacao'); return m + a ? m / (m + a) - alvo : 0; };
-    for (let volta = 0; volta < 60 && desvioMarca() > 0.08; volta += 1) {
-      const x = novas.filter((y) => ehMarca(y) && !y.executa && !marco(y.titulo) && y.peso !== 'essencial' && faseDe(y.titulo) !== 1
-        && !ALC.test(y.titulo) && !CEP.test(y.titulo) && marcasNoMes(y.mes) > 1)
-        .sort((a, b) => ptsT(b.titulo) - ptsT(a.titulo))[0];
-      if (!x) {
-        // cada mês já tem uma só ação de marca (a presença contínua): em vez de tirar marca, soma ativação no mês mais leve que ainda tem espaço
-        const livre = meses.filter((mm) => nMes(mm) < LIM_N && LIM - carga(mm) >= 2).sort((m1, m2) => carga(m1) - carga(m2))[0];
-        if (!livre) break;
-        kMes = meses.indexOf(livre);
-        const z = pega((w) => tipoLib(w) === 'ativacao' && (TAM[w.tam] || [, , 2])[2] <= LIM - carga(livre));
-        if (!z) break;
-        novas.push({ mes: livre, peso: 'ajuda', promessa: z.promessa || null, esforco: z.esforco || null, titulo: z.texto, porque: z.porque || null, metrica: z.metrica || null });
-        continue;
+    // a conta é feita por fase: no lançamento, o 1º ano contra 35% e o resto contra 57%; nos demais planos, o plano inteiro contra a meta
+    const fases = (() => {
+      if (pMeta.esforco_marca_pct !== 35 || !p.inicio) return [meses];
+      const a1 = meses.filter((mm) => U.metaMarcaMes(pMeta, mm) === 35); const a2 = meses.filter((mm) => U.metaMarcaMes(pMeta, mm) !== 35);
+      return [a1, a2].filter((f) => f.length);
+    })();
+    fases.forEach((fase) => {
+      const naFaseM = (mm) => fase.includes(mm);
+      const pesoFase = (t) => acoes.filter((a) => naFaseM(a.mes_previsto) && U.tipoEsforco(a) === t).reduce((s2, a) => s2 + U.pesoTamanho(a), 0)
+        + novas.filter((x) => naFaseM(x.mes) && U.tipoEsforco({ titulo: x.titulo, tipo: x.tipo, esforco: x.esforco }) === t).reduce((s2, x) => s2 + ptsT(x.titulo), 0);
+      const metaFase = alvoDe(fase[0]);
+      const desvioMarca = () => { const m = pesoFase('marca'); const a = pesoFase('ativacao'); return m + a ? m / (m + a) - metaFase : 0; };
+      for (let volta = 0; volta < 60 && desvioMarca() > 0.08; volta += 1) {
+        const x = novas.filter((y) => naFaseM(y.mes) && ehMarca(y) && !y.executa && !marco(y.titulo) && y.peso !== 'essencial' && faseDe(y.titulo) !== 1
+          && !ALC.test(y.titulo) && !CEP.test(y.titulo) && marcasNoMes(y.mes) > 1)
+          .sort((a, b) => ptsT(b.titulo) - ptsT(a.titulo))[0];
+        if (!x) {
+          // cada mês já tem uma só ação de marca (a presença contínua): em vez de tirar marca, soma ativação no mês mais leve que ainda tem espaço
+          const livre = fase.filter((mm) => nMes(mm) < LIM_N && LIM - carga(mm) >= 2).sort((m1, m2) => carga(m1) - carga(m2))[0];
+          if (!livre) break;
+          kMes = meses.indexOf(livre);
+          const z = pega((w) => tipoLib(w) === 'ativacao' && (TAM[w.tam] || [, , 2])[2] <= LIM - carga(livre));
+          if (!z) break;
+          novas.push({ mes: livre, peso: 'ajuda', promessa: z.promessa || null, esforco: z.esforco || null, titulo: z.texto, porque: z.porque || null, metrica: z.metrica || null });
+          continue;
+        }
+        kMes = Math.max(0, meses.indexOf(x.mes));
+        const cabe = LIM - carga(x.mes) + ptsT(x.titulo);
+        const y = pega((z) => tipoLib(z) === 'ativacao' && (TAM[z.tam] || [, , 2])[2] <= cabe);
+        if (y) Object.assign(x, { promessa: y.promessa || null, esforco: y.esforco || null, tipo: y.tipo || undefined, titulo: y.texto, porque: y.porque || null, metrica: y.metrica || null });
+        else if (novas.filter((z) => z.mes === x.mes).length + acoes.filter((a) => a.mes_previsto === x.mes).length > 2) novas.splice(novas.indexOf(x), 1);
+        else break;
       }
-      kMes = Math.max(0, meses.indexOf(x.mes));
-      const cabe = LIM - carga(x.mes) + ptsT(x.titulo);
-      const y = pega((z) => tipoLib(z) === 'ativacao' && (TAM[z.tam] || [, , 2])[2] <= cabe);
-      if (y) Object.assign(x, { promessa: y.promessa || null, esforco: y.esforco || null, tipo: y.tipo || undefined, titulo: y.texto, porque: y.porque || null, metrica: y.metrica || null });
-      else if (novas.filter((z) => z.mes === x.mes).length + acoes.filter((a) => a.mes_previsto === x.mes).length > 2) novas.splice(novas.indexOf(x), 1);
-      else break;
-    }
+    });
     // no máximo 2 essenciais por mês: o que passar disso vira ajuda (foco, não lista de urgências); as da estratégia têm a vez
     meses.forEach((mes) => {
       let n = acoes.filter((a) => a.mes_previsto === mes && a.peso === 'essencial').length;

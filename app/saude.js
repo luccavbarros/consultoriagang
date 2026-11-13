@@ -144,7 +144,7 @@
     const pM = pesoDe('marca'); const pA = pesoDe('ativacao');
     const marcaPct = pM + pA ? Math.round((pM / (pM + pA)) * 100) : null;
     const nBase = acs.filter((a) => U.tipoEsforco(a) === 'base').length;
-    const planejado = (b.plano && b.plano.esforco_marca_pct) ?? (window.GangUI.esforcoPadrao ? window.GangUI.esforcoPadrao(b.empresa && b.empresa.setor) : 62);
+    const planejado = (b.plano && b.plano.esforco_marca_pct != null) ? U.metaMarcaPlano(b.plano) : (U.esforcoPadrao ? U.esforcoPadrao(b.empresa && b.empresa.setor) : 62);
     const porPromessa = { vendas: 0, pessoas: 0, valor: 0 };
     acs.forEach((a) => { porPromessa[U.promessaDe(a)] += 1; });
     const ini = inicioRef(b); const dur = b.plano ? b.plano.duracao_meses || 18 : 18;

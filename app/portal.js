@@ -1303,7 +1303,7 @@
     out.push(parte('Marca', 'A marca muda em meses, não em semanas. Medimos em pesquisas e nas buscas.'));
     let esf = null;
     if (p) {
-      const marca = p.esforco_marca_pct ?? 62;
+      const marca = p.esforco_marca_pct != null ? U.metaMarcaMes(p) : 62; // no lançamento, a divisão do momento (35% no 1º ano, 57% depois)
       esf = (el('section', { class: 'box', 'aria-labelledby': 'eff-t' },
         el('h2', { class: 'box__title', id: 'eff-t' }, 'Onde vai o esforço'),
         el('div', 'esf__legend',

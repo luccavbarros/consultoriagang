@@ -528,5 +528,25 @@
   // divisão marca:ativação de referência por setor (Binet & Field, Effectiveness in Context; B2B: Código de Eficácia B2B)
   const ESFORCO_SETOR = { b2b: 45, varejo: 64, loja_online: 64, servicos: 51, saude: 51, beleza: 51, educacao: 51, alimentacao: 51, tecnologia: 62 };
   const esforcoPadrao = (setor) => ESFORCO_SETOR[setor] || 62;
-  window.GangUI = { buscaFonte, esforcoPadrao, ESFORCO_SETOR, addDias, moedaFmt, moedaValor, moedaSet, PROMESSAS, promessaDe, tipoEsforco, pesoTamanho, combo, comboValue, comboSet, multi, multiValue, avatar, iniciais, $, el, say, day, fmt, cap, dia, diaAno, mesAno, hora, quando, ref, refDate, addRef, nomeMes, nomeMesCurto, mesesEntre, mesDoPlano, diasAte, reais, pct };
+  // lançamento (35%): mais ativação no 1º ano para gerar experimentação, e depois ~57% de marca. Muitos lançamentos
+  // fracassam por não virar a tempo (Effectiveness in Context, p.77 e p.133). A virada é automática no 13º mês do plano.
+  const LANC = 35; const POS_LANC = 57;
+  const metaMarcaMes = (p, r) => {
+    const v = p && p.esforco_marca_pct; if (v !== LANC || !p.inicio) return v;
+    const k = mesesEntre(p.inicio, (r || ref()) + '-01') + 1;
+    return k > 12 ? POS_LANC : LANC;
+  };
+  const metaMarcaPlano = (p) => {
+    const v = p && p.esforco_marca_pct; if (v !== LANC) return v;
+    const d = p.duracao_meses || 18; return Math.round((Math.min(12, d) * LANC + Math.max(0, d - 12) * POS_LANC) / d);
+  };
+  // referência para o cliente: setor + ajustes do mesmo estudo (Tabela S3): compra recorrente/assinatura +12, preço baixo −5
+  const esforcoReferencia = (setor, comoVencer) => {
+    const base = esforcoPadrao(setor); const partes = []; let v = base;
+    const t = String(comoVencer || '');
+    if (/^Tornar a compra um hábito/.test(t)) { v += 12; partes.push('compra recorrente +12'); }
+    if (/^Ser a opção simples/.test(t)) { v -= 5; partes.push('preço baixo −5'); }
+    return { pct: Math.max(30, Math.min(85, v)), base, partes };
+  };
+  window.GangUI = { buscaFonte, esforcoPadrao, ESFORCO_SETOR, metaMarcaMes, metaMarcaPlano, esforcoReferencia, addDias, moedaFmt, moedaValor, moedaSet, PROMESSAS, promessaDe, tipoEsforco, pesoTamanho, combo, comboValue, comboSet, multi, multiValue, avatar, iniciais, $, el, say, day, fmt, cap, dia, diaAno, mesAno, hora, quando, ref, refDate, addRef, nomeMes, nomeMesCurto, mesesEntre, mesDoPlano, diasAte, reais, pct };
 })();

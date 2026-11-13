@@ -139,7 +139,7 @@
             <div><label class="label" for="p-consultor">Consultor</label><select class="field" id="p-consultor"></select></div>
             <div><label class="label" for="p-meta">Meta de faturamento (%)</label><select class="field" id="p-meta" data-num><option value="">Sem meta</option><option value="10">+10%</option><option value="15">+15%</option><option value="20">+20%</option><option value="25">+25%</option><option value="30">+30%</option><option value="40">+40%</option><option value="50">+50%</option><option value="100">+100% (dobrar)</option></select></div>
             <div><label class="label" for="p-base">Faturamento de partida</label><input class="field" id="p-base" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" aria-describedby="p-base-d" /><p class="field-hint" id="p-base-d">Média mensal dos 12 meses antes do plano</p></div>
-            <div><label class="label" for="p-esforco">Divisão do esforço de comunicação</label><select class="field" id="p-esforco" data-num aria-describedby="p-esforco-d"><option value="35">35% marca · 65% ativação (1º ano de lançamento)</option><option value="40">40% marca · 60% ativação</option><option value="45">45% marca · 55% ativação (B2B)</option><option value="50">50% · 50%</option><option value="51">51% marca · 49% ativação (serviços)</option><option value="60">60% marca · 40% ativação</option><option value="62">62% marca · 38% ativação (média geral)</option><option value="64">64% marca · 36% ativação (varejo e loja online)</option><option value="70">70% marca · 30% ativação</option><option value="80">80% marca · 20% ativação (serviços financeiros)</option></select><p class="field-hint" id="p-esforco-d">Referência dos estudos de eficácia, por setor. Marca nova começa com mais ativação no 1º ano e passa para perto de 57% depois. Proposta, preço e atendimento ficam fora da conta.</p></div>
+            <div><label class="label" for="p-esforco">Divisão do esforço de comunicação</label><select class="field" id="p-esforco" data-num aria-describedby="p-esforco-d"><option value="35">Lançamento: 35% marca no 1º ano, depois 57%</option><option value="40">40% marca · 60% ativação</option><option value="45">45% marca · 55% ativação (B2B)</option><option value="50">50% · 50%</option><option value="51">51% marca · 49% ativação (serviços)</option><option value="60">60% marca · 40% ativação</option><option value="62">62% marca · 38% ativação (média geral)</option><option value="64">64% marca · 36% ativação (varejo e loja online)</option><option value="70">70% marca · 30% ativação</option><option value="80">80% marca · 20% ativação (serviços financeiros)</option></select><p class="field-hint" id="p-esforco-d">Referência dos estudos de eficácia, por setor. Marca nova começa com mais ativação no 1º ano e passa para perto de 57% depois. Proposta, preço e atendimento ficam fora da conta.</p></div>
             <div><label class="label" for="p-revis">Revisões de peça por mês</label><input class="field" id="p-revis" type="number" min="0" max="50" step="1" placeholder="2" /></div>
             <div><label class="label" for="p-dias">Dias em que responde mensagens</label><input class="field" id="p-dias" maxlength="60" placeholder="terças e quintas" /></div>
             <div><label class="label" for="p-prazo">Resposta de revisão (dias úteis)</label><select class="field" id="p-prazo" data-num><option value="1">1 dia útil</option><option value="2">2 dias úteis</option><option value="3">3 dias úteis</option><option value="5">5 dias úteis</option></select></div>
@@ -560,10 +560,10 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script src="app/config.js"></script>
   <script src="app/auth.js?v=2"></script>
-  <script src="app/ui.js?v=32"></script>
+  <script src="app/ui.js?v=33"></script>
   <script src="app/cerebro.js?v=1"></script>
   <script src="app/admin-marca.js?v=38"></script>
-  <script src="app/saude.js?v=13"></script>
-  <script src="app/admin-cliente.js?v=101"></script>
+  <script src="app/saude.js?v=14"></script>
+  <script src="app/admin-cliente.js?v=103"></script>
 </body>
 </html>

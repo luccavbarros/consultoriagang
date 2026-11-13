@@ -5883,4 +5883,14 @@
   const troca = (lista, ant, novo) => { const x = (P[lista] || []).find((y) => y.texto === ant); if (x) x.texto = novo; };
   troca('objetivos', 'recompra em 12 meses, com clientes voltando mais vezes', 'clientes ativos no ano em 12 meses, puxados por clientes novos');
   troca('vereditos', 'A recompra subiu: quem compra está voltando mais vezes.', 'A recompra subiu junto com os clientes novos: a base está crescendo.');
+
+  // 8) ofertas com prazo: o pico some quando a oferta acaba, vem quase todo de quem já comprava a marca e não traz cliente novo.
+  //    Medir só "acima do normal" faz quase toda oferta parecer que funcionou: compara com o ano anterior e olha a queda depois.
+  const OFERTA = 'Fazer uma ação de ativação com prazo (oferta ou condição especial)';
+  corrige(OFERTA,
+    'Ativação converte quem já quer comprar e funciona no curto prazo, em equilíbrio com a marca. O pico some quando a oferta acaba, vem quase todo de quem já comprava e não traz cliente novo; por isso o resultado só vale comparado ao ano anterior e somando a queda das semanas seguintes.',
+    'Vendas no período e nas 4 semanas seguintes, comparadas ao mesmo período do ano anterior');
+  const of = (P.acoes || []).find((x) => x.texto === OFERTA);
+  const MEDE = 'Comparar as vendas do período e das 4 semanas seguintes com o mesmo período do ano anterior';
+  if (of && Array.isArray(of.passos) && !of.passos.includes(MEDE)) of.passos.push(MEDE);
 })();

@@ -22,7 +22,7 @@ begin
   foreach t in array array['planos', 'objetivos', 'escolhas', 'condicoes', 'diagnosticos', 'impressoes', 'fatores', 'causas',
     'plataformas', 'mensagens_apoio', 'tom_atributos', 'tom_exemplos', 'facetas', 'identidades', 'arquivos_marca', 'cores',
     'tipografias', 'aplicacoes', 'orientacoes', 'acoes', 'acoes_descartadas', 'sugestoes', 'numeros_mensais', 'metricas',
-    'encontros', 'pedidos_revisao', 'mensagens', 'pesquisas', 'buscas', 'vozes', 'situacoes', 'ativos', 'compromissos'] loop
+    'encontros', 'pedidos_revisao', 'mensagens', 'pesquisas', 'buscas', 'vozes', 'situacoes', 'ativos', 'compromissos', 'disponibilidade'] loop
     execute format('delete from public.%I where empresa_id = $1', t) using e;
   end loop;
 
@@ -266,6 +266,45 @@ begin
    where empresa_id = e and titulo = 'Publicar o método no site';
   update public.acoes set tamanho = 'G', ler_em_dias = 180 where empresa_id = e and titulo = 'Trocar a fachada';
   update public.acoes set tamanho = 'G', ler_em_dias = 90 where empresa_id = e and titulo = 'Campanha de lembrança nas redes';
+
+  -- ===== o que faltava para a plataforma aparecer completa =====
+  foreach t in array array['identidade_central', 'elementos_marca', 'sugestoes'] loop
+    execute format('delete from public.%I where empresa_id = $1', t) using e;
+  end loop;
+  -- estratégia escolhida da biblioteca (desafio + abordagem), para o modelo de ações sair alinhado, e o próximo marco
+  update public.planos set
+    desafio = 'O cliente não vê diferença entre a marca e os concorrentes, então decide pelo preço',
+    como_vencer = 'Ser a especialista em um tipo de cliente e em um problema, vencendo por conhecer esse problema melhor que qualquer generalista. Abrimos mão de atender quem está fora desse perfil, mesmo quando pede orçamento.',
+    objetivo_proximo = 'Fechar 5 propostas novas abrindo pela mensagem central, sem desconto',
+    objetivo_proximo_ate = (date_trunc('month', current_date) + interval '2 months - 1 day')::date,
+    dias_resposta = 'terças e quintas', revisoes_mes = 2
+   where empresa_id = e;
+  -- identidade central: o que não muda
+  insert into public.identidade_central (empresa_id, texto, explicacao, ordem) values
+    (e, 'Fazer certo da primeira vez', 'Nenhum projeto começa sem o plano completo aprovado pelo cliente.', 1),
+    (e, 'Método à vista', 'O cliente sabe cada etapa antes de contratar.', 2),
+    (e, 'Especialista em empresas de médio porte', 'Projetos completos, não serviços avulsos.', 3);
+  -- elementos da marca além do logo, cores e fontes
+  insert into public.elementos_marca (empresa_id, tipo, nome, descricao, cores, ordem) values
+    (e, 'degrade', 'Degradê de destaque', 'Só em capas e fundos de destaque; nunca atrás de texto longo.', '#E5482A, #FFB36B', 1),
+    (e, 'forma', 'Quadrado da marca', 'Moldura das fotos de obra; sempre com cantos retos.', null, 2),
+    (e, 'foto', 'Fotos reais das obras', 'Luz natural, equipe uniformizada, nada de banco de imagens.', null, 3),
+    (e, 'som', 'Assinatura sonora', 'Três batidas curtas no fim dos vídeos.', null, 4);
+  -- ideias e dúvidas do cliente
+  insert into public.sugestoes (empresa_id, usuario_id, texto, tipo, status, criada_em, acao_id) values
+    (e, null, 'E se a gente gravasse um vídeo curto de cada etapa do método para mandar junto com a proposta?', 'ideia', 'nova', now() - interval '2 days', null),
+    (e, null, 'Na proposta nova, coloco o preço na primeira página ou só no fim?', 'duvida', 'nova', now() - interval '1 day',
+     (select id from public.acoes where empresa_id = e and titulo = 'Reescrever a proposta comercial' limit 1));
+  -- conversa com o consultor (a última mensagem dele ainda não lida: aparece o aviso no início do portal)
+  insert into public.mensagens (empresa_id, autor_id, de, texto, criada_em, lida) values
+    (e, c, 'consultor', 'Oi! Vi que a fachada ficou pronta. Ficou excelente. Me conta o que os clientes estão comentando?', now() - interval '20 days', true),
+    (e, null, 'cliente', 'Muita gente perguntando se a empresa é nova! Já vieram dois orçamentos por causa dela.', now() - interval '19 days', true),
+    (e, c, 'consultor', 'Ótimo sinal. Este mês o foco é a proposta: me mande o rascunho antes de enviar para o primeiro cliente.', now() - interval '18 days', true),
+    (e, c, 'consultor', 'Passando para saber como estão as ações deste mês. Alguma travou? Me conta que a gente resolve junto.', now() - interval '1 day', false);
+  -- pesquisa: frases ligadas às marcas (5 = marcou esta marca, 1 = não marcou)
+  update public.pesquisas set afirmacoes = '["Tem um método próprio", "Cumpre o prazo"]'::jsonb where empresa_id = e;
+  update public.respostas r set notas = case when x.k % 2 = 0 then '[5,5]'::jsonb when x.k % 3 = 0 then '[1,5]'::jsonb else '[5,1]'::jsonb end
+    from (select id, row_number() over (order by id) as k from public.respostas where empresa_id = e) x where r.id = x.id;
 end $$;
 
 select 'Empresa Exemplo pronta. No painel, abra a empresa e crie um acesso de cliente para ela.' as resultado;
