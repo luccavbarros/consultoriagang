@@ -102,6 +102,8 @@
     if (ativoHa > 30) s.push({ nivel: 'medio', texto: 'Cliente sem atividade no portal há ' + ativoHa + ' dias', aba: 'mensagens' });
     const aberta = [...b.pesquisas].reverse().find((q) => q.aberta);
     if (aberta) { const n = b.respostas.filter((r) => r.pesquisa_id === aberta.id).length; if (n < 30) s.push({ nivel: 'info', texto: 'Pesquisa com ' + n + (n === 1 ? ' resposta' : ' respostas') + ' (o ideal é 30)', aba: 'resultados' }); }
+    // lançamento: perto de 1 ano, avisar a virada da comunicação (a meta de marca já vira sozinha no 13º mês)
+    if (b.plano.esforco_marca_pct === 35) { const mp2 = U.mesDoPlano(b.plano); if (mp2 >= 11 && mp2 <= 13) s.push({ nivel: 'info', texto: 'Lançamento perto de 1 ano: virar a comunicação de experimentar para lembrar da marca', aba: 'foco' }); }
     const pp = pesquisaPrevista(b);
     if (pp && pp.agora && !b.pesquisas.some((q) => q.criada_em && q.criada_em.slice(0, 7) === hoje())) s.push({ nivel: 'info', texto: 'Pesquisa de marca prevista para este mês', aba: 'resultados' });
     return s;

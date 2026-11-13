@@ -544,6 +544,7 @@
   const esforcoReferencia = (setor, comoVencer) => {
     const base = esforcoPadrao(setor); const partes = []; let v = base;
     const t = String(comoVencer || '');
+    if (/^Lançar a marca/.test(t)) return { pct: LANC, base, partes: ['lançamento: 35% no 1º ano, depois 57%'] };
     if (/^Tornar a compra um hábito/.test(t)) { v += 12; partes.push('compra recorrente +12'); }
     if (/^Ser a opção simples/.test(t)) { v -= 5; partes.push('preço baixo −5'); }
     return { pct: Math.max(30, Math.min(85, v)), base, partes };

@@ -5894,3 +5894,60 @@
   const MEDE = 'Comparar as vendas do período e das 4 semanas seguintes com o mesmo período do ano anterior';
   if (of && Array.isArray(of.passos) && !of.passos.includes(MEDE)) of.passos.push(MEDE);
 })();
+
+// ===== Rodada 27: pacote de lançamento de marca =====
+// Fontes (pasta Evidência): marca nova cresce sem anúncio, mas com campanha de lançamento cresce muito mais rápido, e cada real
+// anunciado rende mais nela; divisão ~35:65 no começo e virada para ~57% de marca perto de 1 ano (muitos lançamentos falham por
+// não virar); volume antes de preço premium; marca nova precisa das memórias básicas (o que é, nome, aparência, onde comprar)
+// e de compra fácil antes da campanha; momentos de mudança de vida são quando as pessoas mais experimentam marcas novas;
+// o teste decisivo é a recompra ao longo de 1 a 2 anos, não a experimentação.
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes || !P.abordagens) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'Deixar a compra pronta antes de anunciar: onde comprar, horários, formas de pagamento e resposta rápida', esforco: 'venda', promessa: 'vendas', tema: 'distribuicao', tipo: 'base', tam: 'M', ler: 30,
+      porque: 'Sem um jeito fácil de comprar, parte do anúncio é desperdiçada: quem se interessa não acha onde nem como comprar. Na marca nova, a compra pronta vem antes da campanha.',
+      metrica: 'Todos os pontos de compra prontos antes da campanha', passos: ['Listar onde o cliente vai procurar e comprar', 'Conferir horários, formas de pagamento e prazo de resposta', 'Fazer uma compra de teste em cada canal', 'Corrigir o que travou antes de anunciar'] },
+    { texto: 'Escolher 2 ou 3 sinais próprios da marca nova (cor, símbolo, frase) e usar os mesmos em tudo desde o primeiro dia', esforco: 'marca', promessa: 'pessoas', tema: 'posicionamento', tipo: 'base', tam: 'P', ler: 180,
+      porque: 'Marca nova ainda não tem nada que as pessoas reconheçam. Um sinal só vira da marca quando aparece sempre igual e muita gente o vê; trocar a cada peça recomeça do zero.',
+      metrica: 'Os mesmos sinais em todas as peças, e reconhecidos na pesquisa', passos: ['Escolher 2 ou 3 sinais que nenhum concorrente usa', 'Colocar os mesmos sinais em todas as peças', 'Conferir cada peça antes de publicar', 'Medir o reconhecimento na pesquisa de 6 meses'] },
+    { texto: 'Comunicar o básico da marca nova: o que ela é, o nome, como ela é e onde comprar', esforco: 'marca', promessa: 'pessoas', tema: 'conteudo', tipo: 'marca', tam: 'M', ler: 90,
+      porque: 'Para ser escolhida, a marca nova precisa primeiro existir na memória: o que é, o nome, como é e onde se compra. Simples e repetido funciona melhor do que uma mensagem esperta que as pessoas lembram sem lembrar da marca.',
+      metrica: 'Pessoas que sabem dizer o que a marca é e onde comprar', passos: ['Escrever em uma frase o que a marca é e para quem', 'Mostrar o nome e os sinais próprios em toda peça', 'Dizer sempre onde comprar', 'Mostrar a marca sendo usada em situações reais'] },
+    { texto: 'Fazer uma campanha de lançamento concentrada nos primeiros meses, com alcance amplo entre quem compra a categoria', esforco: 'venda', promessa: 'pessoas', tema: 'anuncio', tipo: 'ativacao', tam: 'G', ler: 90,
+      porque: 'Marca nova cresce sem anúncio, pelo boca a boca, mas com campanha de lançamento cresce muito mais rápido. Nessa fase cada real anunciado rende mais do que numa marca já conhecida, e falar com todos os compradores da categoria traz mais gente que mirar um grupo estreito.',
+      metrica: 'Clientes de primeira compra por mês durante a campanha', passos: ['Definir quem compra a categoria, em números', 'Escolher meios que alcancem a maioria deles', 'Concentrar a verba nos primeiros meses', 'Contar as primeiras compras mês a mês'] },
+    { texto: 'Falar com quem acabou de passar por uma mudança de vida (mudança de casa, empresa nova, filho, novo emprego)', esforco: 'venda', promessa: 'pessoas', tema: 'anuncio', tipo: 'ativacao', tam: 'M', ler: 60,
+      porque: 'Nos momentos de mudança de vida as pessoas mais experimentam marcas novas, porque os hábitos antigos deixam de valer. É quando a marca nova tem mais chance de ser testada.',
+      metrica: 'Primeiras compras vindas de quem estava num momento de mudança', passos: ['Listar os momentos de mudança ligados à categoria', 'Achar onde essas pessoas estão (cadastros, parceiros, anúncios)', 'Fazer uma oferta de experimentação para esse momento', 'Contar as primeiras compras que vieram daí'] },
+    { texto: 'Medir quantos clientes de primeira compra voltam a comprar em 6 e em 12 meses', esforco: 'venda', promessa: 'vendas', tema: 'medicao', tipo: 'base', tam: 'P', ler: 180,
+      porque: 'Na marca nova, o que decide se o lançamento deu certo não é quantos experimentaram, e sim se uma parte deles continua comprando. Essa resposta leva de 1 a 2 anos para aparecer, então é preciso começar a medir cedo.',
+      metrica: 'Parcela dos clientes de primeira compra que voltou em 6 e 12 meses', passos: ['Registrar a data da primeira compra de cada cliente', 'Contar quem voltou a comprar em 6 meses', 'Repetir em 12 meses', 'Comparar a primeira turma com as seguintes'] },
+    { texto: 'Virar a comunicação de "experimente" para "lembre da marca" perto de 1 ano depois do lançamento', esforco: 'marca', promessa: 'pessoas', tema: 'medicao', tipo: 'base', tam: 'P', ler: 90,
+      porque: 'No começo, o esforço vai para fazer as pessoas experimentarem. Quando a novidade passa, a marca precisa ser lembrada por quem ainda vai comprar. Muitos lançamentos falham por não fazer essa virada a tempo.',
+      metrica: 'Divisão do plano passada para perto de 57% de marca', passos: ['Rever o que trouxe as primeiras compras', 'Trocar as ofertas de experimentação por presença contínua da marca', 'Manter os mesmos sinais próprios', 'Conferir a nova divisão no plano'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+
+  // a estratégia de lançamento: as ações dela entram nos 3 primeiros meses, na ordem abaixo (compra pronta e sinais antes da campanha)
+  const LANC = 'Lançar a marca para o maior número possível de compradores da categoria, vencendo por ser experimentada logo e lembrada pelo básico: o que é, o nome e onde comprar. Abrimos mão de começar com preço premium e de mirar só um grupo estreito.';
+  const ex = (ini) => (P.acoes.find((a) => a.texto.startsWith(ini)) || {}).texto;
+  const acoesLanc = [NOVAS[0].texto, NOVAS[1].texto, NOVAS[2].texto, NOVAS[3].texto,
+    ex('Oferecer uma forma de diminuir o risco da primeira compra'), ex('Planejar a presença em anúncios para aparecer mais que os concorrentes'),
+    NOVAS[4].texto, NOVAS[5].texto].filter(Boolean);
+  const foraLanc = ['Criar uma versão premium do serviço principal', 'Montar uma versão premium com mais entrega',
+    'Criar um clube de clientes com nome, encontros e pequenos benefícios para quem já compra',
+    'Reativar quem não compra há mais de 6 meses com uma mensagem útil e um motivo para voltar'].filter((t) => P.acoes.some((a) => a.texto === t));
+  if (!P.abordagens.some((a) => a.texto === LANC)) P.abordagens.push({ grupo: G, texto: LANC, curto: 'Lançar a marca', acoes: acoesLanc, fora: foraLanc, lancamento: true });
+  // o desafio da empresa nova passa a oferecer o lançamento como abordagem
+  const d = (P.desafios || []).find((x) => x.texto.startsWith('A empresa é nova e o cliente desconfia'));
+  if (d && Array.isArray(d.abordagens) && !d.abordagens.includes(LANC)) d.abordagens.unshift(LANC);
+
+  // métricas do lançamento: primeiras compras e recompra, não recompra e lembrança desde o mês 1
+  if (P.metricas) [
+    { texto: 'Clientes de primeira compra no mês', nivel: 'negocio', frequencia: 'mensal' },
+    { texto: 'Clientes de primeira compra que voltaram (6 e 12 meses)', nivel: 'negocio', frequencia: 'semestral' },
+    { texto: 'Reconhecimento dos sinais próprios da marca', nivel: 'marca', frequencia: 'semestral' },
+  ].forEach((m) => { if (!P.metricas.some((y) => y.texto === m.texto)) P.metricas.push({ grupo: 'Lançamento', ...m }); });
+})();

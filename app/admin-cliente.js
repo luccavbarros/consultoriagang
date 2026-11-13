@@ -986,6 +986,12 @@
       const ini3 = meses.slice(0, Math.min(3, meses.length));
       novas.push({ ...daLib(t, 'essencial'), executa: ab.curto, mes: ini3.includes(alvo) ? alvo : ini3.reduce((x, y) => (carga(y) < carga(x) ? y : x), ini3[0]) });
     });
+    // 2b. lançamento: a virada de "experimente" para "lembre da marca" entra no 12º mês do plano (a meta de marca vira no 13º)
+    if (pMeta.esforco_marca_pct === 35 || (ab && ab.lancamento)) {
+      const VIRA = (P.acoes || []).find((y) => y.texto.startsWith('Virar a comunicação de "experimente"'));
+      const m12 = p.inicio ? U.addRef(U.ref(p.inicio), 11) : null;
+      if (VIRA && m12 && meses.includes(m12) && !ja(VIRA.texto)) novas.push({ ...daLib(VIRA.texto, 'essencial'), mes: m12 });
+    }
     // 3. fundação: a identidade nos canais próprios e o caminho de compra, a partir do mês atual
     (P.FUNDACAO || []).forEach((t) => {
       if (ja(t) || acoes.some((a) => a.titulo === t) || !doSetor(libDe(t))) return;
