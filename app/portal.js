@@ -3239,9 +3239,20 @@
   const rota = () => { const r = location.hash.slice(1); const padrao = soAcesso ? 'inicio' : 'plano'; return SCREENS[r] && !(soAcesso && SO_CONSULTORIA.includes(r)) && !(!soAcesso && r === 'inicio') ? r : padrao; };
   // a animação de entrada só roda ao trocar de tela; atualizar algo na mesma tela (ex.: status de uma ação) não pisca
   let telaAtual = null;
+  // uso: cada tela aberta e quanto tempo a pessoa ficou nela (só telas e tempo; o consultor vê isso para decidir o que simplificar)
+  let usoTela = null; let usoDesde = 0;
+  const registraUso = () => {
+    if (!usoTela) return;
+    const seg = Math.round((Date.now() - usoDesde) / 1000); const t = usoTela; usoTela = null;
+    sb.rpc('portal_registrar_uso', { p_tela: t, p_segundos: seg }).then(() => {}); // o .then envia o pedido (o rpc só sai quando é esperado)
+  };
+  const comecaUso = (r) => { usoTela = r; usoDesde = Date.now(); };
+  document.addEventListener('visibilitychange', () => { if (document.hidden) registraUso(); else if (telaAtual && !usoTela) comecaUso(telaAtual); });
+  window.addEventListener('pagehide', registraUso);
   function render() {
     const r = rota();
     const trocou = r !== telaAtual; telaAtual = r;
+    if (trocou) { registraUso(); comecaUso(r); }
     const y = window.scrollY;
     $('crumb').textContent = SCREENS[r].crumb;
     $('screen').replaceChildren(el('div', 'screen screen--' + r + (trocou ? ' screen--entra' : ''), SCREENS[r].render()));

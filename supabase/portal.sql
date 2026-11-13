@@ -1280,3 +1280,34 @@ end;
 $$;
 revoke all on function public.portal_compromisso_cumprido(uuid, boolean) from public, anon;
 grant execute on function public.portal_compromisso_cumprido(uuid, boolean) to authenticated;
+
+-- ===== uso do portal: quais telas cada cliente abre, por dia (para saber o que é usado antes de cortar) =====
+-- Só conta telas e tempo; não grava o que a pessoa digita nem por onde navega fora do portal.
+create table if not exists public.uso_telas (
+  empresa_id uuid not null references public.empresas (id) on delete cascade,
+  usuario_id uuid not null references public.profiles (id) on delete cascade,
+  tela text not null check (length(tela) between 1 and 40),
+  dia date not null default current_date,
+  vezes int not null default 0,
+  segundos int not null default 0,
+  primary key (usuario_id, tela, dia)
+);
+alter table public.uso_telas enable row level security;
+drop policy if exists "admin le o uso" on public.uso_telas;
+create policy "admin le o uso" on public.uso_telas for select using (public.is_admin());
+
+-- o portal registra uma visita (vezes +1) e o tempo que a pessoa ficou na tela (até 30 minutos por visita)
+create or replace function public.portal_registrar_uso(p_tela text, p_segundos int)
+returns void
+language plpgsql security definer set search_path = public
+as $$
+declare e uuid := public.minha_empresa(); s int := greatest(0, least(coalesce(p_segundos, 0), 1800));
+begin
+  if e is null or auth.uid() is null then return; end if;  -- consultor vendo o portal não conta
+  insert into public.uso_telas (empresa_id, usuario_id, tela, dia, vezes, segundos)
+  values (e, auth.uid(), left(p_tela, 40), current_date, 1, s)
+  on conflict (usuario_id, tela, dia) do update set vezes = public.uso_telas.vezes + 1, segundos = public.uso_telas.segundos + excluded.segundos;
+end;
+$$;
+revoke all on function public.portal_registrar_uso(text, int) from public, anon;
+grant execute on function public.portal_registrar_uso(text, int) to authenticated;

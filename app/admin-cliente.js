@@ -1660,6 +1660,27 @@
   };
   loadPeds();
 
+  // ===== uso do portal (últimos 30 dias): o que o cliente abre de fato =====
+  const TELAS_PORTAL = [['plano', 'Plano (tela inicial)'], ['acoes', 'Ações'], ['resultados', 'Resultados'], ['consultoria', 'Encontros e prazos'],
+    ['relatorio', 'Relatório do mês'], ['diagnostico', 'Diagnóstico'], ['estrategia', 'Estratégia'], ['plataforma', 'Narrativa'], ['identidade', 'Identidade visual'], ['inicio', 'Início (só acesso)']];
+  const tempo = (s) => (s < 60 ? s + ' s' : s < 3600 ? Math.round(s / 60) + ' min' : (s / 3600).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' h');
+  const loadUso = async () => {
+    const desde = U.addDias(new Date().toISOString().slice(0, 10), -30);
+    const { data, error } = await sb.from('uso_telas').select('tela, dia, vezes, segundos, usuario_id').eq('empresa_id', id).gte('dia', desde);
+    if (error) { $('uso').hidden = true; return; } // a tabela ainda não existe no banco (rode o portal.sql)
+    const rows = (data || []).map((r) => ({ ...r, tela: r.tela === 'calendario' ? 'consultoria' : r.tela }));
+    const dias = new Set(rows.map((r) => r.dia)); const ult = rows.map((r) => r.dia).sort().pop();
+    $('uso-resumo').textContent = rows.length
+      ? dias.size + (dias.size === 1 ? ' dia' : ' dias') + ' com acesso nos últimos 30 · último em ' + U.dia(ult) + '. Telas com zero visitas são candidatas a simplificar.'
+      : 'Nenhum acesso registrado nos últimos 30 dias. O registro começa a contar a partir de agora.';
+    const por = (t) => { const x = rows.filter((r) => r.tela === t); return { dias: new Set(x.map((r) => r.dia)).size, vezes: x.reduce((a, r) => a + r.vezes, 0), seg: x.reduce((a, r) => a + r.segundos, 0) }; };
+    const linhas = TELAS_PORTAL.filter(([t]) => t !== 'inicio' || rows.some((r) => r.tela === 'inicio')).map(([t, nome]) => ({ nome, ...por(t) }))
+      .sort((a, b) => b.vezes - a.vezes || b.seg - a.seg);
+    $('uso-tab').replaceChildren(...tabela(['Tela', 'Dias', 'Visitas', 'Tempo'], linhas.map((l) => [
+      l.vezes ? l.nome : el('span', 'uso__zero', l.nome), l.dias || '—', l.vezes || '—', l.seg ? tempo(l.seg) : '—'])));
+  };
+  loadUso();
+
   // ===== acessos =====
   const loadAcc = async () => {
     const { data, error } = await sb.from('profiles').select('id, name, email, active, empresa_id').eq('role', 'client');

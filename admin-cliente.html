@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="app/app.css?v=25" />
   <link rel="stylesheet" href="app/portal.css?v=65" />
-  <link rel="stylesheet" href="app/tema.css?v=142" />
+  <link rel="stylesheet" href="app/tema.css?v=143" />
   <script src="app/entrada.js?v=2"></script>
 </head>
 <body class="portal-body">
@@ -548,6 +548,12 @@
       <p class="msg" id="acc-msg" role="status" aria-live="polite"></p>
       <ul class="clients" id="accs"></ul>
 
+      <div class="bloco uso" id="uso">
+        <h2 class="title-sm">Uso do portal nos últimos 30 dias</h2>
+        <p class="small" id="uso-resumo">Quais telas o cliente abre e por quanto tempo. Antes de cortar ou juntar telas, veja o que é usado de fato.</p>
+        <div class="table-wrap"><table class="table" id="uso-tab"></table></div>
+      </div>
+
       <form class="link-acc" id="link-form" hidden>
         <label class="label" for="link-sel">Vincular acesso existente</label>
         <div class="new-client__pass">
@@ -566,6 +572,6 @@
   <script src="app/cerebro.js?v=1"></script>
   <script src="app/admin-marca.js?v=38"></script>
   <script src="app/saude.js?v=15"></script>
-  <script src="app/admin-cliente.js?v=106"></script>
+  <script src="app/admin-cliente.js?v=107"></script>
 </body>
 </html>

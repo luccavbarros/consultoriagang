@@ -2092,3 +2092,7 @@ td.clients__empty { color: var(--ganggrey); font-size: var(--t-ui); }
 .graf-vazio:empty { display: none; }
 #busca-graf:empty { display: none; }
 @media (max-width: 1100px) { .graf-grade { grid-template-columns: 1fr; } }
+
+/* uso do portal (Acessos): telas sem visita em cinza */
+.uso { margin-top: 24px; display: grid; gap: 8px; }
+.uso__zero { color: #6f6f6f; }
