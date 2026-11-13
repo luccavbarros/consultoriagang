@@ -1269,9 +1269,46 @@
   const toggle = (formEl, btn, open) => { formEl.hidden = !open; btn.setAttribute('aria-expanded', String(open)); };
 
   // ===== resultados: números enviados =====
+  // gráficos dos números: o que a tabela mostra, em forma de tendência
+  const GR = U.graficos('#f3f3f3'); const CINZA = '#8a8a8a';
+  const fmtR = (v) => (Math.abs(v) >= 1000 ? 'R$ ' + (v / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' mil' : U.reais(v));
+  const fmtN = (v) => String(Math.round(v));
+  const fmtP = (v) => Math.round(v) + '%';
+  const cartao = (titulo, sub, legenda, chart) => el('div', 'graf-card', el('p', 'graf-card__t', titulo), sub ? el('p', 'small', sub) : null, legenda, chart);
+  const desenhaGraficosNums = (rows) => {
+    const box = $('nums-graf'); if (!box) return;
+    const asc = [...rows].sort((a, b) => (a.mes_ref < b.mes_ref ? -1 : 1));
+    if (asc.length < 2) { box.replaceChildren(el('p', 'small graf-vazio', asc.length ? 'Os gráficos aparecem a partir do 2º mês de números.' : '')); return; }
+    const rot = asc.map((n) => U.cap(U.nomeMesCurto(n.mes_ref)));
+    const v = (k) => asc.map((n) => (n[k] == null ? null : Number(n[k])));
+    const anoAnt = (p && p.fat_ano_anterior) || {};
+    const ant = asc.map((n) => { const x = anoAnt[n.mes_ref.slice(5, 7)]; return x == null ? null : Number(x); });
+    const temAnt = ant.some((x) => x != null);
+    const fech = asc.map((n) => (n.propostas ? Math.round((100 * (n.fechadas || 0)) / n.propostas) : null));
+    const semDesc = asc.map((n) => (n.fechadas ? Math.round((100 * (n.sem_desconto || 0)) / n.fechadas) : null));
+    const cards = [
+      cartao('Faturamento', temAnt ? 'Comparado ao mesmo mês do ano anterior, para separar o efeito da época do ano.' : 'Mês a mês. Preencha o faturamento do ano anterior no Plano para comparar com a época do ano.',
+        GR.legenda([['Este período', '#f3f3f3'], ...(temAnt ? [['Ano anterior', CINZA, 'dash']] : [])]),
+        GR.linhas({ rotulos: rot, fmt: fmtR, label: 'Faturamento por mês: ' + rot.map((r, i) => r + ' ' + (asc[i].faturamento == null ? 'sem dado' : fmtR(asc[i].faturamento))).join(', '),
+          series: [{ nome: 'este período', cor: '#f3f3f3', valores: v('faturamento'), pontos: true, rotuloFim: true }, ...(temAnt ? [{ nome: 'ano anterior', cor: CINZA, valores: ant, tracejado: true }] : [])] })),
+    ];
+    if (v('clientes_atendidos').some((x) => x != null)) cards.push(cartao('Clientes atendidos', 'Novos embaixo e os que voltaram em cima. Crescer depende sobretudo dos novos.',
+      GR.legenda([['Novos', '#f3f3f3', 'sq'], ['Voltaram', '#5c5c5c', 'sq']]),
+      GR.pilhas({ rotulos: rot, a: v('clientes_novos'), total: v('clientes_atendidos'), fmt: fmtN, label: 'Clientes atendidos por mês, com os novos: ' + rot.map((r, i) => r + ' ' + (asc[i].clientes_atendidos ?? 'sem dado') + ' (' + (asc[i].clientes_novos ?? '?') + ' novos)').join(', ') })));
+    if (v('leads').some((x) => x != null) || v('fechadas').some((x) => x != null)) cards.push(cartao('Leads e vendas fechadas', 'Quantos contatos chegaram e quantas propostas viraram venda.',
+      GR.legenda([['Leads', '#f3f3f3'], ['Fechadas', CINZA]]),
+      GR.linhas({ rotulos: rot, fmt: fmtN, label: 'Leads e propostas fechadas por mês',
+        series: [{ nome: 'leads', cor: '#f3f3f3', valores: v('leads'), pontos: true, rotuloFim: true }, { nome: 'fechadas', cor: CINZA, valores: v('fechadas'), pontos: true, rotuloFim: true }] })));
+    if (fech.some((x) => x != null)) cards.push(cartao('Fechamento e preço', 'Das propostas, quantas fecharam; das fechadas, quantas sem desconto.',
+      GR.legenda([['Fechamento', '#f3f3f3'], ['Sem desconto', CINZA]]),
+      GR.linhas({ rotulos: rot, fmt: fmtP, label: 'Taxa de fechamento e vendas sem desconto por mês, em %',
+        series: [{ nome: 'fechamento', cor: '#f3f3f3', valores: fech, pontos: true, rotuloFim: true }, { nome: 'sem desconto', cor: CINZA, valores: semDesc, pontos: true, rotuloFim: true }] })));
+    box.replaceChildren(...cards);
+  };
   const loadNums = async () => {
     const { data } = await sb.from('numeros_mensais').select('*').eq('empresa_id', id).order('mes_ref', { ascending: false });
     const rows = data || [];
+    desenhaGraficosNums(rows);
     const t = $('nums');
     if (!rows.length) return t.replaceChildren(el('tbody', null, el('tr', null, el('td', 'clients__empty', 'Nenhum número enviado ainda.'))));
     t.replaceChildren(...tabela(['Mês', 'Faturamento', 'Leads', 'Atendidos', 'Novos', 'Propostas', 'Enviado', ''], rows.map((n) => [
@@ -1478,6 +1515,11 @@
       $('b-trends').href = 'https://trends.google.com/trends/explore?geo=BR&date=today%2012-m&q=' + termos.map((t) => encodeURIComponent(t)).join(',');
     });
     const { data } = await sb.from('buscas').select('*').eq('empresa_id', id).order('mes_ref', { ascending: false });
+    const bs = [...(data || [])].reverse();
+    const bg = $('busca-graf');
+    if (bg) bg.replaceChildren(...(bs.length >= 2 ? [GR.linhas({ rotulos: bs.map((b) => U.cap(U.nomeMesCurto(b.mes_ref))), fmt: fmtP,
+      label: 'Participação da marca nas buscas por mês: ' + bs.map((b) => U.nomeMesCurto(b.mes_ref) + ' ' + b.marca_pct + '%').join(', '),
+      series: [{ nome: 'da marca', cor: '#f3f3f3', valores: bs.map((b) => Number(b.marca_pct)), pontos: true, rotuloFim: true }] })] : []));
     $('buscas').replaceChildren(...((data || []).length ? data.map((b) => el('li', 'row',
       el('div', 'row__main', el('p', 'row__title', MESES(b.mes_ref) + ': ' + Number(b.marca_pct).toLocaleString('pt-BR') + '%')),
       el('div', 'row__actions', rowBtn('Excluir', async () => { await sb.from('buscas').delete().eq('empresa_id', id).eq('mes_ref', b.mes_ref); loadBuscas(); }, true)))) : [el('li', 'ed-vazio', 'Nenhum mês anotado ainda.')]));

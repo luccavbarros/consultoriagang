@@ -549,5 +549,102 @@
     if (/^Ser a opção simples/.test(t)) { v -= 5; partes.push('preço baixo −5'); }
     return { pct: Math.max(30, Math.min(85, v)), base, partes };
   };
-  window.GangUI = { buscaFonte, esforcoPadrao, ESFORCO_SETOR, metaMarcaMes, metaMarcaPlano, esforcoReferencia, addDias, moedaFmt, moedaValor, moedaSet, PROMESSAS, promessaDe, tipoEsforco, pesoTamanho, combo, comboValue, comboSet, multi, multiValue, avatar, iniciais, $, el, say, day, fmt, cap, dia, diaAno, mesAno, hora, quando, ref, refDate, addRef, nomeMes, nomeMesCurto, mesesEntre, mesDoPlano, diasAte, reais, pct };
+  // ===== gráficos (mesmo desenho do portal do cliente: SVG feito à mão, linhas e barras; nunca pizza) =====
+  const graficos = (cor = '#f3f3f3') => {
+    const SVGNS = 'http://www.w3.org/2000/svg';
+    const sv = (tag, attrs, ...kids) => {
+      const n = document.createElementNS(SVGNS, tag);
+      Object.entries(attrs || {}).forEach(([k, v]) => { if (v != null) n.setAttribute(k, v); });
+      kids.flat().forEach((k) => { if (k != null) n.append(k instanceof Node ? k : document.createTextNode(String(k))); });
+      return n;
+    };
+    const C = { grid: '#2e2e2e', axis: '#737373', surface: '#1c1c1c', bar: cor, barHover: '#ffffff', ref2: '#5c5c5c' };
+    const ticks = (min, max, alvo = 4) => {
+      const span = Math.max(max - min, 1e-9); const passo0 = span / alvo; const mag = 10 ** Math.floor(Math.log10(passo0));
+      const passo = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((x) => x >= passo0) || 10 * mag;
+      const lo = Math.floor(min / passo) * passo; const hi = Math.ceil(max / passo) * passo;
+      const out = []; for (let v = lo; v <= hi + passo / 2; v += passo) out.push(Math.round(v * 1e6) / 1e6);
+      return out;
+    };
+    const caixa = (cls, label, draw) => {
+      const box = el('div', { class: 'chart ' + cls, role: 'img', 'aria-label': label });
+      const tip = el('div', { class: 'chart__tip', hidden: true });
+      let w0 = 0;
+      const ro = new ResizeObserver(([e]) => {
+        const w = Math.round(e.contentRect.width); if (!w || w === w0) return; w0 = w;
+        [...box.querySelectorAll('svg')].forEach((x) => x.remove()); box.prepend(draw(w, tip, box));
+      });
+      box.append(tip); requestAnimationFrame(() => ro.observe(box));
+      return box;
+    };
+    const dica = (tip, box, x, y, linhas) => {
+      tip.replaceChildren(...linhas.map(([v, nome, c]) => el('div', 'chart__row', c ? el('span', { class: 'chart__key', style: 'background:' + c }) : null, el('strong', null, v), nome ? el('span', null, nome) : null)));
+      tip.hidden = false;
+      const bw = box.clientWidth; const tw = tip.offsetWidth;
+      tip.style.left = Math.min(Math.max(x - tw / 2, 0), bw - tw) + 'px'; tip.style.top = Math.max(y - tip.offsetHeight - 12, 0) + 'px';
+    };
+    const eixoY = (svg, tk, y, L, W, R, fmt) => tk.forEach((t) => svg.append(sv('line', { x1: L, x2: W - R, y1: y(t), y2: y(t), stroke: C.grid, 'stroke-width': 1, 'stroke-dasharray': t === tk[0] ? null : '3 4' }),
+      sv('text', { x: L - 8, y: y(t) + 4, 'text-anchor': 'end', class: 'chart__axis' }, fmt(t))));
+    // linhas: séries com valores por rótulo (null = sem dado); a primeira com "pontos" ganha área e pontos
+    const linhas = ({ rotulos, series, fmt, label, zero = true }) => caixa('chart--line', label, (W, tip, box) => {
+      const H = 220; const R = 56; const T = 14; const B = 30;
+      const vals = series.flatMap((x) => x.valores.filter((v) => v != null));
+      const tk = ticks(zero ? Math.min(0, ...vals) : Math.min(...vals), Math.max(1, ...vals));
+      const L = Math.max(40, 14 + Math.max(...tk.map((t) => fmt(t).length)) * 6.6); // espaço para o maior rótulo do eixo
+      const y = (v) => T + (H - T - B) * (1 - (v - tk[0]) / (tk[tk.length - 1] - tk[0]));
+      const n = rotulos.length; const x = (i) => L + (n === 1 ? (W - L - R) / 2 : ((W - L - R) * i) / (n - 1));
+      const svg = sv('svg', { width: W, height: H, viewBox: `0 0 ${W} ${H}`, 'aria-hidden': 'true' });
+      eixoY(svg, tk, y, L, W, R, fmt);
+      const cada = Math.ceil(n / Math.max(1, Math.floor((W - L - R) / 56)));
+      rotulos.forEach((r, i) => { if (i % cada === 0 || i === n - 1) svg.append(sv('text', { x: x(i), y: H - 8, 'text-anchor': 'middle', class: 'chart__axis' }, r)); });
+      series.forEach((sr) => {
+        let d = ''; let caneta = false;
+        sr.valores.forEach((v, i) => { if (v == null) { caneta = false; return; } d += (caneta ? 'L' : 'M') + x(i) + ' ' + y(v) + ' '; caneta = true; });
+        svg.append(sv('path', { d, fill: 'none', stroke: sr.cor, 'stroke-width': sr.tracejado ? 1.5 : 2.5, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', 'stroke-dasharray': sr.tracejado ? '4 5' : null }));
+        if (sr.pontos) sr.valores.forEach((v, i) => { if (v != null) svg.append(sv('circle', { cx: x(i), cy: y(v), r: 4, fill: sr.cor, stroke: C.surface, 'stroke-width': 2 })); });
+        const last = sr.valores.reduce((a, v, i) => (v != null ? i : a), -1);
+        if (last >= 0 && sr.rotuloFim) svg.append(sv('text', { x: x(last) + 8, y: y(sr.valores[last]) - 10, class: 'chart__end' }, fmt(sr.valores[last])));
+      });
+      const mira = sv('line', { y1: T, y2: H - B, stroke: C.axis, 'stroke-width': 1, visibility: 'hidden' }); svg.append(mira);
+      const hit = sv('rect', { x: 0, y: 0, width: W, height: H, fill: 'transparent' }); svg.append(hit);
+      hit.addEventListener('pointermove', (e) => {
+        const r = svg.getBoundingClientRect(); const i = Math.max(0, Math.min(n - 1, Math.round(((e.clientX - r.left - L) / Math.max(1, W - L - R)) * (n - 1))));
+        mira.setAttribute('x1', x(i)); mira.setAttribute('x2', x(i)); mira.setAttribute('visibility', 'visible');
+        dica(tip, box, x(i), T + 10, [[rotulos[i]], ...series.map((sr) => [sr.valores[i] == null ? '—' : fmt(sr.valores[i]), sr.nome, sr.cor])]);
+      });
+      hit.addEventListener('pointerleave', () => { mira.setAttribute('visibility', 'hidden'); tip.hidden = true; });
+      return svg;
+    });
+    // barras empilhadas: a (embaixo, na cor) + o resto até o total (cinza)
+    const pilhas = ({ rotulos, a, total, fmt, label, nomes = ['novos', 'voltaram'] }) => caixa('chart--bars', label, (W, tip, box) => {
+      const H = 220; const L = 36; const R = 8; const T = 22; const B = 28;
+      const tk = ticks(0, Math.max(1, ...total.filter((v) => v != null)), 3); const top = tk[tk.length - 1];
+      const y = (v) => T + (H - T - B) * (1 - v / top);
+      const n = total.length; const banda = (W - L - R) / n; const bw = Math.min(44, banda * 0.55);
+      const svg = sv('svg', { width: W, height: H, viewBox: `0 0 ${W} ${H}`, 'aria-hidden': 'true' });
+      eixoY(svg, tk, y, L, W, R, fmt);
+      const cada = Math.ceil(n / Math.max(1, Math.floor((W - L - R) / 40)));
+      total.forEach((tot, i) => {
+        const cx = L + banda * i + banda / 2;
+        if (i % cada === 0 || i === n - 1) svg.append(sv('text', { x: cx, y: H - 8, 'text-anchor': 'middle', class: 'chart__axis' }, rotulos[i]));
+        if (tot == null || tot <= 0) return;
+        const nov = Math.min(a[i] || 0, tot); const volt = tot - nov;
+        const x0 = cx - bw / 2; const yb = y(0); const yN = y(nov); const yT = y(tot);
+        const rect = (y1, y2, fill, roundTop) => { const h = y2 - y1; if (h <= 0) return null; const r = roundTop ? Math.min(7, h / 2, bw / 2) : 0;
+          return sv('path', { d: `M${x0} ${y2}V${y1 + r}Q${x0} ${y1} ${x0 + r} ${y1}H${x0 + bw - r}Q${x0 + bw} ${y1} ${x0 + bw} ${y1 + r}V${y2}Z`, fill }); };
+        const gap = volt > 0 && nov > 0 ? 2 : 0;
+        [rect(yN, yb, C.bar, volt === 0), rect(yT, yN - gap, C.ref2, true)].forEach((q) => q && svg.append(q));
+        svg.append(sv('text', { x: cx, y: yT - 6, 'text-anchor': 'middle', class: 'chart__end' }, fmt(tot)));
+        const hit = sv('rect', { x: L + banda * i, y: T, width: banda, height: H - T - B, fill: 'transparent' });
+        hit.addEventListener('pointerenter', () => dica(tip, box, cx, yT, [[rotulos[i]], [fmt(tot), 'no total'], [fmt(nov), nomes[0], C.bar], [fmt(volt), nomes[1], C.ref2]]));
+        hit.addEventListener('pointerleave', () => { tip.hidden = true; });
+        svg.append(hit);
+      });
+      return svg;
+    });
+    const legenda = (itens) => el('div', 'chart__legend', itens.map(([nome, c, tipo]) => el('span', null,
+      tipo === 'sq' ? el('span', { class: 'chart__sq', style: 'background:' + c }) : el('span', { class: 'chart__line' + (tipo === 'dash' ? ' chart__line--dash' : ''), style: tipo === 'dash' ? null : 'background:' + c }), nome)));
+    return { linhas, pilhas, legenda };
+  };
+  window.GangUI = { buscaFonte, graficos, esforcoPadrao, ESFORCO_SETOR, metaMarcaMes, metaMarcaPlano, esforcoReferencia, addDias, moedaFmt, moedaValor, moedaSet, PROMESSAS, promessaDe, tipoEsforco, pesoTamanho, combo, comboValue, comboSet, multi, multiValue, avatar, iniciais, $, el, say, day, fmt, cap, dia, diaAno, mesAno, hora, quando, ref, refDate, addRef, nomeMes, nomeMesCurto, mesesEntre, mesDoPlano, diasAte, reais, pct };
 })();

@@ -2082,3 +2082,13 @@ td.clients__empty { color: var(--ganggrey); font-size: var(--t-ui); }
 .comp__n { font-size: 12px; color: var(--ganggrey, #9a9a9a); }
 .ktile .comp__placar { flex-wrap: wrap; gap: 6px 10px; }
 .comp__n { white-space: nowrap; }
+
+/* gráficos dos números na área do consultor (Resultados) */
+.graf-grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 4px 0 20px; }
+.graf-card { display: grid; gap: 8px; align-content: start; min-width: 0; padding: 16px; background: var(--lightblack); border: 1px solid var(--line); border-radius: var(--r); }
+.graf-card__t { margin: 0; font-size: 14px; font-weight: 500; color: #f3f3f3; }
+.graf-card .small { margin: 0; font-size: 12px; line-height: 1.5; }
+.graf-card .chart { margin-top: 4px; }
+.graf-vazio:empty { display: none; }
+#busca-graf:empty { display: none; }
+@media (max-width: 1100px) { .graf-grade { grid-template-columns: 1fr; } }
