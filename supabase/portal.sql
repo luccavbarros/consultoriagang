@@ -1311,3 +1311,14 @@ end;
 $$;
 revoke all on function public.portal_registrar_uso(text, int) from public, anon;
 grant execute on function public.portal_registrar_uso(text, int) to authenticated;
+
+-- ===== os meses depois do próximo ficam invisíveis para o cliente =====
+-- Antes o portal mostrava quantas ações cada mês trancado tinha. Agora o cliente vê só até o mês seguinte,
+-- como se o plano fosse montado com um mês de antecedência. A função continua existindo (versões antigas do portal
+-- ainda a chamam), mas não devolve nada.
+create or replace function public.portal_acoes_futuras()
+returns table (mes_previsto text, n int, essenciais int)
+language sql stable security definer set search_path = public
+as $$
+  select null::text, 0, 0 where false;
+$$;

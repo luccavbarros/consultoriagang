@@ -91,7 +91,7 @@
     sb.from('orientacoes').select('*').eq('mes_ref', hoje).order('publicada_em', { ascending: false }).limit(1),
     sb.from('pedidos_revisao').select('*').order('enviado_em', { ascending: false }),
     sb.from('metricas').select('*').order('ordem'),
-    sb.rpc('portal_acoes_futuras'),
+    Promise.resolve({ data: [] }), // os meses depois do próximo não aparecem para o cliente: o plano parece montado com um mês de antecedência
   ]);
   const D = {
     empresa: emp.data, plano: plano.data, consultor: (cons.data || [])[0], objetivos: objs.data || [],
@@ -524,7 +524,7 @@
       proximos: D.acoes.filter((a) => a.status !== 'feita' && a.mes_previsto > hoje),
       feitas: D.acoes.filter((a) => a.status === 'feita').reverse(),
     };
-    const nomes = { mes: U.cap(U.nomeMes(hoje)), proximos: 'Próximos meses', feitas: 'Concluídas' };
+    const nomes = { mes: U.cap(U.nomeMes(hoje)), proximos: U.cap(U.nomeMes(U.addRef(hoje, 1))), feitas: 'Concluídas' };
     const alvo = abreAcao; abreAcao = null;
     if (alvo) {
       const k = Object.keys(grupos).find((g) => grupos[g].some((x) => x.id === alvo));
@@ -537,7 +537,7 @@
     const lista = el('ul', { class: 'tasks', id: 'acoes-lista', role: 'tabpanel' });
     const tabs = el('div', { class: 'tabs', role: 'tablist', 'aria-label': 'Ações por período' }, Object.keys(grupos).map((k) =>
       el('button', { class: 'tabs__btn', role: 'tab', type: 'button', 'aria-selected': String(k === abaAcoes), 'aria-controls': 'acoes-lista',
-        onclick: () => { abaAcoes = k; render(); } }, nomes[k], el('span', 'tabs__n', String(grupos[k].filter((x) => k === 'feitas' || x.status !== 'feita').length + (k === 'proximos' ? D.futuras.reduce((m, f) => m + f.n, 0) : 0))))));
+        onclick: () => { abaAcoes = k; render(); } }, nomes[k], el('span', 'tabs__n', String(grupos[k].filter((x) => k === 'feitas' || x.status !== 'feita').length)))));
     tabs.addEventListener('keydown', (ev) => {
       const ks = Object.keys(grupos); const i = ks.indexOf(abaAcoes);
       if (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') {
@@ -547,7 +547,7 @@
     });
 
     const doGrupo = grupos[abaAcoes];
-    if (!doGrupo.length && !(abaAcoes === 'proximos' && D.futuras.length)) lista.append(el('li', 'tasks__empty', { mes: 'Nenhuma ação pendente neste mês.', proximos: 'Nenhuma ação prevista para os próximos meses.', feitas: 'Nenhuma ação concluída ainda.' }[abaAcoes]));
+    if (!doGrupo.length) lista.append(el('li', 'tasks__empty', { mes: 'Nenhuma ação pendente neste mês.', proximos: 'As ações do próximo mês aparecem aqui assim que o consultor as planejar.', feitas: 'Nenhuma ação concluída ainda.' }[abaAcoes]));
     const primeira = abaAcoes === 'mes' ? doGrupo.find((a) => a.responsavel !== 'gang') : null;
     if (abaAcoes === 'proximos') {
       // próximos meses: um bloco por mês, fechado; o próximo mês já vem aberto (sem lista gigante)
@@ -573,11 +573,6 @@
         });
         lista.append(el('li', 'tasks__mesli', det));
       });
-      D.futuras.filter((f) => !porMes[f.mes_previsto]).forEach((f) => lista.append(el('li', 'tasks__mesli',
-        el('div', 'tasks__mes tasks__mes--fechado',
-          el('div', 'tasks__fech', el('span', 'tasks__mes-t', U.cap(U.nomeMes(f.mes_previsto)) + ' ' + f.mes_previsto.slice(0, 4)),
-            el('span', 'tasks__mes-n', f.n + (f.n === 1 ? ' ação' : ' ações') + (f.essenciais ? ' · ' + f.essenciais + (f.essenciais === 1 ? ' essencial' : ' essenciais') : '')),
-            el('span', 'tasks__cad', 'Abre em ' + U.nomeMes(U.addRef(f.mes_previsto, -1))))))));
     } else doGrupo.forEach((a) => {
       const card = cartaoAcao(a);
       if (a === primeira) { card.classList.add('is-prioridade'); card.querySelector('.task__sub').prepend(el('span', 'task__flag', 'Faça agora'), ' '); }
@@ -2076,7 +2071,7 @@
   const telaConsultoria = () => {
     const p = D.plano;
     const ativo = !p || p.status === 'ativo';
-    const out = [head(null, 'Encontros e prazos', 'O próximo encontro, os prazos do mês e o que já conversamos.',
+    const out = [head(null, 'Encontros e prazos', 'O próximo encontro, os prazos do mês e\u00a0o\u00a0que\u00a0já\u00a0conversamos.',
       el('div', 'status-line', chip(ativo ? 'done' : 'todo', 'Consultoria mensal · ' + (p ? { ativo: 'ativa', pausado: 'pausada', encerrado: 'encerrada' }[p.status] : 'ativa')),
         p ? el('p', 'box__note', 'Desde ' + U.mesAno(p.inicio) + ' com a GANG') : null))];
 
@@ -2307,7 +2302,7 @@
   const telaPlataforma = () => {
     const P = D.plataforma;
     const out = [head(P && P.entregue_em ? 'Plataforma de marca · entregue em ' + U.mesAno(P.entregue_em) : 'Plataforma de marca', 'Narrativa',
-      'Quem sua marca é e como ela fala. Consulte antes de escrever um post, uma proposta ou um anúncio.',
+      'Quem sua marca é e como ela fala. Consulte antes de escrever um post, uma\u00a0proposta\u00a0ou\u00a0um\u00a0anúncio.',
       P && P.pdf ? baixar(P.pdf, 'Baixar em PDF') : null)];
     if (!P) return out.concat(vazio());
     const facN = FACETAS.filter(([k]) => D.facetas[k]).length;
@@ -2576,7 +2571,7 @@
   const telaIdentidade = () => {
     const I = D.identidade;
     const out = [head(I ? [I.entregue_em ? 'Entregue em ' + U.mesAno(I.entregue_em) : null, I.versao ? 'versão ' + I.versao : null].filter(Boolean).join(' · ') : '', 'Identidade visual',
-      'A marca para usar, não só para ler: copie as cores certas, veja as fontes e teste logo, combinações e títulos antes de publicar.',
+      'A marca para usar, não só para ler: copie as cores certas, veja as fontes e teste logo, combinações e\u00a0títulos\u00a0antes\u00a0de\u00a0publicar.',
       I && I.zip ? baixar(I.zip, 'Baixar tudo (.zip)') : null)];
     if (!I && !D.arquivos_marca.length && !D.cores.length && !(D.elementos_marca || []).length) return out.concat(vazio());
     const nLogos = D.arquivos_marca.filter((a) => a.categoria === 'logo').length;
@@ -2661,7 +2656,7 @@
     const p = D.plano || {};
     const out = [head([p.estrategia_aprovada_em ? 'Aprovada em ' + U.mesAno(p.estrategia_aprovada_em) : null,
       p.proxima_revisao_estrategia ? 'próxima revisão em ' + U.mesAno(p.proxima_revisao_estrategia) : null].filter(Boolean).join(' · '),
-    'Estratégia', 'O desafio da marca, como vamos vencê-lo e as escolhas que fizemos. Toda ação do plano sai daqui.',
+    'Estratégia', 'O desafio da marca, como vamos vencê-lo e\u00a0as\u00a0escolhas\u00a0que\u00a0fizemos. Toda ação do plano sai daqui.',
     p.estrategia_pdf ? baixar(p.estrategia_pdf, 'Baixar plano completo (PDF)') : null)];
     if (!D.objetivos.length && !D.escolhas.length && !p.como_vencer && !p.desafio && !D.condicoes.length) return out.concat(vazio());
     const conf = D.condicoes.filter((c) => c.status === 'se_confirma').length;
@@ -2752,7 +2747,7 @@
   const telaDiagnostico = () => {
     const G = D.diagnostico;
     const out = [head(G && G.data ? 'Ponto de partida · ' + U.mesAno(G.data) : '', 'Diagnóstico',
-      'Como sua marca era vista quando começamos. Daqui a um ano refazemos este retrato para comparar o antes e o depois.',
+      'Como sua marca era vista quando começamos. Daqui a um ano refazemos este retrato para comparar o\u00a0antes\u00a0e\u00a0o\u00a0depois.',
       G && G.proximo ? el('p', 'box__note', 'Novo diagnóstico em ' + U.mesAno(G.proximo)) : null)];
     if (!G) return out.concat(vazio());
 

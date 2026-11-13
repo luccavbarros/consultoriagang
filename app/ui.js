@@ -487,7 +487,7 @@
   const frases = () => {
     document.querySelectorAll(SUBT).forEach((n) => {
       if (n.children.length || n.dataset.frases === n.textContent) return;
-      const t = n.textContent.replace(/\s*\n\s*/g, ' ').replace(/\u00a0/g, ' ').trim();
+      const t = n.textContent.replace(/[ \t]*\n[ \t]*/g, ' ').trim(); // mantém os espaços que não quebram escritos no texto (para escolher onde a linha quebra)
       const q = t.replace(FIM, '$1\n').replace(/;\s+/g, ';\n').split('\n').map(semOrfa).join('\n');
       if (q !== n.textContent) n.textContent = q;
       n.dataset.frases = n.textContent; n.classList.add('is-frases');
