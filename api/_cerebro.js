@@ -5755,3 +5755,76 @@
   liga('Ganhar mercado conquistando', [NOVAS[3].texto]);
   liga('Ser a escolha mais conveniente', [NOVAS[4].texto]);
 })();
+
+// ===== Rodada 25: execução, serviços e varejo, a partir de três livros novos do Drive (leitura do texto completo).
+// Execução: a meta "de X para Y até quando", as medidas de direção (o que a equipe controla e antecipa o resultado), o placar
+// e a reunião semanal curta. Serviços: a flor do serviço, as travas contra erro, a psicologia da espera, os motivos de saída
+// e a zona de tolerância. Varejo: o tempo do comprador (só 20% dele é escolhendo produto), os itens que mais vendem no caminho
+// e a medição de quem passa, para e compra. =====
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'Escrever o objetivo principal do ano no formato "de X para Y até quando" e mostrar para toda a equipe', esforco: 'marca', promessa: 'vendas', tema: 'medicao', tipo: 'base', tam: 'P', ler: 30,
+      porque: 'Uma meta sem ponto de partida, ponto de chegada e prazo não orienta ninguém. Escrita como "de X para Y até quando", ela diz onde a empresa está, aonde quer chegar e quando.',
+      metrica: 'Equipe que sabe dizer o objetivo e o prazo', passos: ['Escolher o objetivo que mais importa no ano', 'Escrever onde está hoje, aonde quer chegar e até quando', 'Mostrar para toda a equipe', 'Perguntar a 3 pessoas qual é o objetivo um mês depois'] },
+    { texto: 'Escolher 1 ou 2 medidas de direção para o objetivo principal: ações que a equipe controla e que antecipam o resultado', esforco: 'venda', promessa: 'vendas', tema: 'medicao', tipo: 'base', tam: 'P', ler: 60,
+      porque: 'O faturamento só mostra o resultado depois que ele aconteceu. Uma medida de direção, como propostas enviadas ou clientes contatados por semana, prevê o resultado e está nas mãos da equipe.',
+      metrica: 'Medida de direção cumprida por semana', passos: ['Listar o que a equipe pode fazer que mais mexe no objetivo', 'Escolher 1 ou 2 que dá para medir toda semana', 'Definir a meta semanal de cada uma', 'Acompanhar junto com o resultado'] },
+    { texto: 'Montar um placar simples, à vista da equipe, que mostre em segundos se o objetivo está sendo ganho', esforco: 'venda', promessa: 'vendas', tema: 'equipe', tipo: 'base', tam: 'P', ler: 30,
+      porque: 'As pessoas jogam diferente quando sabem o placar. Um quadro simples, com a meta e as medidas de direção, mostra se a equipe está ganhando ou perdendo sem precisar de relatório.',
+      metrica: 'Semanas com o placar atualizado', passos: ['Colocar no placar o objetivo e as medidas de direção', 'Deixar à vista de todos', 'Atualizar toda semana', 'Mostrar com clareza se está ganhando ou perdendo'] },
+    { texto: 'Fazer uma reunião semanal de 20 a 30 minutos com a equipe: o que cada um cumpriu, como está o placar e o compromisso da próxima semana', esforco: 'venda', promessa: 'vendas', tema: 'equipe', tipo: 'base', tam: 'P', ler: 60,
+      porque: 'O dia a dia sempre engole o que é novo. Uma reunião curta e fixa, em que cada pessoa presta contas do que prometeu, mantém o plano andando no meio da rotina.',
+      metrica: 'Compromissos semanais cumpridos', passos: ['Marcar o mesmo dia e horário toda semana', 'Cada pessoa conta o que cumpriu da semana anterior', 'Olhar o placar juntos', 'Cada pessoa assume um compromisso para a semana'] },
+    { texto: 'Revisar o que cerca o serviço principal (informação, agendamento, cobrança, pagamento, orientação, recepção e exceções) e corrigir o que mais incomoda o cliente', esforco: 'venda', promessa: 'valor', tema: 'experiencia', tipo: 'base', tam: 'M', ler: 60,
+      porque: 'O serviço principal costuma ser parecido entre concorrentes. O que o cliente lembra muitas vezes é o que está em volta dele: a informação que faltou, a cobrança confusa, a espera na recepção.',
+      metrica: 'Reclamações sobre o que cerca o serviço', passos: ['Listar tudo o que acontece em volta do serviço principal', 'Perguntar a clientes o que mais incomoda', 'Escolher o pior ponto', 'Corrigir e conferir depois de um mês'] },
+    { texto: 'Colocar uma trava contra erro em cada ponto do atendimento que mais falha: checklist, confirmação ou um passo que não deixa pular etapa', esforco: 'venda', promessa: 'valor', tema: 'experiencia', tipo: 'base', tam: 'M', ler: 60,
+      porque: 'Pedir cuidado não evita erro; o processo precisa tornar o erro difícil de acontecer. Uma trava simples, como um checklist ou uma confirmação, protege a promessa da marca nos pontos frágeis.',
+      metrica: 'Erros nos pontos com trava', passos: ['Listar os pontos onde o atendimento mais falha', 'Descobrir por que falha', 'Criar uma trava simples para cada um', 'Contar os erros antes e depois'] },
+    { texto: 'Ocupar o tempo de espera do cliente com algo útil ou agradável, no local ou por mensagem', esforco: 'venda', promessa: 'valor', tema: 'experiencia', tipo: 'base', tam: 'P', ler: 30, setores: ['servicos', 'varejo'],
+      porque: 'Tempo ocioso parece mais longo do que tempo ocupado: as pessoas acham que esperaram mais do que de fato esperaram. Dar algo para fazer ou ver encurta a espera sentida.',
+      metrica: 'Reclamações sobre espera', passos: ['Ver onde e quanto o cliente espera', 'Escolher algo útil para esse tempo (informação, conforto, conteúdo)', 'Aplicar na recepção ou na mensagem de espera', 'Perguntar aos clientes como sentiram a espera'] },
+    { texto: 'Ouvir os clientes que deixaram de comprar, anotar por que saíram e corrigir o motivo que mais se repete', esforco: 'venda', promessa: 'vendas', tema: 'medicao', tipo: 'base', tam: 'M', ler: 90,
+      porque: 'Reduzir a saída de clientes começa por saber o que leva à saída. Os motivos costumam se repetir, e corrigir o principal deles protege mais clientes do que qualquer oferta para quem já decidiu sair.',
+      metrica: 'Clientes que deixam de comprar', passos: ['Listar quem deixou de comprar nos últimos 6 meses', 'Conversar com pelo menos 10 deles', 'Agrupar os motivos', 'Corrigir o que mais se repete'] },
+    { texto: 'Perguntar aos clientes o prazo e a espera mínimos que aceitam e os que gostariam, e manter o serviço dentro dessa faixa', esforco: 'venda', promessa: 'valor', tema: 'medicao', tipo: 'base', tam: 'P', ler: 90,
+      porque: 'Dentro de uma faixa de tolerância o cliente nem repara no serviço; abaixo dela ele se frustra, acima ele se encanta. Saber onde está essa faixa mostra onde vale investir.',
+      metrica: 'Atendimentos dentro da faixa aceita', passos: ['Perguntar a 10 clientes o mínimo aceitável e o desejado', 'Comparar com o que a empresa entrega hoje', 'Corrigir o que estiver abaixo do mínimo', 'Escolher um ponto para superar o desejado'] },
+    { texto: 'Medir em cada área da loja quantos clientes passam, quantos param e quantos compram, e mudar o que não para ninguém', esforco: 'venda', promessa: 'vendas', tema: 'medicao', tipo: 'base', tam: 'M', ler: 60, setores: ['varejo'],
+      porque: 'Toda venda na loja passa por três momentos: o cliente passa pelo produto, para diante dele e decide comprar. Medir os três mostra se o problema é o lugar, a exposição ou a oferta.',
+      metrica: 'Clientes que compram por cliente que passa', passos: ['Escolher as áreas mais importantes da loja', 'Contar por uma hora quantos passam, param e compram', 'Achar onde as pessoas passam e não param', 'Mudar a exposição e medir de novo'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+
+  // a ação antiga mandava os itens mais procurados para o fundo da loja; as medições de trajeto mostram que esconder os itens
+  // mais vendidos desperdiça o tempo do comprador (só 20% do tempo na loja é gasto escolhendo produto) e metade das compras tem até 5 itens
+  const ANTIGA = 'Organizar a loja: os mais procurados ao fundo e os de impulso perto do caixa';
+  const NOVA = 'Deixar os itens que mais vendem fáceis de achar no caminho principal da loja, e os de impulso perto do caixa';
+  const a = P.acoes.find((x) => x.texto === ANTIGA);
+  if (a) {
+    a.texto = NOVA;
+    a.porque = 'Nas medições de trajeto, o comprador passa só 20% do tempo na loja escolhendo produto, e metade das compras tem até 5 itens. Esconder os itens que mais vendem desperdiça tempo e vende menos; deixá-los à mão atende quem entra para uma compra rápida.';
+    a.passos = ['Listar os 20 itens que mais vendem', 'Colocá-los no caminho principal, fáceis de achar', 'Deixar os de impulso perto do caixa', 'Comparar as vendas por cliente antes e depois'];
+  }
+  Object.values(P.modelos || {}).forEach((m) => (m.acoes || []).forEach((x) => { if (x[4] === ANTIGA) x[4] = NOVA; }));
+  (P.abordagens || []).forEach((ab) => { if (ab.acoes) ab.acoes = ab.acoes.map((t) => (t === ANTIGA ? NOVA : t)); });
+
+  // diagnóstico: causas que esses livros ajudam a nomear
+  [
+    'O dia a dia toma todo o tempo e as ações do plano ficam sempre para depois',
+    'A equipe não sabe se está ganhando: o objetivo não tem número, ponto de partida nem prazo',
+    'O que cerca o serviço (agendamento, cobrança, informação, espera) incomoda mais do que o serviço em si',
+    'Os itens que mais vendem ficam difíceis de achar, e o cliente perde tempo dentro da loja',
+  ].forEach((texto) => { if (P.causas && !P.causas.some((c) => c.texto === texto)) P.causas.push({ grupo: G, texto }); });
+
+  // ligar às abordagens que elas executam
+  const liga = (ini, titulos) => { const ab = (P.abordagens || []).find((y) => y.texto.startsWith(ini)); if (!ab || !ab.acoes) return;
+    titulos.forEach((t) => { if (!ab.acoes.includes(t)) ab.acoes.push(t); }); };
+  liga('Concentrar quase todo o esforço', [NOVAS[0].texto, NOVAS[3].texto]);
+  liga('Prometer menos e entregar', [NOVAS[5].texto, NOVAS[8].texto]);
+  liga('Ser a escolha mais conveniente', [NOVAS[6].texto]);
+  liga('Ser a parceira de longo prazo', [NOVAS[7].texto]);
+})();
