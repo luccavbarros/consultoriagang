@@ -531,6 +531,15 @@
   // lançamento (35%): mais ativação no 1º ano para gerar experimentação, e depois ~57% de marca. Muitos lançamentos
   // fracassam por não virar a tempo (Effectiveness in Context, p.77 e p.133). A virada é automática no 13º mês do plano.
   const LANC = 35; const POS_LANC = 57;
+  // quantos meses de passado a ação precisa para fazer sentido numa marca nova (0 = nenhum)
+  // revisar peças precisa de peças publicadas; comparar com o ano anterior precisa de um ano; ouvir clientes precisa de clientes
+  const mesesDeHistorico = (t) => {
+    if (/(ano passado|ano anterior|mesmo período do ano)/i.test(t)) return 12;
+    if (/últimos 3 meses/i.test(t)) return 3;
+    if (/(último mês|mês passado)/i.test(t)) return 2;
+    if (/(clientes antigos|clientes perdidos|ex-clientes|ex-alunos|melhores clientes|clientes recentes|clientes atuais|quem já comprou|conselho com \d+ clientes|perguntar a \d+ clientes|com \d+ clientes)/i.test(t)) return 3;
+    return 0;
+  };
   const metaMarcaMes = (p, r) => {
     const v = p && p.esforco_marca_pct; if (v !== LANC || !p.inicio) return v;
     const k = mesesEntre(p.inicio, (r || ref()) + '-01') + 1;
@@ -659,5 +668,5 @@
   // a situação que aparece no selo: Ativo, Pausado, Encerrado ou Pagamento pendente (acesso vencido)
   const situacaoPlano = (p) => (!p ? null : p.status === 'encerrado' ? [' is-off', 'Encerrado'] : p.status === 'pausado' ? [' is-warn', 'Pausado']
     : acessoVencido(p) ? [' is-warn', 'Pagamento pendente'] : ['', 'Ativo']);
-  window.GangUI = { buscaFonte, acessoVence, acessoVencido, acessoDiasRestantes, situacaoPlano, graficos, esforcoPadrao, ESFORCO_SETOR, metaMarcaMes, metaMarcaPlano, esforcoReferencia, addDias, moedaFmt, moedaValor, moedaSet, PROMESSAS, promessaDe, tipoEsforco, pesoTamanho, combo, comboValue, comboSet, multi, multiValue, avatar, iniciais, $, el, say, day, fmt, cap, dia, diaAno, mesAno, hora, quando, ref, refDate, addRef, nomeMes, nomeMesCurto, mesesEntre, mesDoPlano, diasAte, reais, pct };
+  window.GangUI = { buscaFonte, acessoVence, acessoVencido, acessoDiasRestantes, situacaoPlano, graficos, esforcoPadrao, ESFORCO_SETOR, metaMarcaMes, mesesDeHistorico, metaMarcaPlano, esforcoReferencia, addDias, moedaFmt, moedaValor, moedaSet, PROMESSAS, promessaDe, tipoEsforco, pesoTamanho, combo, comboValue, comboSet, multi, multiValue, avatar, iniciais, $, el, say, day, fmt, cap, dia, diaAno, mesAno, hora, quando, ref, refDate, addRef, nomeMes, nomeMesCurto, mesesEntre, mesDoPlano, diasAte, reais, pct };
 })();

@@ -976,9 +976,18 @@
     // uma vaga de cada mês fica reservada para a ação de marca, até o mês ter uma: a marca não pode sumir por falta de espaço
     const temMarca = (mm) => acoes.some((a) => a.mes_previsto === mm && U.tipoEsforco(a) === 'marca') || novas.some((x) => x.mes === mm && U.tipoEsforco({ titulo: x.titulo, esforco: x.esforco }) === 'marca');
     const cabeN = (mm, t) => nMes(mm) < LIM_N - (temMarca(mm) || (t && U.tipoEsforco({ titulo: t }) === 'marca') ? 0 : 1);
-    const vagaLivre = (desde, t) => meses.slice(desde).find((mm) => carga(mm) + (t ? ptsT(t) : 2) <= LIM && cabeN(mm, t)) || null;
+    // marca nova não tem passado: ação que revisa peças, compara períodos ou ouve clientes antigos só entra quando esse passado existe
+    const nova = p.esforco_marca_pct === 35 || !!(ab && ab.lancamento);
+    const desdeHist = (t) => {
+      if (!nova || !t) return 0;
+      const k = U.mesesDeHistorico(t); if (!k) return 0;
+      const i = meses.findIndex((mm) => nRef(mm) >= nRef(ini) + k);
+      return i < 0 ? meses.length : i;
+    };
+    const vagaLivre = (desde, t) => meses.slice(Math.max(desde, desdeHist(t))).find((mm) => carga(mm) + (t ? ptsT(t) : 2) <= LIM && cabeN(mm, t)) || null;
     let semEspaco = 0; // ações que ficaram de fora porque o plano não tem espaço (plano curto ou refeito no fim)
-    const vaga = (desde, t) => meses.slice(desde).find((mm) => carga(mm) + (t ? ptsT(t) : 2) <= LIM && cabeN(mm, t)) || meses.slice(desde).reduce((a, b) => (carga(b) < carga(a) ? b : a), meses[Math.min(desde, meses.length - 1)]);
+    const vaga = (desde0, t) => { const desde = Math.min(Math.max(desde0, desdeHist(t)), meses.length - 1); return vagaDe(desde, t); };
+    const vagaDe = (desde, t) => meses.slice(desde).find((mm) => carga(mm) + (t ? ptsT(t) : 2) <= LIM && cabeN(mm, t)) || meses.slice(desde).reduce((a, b) => (carga(b) < carga(a) ? b : a), meses[Math.min(desde, meses.length - 1)]);
     const libDe = (t) => (P.acoes || []).find((a) => a.texto === t) || { texto: t };
     const daLib = (t, peso) => { const x = libDe(t); return { peso, promessa: x.promessa || null, esforco: x.esforco || null, titulo: t, porque: x.porque || null, metrica: x.metrica || null }; };
     const marco = (t) => /^(Revisão|Chegada|Lançar a pesquisa de partida|Segunda rodada da pesquisa|Pesquisa de marca de)/.test(t);
@@ -1011,8 +1020,11 @@
     // no máximo 8: estratégia é foco, e mais que isso não cabe nos 3 primeiros meses junto com a fundação
     if (ab) (ab.acoes || []).filter((t) => !ja(t) && (doSetor(libDe(t)) || doModelo.some((x) => x.titulo === t))).slice(0, 8).forEach((t, k) => {
       // se não couber, vai para o mês mais leve dos 3 primeiros: a estratégia nunca escorrega para depois do início
+      // exceção: na marca nova, a ação que depende de histórico espera o histórico existir (ou fica de fora, se o plano acabar antes)
+      const h = desdeHist(t);
+      if (h >= meses.length) return;
       const alvo = vaga(Math.min(Math.floor(k / 3), meses.length - 1), t);
-      const ini3 = meses.slice(0, Math.min(3, meses.length));
+      const ini3 = meses.slice(Math.min(h, meses.length - 1), Math.max(Math.min(3, meses.length), h + 1));
       novas.push({ ...daLib(t, 'essencial'), executa: ab.curto, mes: ini3.includes(alvo) ? alvo : ini3.reduce((x, y) => (carga(y) < carga(x) ? y : x), ini3[0]) });
     });
     // 2b. lançamento: a virada de "experimente" para "lembre da marca" entra no 12º mês do plano (a meta de marca vira no 13º)
@@ -1160,7 +1172,7 @@
     if (!E.ab) return el('li', 'lib__item mod__estr is-falta', el('p', 'row__text', 'A abordagem foi escrita à mão, então o modelo não sabe quais ações a executam: o plano segue o setor. Marque as ações da estratégia no Planejar o mês.'));
     const n = plano.filter((x) => x.executa).length;
     const fora = (E.ab.fora || []).length;
-    return el('li', 'lib__item mod__estr', el('p', 'row__text', el('strong', null, 'Alinhado à estratégia: ' + E.ab.curto + '. '),
+    return el('li', 'lib__item mod__estr', el('p', 'row__text', el('strong', null, 'Alinhado à estratégia: ' + E.ab.curto + '.'), el('br'),
       n + (n === 1 ? ' ação executa' : ' ações executam') + ' a abordagem e ' + (n === 1 ? 'vem' : 'vêm') + ' primeiro.' + (fora ? ' ' + fora + (fora === 1 ? ' ação ficou' : ' ações ficaram') + ' de fora por contradizer a renúncia.' : '')));
   };
   const desenhaModelo = async () => {

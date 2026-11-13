@@ -335,7 +335,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     [lista, { icone: 'estrela', tom: 'gang', titulo: 'O que faz escolher uma marca', nota: 'Discriminadores: o que diferencia.', tabela: 'fatores', fixo: { tipo: 'discriminador' }, fields: [
       { k: 'texto', label: 'Item', req: true, type: 'preset', presets: 'discriminadores' }, { k: 'posicao', label: 'A marca…', type: 'select', options: POS }],
     resumo: (r) => [r.texto, POS_T[r.posicao]] }],
-    [lista, { icone: 'alvo', largo: true, titulo: 'As causas que o plano ataca', tabela: 'causas', fields: [{ k: 'texto', label: 'Causa', req: true, full: true, type: 'preset', presets: 'causas' }], resumo: (r) => [r.texto] }],
+    [lista, { icone: 'alvo', largo: true, titulo: 'As causas que o plano ataca', nota: 'Os motivos por trás dos números, não os números. Prefira causas em que a empresa consegue agir.', tabela: 'causas', fields: [{ k: 'texto', label: 'Causa', req: true, full: true, type: 'preset', presets: 'causas' }], resumo: (r) => [r.texto] }],
   ]);
 
   // ===== Teste de estratégia ruim: o que costuma faltar numa estratégia que é só desejo =====
@@ -358,6 +358,8 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
           : motivos.length ? 'Responde a ' + motivos.length + (motivos.length === 1 ? ' ponto' : ' pontos') + ' do diagnóstico (' + motivos[0].replace(/^causa: /, '') + (motivos.length > 1 ? '…' : '') + ').'
             : 'O desafio não responde a nenhuma causa do diagnóstico. Reveja o desafio ou complete o Diagnóstico.'];
     const meta = /^\s*([+\-]?\d+[\d.,]*\s*%|crescer|aumentar|faturar|vender mais|dobrar)/i;
+    // desafio escrito como resultado ("as vendas caíram") e não como o motivo do resultado
+    const resultado = /^\s*((as|os|o|a|nosso|nossa|nossas|nossos)\s+)?((queda|baixa|redu[çc][ãa]o|pouc[oa]s?)\s+(d[eoa]s?\s+|n[oa]s?\s+)?)?(vendas|faturamento|lucro|margem|resultado|crescimento|receita)\b|^\s*(estamos|a empresa est[aá]|a marca est[aá])\s+(perdendo|vendendo menos|sem crescer|faturando menos)|^\s*(n[aã]o (estamos )?(crescemos|crescendo|vendemos|vendendo))/i;
     const floreio = /(excel[êe]ncia|inova[çc][ãa]o|sinergia|refer[êe]ncia|l[íi]der|melhor (empresa|do mercado)|qualidade total|valor agregado)/i;
     const nObj = (obs || []).filter((o) => o.nivel !== 'comunicacao').length;
     // tática: começa por um verbo de tarefa (abrir, criar, publicar…); a abordagem é uma escolha, não uma tarefa
@@ -377,6 +379,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     const T = [
       doDiag,
       [!!P.desafio, 'Nomeia o desafio', P.desafio ? 'O obstáculo principal está escrito.' : 'Sem o desafio, não dá para saber se a estratégia resolve alguma coisa. Escreva o que impede a marca de crescer.'],
+      [!!P.desafio && !resultado.test(P.desafio), 'O desafio é um motivo, não um resultado', !P.desafio ? 'O desafio é o motivo por trás dos números, não os números.' : resultado.test(P.desafio) ? 'O desafio descreve um resultado. Escreva o motivo dele: o que faz as vendas não virem.' : 'O desafio aponta um motivo em que dá para agir.'],
       [!!P.como_vencer && !meta.test(P.como_vencer), 'Tem uma abordagem, não só uma meta', !P.como_vencer ? 'Falta dizer como a marca vai vencer o desafio.' : meta.test(P.como_vencer) ? 'A abordagem parece uma meta ("crescer", "+30%"). Meta é aonde ir; a abordagem é o caminho.' : 'A abordagem diz o caminho, não só o destino.'],
       [!!P.como_vencer && !floreio.test(P.como_vencer), 'Sem floreio', !P.como_vencer ? 'Escreva a abordagem em palavras concretas.' : floreio.test(P.como_vencer) ? 'Troque palavras vagas ("excelência", "referência", "inovação") pelo que a marca faz de fato.' : 'A abordagem usa palavras concretas.'],
       [!!cv && !tatica.test(cv), 'É uma escolha, não uma ação', !cv ? 'A abordagem é a escolha que orienta as ações: onde jogar e por que a marca vence ali.' : tatica.test(cv) ? 'A abordagem parece uma tarefa. Tarefas vão para Ações; aqui fica a escolha que explica por que elas existem.' : 'A abordagem é uma escolha que orienta as ações.'],
@@ -483,7 +486,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
         dica: 'Comece pela alternativa real: o que o cliente faria se a marca não existisse. Depois, o que só a marca tem, o valor disso e quem se importa muito com esse valor. Por último, escolha a categoria em que ela vira a escolha óbvia.' },
       { k: 'mensagem_central', label: 'Mensagem central', full: true, type: 'preset', presets: 'mensagensCentrais',
         dica: 'Uma ideia só, que o cliente entende em segundos. Teste: troque o nome da marca pelo de um concorrente. Se a frase continuar verdadeira, ainda não é a mensagem.' }] }],
-    [lista, { icone: 'alvo', largo: true, titulo: 'Identidade central', nota: 'De 2 a 4 ideias que não mudam com o tempo. Servem de filtro para aprovar peças, parcerias e serviços novos.', tabela: 'identidade_central', max: 4,
+    [lista, { icone: 'alvo', largo: true, titulo: 'Identidade central', nota: 'De 2 a 4 ideias que não mudam com o tempo. Teste de cada uma: se a marca não tivesse isto, ainda seria ela? Pelo menos uma que se vê e uma que se sente, e nenhuma que qualquer concorrente diria.', tabela: 'identidade_central', max: 4,
       vazio: 'Ainda sem a identidade central.', fields: [
       { k: 'texto', label: 'Ideia que não muda', req: true, full: true, type: 'preset', presets: 'identidadeCentral', fill: { explicacao: 'explicacao' } },
       { k: 'explicacao', label: 'O que isso significa na prática', full: true, type: 'textarea', rows: 2, placeholder: 'Ex.: nenhum projeto começa sem o plano completo aprovado pelo cliente.' }],

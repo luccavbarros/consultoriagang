@@ -17,7 +17,7 @@
     const rs = await Promise.all([
       f('planos', '*'), f('acoes', '*'), f('numeros_mensais', '*').order('mes_ref'),
       f('orientacoes', 'empresa_id, mes_ref, veredito, nota_vendas, nota_pessoas, nota_valor'),
-      f('pesquisas', 'id, empresa_id, titulo, aberta, criada_em'), f('respostas', 'empresa_id, pesquisa_id'),
+      f('pesquisas', 'id, empresa_id, titulo, aberta, criada_em'), f('respostas', 'empresa_id, pesquisa_id, lembranca'),
       f('pedidos_revisao', 'id, empresa_id, status, enviado_em, titulo'), f('encontros', '*').order('inicio'),
       f('mensagens', 'empresa_id, de, criada_em'), f('causas', 'id, empresa_id, texto'), f('objetivos', 'id, empresa_id, nivel, titulo'), perf,
       f('sugestoes', 'id, empresa_id, texto, tipo, acao_id, criada_em').eq('status', 'nova'),
@@ -27,6 +27,9 @@
     const rc = await f('compromissos', 'id, empresa_id, semana, texto, cumprido, acao_id').gte('semana', U.addDias(new Date().toISOString().slice(0, 10), -70));
     const comps = (!rc.error && rc.data) || [];
     const [planos, acoes, numeros, oris, pesqs, resps, peds, encs, msgs, causas, objs, perfis, sugs] = rs.map((r) => r.data || []);
+    // nome da empresa, para ler a lembrança espontânea nas respostas (opcional: sem ele, o sinal de lembrança só não aparece)
+    let eq = sb.from('empresas').select('id, nome'); if (empresaId) eq = eq.eq('id', empresaId);
+    const re = await eq; const nomes = Object.fromEntries(((!re.error && re.data) || []).map((e) => [e.id, e.nome]));
     const por = (arr, eid) => arr.filter((x) => x.empresa_id === eid);
     const ids = empresaId ? [empresaId] : [...new Set(planos.map((p) => p.empresa_id))];
     const out = {};
@@ -35,13 +38,28 @@
         plano: planos.find((p) => p.empresa_id === eid) || null,
         acoes: por(acoes, eid), numeros: por(numeros, eid), orientacoes: por(oris, eid), pesquisas: por(pesqs, eid),
         respostas: por(resps, eid), pedidos: por(peds, eid), encontros: por(encs, eid), mensagens: por(msgs, eid),
-        causas: por(causas, eid), objetivos: por(objs, eid), clientes: por(perfis, eid).map((x) => x.id), sugestoes: por(sugs, eid), compromissos: por(comps, eid),
+        causas: por(causas, eid), objetivos: por(objs, eid), clientes: por(perfis, eid).map((x) => x.id), sugestoes: por(sugs, eid), compromissos: por(comps, eid), nome: nomes[eid] || '',
       };
     });
     return empresaId ? out[empresaId] : out;
   }
 
   // ===== regras comuns =====
+  // lembrança espontânea por pesquisa (como no portal: a última palavra do nome da empresa aparece no que a pessoa lembrou)
+  const semAc = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const lembrancaQueda = (b) => {
+    if (!b.nome) return null;
+    const chave = semAc(b.nome).split(/\s+/).filter((w) => w.length > 2).pop() || semAc(b.nome);
+    const st = [...b.pesquisas].filter((q) => !q.aberta).sort((x, y) => String(x.criada_em).localeCompare(String(y.criada_em))).map((q) => {
+      const rs = b.respostas.filter((r) => r.pesquisa_id === q.id);
+      return rs.length >= 30 ? { n: rs.length, p: rs.filter((r) => semAc(r.lembranca).includes(chave)).length / rs.length } : null;
+    }).filter(Boolean);
+    if (st.length < 2) return null;
+    const [a, c] = st.slice(-2);
+    // só avisa se a queda for maior do que a amostra explicaria (teste de duas proporções, 95%): com 30 respostas, quedas pequenas são ruído
+    const pm = (a.p * a.n + c.p * c.n) / (a.n + c.n); const ep = Math.sqrt(pm * (1 - pm) * (1 / a.n + 1 / c.n));
+    return ep > 0 && (a.p - c.p) / ep >= 1.96 ? [Math.round(a.p * 100), Math.round(c.p * 100)] : null;
+  };
   const inicioRef = (b) => (b.plano && b.plano.inicio ? U.ref(b.plano.inicio) : null);
   const ativo = (b) => b.plano && b.plano.status === 'ativo' && b.plano.tipo !== 'acesso';
   const diasDesde = (iso) => Math.floor((Date.now() - new Date(iso).getTime()) / 864e5);
@@ -110,6 +128,9 @@
     if (aberta) { const n = b.respostas.filter((r) => r.pesquisa_id === aberta.id).length; if (n < 30) s.push({ nivel: 'info', texto: 'Pesquisa com ' + n + (n === 1 ? ' resposta' : ' respostas') + ' (o ideal é 30)', aba: 'resultados' }); }
     // lançamento: perto de 1 ano, avisar a virada da comunicação (a meta de marca já vira sozinha no 13º mês)
     if (b.plano.esforco_marca_pct === 35) { const mp2 = U.mesDoPlano(b.plano); if (mp2 >= 11 && mp2 <= 13) s.push({ nivel: 'info', texto: 'Lançamento perto de 1 ano: virar a comunicação de experimentar para lembrar da marca', aba: 'foco' }); }
+    // lembrança espontânea caindo entre as duas últimas pesquisas com amostra mínima: primeiro sinal de marca envelhecendo
+    const lq = lembrancaQueda(b);
+    if (lq) s.push({ nivel: 'medio', texto: 'Lembrança espontânea caiu de ' + lq[0] + '% para ' + lq[1] + '% entre as duas últimas pesquisas', aba: 'resultados' });
     const pp = pesquisaPrevista(b);
     if (pp && pp.agora && !b.pesquisas.some((q) => q.criada_em && q.criada_em.slice(0, 7) === hoje())) s.push({ nivel: 'info', texto: 'Pesquisa de marca prevista para este mês', aba: 'resultados' });
     return s;

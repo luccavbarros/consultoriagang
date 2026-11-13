@@ -6026,3 +6026,159 @@
     return ind;
   };
 })();
+
+// ===== Rodada 29: o que não muda na marca, como ela envelhece, reclamações, cortes de custo e B2B =====
+// Fontes (leitura completa de um manual de gestão estratégica de marcas, com as pesquisas que ele cita):
+// ideias que o cliente diz serem indispensáveis melhoram a percepção de toda a linha, as outras só de parte dela (e podem
+// atrapalhar); identidade em camadas: núcleo fixo, expressão que se renova, promessas que mudam (reposicionar a cada 4-5 anos);
+// sinais de envelhecimento (lembrança espontânea caindo, clientes mais velhos, mais "mais ou menos satisfeitos", nada novo);
+// reclamação bem atendida: 84% voltariam, contra 64% de quem nunca reclamou; cortes "sem diferença significativa" somados
+// derrubam a marca; no B2B, pergunta direta põe a marca em último e a escolha real mostra a reputação como decisiva;
+// troca de nome: de 11,9% para 4,7% de participação apesar do investimento.
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'Testar cada ideia da identidade central com 10 clientes: "se a marca não tivesse isto, ainda seria ela?"', esforco: 'marca', promessa: 'valor', tema: 'medicao', tipo: 'base', tam: 'P', ler: 180,
+      porque: 'Nem tudo que se diz da marca é essencial. Em pesquisa com clientes, as ideias que eles diziam ser indispensáveis melhoraram a avaliação de todos os produtos da marca, do mais barato ao mais caro; as outras ajudaram só em alguns e às vezes atrapalharam. A pergunta separa o essencial do resto.',
+      metrica: 'Ideias que a maioria diz serem indispensáveis', passos: ['Listar as ideias da identidade central', 'Perguntar a 10 clientes, ideia por ideia: sem isto, ainda é a marca?', 'Manter como centrais as que a maioria diz que sim', 'Tratar as outras como variáveis, por serviço ou público'] },
+    { texto: 'Conferir se cada serviço ou produto carrega todas as ideias da identidade central, e ajustar ou tirar o que contradiz', esforco: 'marca', promessa: 'valor', tema: 'posicionamento', tipo: 'base', tam: 'M', ler: 365,
+      porque: 'O cliente conhece a marca pelo que compra e usa, não pelo documento. Quando cada serviço mostra só uma parte das ideias, ninguém vê a marca inteira. O que contradiz uma ideia central pode até vender, mas reduz a simpatia pela marca toda.',
+      metrica: 'Serviços que carregam todas as ideias centrais', passos: ['Listar os serviços ou produtos', 'Marcar quais ideias centrais cada um mostra', 'Ajustar os que mostram só uma parte', 'Tirar ou separar o que contradiz alguma ideia'] },
+    { texto: 'Renovar o visual, os formatos e as campanhas sem mexer na identidade central nem nos sinais próprios', esforco: 'marca', promessa: 'pessoas', tema: 'presenca', tipo: 'marca', tam: 'M', ler: 365,
+      porque: 'O jeito de se mostrar envelhece mais rápido do que aquilo que a marca é. Atualizar a expressão mantém a marca atual; mudar o núcleo ou os sinais junto faz o cliente perder a referência. Reposicionar de verdade, só a cada 4 ou 5 anos.',
+      metrica: 'Peças renovadas com as ideias centrais e os sinais próprios mantidos', passos: ['Separar o que não muda (ideias centrais e sinais próprios)', 'Escolher o que renovar: fotos, formatos, campanhas', 'Conferir cada peça nova contra o que não muda', 'Registrar a data da renovação'] },
+    { texto: 'Facilitar a reclamação: um canal simples, resposta no mesmo dia e solução combinada com o cliente', esforco: 'venda', promessa: 'vendas', tema: 'experiencia', tipo: 'base', tam: 'P', ler: 90,
+      porque: 'O pior cliente insatisfeito é o que não reclama: some e fala mal para os outros. Numa companhia aérea, 84% de quem reclamou e foi bem atendido voltaria a voar com ela, contra 64% de quem nunca reclamou. Receber a reclamação é a chance de manter o cliente.',
+      metrica: 'Reclamações respondidas no mesmo dia e clientes que voltaram a comprar depois', passos: ['Criar um canal simples e divulgar onde reclamar', 'Definir quem responde e em quanto tempo', 'Combinar a solução com o cliente', 'Conferir se quem reclamou voltou a comprar'] },
+    { texto: 'Antes de cortar custo no produto ou serviço, testar com clientes e não aprovar se a avaliação cair, mesmo pouco', esforco: 'venda', promessa: 'valor', tema: 'medicao', tipo: 'base', tam: 'P', ler: 90,
+      porque: 'Cada corte pequeno parece não fazer diferença no teste e por isso é aprovado. Somados, os clientes percebem a queda e vão embora. Uma avaliação menor que a do padrão já é motivo para não cortar.',
+      metrica: 'Cortes aprovados sem queda na avaliação dos clientes', passos: ['Fazer a versão com o corte', 'Comparar com a atual com clientes, sem dizer qual é qual', 'Não aprovar se a nova tiver avaliação menor', 'Registrar cada corte aprovado'] },
+    { texto: 'Descobrir o que pesa na escolha olhando as propostas ganhas e perdidas, e não só perguntando ao cliente', esforco: 'venda', promessa: 'vendas', tema: 'medicao', tipo: 'base', tam: 'M', ler: 180, setores: ['b2b', 'servicos'],
+      porque: 'Perguntado diretamente, o comprador diz que escolhe por preço e prazo e põe a marca em último lugar. Quando se olham as escolhas reais, a reputação aparece como fator decisivo. Concluir que "o cliente só liga para preço" a partir da pergunta direta leva a cortar justamente o que faz vender.',
+      metrica: 'Fatores de escolha tirados de propostas reais', passos: ['Juntar as propostas dos últimos 6 meses, ganhas e perdidas', 'Anotar o que era diferente nas que fecharam', 'Comparar com o que os clientes disseram quando perguntados', 'Ajustar a proposta pelo que as escolhas mostram'] },
+    { texto: 'Entender o problema do cliente com os clientes dele e mostrar na proposta como a empresa ajuda nisso', esforco: 'venda', promessa: 'valor', tema: 'venda', tipo: 'base', tam: 'M', ler: 180, setores: ['b2b'],
+      porque: 'No B2B, o que se compra vira parte do que o cliente entrega aos clientes dele, e a reputação dele depende disso. Mostrar que a empresa entende e protege isso tira a conversa do preço por unidade.',
+      metrica: 'Propostas que citam o problema do cliente final', passos: ['Perguntar a 5 clientes o que os clientes deles mais cobram', 'Ligar o serviço a esse problema', 'Colocar isso no começo da proposta', 'Ver se as propostas com isso fecham mais'] },
+    { texto: 'Fazer com a equipe uma conversa por ideia central: o que começar, parar e continuar a fazer no próprio trabalho', esforco: 'marca', promessa: 'valor', tema: 'equipe', tipo: 'base', tam: 'P', ler: 180,
+      porque: 'Em serviço, a marca é o que as pessoas fazem em cada atendimento. Quando cada um descobre o que a ideia muda no próprio trabalho, passa a cuidar do próprio jeito de agir; um discurso de cima não faz isso.',
+      metrica: 'Pessoas da equipe com o que começar, parar e continuar escrito', passos: ['Explicar cada ideia central e por que ela existe', 'Pedir a cada pessoa o que começar, parar e continuar', 'Combinar um exemplo prático por pessoa', 'Rever em 3 meses o que mudou'] },
+    { texto: 'Escolher o serviço ou produto que melhor mostra o que a marca é e fazer dele o primeiro a aparecer', esforco: 'marca', promessa: 'pessoas', tema: 'posicionamento', tipo: 'base', tam: 'P', ler: 365,
+      porque: 'O primeiro produto que as pessoas conhecem vira o exemplo da marca na memória e é difícil de mudar depois. Ele deve ser o que melhor mostra a intenção da marca, mesmo que não seja o que mais vende.',
+      metrica: 'Serviço de destaque escolhido e em primeiro lugar no site e nas peças', passos: ['Listar os serviços e o que cada um mostra da marca', 'Escolher o que mostra mais das ideias centrais', 'Colocar ele em primeiro no site, nas peças e na proposta', 'Conferir se as pessoas citam esse serviço ao falar da marca'] },
+    { texto: 'Uma vez por ano, fazer o check da marca: sinais de envelhecimento e desvios da estratégia', esforco: 'marca', promessa: 'valor', tema: 'medicao', tipo: 'base', tam: 'P', ler: 365,
+      porque: 'Marca envelhece devagar e em silêncio, e perde o rumo por pequenos ajustes que, somados, a desviam da estratégia. Os sinais aparecem antes da queda nas vendas: lembrança espontânea caindo, clientes cada vez mais velhos, mais gente "mais ou menos satisfeita" e muito tempo sem nada novo.',
+      metrica: 'Check feito no ano e o que tirar ou recolocar decidido', passos: ['Comparar a lembrança espontânea das últimas pesquisas', 'Ver se a idade média dos clientes está subindo', 'Contar os "mais ou menos satisfeitos" e ouvir clientes perdidos', 'Listar há quanto tempo não há serviço, embalagem ou campanha nova', 'Reler a estratégia e decidir o que tirar e o que recolocar'] },
+    { texto: 'Antes de trocar o nome da marca, medir quantos lembram do nome atual e manter os sinais conhecidos na transição', esforco: 'marca', promessa: 'pessoas', tema: 'posicionamento', tipo: 'base', tam: 'P', ler: 365,
+      porque: 'Trocar o nome apaga parte do que as pessoas lembram. Uma marca que só mudou de nome caiu de 11,9% para 4,7% de participação, mesmo com muito investimento para avisar. Se a troca for mesmo necessária, os sinais conhecidos ajudam a não recomeçar do zero.',
+      metrica: 'Lembrança medida antes da troca e sinais mantidos', passos: ['Medir a lembrança espontânea do nome atual', 'Escrever por que a troca é necessária', 'Manter cores, símbolo e frase conhecidos', 'Medir a lembrança de novo 6 meses depois'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+
+  const add = (k, itens) => { if (P[k]) itens.forEach((t) => { if (!P[k].some((y) => y.texto === t)) P[k].push({ grupo: G, texto: t }); }); };
+  add('naoFazer', ['Trocar o nome da marca só para parecer nova', 'Aprovar um corte de custo porque o teste "não mostrou diferença"',
+    'Concluir que o cliente só liga para preço a partir de pergunta direta', 'Reposicionar a marca antes de 4 ou 5 anos']);
+  add('verificacoes', ['Pergunta a clientes: se a marca não tivesse isto, ainda seria ela?', 'Propostas ganhas e perdidas, e o que pesou em cada uma',
+    'Reclamações respondidas no mesmo dia', 'Lembrança espontânea comparada entre as pesquisas']);
+
+  // sinais de envelhecimento e de coerência como causas do diagnóstico, já ligadas aos desafios que indicam
+  if (P.causas && P.desafios) {
+    const D = (ini) => (P.desafios.find((d) => d.texto.startsWith(ini)) || {}).texto;
+    [['Os clientes estão ficando mais velhos e os novos não chegam', ['A marca é lembrada por um produto ou fase antiga', 'A marca só é lembrada por quem já é cliente']],
+      ['Faz tempo que a marca não lança nada novo', ['A marca é lembrada por um produto ou fase antiga', 'A marca cresceu e perdeu']],
+      ['Mais clientes dizem estar "mais ou menos satisfeitos"', ['A experiência muda de pessoa', 'Os clientes compram uma vez']],
+      ['Cada serviço mostra uma parte da marca, e nenhum mostra ela inteira', ['A marca não tem opinião', 'A empresa faz de tudo um pouco']],
+      ['Pequenos cortes de custo foram piorando o produto ou o serviço', ['A experiência muda de pessoa', 'A marca cresceu e perdeu']],
+    ].forEach(([t, ds]) => { if (!P.causas.some((c) => c.texto === t)) P.causas.push({ grupo: G, texto: t, desafios: ds.map(D).filter(Boolean) }); });
+  }
+})();
+
+// ===== Rodada 30: estratégia como foco, diagnóstico de motivos, elos fracos, teste pequeno e manutenção =====
+// Fontes (leitura completa de um livro sobre estratégia boa e ruim, com casos de empresas pequenas e grandes):
+// o desafio é o motivo do resultado, não o resultado; a boa estratégia concentra em poucos objetivos realizáveis com os
+// recursos de hoje; num sistema de elos, melhorar um elo só não adianta, e a virada vem atacando um gargalo por vez;
+// ideia nova é hipótese: testar pequeno, observar e ajustar; unidades que dão prejuízo ficam escondidas por subsídio
+// cruzado (ordenar pelo ganho e somar mostra); linhas da mesma empresa disputando o mesmo cliente encolhem o resultado;
+// melhoria vem de reexaminar os detalhes do trabalho, inclusive o esforço do cliente para comprar e usar.
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'Ordenar os serviços (ou unidades) pelo ganho de cada um e somar do maior para o menor, para ver quais puxam o resultado para baixo', esforco: 'venda', promessa: 'valor', tema: 'medicao', tipo: 'base', tam: 'M', ler: 365,
+      porque: 'O resultado total esconde serviços ou unidades que dão prejuízo e são sustentados pelos que dão lucro. Ordenar do que mais ganha para o que menos ganha e ir somando mostra onde o total para de subir. Numa rede de lojas, fechar as piores e copiar nas fracas o que as melhores faziam multiplicou o ganho sem nenhuma ideia nova.',
+      metrica: 'Serviços ou unidades com ganho negativo identificados e com decisão tomada', passos: ['Calcular o ganho de cada serviço ou unidade, com todos os custos', 'Ordenar do maior para o menor', 'Somar um a um e ver onde o total começa a cair', 'Decidir: corrigir copiando os melhores, mudar o preço ou parar'] },
+    { texto: 'Escolher o elo mais fraco (qualidade, venda ou custo) e dedicar o trimestre só a ele, antes de passar para o próximo', esforco: 'venda', promessa: 'valor', tema: 'experiencia', tipo: 'base', tam: 'G', ler: 90,
+      porque: 'Quando a entrega, a venda e o custo dependem uns dos outros, melhorar só um deles não aparece no resultado, e por isso ninguém tem incentivo para começar. A saída é atacar um gargalo por vez, com a atenção da empresa inteira, aceitando que o retorno vem depois.',
+      metrica: 'Gargalo do trimestre resolvido e o próximo escolhido', passos: ['Listar os gargalos que se travam entre si', 'Escolher a ordem (o corte de custo costuma vir por último)', 'Dedicar o trimestre a um só, com meta clara', 'Não cobrar resultado de vendas da fase em andamento'] },
+    { texto: 'Testar a ideia nova pequeno (um serviço, uma unidade ou um grupo de clientes), observar o que os clientes fazem e ajustar antes de expandir', esforco: 'venda', promessa: 'pessoas', tema: 'medicao', tipo: 'base', tam: 'M', ler: 90,
+      porque: 'Toda estratégia nova é uma hipótese sobre o que vai funcionar. Testar pequeno custa pouco e mostra o que os clientes fazem de verdade; os ajustes que surgem do teste costumam valer mais que a ideia original.',
+      metrica: 'Ajustes feitos a partir do teste antes de expandir', passos: ['Escrever a hipótese em uma frase', 'Escolher onde testar com pouco investimento', 'Observar o que os clientes fazem, não só o que dizem', 'Ajustar e só então expandir'] },
+    { texto: 'Uma vez por ano, escrever as 10 coisas mais importantes que a empresa consegue fazer e começar pela primeira', esforco: 'marca', promessa: 'valor', tema: 'medicao', tipo: 'base', tam: 'P', ler: 365,
+      porque: 'O dia a dia faz esquecer o que é mais importante. Fazer a lista força a escolher o que é ao mesmo tempo importante e realizável, e transforma preocupações em ações.',
+      metrica: 'Lista feita e o primeiro item em andamento', passos: ['Listar o que é importante para a empresa', 'Cortar o que não dá para fazer com os recursos de hoje', 'Ordenar as 10 restantes', 'Começar pela primeira e só depois passar à seguinte'] },
+    { texto: 'Dar a cada serviço ou linha um público e uma faixa de preço próprios, para que não disputem o mesmo cliente', esforco: 'marca', promessa: 'valor', tema: 'preco', tipo: 'base', tam: 'M', ler: 365,
+      porque: 'Quando os serviços da mesma empresa se sobrepõem, a energia vai para tirar cliente de dentro de casa, o cliente se confunde e o preço cai. Cada linha com seu público e sua faixa deixa claro para quem é cada coisa. Sem manutenção, as linhas voltam a se misturar.',
+      metrica: 'Cada serviço com público e faixa de preço definidos, sem sobreposição', passos: ['Listar os serviços com preço e para quem são', 'Marcar onde dois disputam o mesmo cliente', 'Separar por público ou faixa de preço', 'Rever a cada ano se continuam separados'] },
+    { texto: 'Acompanhar uma compra do começo ao fim, do lado do cliente, e tirar cada passo que dá trabalho a ele', esforco: 'venda', promessa: 'vendas', tema: 'experiencia', tipo: 'base', tam: 'P', ler: 180,
+      porque: 'Melhoria não vem só de pressão ou incentivo: vem de reexaminar os detalhes de como o trabalho é feito. Para o cliente, o custo inclui procurar, comparar, esperar, aprender a usar e resolver problemas; cada passo tirado vale como desconto sem baixar o preço.',
+      metrica: 'Passos tirados da jornada do cliente', passos: ['Fazer uma compra como cliente, do primeiro contato ao uso', 'Anotar cada espera, dúvida e retrabalho', 'Escolher os 3 passos que mais atrapalham', 'Tirar ou simplificar e refazer o percurso'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+
+  const add = (k, itens) => { if (P[k]) itens.forEach((t) => { if (!P[k].some((y) => y.texto === t)) P[k].push({ grupo: G, texto: t }); }); };
+  add('naoFazer', ['Chamar de estratégia uma meta de crescimento ("crescer 30%")', 'Montar a estratégia por consenso para agradar todo mundo',
+    'Copiar o que um concorrente de sucesso faz sem entender por que funciona para ele', 'Ficar com a primeira ideia sem comparar com outra alternativa',
+    'Espalhar o esforço em muitas frentes ao mesmo tempo']);
+  add('verificacoes', ['Ganho de cada serviço ou unidade, ordenado do maior para o menor', 'Resultado do teste pequeno antes de expandir']);
+
+  if (P.causas && P.desafios) {
+    const D = (ini) => (P.desafios.find((d) => d.texto.startsWith(ini)) || {}).texto;
+    [['Serviços ou unidades que dão prejuízo são sustentados pelos que dão lucro, sem ninguém perceber', ['A empresa faz de tudo um pouco', 'A marca tenta atender todo mundo']],
+      ['Um elo fraco (entrega, venda ou atendimento) anula o esforço feito nos outros', ['A experiência muda de pessoa', 'A equipe de vendas promete']],
+      ['Os serviços da própria empresa disputam o mesmo cliente entre si', ['A empresa faz de tudo um pouco', 'O cliente não entende em que categoria']],
+      ['Há metas e iniciativas demais ao mesmo tempo, e nenhuma recebe esforço suficiente', ['A empresa faz de tudo um pouco', 'A marca investe um pouco em muitos canais']],
+    ].forEach(([t, ds]) => { if (!P.causas.some((c) => c.texto === t)) P.causas.push({ grupo: G, texto: t, desafios: ds.map(D).filter(Boolean) }); });
+  }
+})();
+
+// ===== Rodada 31: escolher entre caminhos, entrar pela porta menos disputada e medir a preferência inteira =====
+// Fontes (leitura completa de um livro sobre estratégia como escolha, escrito a partir de uma grande empresa de bens de consumo):
+// estratégia = onde jogar e como vencer, escolhidos juntos; transformar o problema em pelo menos dois caminhos que se excluem
+// e perguntar "o que teria que ser verdade" para cada um, testando primeiro a condição mais duvidosa; entrar pelo segmento
+// menos disputado antes de enfrentar o líder; grupos pequenos e apaixonados mal atendidos pelo líder viram marcas fortes;
+// medir a preferência pela proposta inteira (aparência, facilidade, marca, preço) e não só pelo atributo técnico;
+// o primeiro contato e o primeiro uso decidem a recompra; no teste de preço, a faixa do meio pode não convencer ninguém.
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'Antes de escolher a abordagem, escrever dois caminhos que não dá para seguir juntos e, para cada um, o que teria que ser verdade para dar certo', esforco: 'marca', promessa: 'valor', tema: 'posicionamento', tipo: 'base', tam: 'P', ler: 365,
+      porque: 'Discutir qual caminho "é o certo" vira disputa de opinião. Perguntar o que teria que ser verdade para cada um dar certo mostra exatamente o que precisa ser checado, e a escolha fica quase óbvia depois do teste. Testar primeiro a condição mais duvidosa economiza tempo: se ela falha, o caminho cai sem testar o resto.',
+      metrica: 'Caminho escolhido depois de testar a condição mais duvidosa', passos: ['Escrever o problema como uma escolha entre pelo menos 2 caminhos', 'Para cada um, listar o que teria que ser verdade (clientes, concorrentes, custos, capacidade)', 'Marcar a condição mais duvidosa de cada caminho', 'Testar essa primeiro, de um jeito que o mais cético aceite'] },
+    { texto: 'Entrar pela porta menos disputada: começar pelo grupo de clientes ou serviço que os concorrentes fortes ignoram e avançar depois', esforco: 'marca', promessa: 'pessoas', tema: 'posicionamento', tipo: 'base', tam: 'M', ler: 365,
+      porque: 'Atacar de frente o concorrente mais forte, onde ele defende tudo, costuma sair caro e falhar. Começar onde ele não está olhando dá tempo de ganhar experiência e escala; depois a marca avança para os segmentos mais disputados com mais força.',
+      metrica: 'Participação no grupo ou serviço escolhido para entrar', passos: ['Listar onde os concorrentes fortes concentram esforço', 'Achar o grupo de clientes ou serviço que eles deixam de lado', 'Entrar ali com uma oferta pensada para esse grupo', 'Decidir o próximo passo só depois de liderar ali'] },
+    { texto: 'Encontrar um grupo pequeno e apaixonado que o líder atende mal e posicionar a marca inteira para ele', esforco: 'marca', promessa: 'pessoas', tema: 'posicionamento', tipo: 'base', tam: 'M', ler: 365,
+      porque: 'O líder costuma atender bem a maioria e mal quem dá muito valor a uma coisa específica. Uma marca que escolhe esse grupo e mostra isso em tudo (produto, embalagem, comunicação) vira a preferida dele, mesmo sendo pequena no começo.',
+      metrica: 'Clientes do grupo escolhido que preferem a marca', passos: ['Procurar clientes que reclamam de algo que ninguém faz bem', 'Medir se o grupo é grande o bastante para sustentar o negócio', 'Ajustar produto, embalagem e comunicação para ele', 'Acompanhar a preferência desse grupo'] },
+    { texto: 'Medir a preferência dos clientes pela proposta inteira (aparência, facilidade, marca e preço), e não só pelo atributo técnico de que a empresa se orgulha', esforco: 'venda', promessa: 'valor', tema: 'medicao', tipo: 'base', tam: 'P', ler: 180,
+      porque: 'A empresa costuma medir o que sabe fazer melhor e concluir que tem o melhor produto. O cliente decide pelo conjunto. Uma medida que pesava aparência, facilidade de uso, marca e preço explicou quem crescia no mercado melhor do que o teste técnico.',
+      metrica: 'Preferência dos clientes medida pela proposta inteira', passos: ['Listar o que pesa na escolha, além do desempenho técnico', 'Pedir a clientes que comparem a empresa e 2 concorrentes em cada ponto', 'Ver onde a empresa perde mesmo sendo tecnicamente melhor', 'Corrigir o ponto que mais pesa na escolha'] },
+    { texto: 'Desenhar o primeiro contato e o primeiro uso para que confirmem a promessa da marca', esforco: 'venda', promessa: 'vendas', tema: 'experiencia', tipo: 'base', tam: 'M', ler: 180,
+      porque: 'Dois momentos decidem se a pessoa compra e volta: quando encontra a empresa (vitrine, perfil, prateleira) e quando usa pela primeira vez. Se o primeiro explica a promessa e o segundo a confirma, abre-se o caminho para recompra.',
+      metrica: 'Clientes que voltam depois da primeira compra', passos: ['Descrever o que a pessoa vê no primeiro contato', 'Conferir se a promessa aparece em segundos', 'Descrever o primeiro uso e o que pode dar errado', 'Ajustar para que o primeiro uso entregue a promessa'] },
+    { texto: 'Testar a oferta nova em três preços antes de lançar, sem assumir que o do meio é o mais seguro', esforco: 'venda', promessa: 'valor', tema: 'preco', tipo: 'base', tam: 'P', ler: 90,
+      porque: 'O preço muda quem compra, não só quanto se vende. Num teste de produto novo, a intenção de compra foi boa no preço baixo, caiu no do meio (caro para um público, barato demais para o outro) e voltou a subir no mais alto, que atraiu os dois. Preço baixo demais também faz o cliente exigente duvidar da qualidade.',
+      metrica: 'Preço escolhido a partir do teste', passos: ['Definir 3 preços: o atual, um intermediário e um mais alto', 'Mostrar a oferta a clientes de perfis diferentes em cada preço', 'Anotar quem diz que compraria em cada um', 'Escolher o preço pelo público que se quer atrair'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+
+  const add = (k, itens) => { if (P[k]) itens.forEach((t) => { if (!P[k].some((y) => y.texto === t)) P[k].push({ grupo: G, texto: t }); }); };
+  add('naoFazer', ['Atacar de frente, primeiro, o concorrente mais forte', 'Abrir disputa com vários concorrentes em várias frentes ao mesmo tempo',
+    'Lançar a melhoria com outro nome e deixar a marca principal sem ela', 'Concluir que o cliente não pagaria mais por algo claramente melhor só porque ele disse que não',
+    'Aceitar o mercado atual como o único jeito possível de competir']);
+  add('verificacoes', ['Condição mais duvidosa da estratégia testada antes de investir', 'Preferência dos clientes pela proposta inteira, comparada a 2 concorrentes']);
+})();
