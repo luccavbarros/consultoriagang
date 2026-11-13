@@ -524,7 +524,7 @@
       proximos: D.acoes.filter((a) => a.status !== 'feita' && a.mes_previsto > hoje),
       feitas: D.acoes.filter((a) => a.status === 'feita').reverse(),
     };
-    const nomes = { mes: U.cap(U.nomeMes(hoje)), proximos: U.cap(U.nomeMes(U.addRef(hoje, 1))), feitas: 'Concluídas' };
+    const nomes = { mes: U.cap(U.nomeMes(hoje)), proximos: 'Próximos meses', feitas: 'Concluídas' };
     const alvo = abreAcao; abreAcao = null;
     if (alvo) {
       const k = Object.keys(grupos).find((g) => grupos[g].some((x) => x.id === alvo));
@@ -573,6 +573,17 @@
         });
         lista.append(el('li', 'tasks__mesli', det));
       });
+      // os meses seguintes do plano aparecem trancados, sem dizer quantas ações têm (todos, e não só os já programados,
+      // para a lista não revelar o que o consultor já planejou)
+      if (inicioRef) {
+        const fimRef = U.addRef(inicioRef, dur - 1);
+        for (let m = U.addRef(hoje, 2); m <= fimRef; m = U.addRef(m, 1)) {
+          if (porMes[m]) continue;
+          lista.append(el('li', 'tasks__mesli', el('div', 'tasks__mes tasks__mes--fechado',
+            el('div', 'tasks__fech', el('span', 'tasks__mes-t', U.cap(U.nomeMes(m)) + ' ' + m.slice(0, 4)),
+              el('span', 'tasks__cad', 'Abre em ' + U.nomeMes(U.addRef(m, -1)))))));
+        }
+      }
     } else doGrupo.forEach((a) => {
       const card = cartaoAcao(a);
       if (a === primeira) { card.classList.add('is-prioridade'); card.querySelector('.task__sub').prepend(el('span', 'task__flag', 'Faça agora'), ' '); }
