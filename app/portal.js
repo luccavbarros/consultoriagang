@@ -1329,7 +1329,7 @@
         el('ul', 'disp-c__list', Object.entries(DISP).map(([k, t]) => el('li', dp.itens[k] ? 'is-ok' : null, el('span', { class: 'rot__ico', 'aria-hidden': 'true' }), t)))));
     }
     const parEsf = lado([esf], [busca]);
-    if (parEsf) out.push(el('details', 'mais mais--res', el('summary', null, el('span', null, 'Mais sobre a marca'), el('span', 'mais__sub', 'onde vai o esforço e buscas pelo nome no Google')), parEsf));
+    if (parEsf) out.push(el('details', 'mais mais--res', el('summary', null, el('span', null, 'Mais sobre a marca'), el('span', 'mais__sub', 'Onde vai o esforço e buscas pelo nome no Google')), parEsf));
     const apr = aprendizados(); const voz = vozDoCliente();
     if (apr.length || voz) out.push(parte('Aprendizados', 'O que funcionou, o que não funcionou e o que seus clientes dizem.'), lado(apr, [voz]));
     return emAbas(out.filter(Boolean));
@@ -1867,7 +1867,7 @@
       }
       const resumo = el('div', 'vista-resumo'); box.append(resumo);
       const colA = el('div', 'vista__col'); const colB = el('div', 'vista__col');
-      const mais = el('details', 'mais', el('summary', null, el('span', null, 'Ver a pesquisa em detalhe'), el('span', 'mais__sub', 'antes e depois, funil, palavras e situações de compra')), el('div', 'vista', colA, colB));
+      const mais = el('details', 'mais', el('summary', null, el('span', null, 'Ver a pesquisa em detalhe'), el('span', 'mais__sub', 'Antes e depois, funil, palavras e situações de compra')), el('div', 'vista', colA, colB));
       // o antes: como as pessoas viam a marca no diagnóstico, para comparar com a pesquisa de agora
       const antes = D.impressoes.find((i) => i.eh_cliente);
       if (antes && (antes.notam || antes.acreditam || antes.sentem)) colA.append(el('div', 'antes',
