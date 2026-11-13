@@ -1335,7 +1335,7 @@
     const parEsf = lado([esf], [busca]);
     if (parEsf) out.push(el('details', 'mais mais--res', el('summary', null, el('span', null, 'Mais sobre a marca'), el('span', 'mais__sub', 'Onde vai o esforço e buscas pelo nome no Google')), parEsf));
     const apr = aprendizados(); const voz = vozDoCliente();
-    if (apr.length || voz) out.push(parte('Aprendizados', 'O que funcionou, o que não funcionou e o que seus clientes dizem.'), lado(apr, [voz]));
+    if (apr.length || voz) out.push(parte('Aprendizados', 'O que funcionou, o que não funcionou e\u00a0o\u00a0que\u00a0seus\u00a0clientes\u00a0dizem.'), lado(apr, [voz]));
     return emAbas(out.filter(Boolean));
   };
   // Resultados em abas: o resumo (números, veredito) fica em cima; Negócio, Marca e Aprendizados ficam cada um na sua aba
