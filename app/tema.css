@@ -2109,3 +2109,30 @@ td.clients__empty { color: var(--ganggrey); font-size: var(--t-ui); }
 .side__plan { display: flex; align-items: center; gap: 8px; min-width: 0; margin-top: 2px; }
 .side__plan-t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .side__plan .badge.selo-plano { flex: none; }
+
+/* Estratégia: o diagnóstico acima do desafio */
+.ed-diag { display: grid; gap: 6px; margin: 4px 0 2px; padding: 12px 14px; border-radius: var(--r-sm); background: #161616; border: 1px solid var(--line); }
+.ed-diag__t { margin: 0; font-size: 12px; color: var(--ganggrey); }
+.ed-diag__l { margin: 0; padding-left: 18px; display: grid; gap: 2px; font-size: 13px; color: #e6e6e6; }
+.ed-diag__s { margin: 0; font-size: 12px; color: var(--ganggrey); }
+
+/* planos de acesso à plataforma (mensal, semestral, anual) */
+.planos-ac { display: grid; gap: 10px; }
+.planos-ac__l { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.planos-ac__c { display: grid; gap: 4px; align-content: start; justify-items: start; padding: 14px; border-radius: var(--r-sm); background: #161616; border: 1px solid var(--line); }
+.planos-ac__t { margin: 0; font-size: 15px; font-weight: 500; color: #f3f3f3; }
+.planos-ac__s { margin: 0 0 8px; font-size: 12px; color: var(--ganggrey); }
+@media (max-width: 640px) { .planos-ac__l { grid-template-columns: 1fr; } }
+
+/* plano: acesso à plataforma */
+.acesso-sit__t { margin: 0; font-size: 13px; color: #d4d4d4; }
+.acesso-sit__t.is-warn { color: #f0b44c; } .acesso-sit__t.is-off { color: #f08a6c; }
+.acesso-pag { display: grid; gap: 8px; }
+.acesso-pag__l { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.acesso-pag__l .field { max-width: 180px; }
+.acesso-hist { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 12px; color: var(--ganggrey); }
+
+/* nome da plataforma no menu do portal: "Plano" em Helvetica Neue, espaçamento −4% (só aqui), com um TM pequeno */
+.side__brand { text-decoration: none; }
+.side__marca { display: inline-flex; align-items: flex-start; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 18px; font-weight: 500; line-height: 1; letter-spacing: -0.04em; color: #fff; }
+.side__tm { margin-left: 1px; font-size: 5px; font-weight: 500; letter-spacing: 0; line-height: 1; position: relative; top: 1px; }

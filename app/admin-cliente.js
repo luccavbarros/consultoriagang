@@ -291,13 +291,13 @@
     sb.from('planos').select('*').eq('empresa_id', id).maybeSingle(),
     sb.from('profiles').select('id, name, email').eq('role', 'admin').eq('active', true),
   ]);
-  const p = plano || { inicio: null, duracao_meses: 18, status: 'ativo', tipo: 'consultoria', esforco_marca_pct: U.esforcoPadrao(emp && emp.setor), // divisão marca:ativação de referência para o setor (estudos de eficácia)
+  const p = plano || { inicio: null, duracao_meses: 18, status: 'ativo', tipo: 'consultoria', acesso_gratis_meses: 1, esforco_marca_pct: U.esforcoPadrao(emp && emp.setor), // divisão marca:ativação de referência para o setor (estudos de eficácia)
     prazo_revisao_dias: 2, consultor_id: me.id };
   const SELO_P = { ativo: ['', 'Ativo'], pausado: [' is-warn', 'Pausado'], encerrado: [' is-off', 'Encerrado'] };
   const sub = () => {
     const alvo = $('sub'); alvo.textContent = '';
     if (!p.inicio) { alvo.textContent = 'Sem plano'; return; }
-    const [c, t] = SELO_P[p.status] || ['', p.status];
+    const [c, t] = U.situacaoPlano(p) || SELO_P[p.status] || ['', p.status];
     alvo.append(el('span', null, p.tipo === 'acesso' ? 'Só acesso' : 'Mês ' + mesDoPlano(p) + ' de ' + p.duracao_meses), el('span', 'badge selo-plano' + c, t));
   };
   sub();
@@ -306,7 +306,7 @@
   const fields = {
     'p-inicio': 'inicio', 'p-duracao': 'duracao_meses', 'p-status': 'status', 'p-tipo': 'tipo', 'p-consultor': 'consultor_id',
     'p-meta': 'meta_faturamento_pct', 'p-base': 'faturamento_base', 'p-esforco': 'esforco_marca_pct',
-    'p-prazo': 'prazo_revisao_dias', 'p-revis': 'revisoes_mes', 'p-dias': 'dias_resposta', 'p-inclui': 'plano_inclui', 'p-fatura': 'proxima_fatura', 'p-mensal': 'mensalidade',
+    'p-prazo': 'prazo_revisao_dias', 'p-gratis': 'acesso_gratis_meses', 'p-acesso-ate': 'acesso_ate', 'p-revis': 'revisoes_mes', 'p-dias': 'dias_resposta', 'p-inclui': 'plano_inclui', 'p-fatura': 'proxima_fatura', 'p-mensal': 'mensalidade',
   };
   $('p-nome').value = emp.nome;
   $('p-semnum').checked = !!p.sem_numeros;
@@ -336,6 +336,35 @@
       Number($('p-esforco').value) === r.pct || Number($('p-esforco').value) === 35 ? '' : usar);
   };
   refEsforco(); $('p-esforco').addEventListener('change', refEsforco);
+
+  // ===== acesso à plataforma ("Só acesso"): período grátis, validade e pagamentos =====
+  const CICLO_T = { mensal: 'mensal', semestral: 'semestral', anual: 'anual' };
+  const desenhaAcesso = async () => {
+    const eAcesso = $('p-tipo').value === 'acesso';
+    $('fset-acesso').hidden = !eAcesso; if (!eAcesso) return;
+    const pv = { ...p, tipo: 'acesso', acesso_gratis_meses: Number($('p-gratis').value || 0), acesso_ate: $('p-acesso-ate').value || p.acesso_ate || null, inicio: $('p-inicio').value || p.inicio };
+    if (!$('p-acesso-ate').value) pv.acesso_ate = null;
+    const vence = U.acessoVence(pv); const dias = U.acessoDiasRestantes(pv);
+    const pago = !!p.acesso_ciclo && !!p.acesso_ate;
+    $('acesso-sit').replaceChildren(!vence ? '' : el('p', 'acesso-sit__t' + (dias < 0 ? ' is-off' : dias <= 10 ? ' is-warn' : ''),
+      dias < 0 ? 'Pagamento pendente desde ' + U.diaAno(vence) + '. O cliente vê só a identidade visual e a narrativa.'
+        : (pago ? 'Pago até ' + U.diaAno(vence) + ' (' + CICLO_T[p.acesso_ciclo] + ')' : 'Grátis até ' + U.diaAno(vence)) + (dias <= 10 ? ' · termina em ' + (dias === 0 ? 'hoje' : dias + (dias === 1 ? ' dia' : ' dias')) : '') + '.'));
+    const { data } = await sb.from('pagamentos').select('*').eq('empresa_id', id).order('pago_em', { ascending: false }).limit(12);
+    $('pag-hist').replaceChildren(...(data || []).map((g) => el('li', null, U.dia(g.pago_em) + ' · ' + U.cap(CICLO_T[g.ciclo]) + (g.valor != null ? ' · ' + U.reais(g.valor) : '') + ' · até ' + U.diaAno(g.liberado_ate))));
+  };
+  ['p-tipo', 'p-gratis', 'p-acesso-ate', 'p-inicio'].forEach((f) => $(f).addEventListener('change', desenhaAcesso));
+  document.querySelectorAll('#fset-acesso [data-ciclo]').forEach((b) => b.addEventListener('click', async () => {
+    const ciclo = b.dataset.ciclo;
+    if (!p.inicio) return say($('pag-msg'), 'Salve o plano antes de registrar um pagamento.', 'error');
+    b.disabled = true;
+    const { data: ate, error } = await sb.rpc('registrar_pagamento', { p_empresa: id, p_ciclo: ciclo, p_valor: U.moedaValor($('pag-valor')) });
+    b.disabled = false;
+    if (error) return say($('pag-msg'), error.message || 'Não foi possível registrar.', 'error');
+    p.acesso_ate = ate; p.acesso_ciclo = ciclo; $('p-acesso-ate').value = ate; $('pag-valor').value = '';
+    say($('pag-msg'), 'Pagamento ' + CICLO_T[ciclo] + ' registrado. Acesso liberado até ' + U.diaAno(ate) + '.', 'ok');
+    sub(); desenhaAcesso();
+  }));
+  desenhaAcesso();
 
   $('plan-form').addEventListener('submit', async (ev) => {
     ev.preventDefault();

@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="app/app.css?v=25" />
   <link rel="stylesheet" href="app/portal.css?v=65" />
-  <link rel="stylesheet" href="app/tema.css?v=146" />
+  <link rel="stylesheet" href="app/tema.css?v=151" />
   <script src="app/entrada.js?v=2"></script>
 </head>
 <body class="portal-body">
@@ -143,6 +143,25 @@
             <div><label class="label" for="p-revis">Revisões de peça por mês</label><input class="field" id="p-revis" type="number" min="0" max="50" step="1" placeholder="2" /></div>
             <div><label class="label" for="p-dias">Dias em que responde mensagens</label><input class="field" id="p-dias" maxlength="60" placeholder="terças e quintas" /></div>
             <div><label class="label" for="p-prazo">Resposta de revisão (dias úteis)</label><select class="field" id="p-prazo" data-num><option value="1">1 dia útil</option><option value="2">2 dias úteis</option><option value="3">3 dias úteis</option><option value="5">5 dias úteis</option></select></div>
+          </div>
+        </fieldset>
+        <fieldset class="fset" id="fset-acesso" hidden>
+          <legend class="fset__title">Acesso à plataforma</legend>
+          <div class="new-client">
+            <div><label class="label" for="p-gratis">Período grátis</label><select class="field" id="p-gratis" data-num><option value="0">Sem período grátis</option><option value="1">1 mês</option><option value="2">2 meses</option><option value="3">3 meses</option><option value="6">6 meses</option></select></div>
+            <div><label class="label" for="p-acesso-ate">Acesso liberado até</label><input class="field" id="p-acesso-ate" type="date" aria-describedby="p-acesso-d" /><p class="field-hint" id="p-acesso-d">Vazio = início do plano + período grátis.</p></div>
+            <div class="full acesso-sit" id="acesso-sit"></div>
+            <div class="full acesso-pag">
+              <p class="label">Registrar pagamento</p>
+              <div class="acesso-pag__l">
+                <input class="field" id="pag-valor" data-moeda inputmode="numeric" autocomplete="off" placeholder="Valor (opcional)" aria-label="Valor pago" />
+                <button class="btn btn--ghost btn--sm" type="button" data-ciclo="mensal">Mensal</button>
+                <button class="btn btn--ghost btn--sm" type="button" data-ciclo="semestral">Semestral</button>
+                <button class="btn btn--ghost btn--sm" type="button" data-ciclo="anual">Anual</button>
+              </div>
+              <p class="msg" id="pag-msg" role="status" aria-live="polite"></p>
+              <ul class="acesso-hist" id="pag-hist"></ul>
+            </div>
           </div>
         </fieldset>
         <fieldset class="fset">
@@ -568,10 +587,10 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script src="app/config.js"></script>
   <script src="app/auth.js?v=2"></script>
-  <script src="app/ui.js?v=38"></script>
+  <script src="app/ui.js?v=39"></script>
   <script src="app/cerebro.js?v=1"></script>
-  <script src="app/admin-marca.js?v=38"></script>
-  <script src="app/saude.js?v=15"></script>
-  <script src="app/admin-cliente.js?v=107"></script>
+  <script src="app/admin-marca.js?v=42"></script>
+  <script src="app/saude.js?v=17"></script>
+  <script src="app/admin-cliente.js?v=109"></script>
 </body>
 </html>

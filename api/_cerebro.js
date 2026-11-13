@@ -5951,3 +5951,78 @@
     { texto: 'Reconhecimento dos sinais próprios da marca', nivel: 'marca', frequencia: 'semestral' },
   ].forEach((m) => { if (!P.metricas.some((y) => y.texto === m.texto)) P.metricas.push({ grupo: 'Lançamento', ...m }); });
 })();
+
+// ===== Rodada 28: a estratégia sai do diagnóstico =====
+// Cada causa do Diagnóstico aponta os desafios que ela indica; os fatores que fazem escolher (ou que todo cliente exige)
+// em que a marca não entrega também. A tela de Estratégia mostra primeiro os desafios indicados, e o teste da estratégia
+// avisa quando o desafio escolhido não responde a nada do diagnóstico.
+(function () {
+  const P = window.GangPresets; if (!P || !P.causas || !P.desafios) return;
+  const D = (ini) => (P.desafios.find((d) => d.texto.startsWith(ini)) || {}).texto;
+  const LEMB = 'A marca é pouco lembrada quando'; const DIF = 'O cliente não vê diferença'; const SO_CLI = 'A marca só é lembrada por quem já é cliente';
+  const PROP = 'A proposta começa pelo preço'; const EXP = 'A experiência muda de pessoa'; const VOLTA = 'Os clientes compram uma vez';
+  const CANAL1 = 'A marca depende de um único canal'; const MAIOR = 'Um concorrente maior ocupa'; const TODOS = 'A marca tenta atender todo mundo';
+  const PROVA = 'A empresa tem qualidade, mas não tem provas'; const ACHAR = 'É difícil achar e comprar'; const IRREG = 'A comunicação é irregular';
+  const JEITO = 'O jeito de comprar da categoria mudou'; const TUDO = 'A empresa faz de tudo um pouco'; const CARA = 'A marca é vista como a mais cara';
+  const BARATA = 'A marca é vista como barata'; const CATEG = 'O cliente não entende em que categoria'; const NOVA = 'A empresa é nova';
+  const PERDEU = 'A marca cresceu e perdeu'; const TROCA = 'O cliente troca de fornecedor'; const VENDAS = 'A equipe de vendas promete';
+  const ANTIGA = 'A marca é lembrada por um produto ou fase antiga'; const NAOCOMPRA = 'O maior concorrente é o cliente não comprar';
+  const OPINIAO = 'A marca não tem opinião'; const TECNICO = 'A categoria só fala do lado técnico'; const DONO = 'A venda depende do dono';
+  const DESCONTO = 'A empresa dá desconto'; const GANHA = 'O cliente vê quanto paga'; const ESPALHA = 'A marca investe um pouco em muitos canais';
+  const PRONTO = 'A comunicação fala só com quem já está pronto'; const IGUAL = 'Todos os concorrentes fazem igual';
+  const MAPA = [
+    ['A marca não mostra o que a torna diferente', [DIF, IGUAL, OPINIAO]], ['A proposta comercial começa pelo preço', [PROP, DESCONTO]],
+    ['A equipe não tem um discurso único', [VENDAS, DONO, EXP]], ['Pouca presença onde o cliente procura', [ACHAR, LEMB]],
+    ['Comunicação irregular, com pausas longas', [IRREG, LEMB]], ['O visual não tem ativos distintivos', [OPINIAO, LEMB]],
+    ['A marca compete principalmente por preço', [DIF, BARATA, DESCONTO]], ['Pouca gente lembra da marca quando precisa', [LEMB]],
+    ['A marca é lembrada só por quem já é cliente', [SO_CLI, PRONTO]], ['A marca não está ligada às situações', [LEMB]],
+    ['A comunicação fala do produto, e não do momento', [LEMB, TECNICO]], ['Cada peça usa cores e estilos diferentes', [OPINIAO]],
+    ['O logo e as cores mudaram várias vezes', [ANTIGA, OPINIAO]], ['O nome é difícil de dizer', [ACHAR, LEMB]],
+    ['A marca não tem um elemento próprio', [OPINIAO]], ['A empresa é difícil de achar no Google', [ACHAR]],
+    ['O cliente demora para conseguir resposta', [ACHAR, EXP]], ['Poucos canais de venda', [ACHAR, CANAL1, JEITO]],
+    ['Horários e formas de pagamento limitados', [ACHAR]], ['Descontos frequentes ensinaram', [DESCONTO, BARATA]],
+    ['O preço aparece antes do valor', [PROP, GANHA]], ['Faltam provas do resultado', [PROVA, NOVA]],
+    ['A empresa tenta atender todo tipo de cliente', [TODOS, TUDO]], ['O atendimento muda muito de pessoa para pessoa', [EXP]],
+    ['A promessa da venda não é cumprida na entrega', [EXP, VENDAS]], ['Não há pós-venda', [VOLTA, TROCA]],
+    ['Reclamações demoram para ser resolvidas', [EXP]], ['O investimento em comunicação é menor', [IRREG, PRONTO, MAIOR]],
+    ['Só há anúncios de oferta', [PRONTO]], ['A marca muda de ideia a cada campanha', [OPINIAO, IRREG]],
+    ['A experiência no ponto de venda não combina', [EXP, VENDAS]], ['Clientes satisfeitos não são incentivados a indicar', [VOLTA]],
+    ['O site não diz em segundos', [CATEG, ACHAR]], ['Os erros não viram aprendizado', [EXP]],
+    ['A marca parece distante', [PERDEU, TECNICO]], ['As propostas não mostram o que está incluído', [PROP, GANHA]],
+    ['O cliente fica indeciso', [NAOCOMPRA]], ['Opções demais na proposta', [PROP]], ['O cliente tem medo de errar', [NOVA, NAOCOMPRA]],
+    ['A empresa não sabe o que o cliente espera', [TODOS]], ['Os clientes perdidos não são acompanhados', [VOLTA, TROCA]],
+    ['A marca é conhecida, mas está parada', [ANTIGA, SO_CLI]], ['A categoria mudou e a marca não acompanhou', [JEITO]],
+    ['A qualidade existe, mas o cliente não enxerga', [PROVA, CARA]], ['A marca é descrita só pelo que os clientes acham hoje', [OPINIAO]],
+    ['A marca fala só do produto', [TECNICO, PERDEU]], ['A marca se resume a um slogan', [OPINIAO]],
+    ['A marca não tem um ponto de vista', [OPINIAO, IGUAL]], ['A comunicação só fala com quem já decidiu', [NAOCOMPRA, PRONTO]],
+    ['A empresa não sabe que progresso', [NAOCOMPRA, TODOS]], ['A marca só mostra competência', [TECNICO]],
+    ['O preço é calculado pelo custo', [GANHA, BARATA]], ['Há um único preço e uma única oferta', [CARA, BARATA]],
+    ['O esforço está espalhado em canais demais', [ESPALHA]], ['Nada na relação faz o cliente perder algo', [TROCA]],
+    ['A categoria só fala de características técnicas', [TECNICO]], ['A comunicação fala só com quem já está pronto', [PRONTO]],
+    ['As campanhas duram pouco tempo', [PRONTO, IRREG]], ['O preço aparece sozinho, sem uma referência', [CARA, GANHA]],
+    ['A primeira coisa que o cliente vê é a lista de serviços', [CATEG, DIF]], ['Cobranças avulsas e taxas extras', [GANHA]],
+    ['O dia a dia toma todo o tempo', [TUDO]], ['A equipe não sabe se está ganhando', [TUDO]],
+    ['O que cerca o serviço', [EXP]], ['Os itens que mais vendem ficam difíceis de achar', [ACHAR]],
+  ];
+  MAPA.forEach(([ini, ds]) => { const c = P.causas.find((x) => x.texto.startsWith(ini)); if (c) c.desafios = ds.map(D).filter(Boolean); });
+
+  // o que o diagnóstico indica: causas (pelo texto, inclusive escritas à mão que batem com a biblioteca) e fatores em que a marca não entrega bem
+  P.desafiosDoDiagnostico = (causas, fatores) => {
+    const ind = new Map();
+    const soma = (d, motivo) => { if (!d) return; if (!ind.has(d)) ind.set(d, []); if (!ind.get(d).includes(motivo)) ind.get(d).push(motivo); };
+    // a causa do cliente pode ter sido ajustada à mão ("não mostrava" em vez de "não mostra"): vale a da biblioteca mais parecida
+    const pal = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter((w) => w.length > 2).map((w) => w.slice(0, 5));
+    const parecida = (t) => {
+      const exata = P.causas.find((y) => y.texto === t); if (exata) return exata;
+      const a = new Set(pal(t)); let melhor = null; let nota = 0;
+      P.causas.forEach((y) => { const b = new Set(pal(y.texto)); const comum = [...a].filter((w) => b.has(w)).length; const j = comum / Math.max(1, new Set([...a, ...b]).size); if (j > nota) { nota = j; melhor = y; } });
+      return nota >= 0.5 ? melhor : null;
+    };
+    (causas || []).forEach((c) => { const x = parecida(c.texto); (x && x.desafios || []).forEach((d) => soma(d, 'causa: ' + c.texto)); });
+    (fatores || []).filter((f) => f.posicao === 'nao_entrega' || f.posicao === 'entrega_mal').forEach((f) => {
+      const ds = f.tipo === 'discriminador' ? [D(DIF), D(IGUAL)] : [D(EXP)];
+      ds.forEach((d) => soma(d, (f.tipo === 'discriminador' ? 'faz escolher, e a marca ' : 'todo cliente exige, e a marca ') + (f.posicao === 'nao_entrega' ? 'não entrega: ' : 'entrega mal: ') + f.texto));
+    });
+    return ind;
+  };
+})();

@@ -646,5 +646,18 @@
       tipo === 'sq' ? el('span', { class: 'chart__sq', style: 'background:' + c }) : el('span', { class: 'chart__line' + (tipo === 'dash' ? ' chart__line--dash' : ''), style: tipo === 'dash' ? null : 'background:' + c }), nome)));
     return { linhas, pilhas, legenda };
   };
-  window.GangUI = { buscaFonte, graficos, esforcoPadrao, ESFORCO_SETOR, metaMarcaMes, metaMarcaPlano, esforcoReferencia, addDias, moedaFmt, moedaValor, moedaSet, PROMESSAS, promessaDe, tipoEsforco, pesoTamanho, combo, comboValue, comboSet, multi, multiValue, avatar, iniciais, $, el, say, day, fmt, cap, dia, diaAno, mesAno, hora, quando, ref, refDate, addRef, nomeMes, nomeMesCurto, mesesEntre, mesDoPlano, diasAte, reais, pct };
+  // ===== acesso à plataforma ("Só acesso"): período grátis e depois plano pago (a regra que vale é a do banco: acesso_vence_em) =====
+  const hojeLocal = () => new Date().toLocaleDateString('sv-SE');
+  const acessoVence = (p) => {
+    if (!p || p.tipo !== 'acesso') return null;
+    if (p.acesso_ate) return String(p.acesso_ate).slice(0, 10);
+    const d = new Date(String(p.inicio).slice(0, 10) + 'T12:00:00'); d.setMonth(d.getMonth() + (p.acesso_gratis_meses ?? 1)); d.setDate(d.getDate() - 1);
+    return d.toLocaleDateString('sv-SE');
+  };
+  const acessoVencido = (p) => { const v = acessoVence(p); return !!v && v < hojeLocal(); };
+  const acessoDiasRestantes = (p) => { const v = acessoVence(p); return v ? Math.round((new Date(v + 'T12:00:00') - new Date(hojeLocal() + 'T12:00:00')) / 864e5) : null; };
+  // a situação que aparece no selo: Ativo, Pausado, Encerrado ou Pagamento pendente (acesso vencido)
+  const situacaoPlano = (p) => (!p ? null : p.status === 'encerrado' ? [' is-off', 'Encerrado'] : p.status === 'pausado' ? [' is-warn', 'Pausado']
+    : acessoVencido(p) ? [' is-warn', 'Pagamento pendente'] : ['', 'Ativo']);
+  window.GangUI = { buscaFonte, acessoVence, acessoVencido, acessoDiasRestantes, situacaoPlano, graficos, esforcoPadrao, ESFORCO_SETOR, metaMarcaMes, metaMarcaPlano, esforcoReferencia, addDias, moedaFmt, moedaValor, moedaSet, PROMESSAS, promessaDe, tipoEsforco, pesoTamanho, combo, comboValue, comboSet, multi, multiValue, avatar, iniciais, $, el, say, day, fmt, cap, dia, diaAno, mesAno, hora, quando, ref, refDate, addRef, nomeMes, nomeMesCurto, mesesEntre, mesDoPlano, diasAte, reais, pct };
 })();

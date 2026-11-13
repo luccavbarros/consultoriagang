@@ -80,6 +80,12 @@
   // ===== sinais de risco (visão geral) =====
   function sinais(b) {
     const s = [];
+    // "Só acesso": o período grátis (ou pago) acabando ou já vencido
+    if (b.plano && b.plano.tipo === 'acesso' && b.plano.status === 'ativo') {
+      const dias = U.acessoDiasRestantes(b.plano);
+      if (dias != null && dias < 0) s.push({ nivel: 'alto', texto: 'Pagamento pendente desde ' + U.diaAno(U.acessoVence(b.plano)), aba: 'plano' });
+      else if (dias != null && dias <= 10) s.push({ nivel: 'medio', texto: 'Acesso termina em ' + (dias === 0 ? 'hoje' : dias + (dias === 1 ? ' dia' : ' dias')), aba: 'plano' });
+    }
     if (!ativo(b)) return s;
     const ini = inicioRef(b); const mp = mesPassado();
     const temNum = (r) => b.numeros.some((x) => x.mes_ref === r);

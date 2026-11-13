@@ -1321,3 +1321,103 @@ language sql stable security definer set search_path = public
 as $$
   select null::text, 0, 0 where false;
 $$;
+
+-- ===================== Acesso à plataforma (plano "Só acesso"): período grátis e depois plano pago =====================
+-- Quem fecha o projeto de marca ganha um período grátis (1 mês por padrão, ajustável por cliente). Depois dele,
+-- o cliente continua entrando e vendo a Identidade visual e a Narrativa (o manual da marca), além da empresa, do plano
+-- e das mensagens; o resto (diagnóstico, estratégia e ferramentas) volta assim que um pagamento mensal, semestral
+-- ou anual é registrado. Nada é apagado.
+alter table public.planos add column if not exists acesso_gratis_meses int not null default 1 check (acesso_gratis_meses between 0 and 24);
+alter table public.planos add column if not exists acesso_ate date;   -- vazio = início do plano + meses grátis
+alter table public.planos add column if not exists acesso_ciclo text check (acesso_ciclo in ('mensal', 'semestral', 'anual'));
+
+create table if not exists public.pagamentos (
+  id uuid primary key default gen_random_uuid(),
+  empresa_id uuid not null references public.empresas (id) on delete cascade,
+  ciclo text not null check (ciclo in ('mensal', 'semestral', 'anual')),
+  valor numeric check (valor >= 0),
+  pago_em date not null default current_date,
+  liberado_ate date not null,
+  registrado_por uuid references public.profiles (id) on delete set null,
+  criado_em timestamptz not null default now()
+);
+alter table public.pagamentos enable row level security;
+
+-- até quando o acesso vale (só para "Só acesso"; consultoria não vence por aqui)
+create or replace function public.acesso_vence_em(e uuid)
+returns date
+language sql stable security definer set search_path = public
+as $$
+  select case when p.tipo = 'acesso'
+              then coalesce(p.acesso_ate, ((p.inicio + make_interval(months => p.acesso_gratis_meses))::date - 1)) end
+    from public.planos p where p.empresa_id = e;
+$$;
+
+create or replace function public.acesso_liberado(e uuid)
+returns boolean
+language sql stable security definer set search_path = public
+as $$
+  select coalesce(public.acesso_vence_em(e) >= (now() at time zone 'America/Sao_Paulo')::date, true);
+$$;
+
+-- o cliente vê os dados da marca só com o acesso liberado (o consultor vê sempre)
+create or replace function public.pode_ver(e uuid)
+returns boolean
+language sql stable security definer set search_path = public
+as $$
+  select public.is_admin() or (e is not null and e = public.minha_empresa() and public.acesso_liberado(e));
+$$;
+
+-- o básico continua visível com o acesso vencido: a empresa, o plano, as mensagens e os pagamentos
+create or replace function public.e_minha(e uuid)
+returns boolean
+language sql stable security definer set search_path = public
+as $$
+  select public.is_admin() or (e is not null and e = public.minha_empresa());
+$$;
+drop policy if exists "ler da propria empresa" on public.empresas;
+create policy "ler da propria empresa" on public.empresas for select using (public.e_minha(id));
+drop policy if exists "ler da propria empresa" on public.planos;
+create policy "ler da propria empresa" on public.planos for select using (public.e_minha(empresa_id));
+drop policy if exists "ler da propria empresa" on public.mensagens;
+create policy "ler da propria empresa" on public.mensagens for select using (public.e_minha(empresa_id));
+-- Identidade visual e Narrativa continuam abertas para o cliente mesmo com o acesso vencido
+do $$
+declare t text;
+begin
+  foreach t in array array['plataformas', 'mensagens_apoio', 'tom_atributos', 'tom_exemplos', 'facetas', 'identidades', 'arquivos_marca',
+    'cores', 'tipografias', 'aplicacoes', 'elementos_marca', 'identidade_central', 'ativos'] loop
+    execute format('drop policy if exists "ler da propria empresa" on public.%I', t);
+    execute format('create policy "ler da propria empresa" on public.%I for select using (public.e_minha(empresa_id))', t);
+  end loop;
+end $$;
+-- os arquivos dessas duas partes (logos, manual, fontes) também; os demais seguem a validade do acesso
+drop policy if exists "portal: ler da propria empresa" on storage.objects;
+create policy "portal: ler da propria empresa" on storage.objects for select
+  using (bucket_id = 'portal' and (public.pode_ver(public.pasta_empresa(name))
+    or (public.e_minha(public.pasta_empresa(name)) and split_part(name, '/', 2) in ('identidade', 'plataforma'))));
+drop policy if exists "ler da propria empresa" on public.pagamentos;
+create policy "ler da propria empresa" on public.pagamentos for select using (public.e_minha(empresa_id));
+drop policy if exists "admin escreve" on public.pagamentos;
+create policy "admin escreve" on public.pagamentos for all using (public.is_admin()) with check (public.is_admin());
+
+-- o consultor registra um pagamento: o acesso vai até a data atual (ou a validade, se ainda estiver em dia) + o ciclo pago
+create or replace function public.registrar_pagamento(p_empresa uuid, p_ciclo text, p_valor numeric default null)
+returns date
+language plpgsql security definer set search_path = public
+as $$
+declare hoje date := (now() at time zone 'America/Sao_Paulo')::date; base date; novo date;
+  meses int := case p_ciclo when 'mensal' then 1 when 'semestral' then 6 when 'anual' then 12 end;
+begin
+  if not public.is_admin() then raise exception 'Só o consultor registra pagamentos.'; end if;
+  if meses is null then raise exception 'Escolha mensal, semestral ou anual.'; end if;
+  base := greatest(coalesce(public.acesso_vence_em(p_empresa), hoje - 1), hoje - 1);
+  novo := (base + make_interval(months => meses))::date;
+  update public.planos set acesso_ate = novo, acesso_ciclo = p_ciclo, status = case when status = 'encerrado' then status else 'ativo' end
+   where empresa_id = p_empresa;
+  insert into public.pagamentos (empresa_id, ciclo, valor, liberado_ate, registrado_por) values (p_empresa, p_ciclo, p_valor, novo, auth.uid());
+  return novo;
+end;
+$$;
+revoke all on function public.registrar_pagamento(uuid, text, numeric) from public, anon;
+grant execute on function public.registrar_pagamento(uuid, text, numeric) to authenticated;

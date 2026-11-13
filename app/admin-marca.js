@@ -40,7 +40,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       const todas = (window.GangPresets || {})[f.presets] || [];
       const ja = new Set(usados || []);
       input = U.combo(idc, ja.size ? todas.filter((i) => !ja.has(i.texto) || i.texto === valor) : todas, valor, {
-        semGrupos: true, // a fonte de cada resposta pronta fica só por trás
+        semGrupos: !f.comGrupos, // a fonte de cada resposta pronta fica só por trás (só listas com grupos neutros os mostram)
         longo: !!f.longo, // frases longas: lista própria que mostra o texto inteiro
         onPick: (item) => Object.entries(f.fill || {}).forEach(([de, para]) => {
           if (item[de] == null) return;
@@ -161,10 +161,12 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     const pre = 'fi-' + tabela + '-';
     const { data } = await sb.from(tabela).select('*').eq('empresa_id', id).maybeSingle();
     let atual = data;
+    const extra = cfg.antes ? await cfg.antes(atual) : null; // prepara listas e devolve um bloco que entra acima dos campos
     const msg = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite' });
     const form = el('form', { class: 'ed-card ed-card--ficha', novalidate: true },
       el('div', 'ed-head', tile(cfg.icone || 'pulso'), el('div', 'ed-head__txt', el('h3', 'ed-head__t', titulo), nota ? el('p', 'ed-head__n', nota) : null),
         el('button', { class: 'btn btn--light btn--sm ed-head__btn', type: 'submit' }, 'Salvar')),
+      extra,
       el('div', 'new-client ed-campos', fields.map((f) => campo(f, atual ? atual[f.k] : null, pre))),
       el('div', 'ed-foot', msg));
     form.addEventListener('submit', async (ev) => {
@@ -312,7 +314,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   const POS_T = Object.fromEntries(POS);
 
   montar('pane-diagnostico', [
-    [ficha, { icone: 'pulso', titulo: 'Diagnóstico', nota: 'O ponto de partida da marca, como o cliente vê em Diagnóstico.', tabela: 'diagnosticos', fields: [
+    [ficha, { icone: 'pulso', titulo: 'Diagnóstico', nota: 'O ponto de partida da marca, como\u00a0o\u00a0cliente\u00a0vê\u00a0em\u00a0Diagnóstico.', tabela: 'diagnosticos', fields: [
       { k: 'data', label: 'Data do diagnóstico', type: 'date' }, { k: 'proximo', label: 'Próximo diagnóstico', type: 'date' },
       { k: 'resumo', label: 'Em uma frase', full: true, type: 'preset', presets: 'resumosDiagnostico' }] }],
     [lista, { icone: 'olho', tom: 'gang', titulo: 'A marca do cliente', nota: 'Como as pessoas viam a marca antes do trabalho.', tabela: 'impressoes', fixo: { eh_cliente: true }, max: 1,
@@ -321,7 +323,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       { k: 'notam', label: 'O que notavam', type: 'preset', presets: 'notam' }, { k: 'acreditam', label: 'O que acreditavam', type: 'preset', presets: 'acreditam' },
       { k: 'sentem', label: 'O que sentiam', type: 'preset', presets: 'sentem' }],
     resumo: (r) => [r.marca_nome, [r.notam, r.acreditam, r.sentem].filter(Boolean).join(' · ')] }],
-    [lista, { icone: 'olho', titulo: 'Concorrentes', nota: 'As mesmas perguntas para cada concorrente, para comparar com a marca do cliente.', tabela: 'impressoes', fixo: { eh_cliente: false },
+    [lista, { icone: 'olho', titulo: 'Concorrentes', nota: 'As mesmas perguntas para cada concorrente, para\u00a0comparar\u00a0com\u00a0a\u00a0marca\u00a0do\u00a0cliente.', tabela: 'impressoes', fixo: { eh_cliente: false },
       vazio: 'Nenhum concorrente ainda.', fields: [
       { k: 'marca_nome', label: 'Concorrente', req: true, placeholder: 'Nome do concorrente' },
       { k: 'notam', label: 'O que notavam', type: 'preset', presets: 'notam' }, { k: 'acreditam', label: 'O que acreditavam', type: 'preset', presets: 'acreditam' },
@@ -339,13 +341,22 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   // ===== Teste de estratégia ruim: o que costuma faltar numa estratégia que é só desejo =====
   const testeEstrategia = async (mount) => {
     mount.classList.add('is-largo');
-    const [{ data: p }, { data: acs }, { data: obs }, { data: esc }] = await Promise.all([
+    const [{ data: p }, { data: acs }, { data: obs }, { data: esc }, diag] = await Promise.all([
       sb.from('planos').select('desafio, como_vencer').eq('empresa_id', id).maybeSingle(),
       sb.from('acoes').select('titulo, executa, status').eq('empresa_id', id),
       sb.from('objetivos').select('nivel').eq('empresa_id', id),
       sb.from('escolhas').select('tipo').eq('empresa_id', id),
+      lerDiagnostico(),
     ]);
     const P = p || {};
+    // o desafio responde a alguma causa (ou fator em que a marca não entrega) do diagnóstico?
+    const motivos = P.desafio ? diag.ind.get(P.desafio) || [] : [];
+    const temDiag = diag.causas.length || diag.fatores.some((f) => f.posicao === 'nao_entrega' || f.posicao === 'entrega_mal');
+    const doDiag = [!!P.desafio && motivos.length > 0, 'Sai do diagnóstico',
+      !temDiag ? 'O Diagnóstico ainda não tem causas. Preencha primeiro: o desafio deve sair dele.'
+        : !P.desafio ? 'Escolha o desafio: os indicados pelo diagnóstico aparecem primeiro.'
+          : motivos.length ? 'Responde a ' + motivos.length + (motivos.length === 1 ? ' ponto' : ' pontos') + ' do diagnóstico (' + motivos[0].replace(/^causa: /, '') + (motivos.length > 1 ? '…' : '') + ').'
+            : 'O desafio não responde a nenhuma causa do diagnóstico. Reveja o desafio ou complete o Diagnóstico.'];
     const meta = /^\s*([+\-]?\d+[\d.,]*\s*%|crescer|aumentar|faturar|vender mais|dobrar)/i;
     const floreio = /(excel[êe]ncia|inova[çc][ãa]o|sinergia|refer[êe]ncia|l[íi]der|melhor (empresa|do mercado)|qualidade total|valor agregado)/i;
     const nObj = (obs || []).filter((o) => o.nivel !== 'comunicacao').length;
@@ -364,6 +375,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
           : nExec >= 4 ? nExec + ' ações do plano executam a abordagem.'
             : (nExec ? 'Só ' + nExec + (nExec === 1 ? ' ação executa' : ' ações executam') : 'Nenhuma ação executa') + ' a abordagem. Use “Montar o plano a partir de um modelo” ou o Planejar o mês para incluir as da estratégia.'];
     const T = [
+      doDiag,
       [!!P.desafio, 'Nomeia o desafio', P.desafio ? 'O obstáculo principal está escrito.' : 'Sem o desafio, não dá para saber se a estratégia resolve alguma coisa. Escreva o que impede a marca de crescer.'],
       [!!P.como_vencer && !meta.test(P.como_vencer), 'Tem uma abordagem, não só uma meta', !P.como_vencer ? 'Falta dizer como a marca vai vencer o desafio.' : meta.test(P.como_vencer) ? 'A abordagem parece uma meta ("crescer", "+30%"). Meta é aonde ir; a abordagem é o caminho.' : 'A abordagem diz o caminho, não só o destino.'],
       [!!P.como_vencer && !floreio.test(P.como_vencer), 'Sem floreio', !P.como_vencer ? 'Escreva a abordagem em palavras concretas.' : floreio.test(P.como_vencer) ? 'Troque palavras vagas ("excelência", "referência", "inovação") pelo que a marca faz de fato.' : 'A abordagem usa palavras concretas.'],
@@ -389,9 +401,38 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   const NIV_T = Object.fromEntries(NIV);
   const CON = [['se_confirma', 'Se confirma'], ['em_observacao', 'Em observação'], ['sem_dados', 'Sem dados ainda'], ['nao_se_confirma', 'Não se confirma']];
   const CON_T = Object.fromEntries(CON);
+  // ===== a estratégia sai do diagnóstico =====
+  const lerDiagnostico = async () => {
+    const [{ data: cs }, { data: fs }] = await Promise.all([
+      sb.from('causas').select('texto').eq('empresa_id', id).order('ordem'),
+      sb.from('fatores').select('tipo, texto, posicao').eq('empresa_id', id),
+    ]);
+    const P = window.GangPresets || {};
+    return { causas: cs || [], fatores: fs || [], ind: P.desafiosDoDiagnostico ? P.desafiosDoDiagnostico(cs || [], fs || []) : new Map() };
+  };
+  // monta a lista de desafios deste cliente (os indicados pelo diagnóstico primeiro) e o resumo que fica acima do desafio
+  const diagnosticoNaEstrategia = async () => {
+    const P = window.GangPresets || {};
+    const { causas, fatores, ind } = await lerDiagnostico();
+    const todos = P.desafios || [];
+    const indicados = todos.filter((d) => ind.has(d.texto)).sort((a, b) => ind.get(b.texto).length - ind.get(a.texto).length);
+    P.desafiosCliente = [...indicados.map((d) => ({ ...d, grupo: 'Indicado pelo diagnóstico' })),
+      ...todos.filter((d) => !ind.has(d.texto)).map((d) => ({ ...d, grupo: indicados.length ? 'Outros desafios' : 'Desafios' }))]; // grupos neutros: a fonte nunca aparece
+    const faltas = fatores.filter((f) => f.posicao === 'nao_entrega' || f.posicao === 'entrega_mal');
+    if (!causas.length && !faltas.length) {
+      return el('div', 'ed-diag is-vazio', el('p', 'ed-diag__t', 'Do diagnóstico'),
+        el('p', 'ed-diag__s', 'O Diagnóstico ainda não tem causas. Preencha primeiro: é dele que o desafio deve sair.'));
+    }
+    const itens = [...causas.map((c) => c.texto), ...faltas.map((f) => (f.posicao === 'nao_entrega' ? 'Não entrega: ' : 'Entrega mal: ') + f.texto)];
+    return el('div', 'ed-diag', el('p', 'ed-diag__t', 'Do diagnóstico'),
+      el('ul', 'ed-diag__l', itens.slice(0, 6).map((t) => el('li', null, t))),
+      itens.length > 6 ? el('p', 'ed-diag__s', 'e mais ' + (itens.length - 6) + ' no Diagnóstico.') : null,
+      el('p', 'ed-diag__s', indicados.length ? indicados.length + (indicados.length === 1 ? ' desafio indicado aparece' : ' desafios indicados aparecem') + ' primeiro na lista.' : 'Nenhum desafio da biblioteca responde a essas causas: escreva o desafio à mão.'));
+  };
+
   montar('pane-estrategia', [
-    [ficha, { icone: 'mapa', titulo: 'O cerne da estratégia', nota: 'O desafio que a marca precisa vencer e a abordagem para vencê-lo.', tabela: 'planos', pasta: 'estrategia', fields: [
-      { k: 'desafio', label: '1. O desafio (o obstáculo principal)', full: true, longo: true, type: 'preset', presets: 'desafios',
+    [ficha, { icone: 'mapa', titulo: 'O cerne da estratégia', nota: 'O desafio que a marca precisa vencer e a abordagem para vencê-lo.', tabela: 'planos', pasta: 'estrategia', antes: diagnosticoNaEstrategia, fields: [
+      { k: 'desafio', label: '1. O desafio (o obstáculo principal)', full: true, longo: true, type: 'preset', presets: 'desafiosCliente', comGrupos: true,
         dica: 'Vários problemas? Escolha o que, resolvido, destrava os outros. Os demais entram como causas no Diagnóstico.' },
       { k: 'como_vencer', label: '2. A abordagem (como vencer o desafio)', full: true, longo: true, type: 'preset', presets: 'abordagens', depende: { de: 'desafio', lista: 'desafios', chave: 'abordagens' } },
       { k: 'estrategia_aprovada_em', label: 'Aprovada em', type: 'date' }, { k: 'proxima_revisao_estrategia', label: 'Próxima revisão', type: 'date' },

@@ -22,7 +22,7 @@ begin
   foreach t in array array['planos', 'objetivos', 'escolhas', 'condicoes', 'diagnosticos', 'impressoes', 'fatores', 'causas',
     'plataformas', 'mensagens_apoio', 'tom_atributos', 'tom_exemplos', 'facetas', 'identidades', 'arquivos_marca', 'cores',
     'tipografias', 'aplicacoes', 'orientacoes', 'acoes', 'acoes_descartadas', 'sugestoes', 'numeros_mensais', 'metricas',
-    'encontros', 'pedidos_revisao', 'mensagens', 'pesquisas', 'buscas', 'vozes', 'situacoes', 'ativos', 'compromissos', 'disponibilidade'] loop
+    'encontros', 'pedidos_revisao', 'mensagens', 'pesquisas', 'buscas', 'vozes', 'situacoes', 'ativos', 'compromissos', 'disponibilidade', 'pagamentos'] loop
     execute format('delete from public.%I where empresa_id = $1', t) using e;
   end loop;
 

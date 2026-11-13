@@ -191,3 +191,10 @@ body { margin: 0; font-family: var(--font); color: var(--tx); -webkit-font-smoot
 .ui-barra .ui-sk { height: 9px; }
 .ui-sk-v { color: var(--ok); }
 .fm__d { white-space: pre-line; }
+
+/* nome da plataforma: "Plano" em Helvetica Neue, espaçamento −4%, com um TM pequeno (o mesmo do menu do portal) */
+.marca-plano { display: inline-flex; align-items: flex-start; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 18px; font-weight: 500; line-height: 1; letter-spacing: -0.04em; color: #fff; text-decoration: none; }
+.marca-plano sup { margin-left: 1px; font-size: 5px; font-weight: 500; letter-spacing: 0; line-height: 1; position: relative; top: 1px; }
+.marca-plano--g { font-size: 26px; }
+.marca-plano--g sup { font-size: 7px; }
+.fm__logo { text-decoration: none; }

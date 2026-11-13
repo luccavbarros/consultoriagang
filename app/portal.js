@@ -164,9 +164,12 @@
   const soAcesso = !!D.plano && D.plano.tipo === 'acesso';
   const SO_CONSULTORIA = ['plano', 'calendario', 'acoes', 'resultados', 'consultoria', 'relatorio'];
   // a linha do plano no menu: mês do plano e o selo da situação (o mesmo do painel do consultor)
-  const SELO = { ativo: ['', 'Ativo'], pausado: [' is-warn', 'Pausado'], encerrado: [' is-off', 'Encerrado'] };
-  const selo = D.plano && SELO[D.plano.status];
-  $('plan-line').replaceChildren(el('span', 'side__plan-t', soAcesso ? 'Acesso à sua marca' : D.plano ? 'Mês ' + mesN + ' de ' + dur : 'Plano de marca'),
+  const selo = U.situacaoPlano(D.plano); // Ativo, Pausado, Encerrado ou Pagamento pendente
+  // "Só acesso" com o período vencido: ficam a Identidade visual e a Narrativa (o banco também só entrega essas duas)
+  const vencido = soAcesso && U.acessoVencido(D.plano);
+  const ABERTAS_VENCIDO = ['inicio', 'identidade', 'plataforma'];
+  if (vencido) ['diagnostico', 'estrategia'].forEach((r) => { const li = document.querySelector('[data-route="' + r + '"]'); if (li) li.closest('li').hidden = true; });
+  $('plan-line').replaceChildren(el('span', 'side__plan-t', soAcesso ? 'Só acesso' : D.plano ? 'Mês ' + mesN + ' de ' + dur : 'Plano de marca'),
     selo ? el('span', 'badge selo-plano' + selo[0], selo[1]) : null);
   if (soAcesso) {
     SO_CONSULTORIA.forEach((r) => { const li = document.querySelector('[data-route="' + r + '"]'); if (li) li.closest('li').hidden = true; });
@@ -2654,7 +2657,7 @@
       grupo(docs.map((a) => [quad('arquivo'), a.nome, a.descricao || null,
         el('div', 'logo__btns', (a.formatos || []).length ? botoesFormato(a) : el('span', 'box__note', 'Em breve'))]))));
 
-    if ((D.ativos || []).length) out.splice(out[1] && out[1].classList && out[1].classList.contains('faixa') ? 2 : 1, 0, ativosDistintivos());
+    if ((D.ativos || []).length && !vencido) out.splice(out[1] && out[1].classList && out[1].classList.contains('faixa') ? 2 : 1, 0, ativosDistintivos());
 
     if (D.aplicacoes.length) {
       const AP = { aplicada: 'done', em_andamento: 'doing', prevista: 'todo' };
@@ -2884,11 +2887,44 @@
           el('button', { class: 'link', type: 'button', onclick: lida }, 'Marcar como lida'))));
   };
 
+  // escolher um plano: manda o pedido como mensagem para o consultor (o pagamento é combinado com a GANG)
+  const CICLOS = [['mensal', 'Mensal', 'Renova todo mês'], ['semestral', 'Semestral', '6 meses de acesso'], ['anual', 'Anual', '12 meses de acesso']];
+  const escolherPlano = () => {
+    const msg = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite' });
+    const pede = async (ciclo, nome, btn) => {
+      btn.disabled = true;
+      const { error } = await sb.rpc('portal_enviar_mensagem', { p_texto: 'Quero ativar o plano ' + nome.toLowerCase() + ' da plataforma.' });
+      btn.disabled = false;
+      U.say(msg, error ? 'Não foi possível enviar. Tente de novo.' : 'Pedido enviado. A GANG responde às ' + diasResposta() + ' com a forma de pagamento.', error ? 'error' : 'ok');
+    };
+    return el('div', 'planos-ac', el('div', 'planos-ac__l', CICLOS.map(([k, nome, sub]) => {
+      const b = el('button', { class: 'btn btn--light btn--sm', type: 'button' }, 'Quero este');
+      b.addEventListener('click', () => pede(k, nome, b));
+      return el('div', 'planos-ac__c', el('p', 'planos-ac__t', nome), el('p', 'planos-ac__s', sub), b);
+    })), msg);
+  };
+  // acesso vencido: a tela inicial explica o que continua aberto e como voltar a ter tudo
+  const telaAcessoVencido = () => {
+    const v = U.acessoVence(D.plano);
+    return [head('Acesso à sua marca', 'Seu acesso gratuito terminou',
+      'Terminou em ' + U.diaAno(v) + '. A identidade visual e a narrativa continuam aqui para\u00a0você. Para voltar a usar o diagnóstico, a estratégia e as ferramentas da marca, escolha um\u00a0plano.'),
+      el('section', { class: 'box', 'aria-labelledby': 'planos-ac-t' }, el('h2', { class: 'box__title', id: 'planos-ac-t' }, 'Escolha um plano'), escolherPlano()),
+      el('section', { class: 'brand-tiles', 'aria-label': 'O que continua aberto' },
+        el('a', { class: 'brand-tile', href: '#identidade' }, el('span', 'brand-tile__n', '1'), el('span', 'brand-tile__t', 'Identidade visual'), el('span', 'brand-tile__d', 'Logos, cores, fontes e arquivos')),
+        el('a', { class: 'brand-tile', href: '#plataforma' }, el('span', 'brand-tile__n', '2'), el('span', 'brand-tile__t', 'Narrativa'), el('span', 'brand-tile__d', 'Quem a marca é e como ela fala')))];
+  };
   const telaInicioAcesso = () => {
+    if (vencido) return telaAcessoVencido();
     const primeiro = (me.name || '').split(' ')[0];
     const P = D.plataforma;
     const out = [head('Acesso à sua marca', 'Olá' + (primeiro ? ', ' + primeiro : '') + '.',
       'Tudo sobre a sua marca em um lugar, sempre na versão certa. Consulte antes de criar qualquer peça e compartilhe com quem trabalha com você.')];
+    // faltando 10 dias ou menos para o fim do acesso: avisa e já mostra os planos
+    const dias = U.acessoDiasRestantes(D.plano);
+    if (dias != null && dias <= 10) out.push(el('section', { class: 'box aviso-acesso', 'aria-labelledby': 'aviso-ac-t' },
+      el('h2', { class: 'box__title', id: 'aviso-ac-t' }, dias <= 0 ? 'Seu acesso gratuito termina hoje' : 'Seu acesso gratuito termina em ' + dias + (dias === 1 ? ' dia' : ' dias')),
+      el('p', 'box__text', 'Depois disso, a identidade visual e a narrativa continuam aqui. O diagnóstico, a estratégia e as ferramentas voltam com um\u00a0plano.'),
+      escolherPlano()));
     const bm = bannerMensagem(); if (bm) out.push(bm);
     if (P && (P.posicionamento || P.mensagem_central)) {
       out.push(el('section', { class: 'focus', 'aria-labelledby': 'pos-i' },
@@ -2933,7 +2969,7 @@
     const mesAgora = inicioRef ? Math.min(Math.max(mesN || 1, 1), dur) : 0;
     const fraseMeta = numero ? frase : frase.charAt(0).toUpperCase() + frase.slice(1);
     // cabeçalho da tela, no mesmo formato de Ações: onde estamos, o título e o que a tela mostra
-    const out = [head(inicioRef ? 'Mês ' + mesAgora + ' de ' + dur + ' · ' + U.cap(U.nomeMes(hoje)) + ' ' + hoje.slice(0, 4) : 'Plano de marca', 'Plano',
+    const out = [head(inicioRef ? 'Mês ' + mesAgora + ' de ' + dur + ' · ' + U.cap(U.nomeMes(hoje)) + ' ' + hoje.slice(0, 4) : 'Plano de marca', 'Visão geral',
       'Onde estamos e o que fazer este mês. Cada mês concluído deixa a marca mais perto da\u00a0meta.'),
       el('section', { class: 'goal goal--kpi', 'aria-labelledby': 'goal-t' },
       el('div', 'goal__head',
@@ -3237,7 +3273,7 @@
 
   // ===== telas =====
   const SCREENS = {
-    plano: { crumb: 'Plano · ' + U.nomeMes(hoje) + ' de ' + hoje.slice(0, 4), render: telaCaminho },
+    plano: { crumb: 'Visão geral · ' + U.nomeMes(hoje) + ' de ' + hoje.slice(0, 4), render: telaCaminho },
     inicio: { crumb: 'Início · ' + U.nomeMes(hoje) + ' de ' + hoje.slice(0, 4), render: telaInicio },
     calendario: { crumb: 'Acompanhamento / Encontros e prazos', render: telaConsultoria },
     acoes: { crumb: 'Acompanhamento / Ações', render: telaAcoes },
@@ -3251,7 +3287,7 @@
   };
 
   const side = document.querySelector('.side');
-  const rota = () => { const r = location.hash.slice(1); const padrao = soAcesso ? 'inicio' : 'plano'; return SCREENS[r] && !(soAcesso && SO_CONSULTORIA.includes(r)) && !(!soAcesso && r === 'inicio') ? r : padrao; };
+  const rota = () => { const r = location.hash.slice(1); const padrao = soAcesso ? 'inicio' : 'plano'; return SCREENS[r] && !(soAcesso && SO_CONSULTORIA.includes(r)) && !(!soAcesso && r === 'inicio') && !(vencido && !ABERTAS_VENCIDO.includes(r)) ? r : padrao; };
   // a animação de entrada só roda ao trocar de tela; atualizar algo na mesma tela (ex.: status de uma ação) não pisca
   let telaAtual = null;
   // uso: cada tela aberta e quanto tempo a pessoa ficou nela (só telas e tempo; o consultor vê isso para decidir o que simplificar)
