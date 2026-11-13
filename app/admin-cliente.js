@@ -156,7 +156,8 @@
   // resumo do cliente no topo: mês do plano, fechamento, promessa e próximo encontro
   // placar do compromisso da semana que o cliente assume no portal (some se ele ainda não usou)
   const placarComp = (B) => {
-    const cp = G.compromissos ? G.compromissos(B) : null; if (!cp || !cp.com) return null;
+    return null; // o compromisso da semana saiu do portal; o placar não aparece mais
+    const cp = G.compromissos ? G.compromissos(B) : null; if (!cp || !cp.com) return null; // eslint-disable-line no-unreachable
     const ROT = { ok: 'cumprido', nao: 'não cumprido', sem: 'sem resposta', vazio: 'sem compromisso' };
     return el('span', 'ktile__sub comp__placar', el('span', { class: 'comp__sem', role: 'img', 'aria-label': cp.feitas + ' de ' + cp.com + ' compromissos cumpridos' },
       cp.semanas.map((x) => el('span', { class: 'comp__d comp__d--' + x.estado, title: 'Semana de ' + U.dia(x.semana) + ': ' + ROT[x.estado] }))),
@@ -1065,7 +1066,16 @@
       const x = novas.filter((y) => ehMarca(y) && !y.executa && !marco(y.titulo) && y.peso !== 'essencial' && faseDe(y.titulo) !== 1
         && !ALC.test(y.titulo) && !CEP.test(y.titulo) && marcasNoMes(y.mes) > 1)
         .sort((a, b) => ptsT(b.titulo) - ptsT(a.titulo))[0];
-      if (!x) break;
+      if (!x) {
+        // cada mês já tem uma só ação de marca (a presença contínua): em vez de tirar marca, soma ativação no mês mais leve que ainda tem espaço
+        const livre = meses.filter((mm) => nMes(mm) < LIM_N && LIM - carga(mm) >= 2).sort((m1, m2) => carga(m1) - carga(m2))[0];
+        if (!livre) break;
+        kMes = meses.indexOf(livre);
+        const z = pega((w) => tipoLib(w) === 'ativacao' && (TAM[w.tam] || [, , 2])[2] <= LIM - carga(livre));
+        if (!z) break;
+        novas.push({ mes: livre, peso: 'ajuda', promessa: z.promessa || null, esforco: z.esforco || null, titulo: z.texto, porque: z.porque || null, metrica: z.metrica || null });
+        continue;
+      }
       kMes = Math.max(0, meses.indexOf(x.mes));
       const cabe = LIM - carga(x.mes) + ptsT(x.titulo);
       const y = pega((z) => tipoLib(z) === 'ativacao' && (TAM[z.tam] || [, , 2])[2] <= cabe);

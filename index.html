@@ -116,7 +116,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   .btn:hover .roll__label, .consent__actions button:hover .roll__label { transform: translateY(-100%); }
 }
 .btn--black { background: var(--black); color: #fff; }
-@media (hover: none) { .btn { transition: transform .2s ease, background-color .3s ease; } .btn:active { transform: scale(.97); } } /* touch: the button gives under the finger */
+@media (hover: none) { .btn { transition: background-color .3s ease; } .btn .roll { transition: transform .2s ease; } .btn:active .roll { transform: scale(.97); } } /* touch: the label gives under the finger. Not the button itself: a CSS transition on the button's transform fights the GSAP entrance and left the hero button 24px low, over the note below it */
 .btn--black:hover { background: transparent; color: var(--black); border-color: var(--black); }
 .btn--gray { background: var(--white); color: var(--black); } /* the one light button, used on the dark backgrounds (header bar, section 03, footer): same as the header on desktop */
 .btn--gray:hover { background: #d4d4d4; }

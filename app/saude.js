@@ -192,10 +192,7 @@
     // o que o cliente trouxe para o encontro
     const MOT = { tempo: 'sem tempo', verba: 'sem verba', duvida: 'com dúvida', outro: 'outro motivo' };
     b.acoes.filter((a) => a.travada && a.status !== 'feita').forEach((a) => itens.push('Travada (' + MOT[a.travada] + '): ' + a.titulo));
-    // a cadência da execução: prestar contas dos compromissos da semana
-    const cp = compromissos(b);
-    if (cp.com) itens.push('Compromissos da semana: ' + cp.feitas + ' de ' + cp.com + ' cumpridos nas últimas semanas' + (cp.naoCumpridos.length ? '; o que travou em: ' + cp.naoCumpridos.slice(0, 2).map((c) => c.texto.slice(0, 80)).join('; ') : ''));
-    else if (ativo(b)) itens.push('Combinar o compromisso da semana no portal: uma coisa só, até sexta');
+    // o compromisso da semana saiu do portal (repetia as ações do mês): não entra mais na pauta
     (b.sugestoes || []).filter((x) => x.tipo === 'duvida').forEach((x) => itens.push('Dúvida do cliente: ' + x.texto.slice(0, 140)));
     const ideias = (b.sugestoes || []).filter((x) => x.tipo !== 'duvida');
     if (ideias.length) itens.push((ideias.length === 1 ? 'Ideia do cliente: ' : ideias.length + ' ideias do cliente: ') + ideias.slice(0, 2).map((x) => x.texto.split('\n')[0].slice(0, 80)).join('; '));

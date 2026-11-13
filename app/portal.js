@@ -2185,7 +2185,7 @@
             chip(k, t));
         }))));
       // o cliente viu as respostas "ajustar": somem das pendências do Início
-      ajustarNaoVistos().forEach((pd) => { pd.visto_pelo_cliente = true; sb.rpc('portal_marcar_visto', { p_pedido: pd.id }); });
+      ajustarNaoVistos().forEach((pd) => { pd.visto_pelo_cliente = true; sb.rpc('portal_marcar_visto', { p_pedido: pd.id }).then(() => {}); });
     return sec;
   };
 
@@ -2801,6 +2801,8 @@
 
   // ===== Falar com o consultor: a conversa fica no portal e chega ao painel da GANG =====
   const naoLidas = () => D.mensagens.filter((m) => m.de === 'consultor' && !m.lida).length;
+  // marca as do consultor como lidas no banco (o rpc do Supabase só é enviado quando o resultado é esperado: por isso o await)
+  const lerMensagens = async () => { if (!naoLidas()) return; D.mensagens.forEach((m) => { if (m.de === 'consultor') m.lida = true; }); marcaNaoLidas(); await sb.rpc('portal_ler_mensagens'); };
   const marcaNaoLidas = () => { const n = naoLidas(); $('c-unread').hidden = !n; $('c-unread').textContent = n; };
   const conv = el('dialog', { class: 'dialog dialog--chat', 'aria-labelledby': 'chat-t' });
   const fio = el('div', { class: 'chat', role: 'log', 'aria-live': 'polite' });
@@ -2836,7 +2838,7 @@
   };
   function abrirConversa() {
     desenhaFio(); U.say($('chat-msg'), ''); conv.showModal(); $('chat-txt').focus();
-    if (naoLidas()) { D.mensagens.forEach((m) => { if (m.de === 'consultor') m.lida = true; }); marcaNaoLidas(); sb.rpc('portal_ler_mensagens'); }
+    lerMensagens();
   }
   chatForm.addEventListener('submit', async (ev) => {
     ev.preventDefault();
@@ -2846,6 +2848,7 @@
     const { error } = await sb.rpc('portal_enviar_mensagem', { p_texto: t });
     btn.disabled = false;
     if (error) return U.say($('chat-msg'), 'Não foi possível enviar. Tente de novo.', 'error');
+    await lerMensagens(); // quem respondeu já viu a mensagem do consultor
     await recarregaMsgs();
     $('chat-txt').value = ''; U.say($('chat-msg'), 'Enviada. A resposta chega às ' + diasResposta() + '. Enquanto o consultor não ler, você pode cancelar.', 'ok'); desenhaFio();
   });
@@ -2858,7 +2861,7 @@
     const novas = D.mensagens.filter((m) => m.de === 'consultor' && !m.lida);
     if (!novas.length) return null;
     const m = novas[novas.length - 1];
-    const lida = () => { D.mensagens.forEach((x) => { if (x.de === 'consultor') x.lida = true; }); marcaNaoLidas(); sb.rpc('portal_ler_mensagens'); render(); };
+    const lida = () => { lerMensagens(); render(); };
     return el('section', { class: 'cmsg', 'aria-labelledby': 'cmsg-t' },
       D.consultor ? avatar(D.consultor) : null,
       el('div', 'cmsg__txt',
@@ -2946,7 +2949,7 @@
 
     // as missões do mês (os números entram como uma missão, sem aviso à parte)
     out.push(missoes());
-    { const comp = compromissoSemana(); if (comp) out.push(comp); } // a semana dentro do mês: uma coisa só até sexta
+    // o compromisso da semana saiu da tela: repetia o que as ações do mês já mostram (compromissoSemana() continua no código, sem uso)
     if (false) {
       out.push(el('div', 'nudge',
         el('p', 'nudge__t', el('strong', null, 'Faltam os números de ' + U.nomeMes(mesPassado) + '.'), ' Leva 2 minutos e é o que mostra se o plano está funcionando.'),
