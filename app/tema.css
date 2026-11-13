@@ -1447,6 +1447,9 @@ input[type=date].field::-webkit-date-and-time-value { text-align: left; }
 .gh .box__title { margin: 0; }
 .gh__n { min-width: 22px; height: 20px; padding: 0 6px; border-radius: 6px; display: inline-grid; place-items: center; background: #2b2b2b; font-size: var(--t-micro); color: #b5b5b5; font-variant-numeric: tabular-nums; }
 .gh__nota { flex-basis: 100%; margin: 0; font-size: var(--t-ui); color: var(--ganggrey); }
+/* a nota do cabeçalho vai para o canto direito da caixa, alinhada à direita; no celular desce para baixo do título */
+.gh__nota { flex: 0 1 auto; max-width: 60%; margin-left: auto; text-align: right; }
+@media (max-width: 640px) { .gh__nota { flex-basis: 100%; max-width: none; margin-left: 0; text-align: left; } }
 .gl { list-style: none; margin: 0; padding: 0; border-radius: 12px; border: 1px solid var(--line); background: #171717; overflow: hidden; }
 .gl__i { display: flex; align-items: center; gap: 12px; padding: 11px 14px; min-width: 0; }
 .gl__i + .gl__i { border-top: 1px solid var(--line); }
@@ -1583,7 +1586,12 @@ summary.hist__linha:hover, .hist__det[open] > summary { background: #1c1c1c; }
 :root { --i-cad: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='11' width='16' height='10' rx='2'/%3E%3Cpath d='M8 11V7a4 4 0 0 1 8 0v4'/%3E%3C/svg%3E"); }
 /* Resultados em abas */
 .res-abas-wrap { display: grid; gap: 16px; }
-.res-abas { justify-self: start; }
+.res-abas { justify-self: stretch; }
+/* as abas de Resultados são o filtro principal da tela: largura toda, letra maior e a escolhida em branco */
+.tabs.res-abas { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 4px; padding: 4px; background: #141414; border: 1px solid var(--line-2); border-radius: 12px; }
+.res-abas .tabs__btn { justify-content: center; min-height: 44px; font-size: 15px; color: #d4d4d4; }
+.res-abas .tabs__btn:hover { color: #fff; background: #232323; }
+.res-abas .tabs__btn[aria-selected="true"] { background: #f3f3f3; color: #111; }
 .res-painel { display: grid; gap: var(--gap, 24px); }
 .res-painel__d { margin: 0; font-size: var(--t-ui); color: var(--ganggrey); }
 .res-painel { display: grid; gap: 32px; }

@@ -91,7 +91,7 @@
     sb.from('orientacoes').select('*').eq('mes_ref', hoje).order('publicada_em', { ascending: false }).limit(1),
     sb.from('pedidos_revisao').select('*').order('enviado_em', { ascending: false }),
     sb.from('metricas').select('*').order('ordem'),
-    Promise.resolve({ data: [] }), // os meses depois do próximo não aparecem para o cliente: o plano parece montado com um mês de antecedência
+    Promise.resolve({ data: [] }), // o cliente não recebe nada dos meses depois do próximo: o plano parece montado com um mês de antecedência
   ]);
   const D = {
     empresa: emp.data, plano: plano.data, consultor: (cons.data || [])[0], objetivos: objs.data || [],
@@ -547,7 +547,7 @@
     });
 
     const doGrupo = grupos[abaAcoes];
-    if (!doGrupo.length) lista.append(el('li', 'tasks__empty', { mes: 'Nenhuma ação pendente neste mês.', proximos: 'As ações do próximo mês aparecem aqui assim que o consultor as planejar.', feitas: 'Nenhuma ação concluída ainda.' }[abaAcoes]));
+    if (!doGrupo.length && abaAcoes !== 'proximos') lista.append(el('li', 'tasks__empty', { mes: 'Nenhuma ação pendente neste mês.', proximos: 'Nenhuma ação prevista para os próximos meses.', feitas: 'Nenhuma ação concluída ainda.' }[abaAcoes]));
     const primeira = abaAcoes === 'mes' ? doGrupo.find((a) => a.responsavel !== 'gang') : null;
     if (abaAcoes === 'proximos') {
       // próximos meses: um bloco por mês, fechado; o próximo mês já vem aberto (sem lista gigante)
@@ -573,8 +573,8 @@
         });
         lista.append(el('li', 'tasks__mesli', det));
       });
-      // os meses seguintes do plano aparecem trancados, sem dizer quantas ações têm (todos, e não só os já programados,
-      // para a lista não revelar o que o consultor já planejou)
+      // os meses seguintes do plano aparecem trancados, com "Abre em…" e sem dizer quantas ações têm. Aparecem todos,
+      // e não só os já programados, para a lista não revelar o que o consultor já planejou
       if (inicioRef) {
         const fimRef = U.addRef(inicioRef, dur - 1);
         for (let m = U.addRef(hoje, 2); m <= fimRef; m = U.addRef(m, 1)) {
@@ -767,7 +767,7 @@
         el('p', 'task__sub', ehNova(a) ? el('span', 'task__novo', 'Novo') : null, ehNova(a) ? ' ' : null, [mesNaLinha(a), ps.length ? feitos + ' de ' + ps.length + ' passos' : null, a.tamanho ? 'tamanho ' + a.tamanho : null, a.esforco === 'marca' ? 'efeito em 6 a 12 meses' : null, a.observacao ? 'nota do consultor' : null,
           a.travada && a.status !== 'feita' ? 'travada: ' + MOTIVOS[a.travada].toLowerCase() : null, a.adiantada_de ? 'adiantada de ' + U.nomeMesCurto(a.adiantada_de).toLowerCase() : null].filter(Boolean).join(' · '))),
       // quem faz: só aparece quando não é só o cliente (GANG, junto com a GANG ou com outra pessoa)
-      el('div', 'task__tags', a.responsavel === 'cliente' && !a.responsavel_nome ? null : el('span', 'mtag mtag--who', a.responsavel === 'cliente' ? 'Com ' + a.responsavel_nome : quem(a)), p.text ? el('span', 'mtag mtag--date' + (p.hot ? ' is-hot' : ''), p.text) : null),
+      el('div', 'task__tags', p.text ? el('span', 'mtag mtag--date' + (p.hot ? ' is-hot' : ''), p.text) : null),
       el('div', 'task__st', status),
       temDetalhe ? el('span', { class: 'task__chev' + (aberta ? ' is-open' : ''), 'aria-hidden': 'true' }) : el('span', 'task__chev is-none'));
     return el('li', { class: 'task' + (a.status === 'feita' ? ' is-feita' : '') + (aberta ? ' is-aberta' : ''), 'data-id': a.id }, linha, corpo);
@@ -1080,7 +1080,7 @@
   let calMes = hoje;
   function eventos() {
     const ev = [];
-    D.acoes.forEach((a) => { if (a.prazo) ev.push({ dia: a.prazo, tipo: a.responsavel === 'gang' ? 'gang' : 'acao', feita: a.status === 'feita', titulo: a.titulo, sub: quem(a) + ' · ' + STATUS[a.status], href: '#acoes', acao: a.id }); });
+    D.acoes.forEach((a) => { if (a.prazo) ev.push({ dia: a.prazo, tipo: a.responsavel === 'gang' ? 'gang' : 'acao', feita: a.status === 'feita', titulo: a.titulo, sub: STATUS[a.status], href: '#acoes', acao: a.id }); });
     D.encontros.forEach((e) => {
       const d = new Date(e.inicio);
       ev.push({ dia: d.toLocaleDateString('sv-SE'), tipo: 'encontro', feita: e.status === 'realizado', hora: U.hora(e.inicio), titulo: TIPO_ENCONTRO[e.tipo] || 'Encontro', sub: e.duracao_min + ' min' + (e.status === 'remarcar_solicitado' ? ' · remarcação pedida' : ''), href: '#consultoria' });
@@ -1190,7 +1190,7 @@
     const et = [['Contatos (leads)', n.leads], ['Propostas enviadas', n.propostas], ['Fechadas', n.fechadas], ['Fechadas sem desconto', n.sem_desconto]].filter(([, v]) => v != null);
     if (et.length < 2) return null;
     const mx = Math.max(...et.map(([, v]) => v), 1);
-    return secN('fun-t', 'Do contato à venda', null, U.cap(U.nomeMes(n.mes_ref)) + '. Onde mais gente se perde é onde vale agir primeiro.',
+    return secN('fun-t', 'Do contato à venda', U.cap(U.nomeMes(n.mes_ref)), 'Onde mais gente se perde é onde vale agir primeiro.',
       el('ul', 'gl funil', et.map(([t, v], i) => {
         const prev = i ? et[i - 1][1] : null;
         const pas = prev ? Math.round((v / prev) * 100) : null;
@@ -1354,7 +1354,7 @@
       const d = x.cab.querySelector('.res-part__d');
       painel.replaceChildren(...(d ? [el('p', 'res-painel__d', d.textContent)] : []), ...x.corpo);
     };
-    const abas = el('div', { class: 'tabs res-abas', role: 'tablist', 'aria-label': 'Resultados por assunto' }, partes.map((x) =>
+    const abas = el('div', { class: 'tabs res-abas', role: 'tablist', 'aria-label': 'Resultados por assunto', style: '--n:' + partes.length }, partes.map((x) =>
       el('button', { class: 'tabs__btn', role: 'tab', type: 'button', 'aria-selected': String(x.t === abaRes), 'aria-controls': 'res-painel', onclick: (ev) => {
         abaRes = x.t; abas.querySelectorAll('.tabs__btn').forEach((b) => b.setAttribute('aria-selected', 'false')); ev.currentTarget.setAttribute('aria-selected', 'true'); mostra();
       } }, x.t)));
@@ -2391,14 +2391,16 @@
     const nMax = Math.max(0, ...comDado.map((x) => x.m.n));
     const preliminar = comDado.length && nMax < 30;
     return sec('dist-t', 'O que faz reconhecerem a marca',
-      el('p', 'box__text', 'O que faz as pessoas reconhecerem a marca sem ler o nome. Na pesquisa, mostramos cada um sem a marca e perguntamos de quem é.'),
-      preliminar ? el('p', 'prelim', el('span', { class: 'chip chip--doing' }, 'Leitura preliminar'),
-        el('span', null, 'Com ' + nMax + (nMax === 1 ? ' resposta' : ' respostas') + ', leia como tendência. A partir de 30 respostas, os números ficam firmes.')) : null,
+      el('p', 'box__text', 'Mostramos cada sinal sem o nome e perguntamos de quem é.'),
+      // amostra pequena: só o selo (o mesmo de "Como a marca é lembrada"); a explicação fica ao passar o mouse
+      preliminar ? el('p', 'prelim', el('span', { class: 'chip chip--doing', title: 'Com menos de 30 respostas, leia como tendência: uma pessoa a mais muda o resultado em vários pontos.' },
+        'Amostra pequena · ' + nMax + (nMax === 1 ? ' resposta' : ' respostas'))) : null,
       el('div', comDado.length >= 2 ? 'dist-grid' : 'dist-solo', comDado.length >= 2 ? graficoDispersao(comDado) : null,
       el('ul', 'todo', itens.map(({ a, m }) => el('li', 'piece',
         el('div', 'asset-row', visual(a), el('div', 'todo__text', el('span', 'todo__title', a.nome),
-          el('span', 'todo__sub', m ? 'Fama ' + m.fama + '% · exclusividade ' + m.excl + '% · ' + m.n + ' respostas' + (m.n < 30 ? ' · tendência' : '') : 'Ainda sem medição: entra na próxima rodada da pesquisa'))),
-        m ? chip(...(m.n < 30 ? ['todo', 'Poucas respostas'] : QUAD(m))) : chip('todo', 'Sem dados'))))));
+          el('span', 'todo__sub', m ? 'Fama ' + m.fama + '% · exclusividade ' + m.excl + '%' : 'Entra na próxima rodada da pesquisa'))),
+        // com amostra pequena o selo de cima já avisa; o veredito por sinal só aparece com 30 respostas ou mais
+        m ? (m.n < 30 ? null : chip(...QUAD(m))) : chip('todo', 'Sem dados'))))));
   };
   // dispersão fama × exclusividade, com os quatro quadrantes
   const graficoDispersao = (itens) => grafico('chart--scatter', 'Ativos por fama e exclusividade: ' + itens.map(({ a, m }) => a.nome + ' fama ' + m.fama + '% exclusividade ' + m.excl + '%').join('; '), (W, tip, box) => {
