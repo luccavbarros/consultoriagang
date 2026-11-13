@@ -163,7 +163,11 @@
   // plano "Só acesso à marca": o cliente paga para acessar o material da marca, sem a consultoria mensal
   const soAcesso = !!D.plano && D.plano.tipo === 'acesso';
   const SO_CONSULTORIA = ['plano', 'calendario', 'acoes', 'resultados', 'consultoria', 'relatorio'];
-  $('plan-line').textContent = soAcesso ? 'Acesso à sua marca' : D.plano ? 'Mês ' + mesN + ' de ' + dur + ' do plano' : 'Plano de marca';
+  // a linha do plano no menu: mês do plano e o selo da situação (o mesmo do painel do consultor)
+  const SELO = { ativo: ['', 'Ativo'], pausado: [' is-warn', 'Pausado'], encerrado: [' is-off', 'Encerrado'] };
+  const selo = D.plano && SELO[D.plano.status];
+  $('plan-line').replaceChildren(el('span', 'side__plan-t', soAcesso ? 'Acesso à sua marca' : D.plano ? 'Mês ' + mesN + ' de ' + dur : 'Plano de marca'),
+    selo ? el('span', 'badge selo-plano' + selo[0], selo[1]) : null);
   if (soAcesso) {
     SO_CONSULTORIA.forEach((r) => { const li = document.querySelector('[data-route="' + r + '"]'); if (li) li.closest('li').hidden = true; });
     const g1 = document.getElementById('g1'); if (g1) g1.hidden = true;
