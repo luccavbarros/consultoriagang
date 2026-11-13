@@ -2744,7 +2744,7 @@
       const ponto = { done: 'ok', doing: 'warn', todo: 'nada', warn: 'mal' };
       out.push(el('section', { class: 'box est-cond', 'aria-labelledby': 'cond-t' },
         el('div', 'est-grupo__head', el('h2', { class: 'box__title', id: 'cond-t' }, 'O que acompanhamos'), el('span', 'est-n', String(D.condicoes.length))),
-        el('p', 'box__text', 'Se uma destas condições deixar de ser verdade, revisamos a estratégia com você.'),
+        el('p', 'box__text', 'Se uma destas condições deixar de ser verdade, revisamos\u00a0a\u00a0estratégia\u00a0com\u00a0você.'),
         el('ol', 'est-tl', D.condicoes.map((c) => {
           const [k, t] = CON[c.status] || CON.sem_dados;
           const quando = c.checar_em ? U.dia(c.checar_em) + (c.checar_em.slice(0, 4) !== hoje.slice(0, 4) ? ' ' + c.checar_em.slice(0, 4) : '') : null;
@@ -2932,7 +2932,10 @@
     const fimRef = inicioRef ? U.addRef(inicioRef, dur - 1) : null;
     const mesAgora = inicioRef ? Math.min(Math.max(mesN || 1, 1), dur) : 0;
     const fraseMeta = numero ? frase : frase.charAt(0).toUpperCase() + frase.slice(1);
-    const out = [el('section', { class: 'goal goal--kpi', 'aria-labelledby': 'goal-t' },
+    // cabeçalho da tela, no mesmo formato de Ações: onde estamos, o título e o que a tela mostra
+    const out = [head(inicioRef ? 'Mês ' + mesAgora + ' de ' + dur + ' · ' + U.cap(U.nomeMes(hoje)) + ' ' + hoje.slice(0, 4) : 'Plano de marca', 'Plano',
+      'Onde estamos e o que fazer este mês. Cada mês concluído deixa a marca mais perto da\u00a0meta.'),
+      el('section', { class: 'goal goal--kpi', 'aria-labelledby': 'goal-t' },
       el('div', 'goal__head',
         el('span', { class: 'goal__ico', 'aria-hidden': 'true' }),
         el('p', 'goal__lbl2', 'Meta do plano'),
