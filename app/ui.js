@@ -525,5 +525,8 @@
     // o menu muda de altura quando entram avisos, o consultor ou o nome: reavalia
     if (side && window.MutationObserver) new MutationObserver(ajusta).observe(side, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
   });
-  window.GangUI = { buscaFonte, addDias, moedaFmt, moedaValor, moedaSet, PROMESSAS, promessaDe, tipoEsforco, pesoTamanho, combo, comboValue, comboSet, multi, multiValue, avatar, iniciais, $, el, say, day, fmt, cap, dia, diaAno, mesAno, hora, quando, ref, refDate, addRef, nomeMes, nomeMesCurto, mesesEntre, mesDoPlano, diasAte, reais, pct };
+  // divisão marca:ativação de referência por setor (Binet & Field, Effectiveness in Context; B2B: Código de Eficácia B2B)
+  const ESFORCO_SETOR = { b2b: 45, varejo: 64, loja_online: 64, servicos: 51, saude: 51, beleza: 51, educacao: 51, alimentacao: 51, tecnologia: 62 };
+  const esforcoPadrao = (setor) => ESFORCO_SETOR[setor] || 62;
+  window.GangUI = { buscaFonte, esforcoPadrao, ESFORCO_SETOR, addDias, moedaFmt, moedaValor, moedaSet, PROMESSAS, promessaDe, tipoEsforco, pesoTamanho, combo, comboValue, comboSet, multi, multiValue, avatar, iniciais, $, el, say, day, fmt, cap, dia, diaAno, mesAno, hora, quando, ref, refDate, addRef, nomeMes, nomeMesCurto, mesesEntre, mesDoPlano, diasAte, reais, pct };
 })();

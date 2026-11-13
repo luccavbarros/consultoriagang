@@ -132,7 +132,7 @@
       { ok: doProx.length > 0 && doProx.some((a) => a.peso === 'essencial'), titulo: 'Ações de ' + U.nomeMes(px) + ' planejadas', detalhe: doProx.length ? doProx.length + (doProx.length === 1 ? ' ação' : ' ações') + (doProx.some((a) => a.peso === 'essencial') ? ', com essencial.' : ', mas nenhuma essencial.') : 'Nenhuma ação no próximo mês.', aba: 'foco', acao: 'Planejar o mês' },
       { ok: !!encontro && (encontro.pauta || []).length > 0, titulo: 'Próximo encontro marcado e com pauta', detalhe: encontro ? U.quando(encontro.inicio) + ((encontro.pauta || []).length ? ' · pauta com ' + encontro.pauta.length + ' itens.' : ' · sem pauta.') : 'Nenhum encontro marcado.', aba: 'encontros', acao: encontro ? 'Montar a pauta' : 'Marcar' },
       { ok: !pendentes.length, titulo: 'Peças em revisão respondidas', detalhe: pendentes.length ? pendentes.length + (pendentes.length === 1 ? ' peça esperando' : ' peças esperando') + (pecasAtrasadas(b).length ? ', ' + pecasAtrasadas(b).length + ' fora do prazo.' : '.') : 'Nada esperando revisão.', aba: 'pecas', acao: 'Revisar' },
-      { ok: !semResultado.length, titulo: 'Resultados lidos na data certa', detalhe: semResultado.length ? semResultado.length + (semResultado.length === 1 ? ' ação chegou na data de medir e está' : ' ações chegaram na data de medir e estão') + ' sem "Funcionou?".' : 'Nenhuma ação esperando leitura.', aba: 'acoes', acao: 'Medir agora' },
+      { ok: !semResultado.length, titulo: 'Resultados lidos na data certa', detalhe: semResultado.length ? semResultado.length + (semResultado.length === 1 ? ' ação chegou na data de medir e está' : ' ações chegaram na data de medir e estão') + ' sem resultado marcado (nas de marca, só se foi feita; o efeito sai na pesquisa do semestre).' : 'Nenhuma ação esperando leitura.', aba: 'acoes', acao: 'Medir agora' },
     ];
   }
 
@@ -144,7 +144,7 @@
     const pM = pesoDe('marca'); const pA = pesoDe('ativacao');
     const marcaPct = pM + pA ? Math.round((pM / (pM + pA)) * 100) : null;
     const nBase = acs.filter((a) => U.tipoEsforco(a) === 'base').length;
-    const planejado = b.plano ? (b.plano.esforco_marca_pct ?? 60) : 60;
+    const planejado = (b.plano && b.plano.esforco_marca_pct) ?? (window.GangUI.esforcoPadrao ? window.GangUI.esforcoPadrao(b.empresa && b.empresa.setor) : 62);
     const porPromessa = { vendas: 0, pessoas: 0, valor: 0 };
     acs.forEach((a) => { porPromessa[U.promessaDe(a)] += 1; });
     const ini = inicioRef(b); const dur = b.plano ? b.plano.duracao_meses || 18 : 18;

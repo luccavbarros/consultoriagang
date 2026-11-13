@@ -5828,3 +5828,59 @@
   liga('Ser a escolha mais conveniente', [NOVAS[6].texto]);
   liga('Ser a parceira de longo prazo', [NOVAS[7].texto]);
 })();
+
+// ===== Rodada 26: correções do cruzamento com a pasta Evidência =====
+// O crescimento vem de mais clientes (penetração), e não de fazer os atuais comprarem mais: a frequência de compra
+// segue o tamanho da marca e quase não muda com marketing. Programas e clubes atraem sobretudo quem já compra muito.
+(function () {
+  const P = window.GangPresets; if (!P) return;
+
+  // 1) foco: o texto antigo prometia aumentar a frequência de cada cliente. O novo fala em ser lembrada na próxima compra.
+  //    O texto antigo continua valendo para quem já o escolheu.
+  const FOCO_ANT = 'Fazer cada cliente comprar mais vezes e mais coisas.';
+  const FOCO_NOVO = 'Ser lembrada por quem já comprou na hora de comprar de novo.';
+  const f = (P.focos || []).find((x) => x.texto === FOCO_ANT);
+  if (f) f.texto = FOCO_NOVO;
+  if (P.modelosFoco && P.modelosFoco[FOCO_ANT] && !P.modelosFoco[FOCO_NOVO]) P.modelosFoco[FOCO_NOVO] = P.modelosFoco[FOCO_ANT];
+
+  // 2) clube e grupo de clientes: o motivo prometia fidelidade e crescimento. Agora diz o que a evidência sustenta.
+  const CLUBE = 'Criar um clube de clientes com nome, encontros e pequenos benefícios para quem já compra';
+  const GRUPO = 'Criar um grupo de clientes com um encontro marcado e espaço para eles trocarem experiências';
+  const corrige = (t, porque, metrica) => { const a = (P.acoes || []).find((x) => x.texto === t); if (a) { a.porque = porque; a.metrica = metrica; } };
+  corrige(CLUBE,
+    'Clubes e programas atraem sobretudo quem já compra muito, e o efeito na recompra costuma ser pequeno. Não trazem cliente novo. Vale como cuidado com a base depois que a marca já alcança gente nova todo mês, não como forma de crescer.',
+    'Indicações vindas do clube comparadas ao custo do clube');
+  corrige(GRUPO,
+    'Um encontro marcado dá aos clientes atuais um motivo para lembrar da marca e indicar. Atinge sobretudo quem já compra muito, então ajuda a manter a base, não a crescer.',
+    'Indicações vindas do grupo comparadas ao custo dos encontros');
+
+  // 3) nas estratégias padrão, o clube sai e entra a presença contínua da marca, que alcança também quem compra pouco
+  const CAL = 'Montar o calendário de comunicação dos próximos 6 meses';
+  ['Ter uma relação direta', 'Tornar a compra um hábito'].forEach((ini) => {
+    const ab = (P.abordagens || []).find((y) => y.texto.startsWith(ini)); if (!ab || !ab.acoes) return;
+    ab.acoes = ab.acoes.filter((t) => t !== CLUBE);
+    if (!ab.acoes.includes(CAL)) ab.acoes.push(CAL);
+  });
+
+  // 4) manifesto: a crença orienta a equipe e gera ideias; o crescimento vem da fama dessas ideias, não do texto em si
+  corrige('Publicar um manifesto curto: o que a marca defende e o que se recusa a fazer',
+    'Uma posição clara dá direção à equipe e matéria para ideias que chamam atenção. O que faz vender é a fama que essas ideias trazem, não o manifesto em si; o cliente liga menos para a causa do que a empresa imagina.',
+    'Manifesto usado para aprovar ideias e peças, e ideias publicadas a partir dele');
+
+  // 5) presente aos melhores clientes: atinge só quem já compra muito
+  corrige('Mandar um presente surpresa e personalizado para os melhores clientes, sem pedir nada em troca',
+    'O inesperado é lembrado e comentado, e pode render indicação. Mas atinge só quem já compra muito, então vale como gesto de cuidado com a base, não como forma de crescer.',
+    'Indicações vindas de quem recebeu, comparadas ao custo dos presentes');
+
+  // 6) identidade nova: manter o que os clientes já reconhecem. Trocar tudo apaga a memória da marca (a Tropicana perdeu 20% das vendas)
+  const MANTER = 'Listar o que os clientes já reconhecem na marca (cor, símbolo, formato, frase) e manter na versão nova';
+  ['Trocar a fachada / ambiente para a nova identidade', 'Atualizar redes sociais com a nova identidade'].forEach((t) => {
+    const a = (P.acoes || []).find((x) => x.texto === t);
+    if (a && Array.isArray(a.passos) && !a.passos.includes(MANTER)) a.passos.unshift(MANTER);
+  });
+
+  // 7) objetivo e veredito que mediam a frequência: a recompra acompanha o tamanho da base, então se lê junto com os clientes novos
+  const troca = (lista, ant, novo) => { const x = (P[lista] || []).find((y) => y.texto === ant); if (x) x.texto = novo; };
+  troca('objetivos', 'recompra em 12 meses, com clientes voltando mais vezes', 'clientes ativos no ano em 12 meses, puxados por clientes novos');
+  troca('vereditos', 'A recompra subiu: quem compra está voltando mais vezes.', 'A recompra subiu junto com os clientes novos: a base está crescendo.');
+})();

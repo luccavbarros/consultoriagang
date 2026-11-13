@@ -584,7 +584,7 @@ create table if not exists public.pesquisas (
   empresa_id uuid not null references public.empresas (id) on delete cascade,
   titulo text not null,
   categoria text not null,                          -- "empresa de reformas", usado na pergunta de lembrança
-  afirmacoes jsonb not null default '[]'::jsonb,    -- ["Notei a nova identidade", ...] (nota de 1 a 5)
+  afirmacoes jsonb not null default '[]'::jsonb,    -- frases que quem responde liga às marcas (grava 5 se marcou esta marca, 1 se não)
   concorrentes jsonb not null default '[]'::jsonb,  -- opções da pergunta de preferência, além da marca
   token uuid not null unique default gen_random_uuid(),
   aberta boolean not null default true,

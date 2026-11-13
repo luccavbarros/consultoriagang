@@ -1303,7 +1303,7 @@
     out.push(parte('Marca', 'A marca muda em meses, não em semanas. Medimos em pesquisas e nas buscas.'));
     let esf = null;
     if (p) {
-      const marca = p.esforco_marca_pct ?? 60;
+      const marca = p.esforco_marca_pct ?? 62;
       esf = (el('section', { class: 'box', 'aria-labelledby': 'eff-t' },
         el('h2', { class: 'box__title', id: 'eff-t' }, 'Onde vai o esforço'),
         el('div', 'esf__legend',
@@ -1906,8 +1906,8 @@
         }
         const af = atual.q.afirmacoes || [];
         if (af.length) {
-          colB.append(el('p', 'eyebrow', 'Quanto concordam (0 a 100)'),
-            el('p', 'box__note', 'Lê com cuidado: notas de frases sobem principalmente com quem já conhece e usa a marca. Para crescer, valem mais as situações de compra acima.'), el('div', 'hbars', af.map((t, i) => el('div', 'hbar',
+          colB.append(el('p', 'eyebrow', 'Quem liga cada frase à marca (%)'),
+            el('p', 'box__note', 'Lê com cuidado: essas ligações sobem principalmente com quem já conhece e usa a marca, e marcas maiores sempre têm mais. Para crescer, valem mais as situações de compra acima.'), el('div', 'hbars', af.map((t, i) => el('div', 'hbar',
             el('p', 'hbar__label', t),
             el('div', 'hbar__track', el('span', { class: 'hbar__fill', style: 'width:' + (atual.medias[i] || 0) + '%' })),
             el('p', 'hbar__value', atual.medias[i] == null ? '—' : String(atual.medias[i]),

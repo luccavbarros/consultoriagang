@@ -290,7 +290,7 @@
     sb.from('planos').select('*').eq('empresa_id', id).maybeSingle(),
     sb.from('profiles').select('id, name, email').eq('role', 'admin').eq('active', true),
   ]);
-  const p = plano || { inicio: null, duracao_meses: 18, status: 'ativo', tipo: 'consultoria', esforco_marca_pct: emp && emp.setor === 'b2b' ? 45 : 60, // B2B: perto de metade, pelos estudos de eficácia
+  const p = plano || { inicio: null, duracao_meses: 18, status: 'ativo', tipo: 'consultoria', esforco_marca_pct: U.esforcoPadrao(emp && emp.setor), // divisão marca:ativação de referência para o setor (estudos de eficácia)
     prazo_revisao_dias: 2, consultor_id: me.id };
   const SELO_P = { ativo: ['', 'Ativo'], pausado: [' is-warn', 'Pausado'], encerrado: [' is-off', 'Encerrado'] };
   const sub = () => {
@@ -336,7 +336,7 @@
       row[k] = v === '' ? null : ($(f).type === 'number' || $(f).hasAttribute('data-num') ? Number(v) : v);
     });
     row.duracao_meses = row.duracao_meses || 18;
-    row.esforco_marca_pct = row.esforco_marca_pct ?? 60;
+    row.esforco_marca_pct = row.esforco_marca_pct ?? U.esforcoPadrao(emp && emp.setor);
     row.prazo_revisao_dias = row.prazo_revisao_dias || 2;
     row.revisoes_mes = row.revisoes_mes ?? 2; row.dias_resposta = row.dias_resposta || 'terças e quintas';
     row.sem_numeros = $('p-semnum').checked;
@@ -729,7 +729,7 @@
         E.marcaPct != null ? el('div', 'equil__barra', el('p', 'equil__lbl', 'Marca e ativação, pelo tamanho das ações'), el('div', 'equil__track', el('span', { class: 'is-marca', style: 'width:' + E.marcaPct + '%' }), el('span', { class: 'is-alvo', style: 'left:' + E.planejado + '%' })), el('p', 'equil__num', E.marcaPct + '% marca · ' + (100 - E.marcaPct) + '% ativação · planejado ' + E.planejado + '%' + (E.nBase ? ' · ' + E.nBase + (E.nBase === 1 ? ' ação de base fora da conta' : ' ações de base fora da conta') : ''))) : null,
         el('div', 'equil__barra', el('p', 'equil__lbl', 'Ações por parte da promessa'), el('div', 'equil__track equil__track--3', Object.keys(PR).map((k) => el('span', { class: 'is-' + k, style: 'width:' + (tot ? Math.round(E.porPromessa[k] / tot * 100) : 0) + '%' }))),
           el('p', 'equil__num', Object.entries(PR).map(([k, t]) => t + ' ' + E.porPromessa[k]).join(' · ')))),
-      avisos.length ? el('ul', 'equil__avisos', avisos.map((t) => el('li', null, t))) : null);
+      avisos.length ? el('ul', 'equil__avisos', avisos.map((t) => el('li', null, t))) : '');
   };
 
   // filtro das ações por andamento (menu com caixas de seleção e contadores)
@@ -862,7 +862,7 @@
           a.travada ? el('span', 'chip chip--warn', 'Travada: ' + MOT[a.travada] + (a.travada_nota ? ' · “' + a.travada_nota + '”' : '')) : null,
           ps.length ? el('span', 'mtag', ps.filter((x) => x.ok).length + ' de ' + ps.length + ' passos') : null,
           a.tamanho ? el('span', 'mtag', 'Tamanho ' + a.tamanho) : null,
-          ler ? el('span', 'mtag' + (ler <= hojeISO() ? ' is-hot' : ''), (ler <= hojeISO() ? 'Medir agora' : 'Medir em ' + U.dia(ler))) : null);
+          ler ? el('span', 'mtag' + (ler <= hojeISO() ? ' is-hot' : ''), a.esforco === 'marca' ? (ler <= hojeISO() ? 'Confirmar se foi feita' : 'Confirmar em ' + U.dia(ler)) : (ler <= hojeISO() ? 'Medir agora' : 'Medir em ' + U.dia(ler))) : null);
         return el('li', { class: 'row', 'data-id': a.id },
           el('div', 'row__main', el('p', 'row__title', a.titulo), el('p', 'row__text', quem + ' · ' + prazo + mudou
             + (a.esforco ? ' · ' + (a.esforco === 'marca' ? 'marca' : 'venda') : ' · sem tipo de esforço')
@@ -956,7 +956,7 @@
       });
     }
     // equilíbrio marca × ativação pelo peso das ações (P=1, M=2, G=4), como nos estudos de eficácia; a base não entra na conta
-    const alvo = (p.esforco_marca_pct ?? 60) / 100;
+    const alvo = (p.esforco_marca_pct ?? U.esforcoPadrao(emp && emp.setor)) / 100;
     const tipoLib = (y) => y.tipo || (y.esforco === 'marca' ? 'marca' : 'ativacao');
     const pesoPlano = (t) => acoes.filter((a) => U.tipoEsforco(a) === t).reduce((s2, a) => s2 + U.pesoTamanho(a), 0)
       + novas.filter((x) => U.tipoEsforco({ titulo: x.titulo, esforco: x.esforco }) === t).reduce((s2, x) => s2 + ptsT(x.titulo), 0);
@@ -1055,6 +1055,24 @@
     });
     // o que já vinha do setor e também executa a abordagem ganha o selo
     if (ab) novas.forEach((x) => { if ((ab.acoes || []).includes(x.titulo)) x.executa = ab.curto; });
+    // acerto final do equilíbrio: se a marca passou da meta do setor (mais de 8 pontos), troca ações de marca de ajuda por ativação
+    // no mesmo mês, das mais pesadas para as mais leves. Nunca mexe na estratégia, na base, nas essenciais, nos marcos,
+    // no piso de alcance e de situação de compra, nem deixa um mês sem marca
+    const ehMarca = (y) => U.tipoEsforco({ titulo: y.titulo, tipo: y.tipo, esforco: y.esforco }) === 'marca';
+    const marcasNoMes = (mes) => acoes.filter((a) => a.mes_previsto === mes && ehMarca(a)).length + novas.filter((y) => y.mes === mes && ehMarca(y)).length;
+    const desvioMarca = () => { const m = pesoPlano('marca'); const a = pesoPlano('ativacao'); return m + a ? m / (m + a) - alvo : 0; };
+    for (let volta = 0; volta < 60 && desvioMarca() > 0.08; volta += 1) {
+      const x = novas.filter((y) => ehMarca(y) && !y.executa && !marco(y.titulo) && y.peso !== 'essencial' && faseDe(y.titulo) !== 1
+        && !ALC.test(y.titulo) && !CEP.test(y.titulo) && marcasNoMes(y.mes) > 1)
+        .sort((a, b) => ptsT(b.titulo) - ptsT(a.titulo))[0];
+      if (!x) break;
+      kMes = Math.max(0, meses.indexOf(x.mes));
+      const cabe = LIM - carga(x.mes) + ptsT(x.titulo);
+      const y = pega((z) => tipoLib(z) === 'ativacao' && (TAM[z.tam] || [, , 2])[2] <= cabe);
+      if (y) Object.assign(x, { promessa: y.promessa || null, esforco: y.esforco || null, tipo: y.tipo || undefined, titulo: y.texto, porque: y.porque || null, metrica: y.metrica || null });
+      else if (novas.filter((z) => z.mes === x.mes).length + acoes.filter((a) => a.mes_previsto === x.mes).length > 2) novas.splice(novas.indexOf(x), 1);
+      else break;
+    }
     // no máximo 2 essenciais por mês: o que passar disso vira ajuda (foco, não lista de urgências); as da estratégia têm a vez
     meses.forEach((mes) => {
       let n = acoes.filter((a) => a.mes_previsto === mes && a.peso === 'essencial').length;
@@ -1081,14 +1099,14 @@
     // o plano já cobre todos os meses com este modelo: não há o que mostrar (e nada a montar)
     if (!plano.length) return $('mod-list').replaceChildren(el('li', 'lib__item', el('p', 'row__text', 'O plano já cobre todos os meses com este modelo. Para mudar um mês, use o Planejar o mês.')));
     const meses = [...new Set(plano.map((x) => x.mes))];
-    $('mod-list').replaceChildren(notaEstrategia(E, plano),
+    $('mod-list').replaceChildren(...[notaEstrategia(E, plano),
       plano.semEspaco ? el('li', 'lib__item mod__estr is-falta', el('p', 'row__text', plano.semEspaco + (plano.semEspaco === 1 ? ' ação do modelo ficou' : ' ações do modelo ficaram') + ' de fora para nenhum mês passar de 5 ações. Com pouco tempo de plano, entram primeiro a estratégia, os marcos e o que tem mais evidência.')) : null,
       el('li', 'lib__item mod__resumo', el('p', 'row__text', plano.length + ' ações em ' + meses.length + ' meses, de ' + U.nomeMes(meses[0]) + ' de ' + meses[0].slice(0, 4) + ' a ' + U.nomeMes(meses[meses.length - 1]) + ' de ' + meses[meses.length - 1].slice(0, 4) + '. Nenhum mês fica vazio; ajuste mês a mês no Planejar o mês, conforme os resultados.')),
       ...meses.map((mm) => el('li', 'lib__item mod__mes',
         el('div', 'lib__main', el('p', 'row__eyebrow', U.cap(U.nomeMes(mm)) + ' ' + mm.slice(0, 4)),
           el('ul', 'mod__acs', plano.filter((x) => x.mes === mm).map((x) => el('li', null,
             el('span', 'mod__peso' + (x.peso === 'essencial' ? ' is-ess' : ''), x.peso === 'essencial' ? 'Essencial' : 'Ajuda'),
-            el('span', null, x.titulo.split(':')[0], x.executa ? el('span', 'mod__exec', 'Estratégia') : null), el('span', 'mod__esf', x.esforco === 'marca' ? 'marca' : 'venda'))))))));
+            el('span', null, x.titulo.split(':')[0], x.executa ? el('span', 'mod__exec', 'Estratégia') : null), el('span', 'mod__esf', x.esforco === 'marca' ? 'marca' : 'venda')))))))].filter(Boolean));
   };
   $('mod-setor').addEventListener('change', desenhaModelo);
   $('acoes-modelo').addEventListener('toggle', desenhaModelo);

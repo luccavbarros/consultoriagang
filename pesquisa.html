@@ -88,7 +88,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script src="app/config.js"></script>
   <script src="app/auth.js?v=2"></script>
-  <script src="app/ui.js?v=31"></script>
+  <script src="app/ui.js?v=32"></script>
   <script>
     /* Pesquisa de marca pública: quem responde são os clientes do cliente, sem login.
        O banco só entrega a pesquisa se ela estiver aberta e só aceita respostas válidas (supabase/portal.sql). */
@@ -110,10 +110,11 @@
       const perg = (txt, tag, attrs) => el(tag || 'legend', { class: 'sv-q', ...(attrs || {}) }, el('span', 'sv-q__n', String(++nq)), el('span', null, txt));
       // ativos sem imagem e sem texto não têm o que mostrar: ficam de fora
       const ATV = (P.ativos || []).filter((a) => a.imagem_url || (a.texto && a.texto.trim()));
+      // frases: a pessoa marca as empresas que combinam com cada frase (escolha livre, e não nota de concordância).
+      // Grava 5 se marcou a marca e 1 se não marcou: a média vira a % de quem liga a frase à marca, comparável com os concorrentes.
       const escala = (i, frase) => el('fieldset', 'survey__q',
-        perg(frase),
-        el('div', 'scale', [1, 2, 3, 4, 5].map((n) => el('label', null, el('input', { type: 'radio', name: 'a' + i, value: n, 'aria-label': n + ' de 5' }), String(n)))),
-        el('div', 'scale__ends', el('span', null, 'Discordo'), el('span', null, 'Concordo totalmente')));
+        perg(el('span', 'sv-sit', el('span', 'sv-sit__rot', 'Quais destas empresas combinam com a frase'), el('span', 'sv-sit__t', '“' + frase + '”'))),
+        el('div', 'chips', [...(P.opcoes || []), 'Nenhuma'].map((o) => el('label', o === 'Nenhuma' ? 'is-nenhuma' : null, el('input', { type: 'checkbox', name: 'a' + i, value: o }), o))));
 
       // lembrança espontânea: um nome por campo; quando a pessoa começa a escrever, aparece outro campo embaixo (até 6)
       const lembra = el('div', 'sv-lembra');
@@ -186,7 +187,7 @@
         if (t.name === 'rec') { ultimaQ.hidden = t.value === 'nunca'; if (ultimaQ.hidden) ultimaQ.querySelectorAll('input').forEach((x) => { x.checked = false; }); }
         if (t.name === 'ult') { outraUlt.hidden = t.value !== 'Outra'; if (!outraUlt.hidden) outraUlt.focus(); }
         if (t.name === 'pref') { outraPref.hidden = t.value !== 'Outra'; if (!outraPref.hidden) outraPref.focus(); }
-        if (/^c\d+$/.test(t.name) && t.checked) {
+        if (/^[ca]\d+$/.test(t.name) && t.checked) {
           const grupoC = form.querySelectorAll('input[name=' + t.name + ']');
           grupoC.forEach((x) => { if (t.value === 'Nenhuma' ? x !== t : x.value === 'Nenhuma') x.checked = false; });
         }
@@ -197,12 +198,12 @@
         ev.preventDefault();
         const prefIn = form.querySelector('input[name=pref]:checked');
         const pref = prefIn && prefIn.value === 'Outra' && outraPref.value.trim() ? { value: 'Outra: ' + outraPref.value.trim() } : prefIn;
-        const notas = (P.afirmacoes || []).map((_, i) => { const r = form.querySelector('input[name=a' + i + ']:checked'); return r ? Number(r.value) : null; });
+        const notas = (P.afirmacoes || []).map((_, i) => { const m = [...form.querySelectorAll('input[name=a' + i + ']:checked')].map((x) => x.value); return m.length ? (m.includes(P.marca) ? 5 : 1) : null; });
         const rec = form.querySelector('input[name=rec]:checked');
         if (!rec) return say(msg, 'Responda quando foi a última vez que comprou ou contratou.', 'error');
         const ultIn = form.querySelector('input[name=ult]:checked');
         const ult = !ultIn ? null : ultIn.value === 'Outra' ? (outraUlt.value.trim() ? 'Outra: ' + outraUlt.value.trim() : 'Outra') : ultIn.value;
-        if (!pref || notas.some((n) => n == null)) return say(msg, 'Responda a escolha e todas as frases de 1 a 5.', 'error');
+        if (!pref || notas.some((n) => n == null)) return say(msg, 'Responda a escolha e marque uma opção em cada frase (pode ser "Nenhuma").', 'error');
         const frase = form.querySelector('input[name=frase]:checked');
         if ((P.frases || []).length && !frase) return say(msg, 'Escolha a frase que melhor descreve a empresa.', 'error');
         const ceps = Object.fromEntries((P.situacoes || []).map((sit, i) => [sit.id, [...form.querySelectorAll('input[name=c' + i + ']:checked')].map((x) => x.value)]));
