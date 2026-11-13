@@ -154,6 +154,14 @@
         el('a', { class: 'btn btn--ghost btn--sm', href: '#' + x.aba, onclick: () => destacaAlvo(alvoDoSinal(x)) }, 'Abrir')))))] : []));
   };
   // resumo do cliente no topo: mês do plano, fechamento, promessa e próximo encontro
+  // placar do compromisso da semana que o cliente assume no portal (some se ele ainda não usou)
+  const placarComp = (B) => {
+    const cp = G.compromissos ? G.compromissos(B) : null; if (!cp || !cp.com) return null;
+    const ROT = { ok: 'cumprido', nao: 'não cumprido', sem: 'sem resposta', vazio: 'sem compromisso' };
+    return el('span', 'ktile__sub comp__placar', el('span', { class: 'comp__sem', role: 'img', 'aria-label': cp.feitas + ' de ' + cp.com + ' compromissos cumpridos' },
+      cp.semanas.map((x) => el('span', { class: 'comp__d comp__d--' + x.estado, title: 'Semana de ' + U.dia(x.semana) + ': ' + ROT[x.estado] }))),
+      el('span', 'comp__n', 'Compromissos ' + cp.feitas + ' de ' + cp.com));
+  };
   const desenhaRaiox = (B, feitos) => {
     const p = B.plano; const dur = p.duracao_meses || 18; const m = U.mesDoPlano(p);
     const barra = (pct, cls) => el('span', 'kbar' + (cls ? ' ' + cls : ''), el('span', { style: 'width:' + Math.max(3, Math.min(100, pct)) + '%' }));
@@ -162,7 +170,7 @@
       el('b', null, v == null ? '—' : (v > 0 ? '+' : '') + String(v).replace('.', ',') + '%'), ' ' + rot);
     const prox = B.encontros.find((e) => e.inicio > new Date().toISOString() && e.status === 'agendado');
     $('raiox').replaceChildren(
-      el('a', { class: 'ktile ktile--a', href: '#plano' }, el('span', 'ktile__lbl', 'Mês do plano'), el('span', 'ktile__num', String(m), el('small', null, ' de ' + dur)), barra(m / dur * 100)),
+      el('a', { class: 'ktile ktile--a', href: '#plano' }, el('span', 'ktile__lbl', 'Mês do plano'), el('span', 'ktile__num', String(m), el('small', null, ' de ' + dur)), barra(m / dur * 100), placarComp(B)),
       el('a', { class: 'ktile ktile--b', href: '#fechamento' }, el('span', 'ktile__lbl', 'Fechamento do mês'), el('span', 'ktile__num', String(feitos), el('small', null, ' de 6')), barra(feitos / 6 * 100, feitos === 6 ? 'is-ok' : '')),
       el('a', { class: 'ktile ktile--c', href: '#resultados' }, el('span', 'ktile__lbl', 'Promessa desde o início'), el('span', 'ktile__deltas', delta('vendas', pr.vendas), delta('pessoas', pr.pessoas), delta('valor', pr.valor))),
       el('a', { class: 'ktile ktile--d', href: '#encontros' }, el('span', 'ktile__lbl', 'Próximo encontro'), el('span', 'ktile__num ktile__num--txt', prox ? U.quando(prox.inicio) : 'Nenhum marcado'), el('span', 'ktile__sub', prox ? ({ mensal: 'Revisão mensal', semestral: 'Revisão semestral', anual: 'Revisão anual', entrega: 'Entrega' }[prox.tipo] || 'Encontro') + ' · ' + prox.duracao_min + ' min' : 'Marque em Encontros')));

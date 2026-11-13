@@ -23,6 +23,9 @@
       f('sugestoes', 'id, empresa_id, texto, tipo, acao_id, criada_em').eq('status', 'nova'),
     ]);
     if (rs.some((r) => r.error)) return null;
+    // compromissos da semana: opcional (se a tabela ainda não existir no banco, o resto continua funcionando)
+    const rc = await f('compromissos', 'id, empresa_id, semana, texto, cumprido, acao_id').gte('semana', U.addDias(new Date().toISOString().slice(0, 10), -70));
+    const comps = (!rc.error && rc.data) || [];
     const [planos, acoes, numeros, oris, pesqs, resps, peds, encs, msgs, causas, objs, perfis, sugs] = rs.map((r) => r.data || []);
     const por = (arr, eid) => arr.filter((x) => x.empresa_id === eid);
     const ids = empresaId ? [empresaId] : [...new Set(planos.map((p) => p.empresa_id))];
@@ -32,7 +35,7 @@
         plano: planos.find((p) => p.empresa_id === eid) || null,
         acoes: por(acoes, eid), numeros: por(numeros, eid), orientacoes: por(oris, eid), pesquisas: por(pesqs, eid),
         respostas: por(resps, eid), pedidos: por(peds, eid), encontros: por(encs, eid), mensagens: por(msgs, eid),
-        causas: por(causas, eid), objetivos: por(objs, eid), clientes: por(perfis, eid).map((x) => x.id), sugestoes: por(sugs, eid),
+        causas: por(causas, eid), objetivos: por(objs, eid), clientes: por(perfis, eid).map((x) => x.id), sugestoes: por(sugs, eid), compromissos: por(comps, eid),
       };
     });
     return empresaId ? out[empresaId] : out;
@@ -156,6 +159,19 @@
     };
   }
 
+  // ===== compromisso da semana: placar das últimas semanas (as 8 anteriores à atual) =====
+  const segundaDe = (iso) => { const x = new Date(iso + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() - ((x.getUTCDay() + 6) % 7)); return x.toISOString().slice(0, 10); };
+  function compromissos(b) {
+    const atual = segundaDe(new Date().toISOString().slice(0, 10));
+    const cs = b.compromissos || [];
+    const semanas = Array.from({ length: 8 }, (_, i) => U.addDias(atual, -7 * (8 - i)));
+    const estado = (sem) => { const c = cs.find((x) => x.semana === sem); return !c ? 'vazio' : c.cumprido === true ? 'ok' : c.cumprido === false ? 'nao' : 'sem'; };
+    const com = semanas.filter((x) => estado(x) !== 'vazio');
+    return { semanas: semanas.map((s) => ({ semana: s, estado: estado(s) })), feitas: semanas.filter((x) => estado(x) === 'ok').length, com: com.length,
+      atual: cs.find((c) => c.semana === atual) || null,
+      naoCumpridos: cs.filter((c) => c.cumprido === false && c.semana >= U.addDias(atual, -28)).sort((x, y) => (x.semana < y.semana ? 1 : -1)) };
+  }
+
   // ===== pauta sugerida do encontro, a partir dos dados =====
   function pautaSugerida(b) {
     const itens = [];
@@ -176,6 +192,10 @@
     // o que o cliente trouxe para o encontro
     const MOT = { tempo: 'sem tempo', verba: 'sem verba', duvida: 'com dúvida', outro: 'outro motivo' };
     b.acoes.filter((a) => a.travada && a.status !== 'feita').forEach((a) => itens.push('Travada (' + MOT[a.travada] + '): ' + a.titulo));
+    // a cadência da execução: prestar contas dos compromissos da semana
+    const cp = compromissos(b);
+    if (cp.com) itens.push('Compromissos da semana: ' + cp.feitas + ' de ' + cp.com + ' cumpridos nas últimas semanas' + (cp.naoCumpridos.length ? '; o que travou em: ' + cp.naoCumpridos.slice(0, 2).map((c) => c.texto.slice(0, 80)).join('; ') : ''));
+    else if (ativo(b)) itens.push('Combinar o compromisso da semana no portal: uma coisa só, até sexta');
     (b.sugestoes || []).filter((x) => x.tipo === 'duvida').forEach((x) => itens.push('Dúvida do cliente: ' + x.texto.slice(0, 140)));
     const ideias = (b.sugestoes || []).filter((x) => x.tipo !== 'duvida');
     if (ideias.length) itens.push((ideias.length === 1 ? 'Ideia do cliente: ' : ideias.length + ' ideias do cliente: ') + ideias.slice(0, 2).map((x) => x.texto.split('\n')[0].slice(0, 80)).join('; '));
@@ -218,5 +238,5 @@
     return n;
   }
 
-  window.GangSaude = { promessa, carregar, repor, sinais, gravidade, fechamento, equilibrio, pautaSugerida, pesquisaPrevista, MESES_PESQUISA, PROM };
+  window.GangSaude = { promessa, carregar, compromissos, repor, sinais, gravidade, fechamento, equilibrio, pautaSugerida, pesquisaPrevista, MESES_PESQUISA, PROM };
 })();

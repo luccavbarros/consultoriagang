@@ -2057,3 +2057,28 @@ td.clients__empty { color: var(--ganggrey); font-size: var(--t-ui); }
 /* Ações: "Montar o plano" e "Biblioteca" empilhados; cada um abre para baixo, no próprio lugar, sem empurrar o outro para o lado */
 .lib-pilha { display: grid; gap: 12px; }
 .lib-pilha > .lib { min-width: 0; }
+
+/* Portal: compromisso da semana — presta contas da semana passada, assume a desta, placar das últimas semanas */
+.comp .box__head { align-items: center; }
+.comp__corpo { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px 28px; margin-top: 10px; }
+.comp__corpo > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.comp__txt { font-size: 15px; line-height: 1.45; color: #fff; }
+.comp__btns { display: flex; align-items: center; gap: 8px 14px; flex-wrap: wrap; margin-top: 4px; }
+.comp__conta { padding-left: 12px; border-left: 2px solid var(--warn); }
+.comp__ops { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.comp__op { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 1px; max-width: 100%; padding: 6px 10px; border-radius: 10px; border: 0;
+  background: rgba(255, 255, 255, .06); box-shadow: inset 0 0 0 1px var(--line-2); color: #e6e6e6; font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
+.comp__op:hover { background: rgba(255, 255, 255, .1); }
+.comp__op.is-on { background: var(--primary); color: var(--on-primary); box-shadow: none; }
+.comp__op-s { font-size: 11px; opacity: .65; }
+.comp__linha { display: flex; gap: 8px 12px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+.comp__linha .field { flex: 1 1 200px; min-width: 0; }
+.comp__placar { display: flex; align-items: center; gap: 10px; }
+.comp__sem { display: flex; gap: 4px; list-style: none; margin: 0; padding: 0; }
+.comp__d { width: 10px; height: 10px; border-radius: 50%; background: transparent; box-shadow: inset 0 0 0 1px var(--line-2); }
+.comp__d--ok { background: var(--ok); box-shadow: none; }
+.comp__d--nao { background: var(--bad); box-shadow: none; }
+.comp__d--sem { box-shadow: inset 0 0 0 1px var(--ganggrey, #777); }
+.comp__n { font-size: 12px; color: var(--ganggrey, #9a9a9a); }
+.ktile .comp__placar { flex-wrap: wrap; gap: 6px 10px; }
+.comp__n { white-space: nowrap; }

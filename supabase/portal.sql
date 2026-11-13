@@ -1224,3 +1224,59 @@ alter table public.acoes add column if not exists executa text;
 -- tipo de esforço da ação: marca (comunicação de longo prazo), ativação (comunicação de curto prazo) ou base (proposta, preço,
 -- atendimento, processo e medição, que ficam fora da conta marca × ativação)
 alter table public.acoes add column if not exists tipo text check (tipo in ('marca', 'ativacao', 'base'));
+
+-- ===================== Compromisso da semana =====================
+-- toda semana o cliente assume uma coisa só que move o plano, e na semana seguinte diz se cumpriu.
+-- O placar das semanas fica à vista dele e do consultor (a cadência de prestação de contas da execução).
+create table if not exists public.compromissos (
+  id uuid primary key default gen_random_uuid(),
+  empresa_id uuid not null references public.empresas (id) on delete cascade,
+  semana date not null,                       -- a segunda-feira da semana
+  acao_id uuid references public.acoes (id) on delete set null,
+  texto text not null check (length(texto) between 1 and 300),
+  cumprido boolean,                           -- null: ainda não respondeu
+  autor_id uuid references public.profiles (id) on delete set null,
+  criado_em timestamptz not null default now(),
+  avaliado_em timestamptz,
+  unique (empresa_id, semana)
+);
+alter table public.compromissos enable row level security;
+drop policy if exists "ler da propria empresa" on public.compromissos;
+create policy "ler da propria empresa" on public.compromissos for select using (public.pode_ver(empresa_id));
+drop policy if exists "admin escreve" on public.compromissos;
+create policy "admin escreve" on public.compromissos for all using (public.is_admin()) with check (public.is_admin());
+
+-- assume (ou troca) o compromisso desta semana
+create or replace function public.portal_compromisso(p_texto text, p_acao uuid default null)
+returns void
+language plpgsql security definer set search_path = public
+as $$
+declare e uuid := public.minha_empresa(); s date := date_trunc('week', current_date)::date; t text := left(trim(coalesce(p_texto, '')), 300);
+begin
+  if e is null then raise exception 'Sem permissão.'; end if;
+  if p_acao is not null and not exists (select 1 from public.acoes a where a.id = p_acao and a.empresa_id = e) then raise exception 'Ação não encontrada.'; end if;
+  if length(t) = 0 then raise exception 'Escreva o compromisso.'; end if;
+  insert into public.compromissos (empresa_id, semana, acao_id, texto, autor_id)
+  values (e, s, p_acao, t, auth.uid())
+  on conflict (empresa_id, semana) do update set acao_id = excluded.acao_id, texto = excluded.texto, autor_id = excluded.autor_id,
+    cumprido = null, avaliado_em = null, criado_em = now();
+end;
+$$;
+revoke all on function public.portal_compromisso(text, uuid) from public, anon;
+grant execute on function public.portal_compromisso(text, uuid) to authenticated;
+
+-- diz se cumpriu (vale para a semana atual ou as anteriores)
+create or replace function public.portal_compromisso_cumprido(p_id uuid, p_cumprido boolean)
+returns void
+language plpgsql security definer set search_path = public
+as $$
+declare e uuid := public.minha_empresa();
+begin
+  if e is null then raise exception 'Sem permissão.'; end if;
+  update public.compromissos set cumprido = p_cumprido, avaliado_em = case when p_cumprido is null then null else now() end
+   where id = p_id and empresa_id = e;
+  if not found then raise exception 'Compromisso não encontrado.'; end if;
+end;
+$$;
+revoke all on function public.portal_compromisso_cumprido(uuid, boolean) from public, anon;
+grant execute on function public.portal_compromisso_cumprido(uuid, boolean) to authenticated;

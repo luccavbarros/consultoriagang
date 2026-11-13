@@ -110,16 +110,18 @@
     ...MARCA.map((t) => sb.from(t).select('*').order('ordem')),
   ]);
   D.plataforma = plat.data; D.identidade = ident.data;
-  const [msgs, pesqs, resps, busc, voz, disp] = await Promise.all([
+  const [msgs, pesqs, resps, busc, voz, disp, comp] = await Promise.all([
     sb.from('mensagens').select('*').order('criada_em'),
     sb.from('pesquisas').select('*').order('criada_em'),
     sb.from('respostas').select('*'),
     sb.from('buscas').select('*').order('mes_ref'),
     sb.from('vozes').select('*').order('criada_em', { ascending: false }),
     sb.from('disponibilidade').select('*').order('mes_ref', { ascending: false }),
+    sb.from('compromissos').select('*').order('semana', { ascending: false }).limit(12),
   ]);
   D.mensagens = msgs.data || []; D.pesquisas = pesqs.data || []; D.respostas = resps.data || [];
   D.buscas = busc.data || []; D.vozes = voz.data || []; D.disponibilidade = disp.data || [];
+  D.compromissos = (comp && !comp.error && comp.data) || [];
   // histórico dos vereditos do consultor (para mostrar a evolução)
   D.vereditos = ((await sb.from('orientacoes').select('mes_ref, veredito').not('veredito', 'is', null).order('mes_ref', { ascending: false }).limit(12)).data || []).filter((v) => v.veredito);
   const condicaoQuebrada = () => (D.condicoes || []).filter((c) => c.status === 'nao_se_confirma');
@@ -260,6 +262,92 @@
   };
 
   // ===== Início =====
+  // ===== compromisso da semana =====
+  // uma coisa só por semana, que dá para terminar até sexta e faz o plano andar; na semana seguinte, o cliente diz se cumpriu.
+  // Primeiro presta contas da semana que passou, depois assume a nova; o placar das últimas semanas fica à vista.
+  const segundaDe = (iso) => { const x = new Date(iso + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() - ((x.getUTCDay() + 6) % 7)); return x.toISOString().slice(0, 10); };
+  const semAtual = segundaDe(new Date().toISOString().slice(0, 10)); // a mesma conta do banco (current_date em UTC)
+  let compTroca = false; let compAcao = null;
+  const recarregaComp = async () => {
+    const r = await sb.from('compromissos').select('*').order('semana', { ascending: false }).limit(12);
+    if (!r.error) D.compromissos = r.data || [];
+    render();
+  };
+  const proximoPasso = (a) => (a.passos || []).find((x) => !x.ok);
+  const compromissoSemana = () => {
+    if (!D.plano) return null;
+    const cs = D.compromissos || [];
+    const atual = cs.find((c) => c.semana === semAtual);
+    const aResponder = cs.find((c) => c.semana < semAtual && c.semana >= U.addDias(semAtual, -14) && c.cumprido == null);
+    const responde = async (c, v) => {
+      const { error } = await sb.rpc('portal_compromisso_cumprido', { p_id: c.id, p_cumprido: v });
+      if (error) return anuncia('Não foi possível salvar. Tente de novo.');
+      anuncia(v ? 'Anotado: cumprido.' : 'Anotado. Leve para o encontro o que travou.');
+      recarregaComp();
+    };
+    const sim = (c, rot) => el('button', { class: 'btn btn--light btn--sm', type: 'button', onclick: () => responde(c, true) }, rot || 'Cumpri');
+    const nao = (c) => el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => responde(c, false) }, 'Não deu');
+
+    // placar: as 8 semanas anteriores (e a atual, se já foi cumprida)
+    const semanas = Array.from({ length: 8 }, (_, i) => U.addDias(semAtual, -7 * (8 - i)));
+    if (atual && atual.cumprido === true) semanas.push(semAtual);
+    const estado = (sem) => { const c = cs.find((x) => x.semana === sem); return !c ? 'vazio' : c.cumprido === true ? 'ok' : c.cumprido === false ? 'nao' : 'sem'; };
+    const comComp = semanas.filter((x) => estado(x) !== 'vazio');
+    const cumpridas = semanas.filter((x) => estado(x) === 'ok').length;
+    const ROT = { ok: 'cumprido', nao: 'não cumprido', sem: 'sem resposta', vazio: 'sem compromisso' };
+    const placar = comComp.length ? el('div', 'comp__placar',
+      el('ol', { class: 'comp__sem', 'aria-label': 'Últimas semanas' }, semanas.map((x) => el('li', { class: 'comp__d comp__d--' + estado(x), title: 'Semana de ' + U.dia(x) + ': ' + ROT[estado(x)] }, el('span', 'sr-only', 'Semana de ' + U.dia(x) + ': ' + ROT[estado(x)])))),
+      el('p', 'comp__n', cumpridas + ' de ' + comComp.length + (comComp.length === 1 ? ' semana cumprida' : ' semanas cumpridas'))) : null;
+
+    const corpo = [];
+    if (aResponder) {
+      corpo.push(el('div', 'comp__conta',
+        el('p', 'eyebrow', 'Semana de ' + U.dia(aResponder.semana)),
+        el('p', 'comp__txt', aResponder.texto),
+        el('p', 'box__note', 'Você cumpriu o que assumiu?'),
+        el('div', 'comp__btns', sim(aResponder), nao(aResponder))));
+    }
+    if (atual && !compTroca) {
+      const acao = atual.acao_id && D.acoes.find((a) => a.id === atual.acao_id);
+      corpo.push(el('div', 'comp__agora',
+        el('p', 'eyebrow', 'Esta semana'),
+        el('p', 'comp__txt', atual.texto),
+        acao && acao.titulo !== atual.texto ? el('p', 'box__note', 'Da ação: ' + acao.titulo) : null,
+        atual.cumprido === true
+          ? el('div', 'comp__btns', chip('done', 'Cumprido'))
+          : el('div', 'comp__btns', sim(atual, 'Já cumpri'),
+            el('button', { class: 'link', type: 'button', onclick: () => { compTroca = true; compAcao = atual.acao_id; render(); } }, 'Trocar'))));
+    } else {
+      const opcoes = pendentesDoMes().slice(0, 4);
+      const txt = el('input', { class: 'field', type: 'text', maxlength: 300, placeholder: 'O que você termina até sexta?', 'aria-label': 'Compromisso desta semana', value: atual && compTroca && !atual.acao_id ? atual.texto : '' });
+      const assumir = async () => {
+        const a = compAcao && D.acoes.find((x) => x.id === compAcao);
+        const livre = txt.value.trim();
+        const texto = livre || (a ? ((proximoPasso(a) || {}).t || a.titulo) : '');
+        if (!texto) { txt.focus(); return anuncia('Escolha uma ação ou escreva o compromisso.'); }
+        const { error } = await sb.rpc('portal_compromisso', { p_texto: texto, p_acao: livre && !a ? null : (a ? a.id : null) });
+        if (error) return anuncia(error.message || 'Não foi possível salvar.');
+        compTroca = false; compAcao = null; anuncia('Compromisso da semana assumido.');
+        recarregaComp();
+      };
+      corpo.push(el('div', 'comp__novo',
+        el('p', 'eyebrow', 'Esta semana'),
+        el('p', 'box__note', 'Uma coisa só, que dá para terminar até sexta e faz o plano andar.'),
+        opcoes.length ? el('div', { class: 'comp__ops', role: 'group', 'aria-label': 'Ações deste mês' }, opcoes.map((a) => {
+          const pp = proximoPasso(a);
+          return el('button', { class: 'comp__op' + (compAcao === a.id ? ' is-on' : ''), type: 'button', 'aria-pressed': String(compAcao === a.id),
+            onclick: () => { compAcao = compAcao === a.id ? null : a.id; txt.value = ''; render(); } },
+            el('span', 'comp__op-t', pp ? pp.t : a.titulo), pp ? el('span', 'comp__op-s', a.titulo) : null);
+        })) : null,
+        el('div', 'comp__linha', txt,
+          el('button', { class: 'btn btn--light btn--sm', type: 'button', onclick: assumir }, 'Assumir'),
+          compTroca ? el('button', { class: 'link', type: 'button', onclick: () => { compTroca = false; compAcao = null; render(); } }, 'Cancelar') : null)));
+    }
+    return el('section', { class: 'box comp', 'aria-labelledby': 'comp-t' },
+      el('div', 'box__head', el('h2', { class: 'box__title', id: 'comp-t' }, 'Compromisso da semana'), placar),
+      el('div', 'comp__corpo', corpo));
+  };
+
   const telaInicio = () => {
     if (soAcesso) return telaInicioAcesso();
     const primeiro = (me.name || '').split(' ')[0];
@@ -2858,6 +2946,7 @@
 
     // as missões do mês (os números entram como uma missão, sem aviso à parte)
     out.push(missoes());
+    { const comp = compromissoSemana(); if (comp) out.push(comp); } // a semana dentro do mês: uma coisa só até sexta
     if (false) {
       out.push(el('div', 'nudge',
         el('p', 'nudge__t', el('strong', null, 'Faltam os números de ' + U.nomeMes(mesPassado) + '.'), ' Leva 2 minutos e é o que mostra se o plano está funcionando.'),

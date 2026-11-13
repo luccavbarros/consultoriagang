@@ -398,7 +398,8 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       { k: 'estrategia_pdf', label: 'Plano completo (PDF)', type: 'file', accept: 'application/pdf' }] }],
     [testeEstrategia, {}],
     [lista, { icone: 'alvo', tom: 'gang', titulo: 'Objetivos', nota: 'Negócio (com o número em destaque), Marca e Comunicação (notar, acreditar, sentir). As ações se ligam a eles.', tabela: 'objetivos', fields: [
-      { k: 'titulo', label: 'Objetivo', full: true, type: 'preset', presets: 'objetivos', fill: { nivel: 'nivel' } },
+      { k: 'titulo', label: 'Objetivo', full: true, type: 'preset', presets: 'objetivos', fill: { nivel: 'nivel' }, dicaId: 'objetivo',
+        dica: 'No objetivo de negócio, diga de onde para onde e até quando (ex.: faturamento de R$ 80 mil para R$ 110 mil por mês até dezembro de 2027). Uma meta sem linha de chegada não orienta a equipe.' },
       { k: 'nivel', label: 'Nível', type: 'select', options: NIV }, { k: 'destaque', label: 'Número em destaque (negócio)', type: 'preset', presets: 'destaques' },
       { k: 'notar', label: 'Notar (comunicação)', type: 'preset', presets: 'notar' }, { k: 'acreditar', label: 'Acreditar (comunicação)', type: 'preset', presets: 'acreditar' }, { k: 'sentir', label: 'Sentir (comunicação)', type: 'preset', presets: 'sentir' }],
     resumo: (r) => [NIV_T[r.nivel] + ': ' + (r.destaque ? r.destaque + ' ' : '') + (r.titulo || ''), r.nivel === 'comunicacao' ? ['Notar ' + (r.notar || '—'), 'acreditar ' + (r.acreditar || '—'), 'sentir ' + (r.sentir || '—')].join(' · ') : null] }],
