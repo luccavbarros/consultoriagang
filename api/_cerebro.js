@@ -6529,3 +6529,90 @@
     ].forEach(([t, ds]) => { if (!P.causas.some((c) => c.texto === t)) P.causas.push({ grupo: G, texto: t, desafios: ds.map(D).filter(Boolean) }); });
   }
 })();
+
+// ===== Rodada 41: experimentação x recompra, quem conhece e não compra, satisfação bem medida e força da marca por região =====
+// Fonte: livro acadêmico de métricas de marca ao longo da jornada do cliente (2022). Matriz experimentação x recompra: muita
+// experimentação e pouca recompra = produto/entrega; pouca experimentação e muita recompra = comunicação e disponibilidade.
+// Taxa de ativação: parte de quem conhece a marca que compra; barreiras: opiniões negativas ouvidas, medo do pós-venda, já ter favorita.
+// Satisfação: questionário deixado no balcão atrai sobretudo insatisfeitos (autosseleção); sortear quem responde; 3,2 numa escala de 5 é
+// cliente educado, não satisfeito; mesma média pode esconder 25% totalmente insatisfeitos; índice ponderado pela importância previu
+// melhor o desempenho futuro que a recomendação isolada (estudo publicado). Vendas por habitante da marca x da categoria por região.
+// Diferença de compras entre seguidores e não seguidores foi atribuída por engano às redes sociais. Pesquisa de atitude ampla quando
+// os números de comportamento vão bem tem pouco valor e pode confundir. Penetração alta veio com apego mais fraco quando a marca largou
+// benefícios de nicho para alcançar mais gente (estudo publicado). Vendas que crescem num mercado que cresce mais rápido = marca mais fraca.
+// Conhecimento auxiliado abaixo de 20% = marca desconhecida.
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'Cruzar quantas pessoas experimentaram a marca com quantas voltaram a comprar, para saber se o problema está na divulgação ou na entrega', esforco: 'marca', promessa: 'vendas', tema: 'medicao', tipo: 'base', tam: 'P', ler: 90,
+      porque: 'Os dois números juntos dizem onde agir. Muita gente experimenta e pouca volta: divulgação e acesso funcionam, mas o produto ou o atendimento não convence. Pouca gente experimenta e quase todos voltam: a entrega é boa, mas faltam alcance e facilidade de compra. Os dois baixos: os dois lados falham. Olhar só um deles leva a mexer na coisa errada.',
+      metrica: 'Clientes novos do período e parte deles que comprou de novo, lidos juntos a cada trimestre', passos: ['Contar os clientes que compraram pela primeira vez no período', 'Contar quantos deles compraram de novo no período seguinte', 'Comparar com o ciclo normal de recompra do setor', 'Se muitos chegam e poucos voltam, olhar o produto e o primeiro atendimento', 'Se poucos chegam e quase todos voltam, reforçar divulgação e facilidade de compra'] },
+    { texto: 'Perguntar a quem conhece a marca e ainda não compra por que não compra', esforco: 'marca', promessa: 'vendas', tema: 'medicao', tipo: 'base', tam: 'P', ler: 90,
+      porque: 'Conhecer não basta: parte de quem conhece a marca nunca vira cliente. Os motivos costumam ser opiniões negativas que ouviu, medo de ficar sem suporte depois da compra, já ter uma marca favorita ou não saber onde comprar. Cada motivo pede uma resposta diferente, e só perguntando dá para saber qual pesa mais.',
+      metrica: 'Parte de quem conhece a marca que já comprou, e o principal motivo de quem não comprou', passos: ['Na próxima pesquisa ou conversa, separar quem conhece a marca e nunca comprou', 'Perguntar o que impediu: preço, opinião que ouviu, medo do pós-venda, já ter outra preferida, não saber onde comprar', 'Contar as respostas e ver qual motivo aparece mais', 'Agir no motivo principal (provas, garantia, presença onde compram)', 'Repetir a pergunta depois de alguns meses'] },
+    { texto: 'Na pesquisa de satisfação, sortear quem responde e contar a parte de notas máximas, não só a média', esforco: 'marca', promessa: 'valor', tema: 'experiencia', tipo: 'base', tam: 'P', ler: 90,
+      porque: 'Questionário deixado no balcão atrai sobretudo quem está insatisfeito, e a média esconde muito: 3,2 numa escala de 5 é um cliente educado, não satisfeito, e duas marcas com a mesma média podem ter uma com um quarto dos clientes totalmente insatisfeitos. Um estudo publicado mostrou que a satisfação pesada pela importância de cada ponto previu melhor o desempenho futuro do que a pergunta de recomendação sozinha.',
+      metrica: 'Parte de notas máximas em cada ponto importante, em amostra sorteada', passos: ['Escolher uma regra de sorteio, por exemplo 1 em cada 5 clientes ao final do serviço', 'Perguntar a nota de cada ponto que importa (atendimento, prazo, resultado, preço) e quanto cada ponto importa', 'Contar a parte de notas máximas e a parte de notas baixas, além da média', 'Melhorar primeiro o que é muito importante e tem poucas notas máximas', 'Repetir com a mesma regra a cada semestre'] },
+    { texto: 'Comparar as vendas por habitante em cada cidade ou bairro atendido com o consumo da categoria ali, para decidir onde reforçar a marca', esforco: 'marca', promessa: 'vendas', tema: 'distribuicao', tipo: 'base', tam: 'M', ler: 90,
+      porque: 'Vender mais numa região grande não quer dizer que a marca é mais forte ali. Dividindo pelas pessoas da região e comparando com quanto a categoria vende ali, aparece onde a marca está bem, onde a categoria é forte e a marca é fraca (a maior oportunidade) e onde o problema é a própria categoria. Se os índices são parecidos em todas as regiões, não há motivo para tratá-las de forma diferente.',
+      metrica: 'Índice de vendas por habitante da marca e da categoria em cada região', passos: ['Listar as cidades ou bairros atendidos e a população de cada um', 'Calcular as vendas da empresa por habitante em cada um e comparar com a média de todos (média = 100)', 'Estimar, com dados públicos ou do setor, se a categoria vende mais ou menos ali', 'Onde a categoria é forte e a marca é fraca, reforçar presença e divulgação', 'Onde marca e categoria são fracas, não insistir antes de entender o motivo'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+
+  const add = (k, itens) => { if (P[k]) itens.forEach((t) => { if (!P[k].some((y) => y.texto === t)) P[k].push({ grupo: G, texto: t }); }); };
+  add('naoFazer', ['Creditar às redes sociais a diferença de compras entre seguidores e não seguidores: quem segue a marca já era cliente mais ativo',
+    'Encomendar pesquisa grande de imagem quando conhecimento, vendas, recompra e facilidade de compra vão bem: aprofunde só quando algum número cair',
+    'Para alcançar públicos novos, abandonar o benefício que fazia a marca ser única: o apego dos clientes se dilui',
+    'Deixar questionários de satisfação no balcão para quem quiser responder: quem responde é sobretudo quem está insatisfeito']);
+  add('verificacoes', ['Crescimento das vendas comparado ao crescimento do mercado e do principal concorrente',
+    'Marca reconhecida pelo nome por menos de 1 em cada 5 pessoas do público é desconhecida: mudar canal, conteúdo ou verba antes de tudo']);
+
+  if (P.causas && P.desafios) {
+    const D = (ini) => (P.desafios.find((d) => d.texto.startsWith(ini)) || {}).texto;
+    [['Muita gente experimenta a marca, mas pouca volta a comprar', ['Os clientes compram uma vez', 'A experiência muda de pessoa']],
+     ['Muita gente conhece a marca, mas pouca chega a comprar', ['A empresa tem qualidade, mas não tem provas', 'É difícil achar e comprar']],
+    ].forEach(([t, ds]) => { if (!P.causas.some((c) => c.texto === t)) P.causas.push({ grupo: G, texto: t, desafios: ds.map(D).filter(Boolean) }); });
+  }
+})();
+
+// ===== Rodada 42: o que se vê de relance, sinais que não podem sumir no redesenho, ganho x não perder e foco num objetivo =====
+// Fonte: livro de ex-executivo de marketing sobre ciência da decisão (2ª ed., 2022). Ficaram de fora as métricas e números da consultoria
+// do autor. Usado: a visão nítida cobre uma área mínima e o resto é borrado; reconhecemos marcas por poucos sinais característicos;
+// mudar esses sinais derrubou vendas (suco que trocou a laranja com canudo por um copo; sabão para lã que trocou o rosa por branco e perdeu
+// clientes para a concorrente rosa). Mensagem com foco igual ao da categoria (ganhar x evitar perda) persuade mais (pesquisa publicada sobre
+// foco de promoção e prevenção). Diferença de preço só é notada acima de um limiar proporcional ao preço (lei de Weber-Fechner).
+// Ligação da marca a muitos objetivos enfraquece cada ligação (pesquisa publicada de psicologia da motivação). Lembrança muda conforme a
+// situação perguntada. Texto em maiúsculas é mais difícil de processar. "Emocionar" sem objetivo vira anúncio genérico de gente feliz.
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'Desfocar anúncios, embalagens, fachada e a página principal e conferir se a marca e o que a diferencia ainda aparecem', esforco: 'marca', promessa: 'pessoas', tema: 'anuncio', tipo: 'base', tam: 'P', ler: 60,
+      porque: 'O olho só vê com nitidez uma área do tamanho de uma unha; o resto chega borrado, e a maior parte dos contatos com anúncios dura uns 2 segundos. Nessa olhada rápida o cérebro reconhece a marca por poucos sinais característicos (cor, forma, símbolo), não pelos textos. Se a peça desfocada não mostra a marca, quase ninguém vai ligá-la à empresa.',
+      metrica: 'Peças principais aprovadas no teste do desfoque', passos: ['Juntar as peças principais: anúncio, embalagem ou sacola, fachada, página inicial e perfil', 'Desfocar cada imagem (ou olhar de longe, apertando os olhos)', 'Perguntar: dá para saber de que marca é? O que a diferencia aparece?', 'Mostrar a versão desfocada a 5 pessoas e pedir que digam a marca', 'Aumentar ou repetir os sinais da marca nas peças que falharem'] },
+    { texto: 'Antes de redesenhar logo, embalagem, site ou fachada, listar os sinais pelos quais o cliente reconhece a marca e mantê-los no novo desenho', esforco: 'marca', promessa: 'pessoas', tema: 'posicionamento', tipo: 'base', tam: 'P', ler: 60,
+      porque: 'Os clientes reconhecem a marca por poucos sinais característicos. Uma marca de suco trocou a laranja com canudo da embalagem por um copo, mudou a letra e a posição dos elementos; mesmo com campanha milionária, perdeu cerca de 30 milhões de euros em dois meses e a embalagem nova foi retirada. Uma marca de sabão para lã trocou o rosa por branco e perdeu clientes para a concorrente rosa. Modernizar é possível; apagar os sinais que o cliente usa para achar a marca, não.',
+      metrica: 'Redesenho aprovado só depois de conferir os sinais reconhecidos', passos: ['Mostrar a 10 clientes partes isoladas da marca (cor, símbolo, forma, letra) e perguntar de quem é cada uma', 'Marcar os sinais que quase todos ligam à marca', 'Colocar esses sinais no briefing do redesenho como obrigatórios', 'Testar a versão nova da mesma forma antes de lançar', 'Lançar só se os sinais continuarem sendo reconhecidos'] },
+    { texto: 'Decidir se a mensagem principal fala do que o cliente ganha ou do que ele evita perder, conforme o que ele busca na categoria', esforco: 'marca', promessa: 'pessoas', tema: 'conteudo', tipo: 'base', tam: 'P', ler: 60,
+      porque: 'Pesquisas publicadas sobre motivação mostram que as pessoas buscam ganhos em algumas compras (beleza, lazer, crescimento) e buscam evitar perdas e riscos em outras (saúde, segurança, dinheiro). A mensagem com o mesmo foco do cliente convence mais. "Fique com o visual de verão" funciona na beleza; "não perca seus dados" funciona na segurança.',
+      metrica: 'Mensagem principal com foco escolhido e testado', passos: ['Perguntar a 5 clientes o que eles queriam conseguir ou evitar quando procuraram a empresa', 'Classificar a categoria: busca de ganho ou proteção contra perda', 'Escrever duas versões da mensagem principal, uma de cada foco', 'Testar as duas com o público ou em anúncios iguais', 'Usar a versão de melhor resultado em todos os pontos de contato'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+
+  const add = (k, itens) => { if (P[k]) itens.forEach((t) => { if (!P[k].some((y) => y.texto === t)) P[k].push({ grupo: G, texto: t }); }); };
+  add('naoFazer', ['Dar um desconto pequeno demais para ser notado: a diferença só é percebida acima de uma proporção do preço, e abaixo disso só reduz a margem',
+    'Ligar a marca a muitos objetivos ao mesmo tempo (ser barata, premium, divertida e séria): cada ligação fica mais fraca',
+    'Pedir à agência apenas que o anúncio "emocione": diga qual objetivo do cliente a marca ajuda a cumprir, ou o resultado vira gente feliz genérica',
+    'Escrever títulos e informações importantes todo em letras maiúsculas: fica mais difícil de ler de relance']);
+  add('verificacoes', ['Lembrança da marca perguntada também por situação de uso ("para um almoço rápido, qual vem à cabeça?"), não só pela categoria',
+    'Novidade anunciada na embalagem, na fachada ou no site é visível de relance; se não for, não espere efeito nas vendas']);
+
+  if (P.causas && P.desafios) {
+    const D = (ini) => (P.desafios.find((d) => d.texto.startsWith(ini)) || {}).texto;
+    [['A marca foi redesenhada e os clientes deixaram de reconhecê-la', ['A marca é pouco lembrada', 'É difícil achar e comprar']],
+    ].forEach(([t, ds]) => { if (!P.causas.some((c) => c.texto === t)) P.causas.push({ grupo: G, texto: t, desafios: ds.map(D).filter(Boolean) }); });
+  }
+})();
