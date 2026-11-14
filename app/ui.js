@@ -518,6 +518,35 @@
     }
   };
   let ajT = null; const ajusta = () => { clearTimeout(ajT); ajT = setTimeout(ajustaLado, 60); };
+  // ===== encolher a barra lateral: só os ícones (preferência guardada neste navegador) =====
+  const MINI = 'gang-side-mini';
+  const lerMini = () => { try { return localStorage.getItem(MINI) === '1'; } catch (e) { return false; } };
+  if (lerMini()) document.documentElement.classList.add('side-mini');
+  const poeMini = (on) => {
+    document.documentElement.classList.toggle('side-mini', on);
+    try { localStorage.setItem(MINI, on ? '1' : '0'); } catch (e) { /* sem armazenamento: vale só nesta página */ }
+    const b = document.querySelector('.side__mini');
+    if (b) { b.setAttribute('aria-expanded', String(!on)); b.setAttribute('aria-label', on ? 'Abrir a barra lateral' : 'Encolher a barra lateral'); b.title = b.getAttribute('aria-label'); }
+    ajusta();
+  };
+  const botaoMini = () => {
+    const side = document.querySelector('.side'); if (!side || document.querySelector('.side__mini')) return;
+    const b = el('button', { class: 'side__mini', type: 'button', 'aria-controls': side.id || 'side-nav', onclick: () => poeMini(!document.documentElement.classList.contains('side-mini')) });
+    b.innerHTML = '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 4 4.5 8l4 4"/><path d="M12 4 8 8l4 4"/></svg>';
+    document.body.append(b);
+    poeMini(lerMini());
+    // encolhida, o nome de cada item aparece ao passar o mouse
+    const titulos = () => side.querySelectorAll('.side__link').forEach((a) => { const s = a.querySelector('span:not(.side__ind):not(.cli-logo)'); if (s && !a.title) a.title = s.textContent.trim(); });
+    titulos(); if (window.MutationObserver) new MutationObserver(titulos).observe(side, { childList: true, subtree: true });
+    // a busca encolhida vira só a lupa: clicar abre a barra e já põe o cursor no campo
+    side.addEventListener('click', (e) => {
+      const q = e.target.closest && e.target.closest('.qsearch');
+      if (!q || !document.documentElement.classList.contains('side-mini')) return;
+      e.preventDefault(); poeMini(false); const i = q.querySelector('input'); if (i) setTimeout(() => i.focus(), 0);
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === '/' && document.documentElement.classList.contains('side-mini') && !(e.target.closest && e.target.closest('input, textarea, select, [contenteditable="true"]'))) poeMini(false); }, true);
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', botaoMini); else botaoMini();
   window.addEventListener('resize', ajusta);
   document.addEventListener('DOMContentLoaded', () => {
     ajustaLado();
