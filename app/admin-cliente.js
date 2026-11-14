@@ -315,7 +315,7 @@
   $('p-partmerc').value = p.participacao_mercado ?? '';
   // o cliente informou o ponto de partida pelo portal: o consultor vê de onde veio o número
   if (p.partida_cliente && p.faturamento_base != null) {
-    $('p-base-d').textContent = 'Informado pelo cliente no portal. Se mudar o valor aqui, ele passa a ser seu e o cliente não altera mais.';
+    $('p-base-d').textContent = 'Informado pelo cliente no portal. Se mudar o valor aqui, ele passa a ser seu e\u00a0o\u00a0cliente não altera mais.';
     $('p-base-d').classList.add('is-cliente');
   } else if (p.faturamento_base == null) $('p-base-d').textContent = 'Média mensal dos 12 meses antes do plano. Se ficar vazio, o cliente informa no portal.';
   Object.entries(fields).forEach(([f, k]) => {
