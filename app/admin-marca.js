@@ -484,7 +484,12 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   };
 
   montar('pane-estrategia', [
-    [ficha, { icone: 'mapa', depoisDeSalvar: (mount, row) => { if (!row || !row.como_vencer) return; const pe = mount.querySelector('.ed-foot'); if (pe) pe.append(el('button', { class: 'btn btn--light btn--sm ed-montar', type: 'button', onclick: () => window.GangAbreModelo && window.GangAbreModelo() }, 'Montar o plano alinhado a esta estratégia')); }, titulo: 'O cerne da estratégia', nota: 'O desafio que a marca precisa vencer e\u00a0a\u00a0abordagem\u00a0para\u00a0vencê-lo.', tabela: 'planos', pasta: 'estrategia', antes: diagnosticoNaEstrategia, fields: [
+    [ficha, { icone: 'mapa', depoisDeSalvar: (mount, row) => {
+      if (!row || !row.como_vencer) return; const f = mount.querySelector('form'); if (!f) return;
+      // o próximo passo, numa faixa própria embaixo do cartão: o que vem agora e um botão para ir até lá
+      f.append(el('div', 'ed-prox', el('div', 'ed-prox__txt', el('p', 'ed-prox__t', 'Próximo passo'), el('p', 'ed-prox__d', 'Montar as ações do plano a partir desta estratégia.')),
+        el('button', { class: 'btn btn--light btn--sm', type: 'button', onclick: () => window.GangAbreModelo && window.GangAbreModelo() }, 'Ver o plano')));
+    }, titulo: 'O cerne da estratégia', nota: 'O desafio que a marca precisa vencer e\u00a0a\u00a0abordagem\u00a0para\u00a0vencê-lo.', tabela: 'planos', pasta: 'estrategia', antes: diagnosticoNaEstrategia, fields: [
       { k: 'desafio', label: '1. O desafio (o obstáculo principal)', full: true, longo: true, type: 'preset', presets: 'desafiosCliente', comGrupos: true,
         dica: 'Vários problemas? Escolha o que, resolvido, destrava os outros. Os demais entram como causas no Diagnóstico.' },
       { k: 'como_vencer', label: '2. A abordagem (como vencer o desafio)', full: true, longo: true, type: 'preset', presets: 'abordagens', depende: { de: 'desafio', lista: 'desafios', chave: 'abordagens' } },
