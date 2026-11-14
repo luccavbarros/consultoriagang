@@ -489,12 +489,13 @@ a.kpi:hover { background: #1f1f1f; }
 .switch__search { position: relative; }
 .switch__search::before { content: ""; position: absolute; left: 14px; top: 9px; width: 14px; height: 14px; background: #7a7a7a;
   -webkit-mask: var(--i-mag) center / contain no-repeat; mask: var(--i-mag) center / contain no-repeat; }
-.switch__list { max-height: 260px; overflow-y: auto; display: grid; gap: 1px; }
+.switch__list { max-height: 260px; overflow-y: auto; overflow-x: hidden; display: grid; gap: 1px; }
+.switch__list > li { min-width: 0; }
 .switch__item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; font-size: 14px; color: #d6d6d6; text-decoration: none; }
 .switch__item:hover { background: #262626; color: #fff; }
 .switch__item.is-on { color: #fff; }
 .switch__item.is-on::after { content: ""; margin-left: auto; width: 14px; height: 14px; background: #fff; -webkit-mask: var(--i-check) center / contain no-repeat; mask: var(--i-check) center / contain no-repeat; }
-.switch__item > span:not(.cli-logo) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.switch__item > span:not(.cli-logo) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .switch__empty { padding: 10px; font-size: 13px; color: var(--ganggrey); }
 .switch__all { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; padding: 10px; border-top: 1px solid var(--line);
   font-size: 13px; color: #b5b5b5; text-decoration: none; border-radius: 0 0 8px 8px; }
@@ -882,7 +883,7 @@ span.task__status { cursor: default; }
 .vazio__t { margin: 0; font-size: 14px; font-weight: 600; color: #f0f0f0; }
 .vazio__d { margin: 0 0 6px; font-size: 13px; color: var(--ganggrey); }
 .side .vazio__t { font-size: 13px; }
-.switch__n { margin-left: auto; padding: 1px 6px; border-radius: 6px; background: #262626; box-shadow: inset 0 0 0 1px var(--line-2); font-size: 12px; color: #a3a3a3; white-space: nowrap; }
+.switch__n { margin-left: auto; padding: 1px 6px; border-radius: 6px; background: #262626; box-shadow: inset 0 0 0 1px var(--line-2); font-size: 12px; color: #a3a3a3; white-space: nowrap; flex: none; }
 .switch__item.is-on::after { margin-left: 8px; }
 
 /* etapas do fechamento em sequência */
