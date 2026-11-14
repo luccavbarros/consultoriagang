@@ -7,6 +7,33 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   const nomeEmpresa = sb.from('empresas').select('nome').eq('id', id).maybeSingle().then((r) => (r.data ? r.data.nome : ''));
   // setor do cadastro (Contrato): separa as abordagens que têm ações para o setor das que quase não têm
   const setorEmpresa = () => sb.from('empresas').select('setor').eq('id', id).maybeSingle().then((r) => (r.data ? r.data.setor : null), () => null);
+  // a estratégia e o setor atuais, para sugerir verificações que combinam com a abordagem
+  let ctxEst = { ab: null, setor: null };
+  const atualizaCtx = async () => {
+    const [{ data: pl }, { data: em }] = await Promise.all([sb.from('planos').select('como_vencer').eq('empresa_id', id).maybeSingle(), sb.from('empresas').select('setor').eq('id', id).maybeSingle()]);
+    ctxEst = { ab: pl && pl.como_vencer, setor: em && em.setor };
+  };
+  let ctxPronto = atualizaCtx();
+  // a estratégia ou o setor mudou: as sugestões de "Onde atuamos" e "O que acompanhamos" se refazem
+  const refazSugestoes = async () => {
+    ctxPronto = atualizaCtx(); await ctxPronto;
+    [...document.querySelectorAll('#pane-estrategia .editor-block')].filter((m) => m.montagem && ['escolhas', 'condicoes'].includes(m.montagem[1].tabela))
+      .forEach((m) => m.montagem[0](m, m.montagem[1]));
+  };
+  document.addEventListener('gang:marca-salva', (e) => { if (e.detail && e.detail.tabela === 'planos') refazSugestoes(); });
+  document.addEventListener('gang:setor', refazSugestoes);
+  // sugestões da biblioteca a partir da abordagem escolhida (o consultor adiciona; nada entra sozinho)
+  const daEstrategia = (lista, n, titulo) => async () => {
+    await ctxPronto; const P = window.GangPresets || {};
+    if (!ctxEst.ab || !P.sugereDaEstrategia) return [];
+    const xs = P.sugereDaEstrategia(lista, ctxEst.ab, ctxEst.setor, [], n); xs.titulo = titulo; return xs;
+  };
+  const renunciaSug = async () => {
+    await ctxPronto; const P = window.GangPresets || {};
+    const r = P.renunciaDa ? P.renunciaDa(ctxEst.ab) : null; if (!r) return [];
+    const xs = [r.frase, ...r.deixados]; xs.titulo = 'Do que a abordagem escolhida abre mão'; return xs;
+  };
+  const verifDaEstrategia = () => { const P = window.GangPresets || {}; return P.sugereDaEstrategia && ctxEst.ab ? P.sugereDaEstrategia('verificacoes', ctxEst.ab, ctxEst.setor, [], 4) : []; };
   const MIN_ACOES_SETOR = 3; // abaixo disso o plano não consegue executar a abordagem naquele setor
   const agrupaPorSetor = (lista, setor) => {
     const P = window.GangPresets || {}; const nome = (U.setorNome(setor) || '').toLowerCase(); const base = U.setorBase(setor);
@@ -49,10 +76,14 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     let input;
     if (f.type === 'preset') {
       // lista de respostas prontas com "Outro…"; escolher pode preencher outros campos (f.fill)
-      const todas = (window.GangPresets || {})[f.presets] || [];
+      let todas = (window.GangPresets || {})[f.presets] || [];
+      // f.destaca: as respostas sugeridas pela estratégia vêm primeiro, num grupo próprio
+      const dest = f.destaca ? f.destaca() : [];
+      if (dest.length) todas = dest.map((t) => ({ ...(todas.find((x) => x.texto === t) || { texto: t }), grupo: 'Sugeridas pela estratégia' }))
+        .concat(todas.filter((x) => !dest.includes(x.texto)).map((x) => ({ ...x, grupo: 'Todas' })));
       const ja = new Set(usados || []);
       input = U.combo(idc, ja.size ? todas.filter((i) => !ja.has(i.texto) || i.texto === valor) : todas, valor, {
-        semGrupos: !f.comGrupos, // a fonte de cada resposta pronta fica só por trás (só listas com grupos neutros os mostram)
+        semGrupos: !f.comGrupos && !dest.length, // a fonte de cada resposta pronta fica só por trás (só listas com grupos neutros os mostram)
         longo: !!f.longo, // frases longas: lista própria que mostra o texto inteiro
         onPick: (item) => Object.entries(f.fill || {}).forEach(([de, para]) => {
           if (item[de] == null) return;
@@ -348,7 +379,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
           el('div', 'ed-item__main', el('p', 'ed-item__t', t), sub ? el('p', 'ed-item__s', sub) : null),
           el('div', 'ed-item__acoes',
             btn('lapis', 'Editar', () => abreForm(r)),
-            btn('lixo', 'Excluir', async () => { if (!confirm('Excluir “' + (typeof t === 'string' ? t : 'este item') + '”?')) return; await sb.from(tabela).delete().eq('id', r.id); lista(mount, cfg); document.dispatchEvent(new CustomEvent('gang:marca-salva')); }, ' ed-acao--bad')));
+            btn('lixo', 'Excluir', async () => { if (!confirm('Excluir “' + (typeof t === 'string' ? t : 'este item') + '”?')) return; await sb.from(tabela).delete().eq('id', r.id); lista(mount, cfg); document.dispatchEvent(new CustomEvent('gang:marca-salva', { detail: { tabela } })); }, ' ed-acao--bad')));
       }) : [el('li', 'ed-vazio', vazio || 'Nada cadastrado ainda.')]));
     const cfg = { titulo, nota, tabela, fields, fixo, resumo, pasta, vazio, ordem, icone, tom, largo, max, aoAbrir, sugere };
     if (max && rows.length >= max) addBtn.hidden = true;
@@ -374,6 +405,31 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     xs.titulo = 'Causas que costumam vir com a frase do Diagnóstico';
     return xs;
   };
+  // das causas para a frase: as frases do Diagnóstico que as causas marcadas sustentam (o consultor escolhe)
+  const frasesSug = async (atual) => {
+    const P = window.GangPresets || {};
+    const { data } = await sb.from('causas').select('texto').eq('empresa_id', id);
+    const cs = (data || []).map((x) => x.texto);
+    const emUso = (atual && atual.resumo) || ($('fi-diagnosticos-resumo') && U.comboValue('fi-diagnosticos-resumo')) || '';
+    if (!cs.length || !P.frasesDasCausas) return el('div', 'ed-diag ed-frases', el('p', 'ed-diag__r', 'Marque acima as causas que o cliente relatou: as frases que elas sustentam aparecem aqui para escolher.'));
+    const r = P.frasesDasCausas(cs, 3);
+    if (!r.frases.length) return el('div', 'ed-diag ed-frases', el('p', 'ed-diag__r', 'As causas marcadas não batem com nenhuma frase da biblioteca. Escolha a frase abaixo ou escreva uma.'));
+    const usar = (t) => { const sel = $('fi-diagnosticos-resumo'); if (!sel) return; sel.value = t; sel.dispatchEvent(new Event('change', { bubbles: true })); };
+    const dividido = r.frases[0].causas.length < Math.ceil(r.lidas / 2);
+    return el('div', 'ed-diag ed-frases',
+      el('p', 'ed-diag__b', 'Frases que as causas marcadas sustentam'),
+      dividido ? el('p', 'ed-diag__aviso', 'As causas apontam para lados diferentes: nenhuma frase reúne a maioria delas. Confira com os números ou com a pesquisa antes de fechar o diagnóstico.') : null,
+      el('ul', 'ed-frases__l', r.frases.map((f) => el('li', 'ed-frases__i' + (f.texto === emUso ? ' is-on' : ''),
+        el('div', 'ed-frases__t', el('p', null, f.texto), el('p', 'ed-frases__por', 'Indicada por ' + f.causas.length + ' de ' + r.lidas + ': ' + f.causas.join('; '))),
+        f.texto === emUso ? el('span', 'ed-frases__ok', 'Em uso') : el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => usar(f.texto) }, 'Usar esta frase')))),
+      el('p', 'ed-diag__r', 'O que o cliente relata nem sempre é a causa real: a frase também depende do que todo cliente exige, do que faz escolher e dos números.'));
+  };
+  const refazFrases = async () => {
+    const m = [...document.querySelectorAll('#pane-diagnostico .editor-block')].find((x) => x.montagem && x.montagem[1].tabela === 'diagnosticos');
+    const velho = m && m.querySelector('.ed-frases'); if (!velho) return;
+    velho.replaceWith(await frasesSug(null));
+  };
+  document.addEventListener('gang:marca-salva', (e) => { if (e.detail && e.detail.tabela === 'causas') refazFrases(); });
   // ao trocar a frase, as sugestões de causas se atualizam
   document.addEventListener('gang:marca-salva', (e) => {
     if (!e.detail || e.detail.tabela !== 'diagnosticos') return;
@@ -382,11 +438,11 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   });
 
   montar('pane-diagnostico', [
-    [ficha, { icone: 'pulso', titulo: 'Diagnóstico', nota: 'O ponto de partida da marca, como\u00a0o\u00a0cliente\u00a0vê\u00a0em\u00a0Diagnóstico.', tabela: 'diagnosticos', fields: [
+    // primeiro as causas que o cliente relatou; delas sai a sugestão da frase do Diagnóstico
+    [lista, { icone: 'alvo', largo: true, titulo: 'As causas que o plano ataca', nota: 'Marque o que o cliente relatou na reunião. As\u00a0frases\u00a0que\u00a0essas\u00a0causas\u00a0sustentam\u00a0aparecem\u00a0abaixo.', tabela: 'causas', fields: [{ k: 'texto', label: 'Causa', req: true, full: true, type: 'preset', presets: 'causas' }], resumo: (r) => [r.texto], sugere: () => causasDaFrase() }],
+    [ficha, { icone: 'pulso', titulo: 'Diagnóstico', nota: 'O ponto de partida da marca, como\u00a0o\u00a0cliente\u00a0vê\u00a0em\u00a0Diagnóstico.', tabela: 'diagnosticos', antes: frasesSug, fields: [
       { k: 'data', label: 'Data do diagnóstico', type: 'date' }, { k: 'proximo', label: 'Próximo diagnóstico', type: 'date' },
       { k: 'resumo', label: 'Em uma frase', full: true, type: 'preset', presets: 'resumosDiagnostico' }] }],
-    // logo abaixo do Diagnóstico: as causas são o que o consultor mais consulta junto com a frase
-    [lista, { icone: 'alvo', largo: true, titulo: 'As causas que o plano ataca', nota: 'Os motivos por trás dos números, não os números. Prefira causas em que a empresa consegue agir.', tabela: 'causas', fields: [{ k: 'texto', label: 'Causa', req: true, full: true, type: 'preset', presets: 'causas' }], resumo: (r) => [r.texto], sugere: () => causasDaFrase() }],
     [lista, { icone: 'olho', tom: 'gang', titulo: 'A marca do cliente', nota: 'Como as pessoas viam a marca antes do trabalho.', tabela: 'impressoes', fixo: { eh_cliente: true }, max: 1,
       vazio: 'Ainda sem a leitura da marca do cliente.', aoAbrir: (pre) => nomeEmpresa.then((n) => { const i = $(pre + 'marca_nome'); if (i && !i.value) i.value = n || ''; }), fields: [
       { k: 'marca_nome', label: 'Marca', req: true },
@@ -538,12 +594,12 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     [lista, { icone: 'pin', titulo: 'Situações de compra', nota: 'Os momentos em que alguém pensa na categoria. Entram na pesquisa e nas ações.', tabela: 'situacoes', fields: [
       { k: 'texto', label: 'Situação', req: true, full: true, type: 'preset', presets: 'situacoes', dicaId: 'situacao',
         dica: 'Escreva um momento da vida de quem compra (quando, onde, por quê), não um motivo. Use de 5 a 10, sempre as mesmas: são elas que a pesquisa mede.' }], resumo: (r) => [r.texto] }],
-    [lista, { icone: 'check', tom: 'ok', titulo: 'Onde atuamos: prioridade', tabela: 'escolhas', fixo: { tipo: 'prioridade' }, fields: [{ k: 'texto', label: 'Prioridade', req: true, full: true, type: 'preset', presets: 'prioridades' }], resumo: (r) => [r.texto] }],
-    [lista, { icone: 'menos', titulo: 'Onde atuamos: deixamos de lado', tabela: 'escolhas', fixo: { tipo: 'deixa_de_lado' }, fields: [{ k: 'texto', label: 'Deixamos de lado', req: true, full: true, type: 'preset', presets: 'deixados' }], resumo: (r) => [r.texto] }],
+    [lista, { icone: 'check', tom: 'ok', titulo: 'Onde atuamos: prioridade', tabela: 'escolhas', fixo: { tipo: 'prioridade' }, fields: [{ k: 'texto', label: 'Prioridade', req: true, full: true, type: 'preset', presets: 'prioridades' }], sugere: daEstrategia('prioridades', 3, 'Prioridades que combinam com a abordagem escolhida'), resumo: (r) => [r.texto] }],
+    [lista, { icone: 'menos', titulo: 'Onde atuamos: deixamos de lado', tabela: 'escolhas', fixo: { tipo: 'deixa_de_lado' }, fields: [{ k: 'texto', label: 'Deixamos de lado', req: true, full: true, type: 'preset', presets: 'deixados' }], sugere: renunciaSug, resumo: (r) => [r.texto] }],
     [lista, { icone: 'radar', largo: true, titulo: 'O que acompanhamos', nota: 'Condições que precisam continuar verdadeiras. Quando uma vira “Não se confirma”, o cliente vê o aviso e\u00a0o\u00a0tema entra na pauta do próximo encontro.', tabela: 'condicoes', fields: [
-      { k: 'texto', label: 'Condição', req: true, full: true, type: 'preset', presets: 'condicoes' }, { k: 'como_verificar', label: 'Como verificamos', type: 'preset', presets: 'verificacoes' }, { k: 'status', label: 'Hoje', type: 'select', options: CON, def: 'sem_dados' },
+      { k: 'texto', label: 'Condição', req: true, full: true, type: 'preset', presets: 'condicoes' }, { k: 'como_verificar', label: 'Como verificamos', type: 'preset', presets: 'verificacoes', destaca: verifDaEstrategia }, { k: 'status', label: 'Hoje', type: 'select', options: CON, def: 'sem_dados' },
       { k: 'checar_em', label: 'Próxima checagem', type: 'date' }],
-    resumo: (r) => [r.texto, [r.como_verificar, CON_T[r.status], r.checar_em ? 'próxima: ' + U.dia(r.checar_em) : null].filter(Boolean).join(' · ')] }],
+    sugere: daEstrategia('condicoes', 3, 'Condições que a abordagem escolhida precisa manter'), resumo: (r) => [r.texto, [r.como_verificar, CON_T[r.status], r.checar_em ? 'próxima: ' + U.dia(r.checar_em) : null].filter(Boolean).join(' · ')] }],
   ]);
   // quando o Diagnóstico muda em outra aba, a Estratégia se atualiza ao ser aberta (sem recarregar a página)
   let estrategiaVelha = false;

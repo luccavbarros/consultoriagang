@@ -2217,3 +2217,21 @@ html.side-abrindo .side__plan .badge { display: none; }
 /* plano modelo: o setor vem do cadastro */
 .mod__setor { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 6px 0 0; font-size: 14px; color: #ececec; }
 .mod__setor .is-falta { color: var(--warn, #e0b25b); }
+/* o que decidimos não fazer: listas com caixas de marcar */
+.desc__l { max-height: 340px; overflow-y: auto; }
+.desc__op { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: #e6e6e6; line-height: 1.45; }
+.desc__op input { margin-top: 3px; flex: none; }
+.desc__todos { margin: 8px 0 10px; display: grid; gap: 10px; }
+.desc__todos > summary { cursor: pointer; font-size: 13px; color: var(--ganggrey); }
+.desc__todos[open] > summary { margin-bottom: 4px; }
+#desc-add { display: grid; gap: 6px; }
+.admin-main #desc-add .ed-sug__t { max-width: none; }
+/* Diagnóstico: frases que as causas marcadas sustentam */
+.ed-frases__l { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 8px; }
+.ed-frases__i { display: flex; gap: 14px; align-items: flex-start; justify-content: space-between; padding: 10px 12px; border: 1px solid var(--line-2); border-radius: var(--r-sm); background: #141414; }
+.ed-frases__i.is-on { border-color: #4a4a4a; background: #1b1b1b; }
+.admin-main .ed-frases p { max-width: none; }
+.ed-frases__t p { margin: 0; font-size: 13px; color: #ececec; line-height: 1.5; }
+.ed-frases__t .ed-frases__por { margin-top: 4px; font-size: 12px; color: var(--ganggrey); }
+.ed-frases__ok { flex: none; font-size: 12px; color: #8fd6a8; padding-top: 2px; }
+.ed-frases__i .btn { flex: none; }

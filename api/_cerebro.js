@@ -6863,7 +6863,7 @@
       porque: 'Estudos publicados mostram que acrescentar uma opção parecida, mas pior em tudo, aumenta a escolha da opção que ela faz parecer melhor. A comparação dá ao cliente uma razão fácil para decidir e justificar a escolha.',
       metrica: 'Parte dos clientes que escolhe o pacote principal, antes e depois', passos: ['Escolher o pacote que a marca quer que mais gente escolha', 'Criar ao lado uma opção parecida, com preço próximo e claramente menos vantajosa', 'Manter as opções reais e honestas: a menos vantajosa precisa poder ser comprada', 'Comparar a escolha do pacote principal antes e depois por um mês'] },
     { texto: 'Perguntar a clientes satisfeitos, no fim do atendimento, se pretendem voltar ou indicar a empresa', esforco: 'venda', promessa: 'vendas', tema: 'relacao', tipo: 'base', tam: 'P', ler: 30,
-      porque: 'Um estudo publicado mostrou que perguntar às pessoas se pretendiam escolher uma marca de que gostavam aumentou a escolha real dessa marca. Dizer a intenção em voz alta reforça o compromisso de quem já está satisfeito.',
+      porque: 'Um estudo publicado mostrou que perguntar às pessoas se pretendiam escolher uma marca de que gostavam aumentou a escolha real dessa marca. Dizer a intenção em voz alta reforça o compromisso de quem já está satisfeito. Funciona quando a pergunta soa natural: quando o cliente a percebe como tática de venda, o efeito some ou se inverte (estudo publicado).',
       metrica: 'Recompra e indicações de quem respondeu à pergunta comparadas às de quem não respondeu', passos: ['Escolher o momento: fim do atendimento ou da entrega, com o cliente satisfeito', 'Fazer uma pergunta simples: pretende voltar? indicaria a alguém?', 'Anotar a resposta junto ao cadastro', 'Comparar recompra e indicações de quem respondeu e de quem não respondeu'] },
   ];
   NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
@@ -6934,4 +6934,244 @@
     'Comentários sobre a marca comparados dentro da mesma rede ao longo do tempo, sem misturar redes diferentes',
     'Posts feitos para serem compartilhados despertam emoção forte (surpresa, entusiasmo, admiração), e não só informam',
     'Em compras novas ou de valor alto, mais de uma pessoa da empresa cliente ouvida: uma pessoa só representa bem a empresa nas recompras de rotina']);
+})();
+
+// ===== Rodada 50: faixa de preço aceitável, preço testado com venda real, serviço novo por etapas, táticas que o cliente percebe =====
+// Fontes: livro acadêmico sobre a história da ciência do marketing, capítulo de preço (leitura completa), e manual acadêmico de psicologia
+// do consumidor, capítulos de preço, preço justo, imaginação, conhecimento de persuasão e categorias de marca (leitura completa).
+// Perguntas hipotéticas superestimam quanto se pagaria (meta-análise de 77 estudos: viés médio de 21%); métodos com compra real erram
+// bem menos. As quatro perguntas de faixa de preço (barato demais, barato, caro, caro demais) são o método mais usado na prática.
+// Preço que muda com frequência aumentou a sensibilidade a preço (estudo publicado). Quando o cliente percebe segunda intenção (elogio
+// exagerado, tática evidente), confia menos, paga menos e escolhe menos (vários estudos publicados). Números e comparações técnicas
+// misturados a uma peça que pede para imaginar atrapalharam o efeito; pedir para imaginar sem detalhes concretos piorou a avaliação.
+// Extensão que contradiz o atributo principal enfraqueceu a marca e a imagem dos produtos antigos; marcas que chegaram a categorias
+// distantes por etapas foram mais aceitas; versão barata de marca de prestígio foi rejeitada pelos clientes atuais; parceria rende mais
+// com marca complementar do que com marca só bem avaliada (estudos publicados).
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'Medir a faixa de preço aceitável com 30 clientes ou interessados: a partir de quanto acham barato demais, barato, caro e caro demais', esforco: 'venda', promessa: 'valor', tema: 'preco', tipo: 'base', tam: 'P', ler: 60,
+      porque: 'As quatro perguntas mostram de onde o preço parece suspeito de tão baixo até onde passa a afastar o cliente. É o método mais usado na prática para achar a faixa de preço. Como respostas hipotéticas costumam exagerar quanto a pessoa pagaria (em média 21% numa revisão de 77 estudos), o resultado serve de faixa, não de preço final.',
+      metrica: 'Faixa de preço aceitável medida e comparada com o preço atual', passos: ['Escolher o serviço ou produto e quem vai responder (clientes e interessados)', 'Fazer as 4 perguntas: barato demais (desconfiaria da qualidade), barato, começa a ficar caro, caro demais', 'Juntar as respostas e ver onde a maioria aceita o preço', 'Comparar com o preço atual', 'Testar o novo preço com vendas reais antes de mudar a tabela inteira'] },
+    { texto: 'Antes de fixar o preço de um serviço novo, vender de verdade a poucos clientes (pré-venda ou reserva com sinal) em vez de só perguntar quanto pagariam', esforco: 'venda', promessa: 'valor', tema: 'preco', tipo: 'base', tam: 'P', ler: 60,
+      porque: 'Quem só responde quanto pagaria não arrisca nada e costuma exagerar. Nos estudos que compararam métodos, os que envolviam compra real erraram bem menos que as perguntas hipotéticas. Uma pré-venda mostra o preço que as pessoas aceitam de fato.',
+      metrica: 'Reservas ou pré-vendas fechadas no preço testado', passos: ['Definir o preço a testar e um limite de vagas', 'Oferecer a poucos clientes, com reserva paga ou sinal', 'Contar quantos aceitaram e quantos desistiram no preço', 'Ajustar o preço antes de lançar para todos'] },
+    { texto: 'Para chegar a um serviço bem diferente do atual, ir por etapas: primeiro um serviço vizinho, depois o mais distante, sempre com o mesmo nome', esforco: 'marca', promessa: 'valor', tema: 'posicionamento', tipo: 'base', tam: 'M', ler: 60,
+      porque: 'O cliente aceita uma novidade da marca quando ela parece ter a ver com o que a marca já faz. Estudos publicados mostram que marcas que chegaram a categorias distantes passando por categorias intermediárias foram mais aceitas do que as que saltaram direto: cada etapa amplia o que o cliente acha que a marca sabe fazer.',
+      metrica: 'Clientes atuais que compram o serviço novo', passos: ['Listar o que a marca já faz e o serviço distante que ela quer oferecer', 'Achar um serviço no meio do caminho, próximo do atual', 'Lançar primeiro o serviço vizinho e comunicar a ligação com o atual', 'Só então lançar o mais distante', 'Acompanhar se os clientes atuais compram cada novidade'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+  const add = (k, itens) => { if (P[k]) itens.forEach((t) => { if (!P[k].some((y) => y.texto === t)) P[k].push({ grupo: G, texto: t }); }); };
+  add('naoFazer', ['Mudar o preço com frequência: preço que muda o tempo todo deixa o cliente mais sensível a preço',
+    'Usar táticas que o cliente percebe como manobra (elogio exagerado, pressa forçada): quando ele vê segunda intenção, confia menos e paga menos',
+    'Na peça que pede ao cliente para se imaginar usando o serviço, encher de números, notas ou comparações técnicas: isso atrapalha a imaginação e reduz o efeito',
+    'Lançar com o mesmo nome um serviço que contradiz o que a marca tem de principal: isso enfraquece a marca e até a imagem dos serviços que já existem',
+    'Lançar uma versão barata com o mesmo nome de uma marca de prestígio: os clientes atuais rejeitam; um nome derivado protege a marca']);
+  add('verificacoes', ['Peças que pedem para o cliente se imaginar trazem detalhes concretos (fotos, cenas, palavras concretas): sem isso, pedir para imaginar piora a avaliação',
+    'Marca parceira escolhida pelo que acrescenta à sua (o que ela tem e a sua não), e não só por ser conhecida']);
+})();
+
+// ===== Rodada 51: anúncios on-line medidos do jeito certo, informação que falta, pesquisa que prevê compra, causas com ligação =====
+// Fontes: livro acadêmico sobre a história da ciência do marketing, capítulos de marketing na internet, canais e força de vendas, e
+// manual acadêmico de psicologia do consumidor, capítulos de inferência e de atitudes e comportamento (leitura completa).
+// Atribuir a venda toda ao último contato favorece canais baratos e frequentes e leva a anunciar demais (estudo publicado). Anúncios de
+// busca nas primeiras posições tiveram mais cliques, mas os de posições abaixo converteram e deram mais lucro (estudo publicado). Remarketing
+// com o produto exato não superou o genérico no começo da jornada; funcionou melhor quando a preferência já estava definida (estudo
+// publicado). Em 15 campanhas numa grande rede social medidas com grupo de controle, só 8 aumentaram as vendas de forma clara. Produto sem
+// informação sobre um atributo foi avaliado pior do que se o atributo fosse descrito como médio (vários estudos). Lembrar 1 motivo para
+// gostar de uma marca gerou avaliação melhor que lembrar 10 (estudo publicado). Apoio a uma causa ligada ao negócio foi visto como
+// sincero; sem ligação, como interesse próprio (estudo publicado). Intenção sobre a ação específica prevê o comportamento (correlação
+// média 0,53); opinião geral prevê mal (meta-análises). Comissão aumentou a venda e fez a equipe largar tarefas sem comissão
+// (experimento de campo de 3 anos).
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const add = (k, itens) => { if (P[k]) itens.forEach((t) => { if (!P[k].some((y) => y.texto === t)) P[k].push({ grupo: G, texto: t }); }); };
+  add('naoFazer', ['Dar todo o crédito da venda ao último contato (normalmente o e-mail ou a busca): isso infla os canais baratos e esconde o efeito dos anúncios que vieram antes',
+    'Pagar sempre pela primeira posição nos anúncios de busca por palavras genéricas: posições um pouco abaixo trouxeram menos cliques, mas mais vendas e lucro',
+    'Pedir ao cliente que liste muitos motivos para escolher a marca: ter dificuldade de lembrar tantos piora a avaliação; peça um ou dois',
+    'Pagar a equipe só por comissão de venda sem acompanhar o atendimento: a comissão aumenta a venda e faz a equipe largar o que não dá comissão, como o pós-venda']);
+  add('verificacoes', ['Remarketing com o serviço exato só para quem já comparou opções; para quem só visitou uma vez, anúncio geral da marca funciona igual ou melhor',
+    'Resultado dos anúncios nas redes comparado com um período ou grupo sem anúncio: em 15 campanhas estudadas assim, só 8 aumentaram as vendas',
+    'Site, anúncios e proposta trazem o que o cliente procura (preço ou faixa, prazo, garantia): informação que falta é lida como ponto fraco',
+    'Causa ou projeto apoiado pela marca tem ligação com o que a empresa faz: com ligação, o apoio parece sincero; sem ela, parece interesse próprio',
+    'Pesquisa com clientes pergunta sobre a ação específica (contratar este serviço nos próximos 3 meses), e não só a opinião geral sobre a marca']);
+})();
+
+// ===== Rodada 52: mídia (segmentação estreita, rajadas, espaçamento e visualização real dos anúncios on-line) =====
+// Fonte: livro-texto de marketing baseado em evidências de um instituto de pesquisa de crescimento de marcas, capítulo de decisões de mídia
+// (segunda metade das páginas, agora lida inteira; capítulos de plano de marketing e do papel do marketing lidos inteiros, sem itens novos).
+// O maior anunciante do mundo admitiu ter segmentado demais nas redes e voltou a priorizar alcance; aceitar algum desperdício costuma ser
+// mais barato por pessoa alcançada do que pagar por mídia estreita. Não há evidência empírica confiável de que exista um peso mínimo de
+// anúncio por semana para a propaganda funcionar. Intervalos maiores entre exposições melhoraram a memória em até 20%. Só cerca de metade dos
+// anúncios gráficos entregues chegou a aparecer na tela (relatório de 2014 de um grande vendedor de anúncios, com critério generoso);
+// "visualização" de vídeo nas redes contava 3 segundos visíveis, e números de visualização chegaram a ser superestimados em até 80%.
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const add = (k, itens) => { if (P[k]) itens.forEach((t) => { if (!P[k].some((y) => y.texto === t)) P[k].push({ grupo: G, texto: t }); }); };
+  add('naoFazer', ['Segmentar os anúncios num público estreito demais para "não desperdiçar": aceitar algum desperdício costuma sair mais barato por pessoa alcançada do que pagar por mídia muito segmentada',
+    'Concentrar a verba em poucas semanas achando que o anúncio só funciona acima de um peso mínimo: não há evidência confiável de que esse limite exista']);
+  add('verificacoes', ['Anúncios espaçados ao longo das semanas e em canais diferentes, e não amontoados: intervalos maiores entre exposições melhoraram a memória em até 20%',
+    'Resultado dos anúncios on-line medido por quem viu o anúncio na tela, e não por impressões entregues: "visualização" de 3 segundos não é ver o anúncio, e só cerca de metade dos anúncios entregues chega a aparecer']);
+})();
+
+// ===== Rodada 53: mudar comportamento (não normalizar o que se quer evitar, facilitar a ação, medir o que o cliente faz) =====
+// Fonte: livro-texto de marketing baseado em evidências de um instituto de pesquisa de crescimento de marcas, capítulo de marketing social
+// (leitura completa). Campanhas que só informam tiveram eficácia limitada; o comportamento costuma vir antes da atitude, e atitudes
+// explicaram no máximo 10% do comportamento em 21 países (estudo publicado). Mensagens que mostram o comportamento indesejado como comum
+// podem estimulá-lo (estudo publicado sobre mensagens normativas). Comportamento declarado é impreciso: as pessoas relatam a mais o que é
+// bem visto e a menos o que não é; a avaliação deve observar o comportamento real e comparar com antes e com um grupo não exposto.
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const add = (k, itens) => { if (P[k]) itens.forEach((t) => { if (!P[k].some((y) => y.texto === t)) P[k].push({ grupo: G, texto: t }); }); };
+  add('naoFazer', ['Pedir ao cliente que pare de fazer algo (faltar, atrasar, pedir desconto) dizendo que "muita gente faz isso": a mensagem mostra o comportamento como normal e pode estimulá-lo',
+    'Fazer campanha só para informar ou mudar a opinião do cliente, sem facilitar a ação (agendar, comprar, experimentar): informação sozinha mudou pouco o comportamento, e a atitude costuma vir depois da ação']);
+  add('verificacoes', ['Resultado medido pelo que o cliente fez (compras, agendamentos, retornos), e não só pelo que ele diz que fez: o comportamento declarado infla o que é bem visto']);
+})();
+
+// ===== Temas dos itens de "não fazer" e das verificações, e sugestão a partir da estratégia =====
+// Cada item ganha os temas que o próprio texto deixa claros (regras abaixo); item sem tema claro não é sugerido.
+// A sugestão olha os temas das ações da abordagem escolhida (só as que servem ao setor do cliente) e devolve os itens
+// que mais combinam. É sugestão: o consultor confirma antes de qualquer coisa ir para o portal.
+(function () {
+  const P = window.GangPresets; if (!P) return;
+  const REGRAS = [
+    ['preco', /preço|preços|desconto|promoç|brinde|oferta|margem|vale o que custa|ticket médio/i],
+    ['anuncio', /anúncio|campanha|verba|mídia|canais pagos|patrocínio|remarketing|influenciador|segmentar|locução|publicidade|imprensa/i],
+    ['medicao', /medir|medid|teste|testad|pesquisa|retorno|estimativ|avaliação completa|creditar|crédito da venda|conferid|acompanhad|contagem|taxa de|lembrança|busca pelo nome|origem dos clientes|comparad|resultado/i],
+    ['posicionamento', /posicionamento|reposicion|diferencia|diferente das|estratégia|concorrente|fora do foco|todo tipo de cliente|muitos objetivos|frentes|mesmo nome|versões|prestígio|benefício que|o que a marca tem de principal/i],
+    ['presenca', /identidade|logo|símbolo|tom de voz|banco de imagens|maiúsculas|embalagem|fachada|personagem|reconhec|de que marca é/i],
+    ['relacao', /fiéis|fiel|quem já é cliente|já compra|recompra|reclamaç|avaliaç|comentários|indica|clientes perdidos|nome da pessoa|conversa mensal|planos pagos|cinco clientes/i],
+    ['experiencia', /atendimento|prazo|entrega|operação|promessa|opcionais|cardápio|favoritos|imaginar|experiência/i],
+    ['venda', /proposta|fechar|fechamento|orçamento|vender só|tempo de resposta|não fechou|comissão|manobra|pressa|prós e contras|compras novas/i],
+    ['equipe', /equipe|comissão|capacidade/i],
+    ['conteudo', /posts|redes|conteúdo|crise|compartilh|mostrar prova|sem mostrar prova/i],
+  ];
+  // o que está entre parênteses são exemplos, não o assunto do item: fica de fora da leitura
+  const marca = (lista) => (lista || []).forEach((x) => { if (x && !x.temas) { const t = x.texto.replace(/\([^)]*\)/g, ''); x.temas = REGRAS.filter(([, r]) => r.test(t)).map(([n]) => n); } });
+  marca(P.naoFazer); marca(P.verificacoes);
+  const BASE = { saude: 'servicos', beleza: 'servicos', educacao: 'servicos', alimentacao: 'varejo', loja_online: 'varejo', tecnologia: 'b2b' };
+  // pesos dos temas a partir das ações da abordagem (as que servem ao setor)
+  const pesosDa = (abordagem, setor) => {
+    const ab = (P.abordagens || []).find((a) => a.texto === abordagem && a.acoes); if (!ab) return null;
+    const base = BASE[setor] || setor;
+    const pesos = {};
+    ab.acoes.forEach((t) => {
+      const x = (P.acoes || []).find((y) => y.texto === t); if (!x || !x.tema) return;
+      if (setor && x.setores && !x.setores.includes(setor) && !x.setores.includes(base)) return;
+      pesos[x.tema] = (pesos[x.tema] || 0) + 1;
+    });
+    return Object.keys(pesos).length ? pesos : null;
+  };
+  // devolve os textos sugeridos, sem os que o cliente já tem
+  P.sugereDaEstrategia = (lista, abordagem, setor, jaTem, quantos) => {
+    const pesos = pesosDa(abordagem, setor); if (!pesos) return [];
+    const ja = new Set(jaTem || []);
+    // palavras da própria abordagem que o item repete (ex.: "especialista" × "especialização") contam a mais
+    const raiz = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[^a-z]+/).filter((w) => w.length > 4).map((w) => w.slice(0, 6));
+    const VAZ = new Set(['abrimo', 'vencen', 'client', 'empres', 'marcas', 'outras', 'outros', 'quando', 'mesmo', 'servic', 'categor']);
+    const doAb = new Set(raiz(abordagem).filter((w) => !VAZ.has(w)));
+    const extra = (t) => (lista === 'prioridades' || lista === 'condicoes' ? raiz(t).filter((w) => doAb.has(w)).length * 2 : 0); // só nas listas curtas de frases da estratégia
+    return (P[lista] || []).filter((x) => x.temas && x.temas.length && !ja.has(x.texto))
+      .map((x, i) => [x.texto, x.temas.reduce((s, t) => s + (pesos[t] || 0), 0) / Math.sqrt(x.temas.length) + extra(x.texto), i])
+      .filter(([, s]) => s > 0).sort((a, b) => b[1] - a[1] || b[2] - a[2]).slice(0, quantos || 5).map(([t]) => t);
+  };
+})();
+
+// ===== Temas das prioridades e das condições, e a renúncia de cada abordagem =====
+// Ligação feita item a item, pelo que cada texto diz. Assim "Onde atuamos" e "O que acompanhamos" também podem ser
+// sugeridos pela estratégia (o consultor confirma). A renúncia vem do próprio texto da abordagem ("Abrimos mão de…").
+(function () {
+  const P = window.GangPresets; if (!P) return;
+  const T = {
+    'Clientes que valorizam qualidade acima de preço': ['preco', 'posicionamento'],
+    'Empresas de médio porte da região': ['venda'],
+    'O serviço principal, de maior margem': ['preco', 'posicionamento'],
+    'Projetos completos com o método': ['posicionamento', 'venda'],
+    'A região onde a marca já é conhecida': ['presenca', 'anuncio'],
+    'Clientes que compram com frequência': ['relacao'],
+    'Um nicho em que a empresa já tem casos de sucesso': ['posicionamento', 'conteudo'],
+    'Clientes que chegam por indicação': ['relacao'],
+    'Os canais que já trazem mais clientes': ['distribuicao', 'anuncio'],
+    'Clientes que já compraram e podem voltar a comprar': ['relacao'],
+    'Quem ainda não compra da categoria na região': ['anuncio', 'presenca'],
+    'As situações de compra em que a marca é mais lembrada': ['presenca', 'anuncio'],
+    'O serviço que traz o cliente para os outros': ['experiencia', 'venda'],
+    'Empresas com quem já há relacionamento': ['relacao', 'venda'],
+    'Os meses de maior procura da categoria': ['anuncio'],
+    'Clientes que já sabem que precisam e só falta decidir': ['venda'],
+    'Quem influencia a decisão (sócio, família, arquiteto, contador)': ['venda', 'relacao'],
+    'Os clientes-alvo valorizam a especialização': ['posicionamento'],
+    'Clientes de alto valor aceitam pagar mais pelo diferencial': ['preco', 'posicionamento'],
+    'A equipe entrega a promessa em todo atendimento': ['experiencia', 'equipe'],
+    'Os concorrentes não copiam o diferencial no curto prazo': ['posicionamento'],
+    'O canal escolhido alcança o cliente-alvo': ['distribuicao', 'anuncio'],
+    'A operação comporta o crescimento': ['experiencia'],
+    'Existe um grupo grande o bastante de clientes com essa necessidade': ['posicionamento'],
+    'Os clientes percebem a diferença e conseguem explicá-la': ['posicionamento', 'conteudo'],
+    'O cliente decide por mais do que o preço': ['preco'],
+    'Nenhum concorrente forte ocupa essa posição': ['posicionamento'],
+    'Os concorrentes não conseguem responder só baixando o preço': ['preco'],
+    'A empresa tem margem para investir em marca todo mês': ['anuncio'],
+    'A equipe consegue manter o padrão de atendimento': ['experiencia', 'equipe'],
+    'A empresa atende mais clientes sem perder qualidade': ['experiencia'],
+    'O cliente compra pelos canais onde a marca está': ['distribuicao'],
+    'O cliente percebe a marca nos momentos em que decide': ['presenca', 'anuncio'],
+    'Os ativos da marca são reconhecidos sem o nome': ['presenca'],
+    'A marca consegue manter presença o ano todo': ['anuncio', 'presenca'],
+    'O preço maior é sustentado pela experiência': ['preco', 'experiencia'],
+    'Quem compra uma vez tem motivo para voltar': ['relacao'],
+    'Os clientes indicam a marca sem ser pedidos': ['relacao'],
+    'A equipe entende e repete a mensagem central': ['equipe'],
+    'A categoria continua crescendo na região': ['medicao'],
+    'O cliente tem uma razão clara para trocar o que usa hoje': ['posicionamento', 'venda'],
+    'A recomendação da equipe é aceita pelo cliente': ['venda'],
+    'A fatia de comunicação da marca está acima da fatia de mercado': ['anuncio'],
+    'O cliente consegue comprar sem muitas etapas': ['distribuicao', 'venda'],
+    'A marca continua relevante para o que o cliente compra hoje': ['posicionamento'],
+    'O programa próprio da marca continua atraindo atenção': ['conteudo'],
+    'A identidade central continua a mesma nas decisões do ano': ['presenca'],
+  };
+  ['prioridades', 'condicoes'].forEach((k) => (P[k] || []).forEach((x) => { if (x && !x.temas && T[x.texto]) x.temas = T[x.texto]; }));
+  // a renúncia escrita na abordagem e os itens de "deixados" que dizem a mesma coisa (palavras em comum)
+  const raiz = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').split(/[^a-z]+/).filter((w) => w.length > 3).map((w) => w.slice(0, 5));
+  const VAZIAS = new Set(['abrim', 'mesmo', 'quand', 'outra', 'outro', 'para', 'parte', 'enqua', 'fazer', 'dentr', 'desse', 'dessa', 'apena']);
+  P.renunciaDa = (abordagem) => {
+    const m = String(abordagem || '').match(/Abrimos mão d[eoa]s? ([^.]*)\./); if (!m) return null;
+    const frase = m[1].charAt(0).toUpperCase() + m[1].slice(1);
+    const r = new Set(raiz(frase).filter((w) => !VAZIAS.has(w)));
+    const deixados = (P.deixados || []).map((x) => [x.texto, raiz(x.texto).filter((w) => r.has(w)).length]).filter(([, n]) => n >= 2)
+      .sort((a, b) => b[1] - a[1]).slice(0, 3).map(([t]) => t);
+    return { frase, deixados };
+  };
+})();
+
+// ===== Das causas para o diagnóstico: as frases que as causas marcadas sustentam =====
+// Cada causa da biblioteca aponta para desafios; cada frase do Diagnóstico também. A frase sugerida é a que reúne mais
+// causas marcadas. É sugestão: o que o cliente relata nem sempre é a causa real, e a frase também depende de fatores e números.
+(function () {
+  const P = window.GangPresets; if (!P || !P.causas || !P.resumoDesafios) return;
+  const pal = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter((w) => w.length > 2).map((w) => w.slice(0, 5));
+  const daBiblioteca = (t) => {
+    const exata = P.causas.find((y) => y.texto === t); if (exata) return exata;
+    const a = new Set(pal(t)); let melhor = null; let nota = 0;
+    P.causas.forEach((y) => { const b = new Set(pal(y.texto)); const j = [...a].filter((w) => b.has(w)).length / Math.max(1, new Set([...a, ...b]).size); if (j > nota) { nota = j; melhor = y; } });
+    return nota >= 0.4 ? melhor : null;
+  };
+  const desafiosDaFrase = (frase) => { const r = P.resumoDesafios.find(([pre]) => String(frase).startsWith(pre)); return r ? r[1] : []; };
+  P.frasesDasCausas = (causasTextos, quantas) => {
+    const cs = (causasTextos || []).map((t) => [t, daBiblioteca(t)]).filter(([, c]) => c && c.desafios && c.desafios.length);
+    if (!cs.length) return { frases: [], lidas: 0 };
+    const frases = (P.resumosDiagnostico || []).map((f) => {
+      const ds = desafiosDaFrase(f.texto); if (!ds.length) return null;
+      const liga = cs.filter(([, c]) => c.desafios.some((d) => ds.some((pre) => d.startsWith(pre))));
+      const fortes = cs.reduce((n, [, c]) => n + c.desafios.filter((d) => ds.some((pre) => d.startsWith(pre))).length, 0);
+      return liga.length ? { texto: f.texto, causas: liga.map(([t]) => t), nota: liga.length + fortes / 100 } : null;
+    }).filter(Boolean).sort((a, b) => b.nota - a.nota).slice(0, quantas || 3);
+    return { frases, lidas: cs.length };
+  };
 })();

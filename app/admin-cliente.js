@@ -337,6 +337,21 @@
       Number($('p-esforco').value) === r.pct || Number($('p-esforco').value) === 35 ? '' : usar);
   };
   refEsforco(); $('p-esforco').addEventListener('change', refEsforco);
+  // a divisão do esforço segue a referência (setor + abordagem) enquanto o consultor não tiver escolhido outro valor:
+  // se o valor salvo é a referência antiga (ou nenhum), ele passa para a nova quando a estratégia ou o setor mudam
+  const poeEsforco = (v) => { const sel = $('p-esforco'); if (![...sel.options].some((o) => o.value === String(v))) sel.append(el('option', { value: v }, v + '% marca · ' + (100 - v) + '% ativação (referência deste cliente)')); sel.value = String(v); refEsforco(); };
+  const seguirReferencia = async (setorAntes, comoAntes) => {
+    const { data } = await sb.from('planos').select('como_vencer, esforco_marca_pct').eq('empresa_id', id).maybeSingle(); if (!data) return;
+    const antes = U.esforcoReferencia(setorAntes, comoAntes).pct; const agora = U.esforcoReferencia(emp.setor, data.como_vencer).pct;
+    p.como_vencer = data.como_vencer;
+    const atual = data.esforco_marca_pct;
+    if (atual != null && atual !== antes) { refEsforco(); return; } // o consultor escolheu outro valor: fica como está
+    if (atual !== agora) {
+      const r = await sb.from('planos').update({ esforco_marca_pct: agora }).eq('empresa_id', id);
+      if (!r.error) { p.esforco_marca_pct = agora; poeEsforco(agora); say($('plan-msg'), 'A divisão do esforço passou para ' + agora + '% de marca, seguindo a referência da estratégia atual.', 'ok'); }
+    } else refEsforco();
+  };
+  document.addEventListener('gang:marca-salva', (e) => { if (e.detail && e.detail.tabela === 'planos') seguirReferencia(emp.setor, p.como_vencer); });
 
   // ===== acesso à plataforma ("Só acesso"): período grátis, validade e pagamentos =====
   const CICLO_T = { mensal: 'mensal', semestral: 'semestral', anual: 'anual' };
@@ -381,6 +396,8 @@
     });
     row.duracao_meses = row.duracao_meses || 18;
     row.esforco_marca_pct = row.esforco_marca_pct ?? U.esforcoPadrao(emp && emp.setor);
+    { const novoSetor = $('p-setor').value || null; const refAntes = U.esforcoReferencia(emp.setor, p.como_vencer).pct;
+      if (novoSetor !== emp.setor && (p.esforco_marca_pct == null || p.esforco_marca_pct === refAntes) && row.esforco_marca_pct === refAntes) row.esforco_marca_pct = U.esforcoReferencia(novoSetor, p.como_vencer).pct; }
     row.prazo_revisao_dias = row.prazo_revisao_dias || 2;
     row.revisoes_mes = row.revisoes_mes ?? 2; row.dias_resposta = row.dias_resposta || 'terças e quintas';
     row.sem_numeros = $('p-semnum').checked;
@@ -405,6 +422,7 @@
     ]);
     if (a.error || b.error) return say($('plan-msg'), 'Não foi possível salvar.', 'error');
     Object.assign(p, row); emp.nome = nome; emp.logo_url = logo; emp.setor = $('p-setor').value || null; $('name').textContent = nome; sub();
+    poeEsforco(p.esforco_marca_pct);
     $('p-logo').value = ''; $('p-logo-rm').checked = false; mostraLogo();
     document.dispatchEvent(new CustomEvent('gang:setor', { detail: emp.setor })); // a Estratégia reagrupa as abordagens pelo setor novo
     say($('plan-msg'), 'Salvo.', 'ok');
@@ -1336,21 +1354,51 @@
   };
   loadSugs();
 
-  // o que decidimos não fazer
+  // o que decidimos não fazer: sugestões da estratégia já marcadas, a lista inteira com caixas de marcar (sem os já escolhidos)
+  // e um campo para escrever um item próprio. Nada vai para o portal sem o consultor confirmar.
+  const insereDescs = async (textos) => {
+    if (!textos.length) return;
+    const { data } = await sb.from('acoes_descartadas').select('ordem').eq('empresa_id', id).order('ordem', { ascending: false }).limit(1);
+    const o = data && data[0] ? data[0].ordem : 0;
+    const r = await sb.from('acoes_descartadas').insert(textos.map((texto, k) => ({ empresa_id: id, texto, ordem: o + k + 1 })));
+    if (r.error) return say($('acoes-msg'), 'Não foi possível adicionar.', 'error');
+    loadDescs();
+  };
+  const caixas = (textos, marcadas) => {
+    const itens = textos.map((t) => { const cb = el('input', { type: 'checkbox', checked: marcadas }); return [t, cb, el('li', null, el('label', 'chk desc__op', cb, el('span', null, t)))]; });
+    const marcados = () => itens.filter(([, cb]) => cb.checked).map(([t]) => t);
+    return { lista: el('ul', 'ed-sug__l desc__l', itens.map((x) => x[2])), marcados };
+  };
+  const desenhaDescAdd = async (jaTem) => {
+    const box = $('desc-add'); if (!box) return;
+    const E = await abordagemAtual();
+    const sug = E.ab && P.sugereDaEstrategia ? P.sugereDaEstrategia('naoFazer', E.texto, emp.setor, jaTem, 5) : [];
+    const blocos = [];
+    if (sug.length) {
+      const c = caixas(sug, true);
+      blocos.push(el('div', 'ed-sug', el('p', 'ed-sug__t', 'Sugeridos pela estratégia (' + (E.ab.curto || 'abordagem escolhida') + '). Desmarque o que não serve para este cliente.'), c.lista,
+        el('button', { class: 'btn btn--light btn--sm ed-sug__todas', type: 'button', onclick: () => insereDescs(c.marcados()) }, 'Adicionar marcados')));
+    } else blocos.push(el('p', 'small', E.texto && !E.ab ? 'A abordagem foi escrita à mão, então não há sugestões automáticas: escolha na lista abaixo.' : 'Escolha a abordagem em Estratégia para ver sugestões do que não fazer.'));
+    const resto = (P.naoFazer || []).map((x) => x.texto).filter((t) => !jaTem.includes(t) && !sug.includes(t));
+    const c2 = caixas(resto, false);
+    blocos.push(el('details', 'desc__todos', el('summary', null, 'Escolher outros da lista (' + resto.length + ')'), c2.lista,
+      el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => insereDescs(c2.marcados()) }, 'Adicionar marcados')));
+    const txt = el('input', { class: 'field', id: 'd-texto', maxlength: 300, placeholder: 'Escrever outro item', 'aria-label': 'Escrever outro item do que não fazer' });
+    blocos.push(el('form', { class: 'inline-add', id: 'desc-form', onsubmit: (ev) => { ev.preventDefault(); const t = txt.value.trim(); if (t) { txt.value = ''; insereDescs([t]); } } },
+      el('div', 'new-client__pass', txt, el('button', { class: 'btn btn--ghost btn--sm', type: 'submit' }, 'Adicionar'))));
+    box.replaceChildren(...blocos);
+  };
   const loadDescs = async () => {
     const { data } = await sb.from('acoes_descartadas').select('*').eq('empresa_id', id).order('ordem').order('texto');
     $('descs').replaceChildren(...((data || []).length ? data.map((d) => el('li', 'row',
       el('div', 'row__main', el('p', 'row__title', el('s', null, d.texto))),
       el('div', 'row__actions', rowBtn('Excluir', async () => { await sb.from('acoes_descartadas').delete().eq('id', d.id); loadDescs(); }, true)))) : [el('li', 'clients__empty', 'Nada descartado ainda.')]));
+    desenhaDescAdd((data || []).map((d) => d.texto));
   };
-  $('desc-form').addEventListener('submit', async (ev) => {
-    ev.preventDefault();
-    const t = val('d-texto'); if (!t) return;
-    const { data } = await sb.from('acoes_descartadas').select('ordem').eq('empresa_id', id).order('ordem', { ascending: false }).limit(1);
-    await sb.from('acoes_descartadas').insert({ empresa_id: id, texto: t, ordem: data && data[0] ? data[0].ordem + 1 : 1 });
-    setv('d-texto', ''); loadDescs();
-  });
   loadDescs();
+  // a estratégia mudou em outra aba: as sugestões acompanham
+  document.addEventListener('gang:marca-salva', (e) => { if (e.detail && e.detail.tabela === 'planos') loadDescs(); });
+  document.addEventListener('gang:setor', () => loadDescs());
 
   const tabela = (cols, linhas) => [el('thead', null, el('tr', null, cols.map((c) => el('th', { scope: 'col' }, c)))),
     el('tbody', null, linhas.map((l) => el('tr', null, l.map((v, i) => (i === 0 ? el('th', { scope: 'row' }, v) : el('td', null, v))))))];
