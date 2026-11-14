@@ -165,25 +165,37 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     const msg = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite' });
     const form = el('form', { class: 'ed-card ed-card--ficha', novalidate: true },
       el('div', 'ed-head', tile(cfg.icone || 'pulso'), el('div', 'ed-head__txt', el('h3', 'ed-head__t', titulo), nota ? el('p', 'ed-head__n', nota) : null),
-        el('button', { class: 'btn btn--light btn--sm ed-head__btn', type: 'submit' }, 'Salvar')),
+        el('span', { class: 'ed-auto', title: 'As mudanças são salvas sozinhas' }, 'Salva sozinho')),
       extra,
       el('div', 'new-client ed-campos', fields.map((f) => campo(f, atual ? atual[f.k] : null, pre))),
       el('div', 'ed-foot', msg));
-    form.addEventListener('submit', async (ev) => {
-      ev.preventDefault();
-      const btn = form.querySelector('[type=submit]'); btn.disabled = true; say(msg, 'Salvando…');
-      try {
-        const row = await ler(fields, pre, pasta, atual);
-        const r = await sb.from(tabela).upsert({ empresa_id: id, ...row }).select('*').single();
-        if (r.error) throw new Error('Não foi possível salvar.');
-        await ficha(mount, cfg); // redesenha com os arquivos atuais
-        document.dispatchEvent(new CustomEvent('gang:marca-salva', { detail: { tabela } }));
-        say(mount.querySelector('.msg'), 'Salvo. O cliente já vê no portal.', 'ok');
-        if (cfg.depoisDeSalvar) cfg.depoisDeSalvar(mount, r.data);
-        return;
-      } catch (err) { say(msg, err.message, 'error'); }
-      btn.disabled = false;
+    // salva sozinho: escolher uma opção, uma data ou um arquivo salva na hora; texto salva ao sair do campo.
+    // Não redesenha o formulário (para não tirar o foco de quem está escrevendo), exceto quando entra um arquivo novo.
+    let fila = null; let rodando = Promise.resolve(); let comArquivo = false;
+    const salvar = () => {
+      rodando = rodando.then(async () => {
+        say(msg, 'Salvando…');
+        try {
+          const row = await ler(fields, pre, pasta, atual);
+          const r = await sb.from(tabela).upsert({ empresa_id: id, ...row }).select('*').single();
+          if (r.error) throw new Error('Não foi possível salvar.');
+          atual = r.data; delete form.dataset.sujo;
+          document.dispatchEvent(new CustomEvent('gang:marca-salva', { detail: { tabela } }));
+          if (comArquivo) { comArquivo = false; await ficha(mount, cfg); say(mount.querySelector('.msg'), 'Salvo. O cliente já vê no portal.', 'ok'); }
+          else {
+            say(msg, 'Salvo. O cliente já vê no portal.', 'ok');
+            // o quadro de cima (ex.: "Do diagnóstico" na Estratégia) acompanha o que acabou de ser salvo
+            if (cfg.antes) { const velho = form.querySelector('.ed-diag'); const novo = await cfg.antes(atual); if (velho && novo) velho.replaceWith(novo); }
+          }
+          if (cfg.depoisDeSalvar && !mount.querySelector('.ed-prox')) cfg.depoisDeSalvar(mount, r.data);
+        } catch (err) { say(msg, err.message, 'error'); }
+      });
+    };
+    form.addEventListener('change', (ev) => {
+      if (ev.target && ev.target.type === 'file') comArquivo = true;
+      clearTimeout(fila); fila = setTimeout(salvar, 400); // junta mudanças em sequência (ex.: o desafio muda e a abordagem se ajusta)
     });
+    form.addEventListener('submit', (ev) => { ev.preventDefault(); clearTimeout(fila); salvar(); });
     form.addEventListener('input', () => { form.dataset.sujo = '1'; }); // edição ainda não salva
     mount.replaceChildren(form);
     // campos que dependem de outro (ex.: as abordagens coerentes com o desafio escolhido)
@@ -534,7 +546,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     mount.classList.add('is-largo');
     const form = el('form', { class: 'ed-card ed-card--ficha', novalidate: true },
       el('div', 'ed-head', tile('rosto'), el('div', 'ed-head__txt', el('h3', 'ed-head__t', 'Quem a marca é'), el('p', 'ed-head__n', 'As seis facetas da identidade.')),
-        el('button', { class: 'btn btn--light btn--sm ed-head__btn', type: 'submit' }, 'Salvar')),
+        el('span', { class: 'ed-auto', title: 'As mudanças são salvas sozinhas' }, 'Salva sozinho')),
       el('div', 'new-client new-client--3 ed-campos', FAC.map(([k, t, lista]) => el('div', null, el('label', { class: 'label', for: 'fa-' + k }, t),
         U.combo('fa-' + k, (window.GangPresets || {})[lista] || [], v[k] || null, { semGrupos: true, placeholder: 'Escreva com as palavras da marca' })))),
       el('div', 'ed-foot', msg));
@@ -544,6 +556,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       const r = await sb.from('facetas').upsert(rows, { onConflict: 'empresa_id,chave' });
       say(msg, r.error ? 'Não foi possível salvar.' : 'Facetas salvas.', r.error ? 'error' : 'ok');
     });
+    let filaF = null; form.addEventListener('change', () => { clearTimeout(filaF); filaF = setTimeout(() => form.requestSubmit(), 400); }); // salva sozinho
     mount.replaceChildren(form);
   };
   montar('pane-plataforma', [
