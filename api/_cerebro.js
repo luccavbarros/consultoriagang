@@ -6806,3 +6806,39 @@
     ['No espaço físico, escolher aroma e música', ['varejo', 'servicos']],
   ].forEach(([ini, st]) => { P.acoes.filter((a) => a.texto.startsWith(ini) && !a.setores).forEach((a) => { a.setores = st.slice(); }); });
 })();
+
+// ===== Rodada 46: promoção sem desconto, serviço novo com regra de parada, clientes à frente do mercado, remarketing e segmentação =====
+// Fonte: livro acadêmico sobre a história da ciência do marketing, capítulos de promoções de vendas, relacionamento com o cliente,
+// segmentação e novos produtos (leitura completa). Destaque e exposição sem desconto: aumento menor, mas com margem cheia, e não reduzem a
+// fidelidade; amostras grátis a aumentam; promoção de preço baixa o preço de referência e a recompra a preço cheio (estudos publicados).
+// Em 23 milhões de promoções de uma rede, menos da metade deu lucro, e o que aumenta vendas tende a reduzir o lucro (estudo publicado).
+// Brinde de pouco valor pode reduzir a compra. Promoção só para quem é de outra marca gera ciúme nos fiéis. Projetos com clientes à frente
+// do mercado (usuários líderes) venderam 8 vezes mais numa grande empresa industrial (estudo publicado). Gestores mantêm produto novo fadado
+// ao fracasso; uma regra de interrupção combinada antes reduz o problema. Vantagem de ser o primeiro é superestimada (viés de sobrevivência).
+// Remarketing logo depois da visita teve efeito negativo; de 1 a 3 dias depois, positivo. E-mail com o nome da pessoa teve mais aberturas.
+// Segmentos por idade e renda mostram pouca diferença de compra; o benefício buscado é a base preferida.
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'Trocar parte dos descontos por destaque sem desconto (vitrine, topo do site, amostra ou experimentação) e comparar o lucro das duas formas', esforco: 'venda', promessa: 'valor', tema: 'preco', tipo: 'base', tam: 'P', ler: 60,
+      porque: 'Estudos publicados mostram que o destaque sem desconto vende um pouco menos, mas com a margem cheia, e não enfraquece a marca. Já a promoção de preço baixa o preço que o cliente espera pagar e reduz a recompra a preço cheio. Amostras e experimentação chegaram a aumentar a fidelidade.',
+      metrica: 'Lucro do período com destaque sem desconto comparado ao período com desconto', passos: ['Escolher um produto ou serviço que hoje costuma entrar em desconto', 'Num período, dar destaque sem baixar o preço: vitrine, topo do site e das redes, amostra ou experimentação', 'Em outro período parecido, fazer o desconto de sempre', 'Comparar o lucro (não só as vendas) dos dois períodos', 'Manter a forma que deu mais lucro'] },
+    { texto: 'Antes de lançar um serviço ou produto novo, combinar por escrito quantas vendas ele precisa ter em 3 a 6 meses para continuar', esforco: 'marca', promessa: 'vendas', tema: 'medicao', tipo: 'base', tam: 'P', ler: 60,
+      porque: 'Até 9 em cada 10 novidades fracassam, e estudos publicados mostram que os gestores tendem a manter o que não está funcionando, porque já investiram. Uma regra de interrupção combinada antes, ou alguém de fora para decidir, reduz esse viés e libera verba e atenção para o que funciona.',
+      metrica: 'Novidades lançadas com meta mínima e prazo combinados antes', passos: ['Escrever a meta mínima de vendas e o prazo antes do lançamento', 'Definir quem decide se o número não for atingido (de preferência alguém que não criou a novidade)', 'Acompanhar mês a mês', 'No prazo, manter, ajustar uma vez ou encerrar, como combinado', 'Registrar o que se aprendeu para a próxima novidade'] },
+    { texto: 'Convidar 3 a 5 clientes que já pedem coisas à frente do mercado para testar e ajudar a desenhar um serviço novo antes do lançamento', esforco: 'marca', promessa: 'valor', tema: 'experiencia', tipo: 'base', tam: 'M', ler: 60,
+      porque: 'Clientes com necessidades à frente do mercado (os que pedem o que ninguém pede, ou já improvisam uma solução) enxergam antes o que os outros vão querer. Numa grande empresa industrial, os projetos feitos com eles venderam 8 vezes mais que os feitos do jeito tradicional (estudo publicado). Eles também tendem a comprar e indicar logo no lançamento.',
+      metrica: 'Serviços novos testados com clientes à frente do mercado antes de lançar', passos: ['Listar clientes que pedem adaptações, usam o serviço de um jeito diferente ou improvisam soluções', 'Convidar 3 a 5 deles para uma conversa sobre o serviço novo', 'Mostrar uma versão simples e ouvir o que mudariam', 'Deixar que usem antes do lançamento', 'Usar os relatos deles na comunicação do lançamento, com autorização'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+  const add = (k, itens) => { if (P[k]) itens.forEach((t) => { if (!P[k].some((y) => y.texto === t)) P[k].push({ grupo: G, texto: t }); }); };
+  add('naoFazer', ['Avaliar uma promoção só pelo aumento de vendas: menos da metade das promoções dá lucro, e o que mais aumenta as vendas costuma reduzir o lucro',
+    'Dar brinde de pouco valor para incentivar a compra: brinde sem valor pode afastar o cliente em vez de atrair',
+    'Dar ofertas só para quem compra de outra marca e esquecer os clientes fiéis: eles se sentem traídos',
+    'Correr para ser o primeiro com uma novidade achando que isso garante a liderança: a vantagem de quem chega primeiro é bem menor do que parece']);
+  add('verificacoes', ['Anúncio de remarketing aparece de 1 a 3 dias depois da visita, e não logo em seguida',
+    'E-mails e mensagens para clientes usam o nome da pessoa',
+    'Grupos de clientes definidos pelo benefício que buscam, e não só por idade, renda ou região']);
+})();
