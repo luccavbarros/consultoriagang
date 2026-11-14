@@ -151,7 +151,7 @@
         sb.from('empresas').select('id, setor'),
       ]);
       if (acs.error || emps.error) { corpo.replaceChildren(el('p', 'msg is-error', 'Não foi possível carregar.')); return; }
-      const setorDe = Object.fromEntries((emps.data || []).map((e) => [e.id, e.setor]));
+      const setorDe = Object.fromEntries((emps.data || []).map((e) => [e.id, U.setorBase(e.setor)])); // o filtro compara pelo setor-base
       aprDados = (acs.data || []).map((a) => ({ ...a, setor: setorDe[a.empresa_id] || null }));
       // resultado de cada cliente (para ver se a estratégia move os números): plano, números e a promessa medida como no portal
       aprClientes = {};
@@ -254,6 +254,7 @@
     $('crumb').textContent = 'Painel / ' + ROTULO[v];
     if (v === 'aprendizado') aprendizado();
     if (v === 'novo') {
+      if ($('nc-setor').options.length < 2) U.setorOpcoes($('nc-setor'), 'Escolha o setor');
       if (!$('nc-pass').value) $('nc-pass').value = randomPass();
       if (!$('nc-start').value) $('nc-start').value = primeiroDoMes();
     }
@@ -271,12 +272,13 @@
     if (!empresa || !conta.name || !conta.email) return say($('nc-msg'), 'Preencha empresa, nome e e-mail.', 'error');
     if (conta.password.length < 8) return say($('nc-msg'), 'A senha precisa ter pelo menos 8 caracteres.', 'error');
     if (!$('nc-start').value) return say($('nc-msg'), 'Escolha a data de início do plano.', 'error');
+    if (!$('nc-setor').value) return say($('nc-msg'), 'Escolha o setor do cliente: ele define o plano modelo.', 'error');
 
     const submit = card.querySelector('[type=submit]');
     submit.disabled = true; say($('nc-msg'), 'Criando…');
     let empresaId = null;
     try {
-      const e = await sb.from('empresas').insert({ nome: empresa }).select('id').single();
+      const e = await sb.from('empresas').insert({ nome: empresa, setor: $('nc-setor').value }).select('id').single();
       if (e.error) throw new Error('Não foi possível criar a empresa.');
       empresaId = e.data.id;
       const p = await sb.from('planos').insert({
@@ -286,7 +288,7 @@
       if (p.error) throw new Error('Não foi possível criar o plano.');
       await adminApi({ ...conta, empresa_id: empresaId });
       say($('nc-msg'), 'Cliente criado. Envie o acesso: ' + conta.email + ' / ' + conta.password, 'ok');
-      card.querySelectorAll('input').forEach((i) => { i.value = ''; });
+      card.querySelectorAll('input').forEach((i) => { i.value = ''; }); $('nc-setor').value = '';
       $('nc-pass').value = randomPass(); $('nc-start').value = primeiroDoMes();
       await load();
     } catch (err) {

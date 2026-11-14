@@ -617,6 +617,21 @@
   // divisão marca:ativação de referência por setor (Binet & Field, Effectiveness in Context; B2B: Código de Eficácia B2B)
   const ESFORCO_SETOR = { b2b: 45, varejo: 64, loja_online: 64, servicos: 51, saude: 51, beleza: 51, educacao: 51, alimentacao: 51, tecnologia: 62 };
   const esforcoPadrao = (setor) => ESFORCO_SETOR[setor] || 62;
+  // setor do cliente: um campo só (Novo cliente e Contrato). Os específicos herdam as ações e as comparações do setor-base.
+  const SETOR_GRUPOS = [
+    ['Serviços', [['servicos', 'Serviços em geral (escritórios, prestadores)'], ['saude', 'Saúde (clínicas, consultórios e terapias)'], ['beleza', 'Beleza e estética'], ['educacao', 'Educação e cursos']]],
+    ['Varejo', [['varejo', 'Varejo e lojas em geral'], ['alimentacao', 'Alimentação (restaurantes, cafés e delivery)'], ['loja_online', 'Loja online']]],
+    ['Empresas (B2B)', [['b2b', 'Indústria e B2B em geral'], ['tecnologia', 'Tecnologia e software para empresas']]],
+  ];
+  const SETOR_BASE = { saude: 'servicos', beleza: 'servicos', educacao: 'servicos', alimentacao: 'varejo', loja_online: 'varejo', tecnologia: 'b2b' };
+  const setorBase = (s) => (s ? SETOR_BASE[s] || s : null);
+  const setorNome = (s) => { for (const [, ops] of SETOR_GRUPOS) { const o = ops.find(([k]) => k === s); if (o) return o[1].replace(/ \(.*\)$/, '').replace(/ em geral$/, ''); } return ''; };
+  // preenche um <select> com os setores agrupados, mantendo o valor atual
+  const setorOpcoes = (sel, vazio) => {
+    const v = sel.value;
+    sel.replaceChildren(el('option', { value: '' }, vazio || 'Não definido'), ...SETOR_GRUPOS.map(([g, ops]) => el('optgroup', { label: g }, ops.map(([k, n]) => el('option', { value: k }, n)))));
+    sel.value = v;
+  };
   // lançamento (35%): mais ativação no 1º ano para gerar experimentação, e depois ~57% de marca. Muitos lançamentos
   // fracassam por não virar a tempo (Effectiveness in Context, p.77 e p.133). A virada é automática no 13º mês do plano.
   const LANC = 35; const POS_LANC = 57;
@@ -757,5 +772,5 @@
   // a situação que aparece no selo: Ativo, Pausado, Encerrado ou Pagamento pendente (acesso vencido)
   const situacaoPlano = (p) => (!p ? null : p.status === 'encerrado' ? [' is-off', 'Encerrado'] : p.status === 'pausado' ? [' is-warn', 'Pausado']
     : acessoVencido(p) ? [' is-warn', 'Pagamento pendente'] : ['', 'Ativo']);
-  window.GangUI = { buscaFonte, acessoVence, acessoVencido, acessoDiasRestantes, situacaoPlano, graficos, esforcoPadrao, ESFORCO_SETOR, metaMarcaMes, mesesDeHistorico, metaMarcaPlano, esforcoReferencia, addDias, moedaFmt, moedaValor, moedaSet, PROMESSAS, promessaDe, tipoEsforco, pesoTamanho, combo, comboValue, comboSet, diasSemana, diasComArtigo, multi, multiValue, avatar, iniciais, $, el, say, day, fmt, cap, dia, diaAno, mesAno, hora, quando, ref, refDate, addRef, nomeMes, nomeMesCurto, mesesEntre, mesDoPlano, diasAte, reais, pct };
+  window.GangUI = { buscaFonte, acessoVence, acessoVencido, acessoDiasRestantes, situacaoPlano, graficos, esforcoPadrao, ESFORCO_SETOR, setorBase, setorNome, setorOpcoes, metaMarcaMes, mesesDeHistorico, metaMarcaPlano, esforcoReferencia, addDias, moedaFmt, moedaValor, moedaSet, PROMESSAS, promessaDe, tipoEsforco, pesoTamanho, combo, comboValue, comboSet, diasSemana, diasComArtigo, multi, multiValue, avatar, iniciais, $, el, say, day, fmt, cap, dia, diaAno, mesAno, hora, quando, ref, refDate, addRef, nomeMes, nomeMesCurto, mesesEntre, mesDoPlano, diasAte, reais, pct };
 })();

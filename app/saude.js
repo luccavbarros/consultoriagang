@@ -236,7 +236,8 @@
     const pend = acoes.filter((a) => a.adiantada_de && !a.reposta); if (!pend.length) return 0;
     const pts = (t) => ({ P: 1, M: 2, G: 4 }[t] || 2);
     const ja = new Set(acoes.map((a) => a.titulo));
-    const doSetor = (x) => !setor || !x.setores || x.setores.includes(setor);
+    const base = window.GangUI && window.GangUI.setorBase ? window.GangUI.setorBase(setor) : setor;
+    const doSetor = (x) => !setor || !x.setores || x.setores.includes(setor) || x.setores.includes(base);
     const hoje = new Date(); const atual = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0');
     const prazoNo = (mes, tam) => {
       const [y, m] = mes.split('-').map(Number);

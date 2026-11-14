@@ -2210,3 +2210,10 @@ html.side-abrindo .side__plan .badge { display: none; }
 /* dias da semana (Contrato): lista que abre com caixas de marcar */
 .dias__op { display: flex; align-items: center; gap: 10px; }
 .dias__op input { accent-color: #ececec; width: 15px; height: 15px; margin: 0; }
+
+/* plano modelo: o foco previsto de cada mês */
+.admin-main .mod__foco { margin: 2px 0 6px; font-size: 13px; color: #ececec; max-width: none; }
+.mod__foco-l { margin-right: 8px; font-size: 11px; letter-spacing: .02em; color: var(--dim); text-transform: uppercase; }
+/* plano modelo: o setor vem do cadastro */
+.mod__setor { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 6px 0 0; font-size: 14px; color: #ececec; }
+.mod__setor .is-falta { color: var(--warn, #e0b25b); }

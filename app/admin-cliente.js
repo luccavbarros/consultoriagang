@@ -52,7 +52,7 @@
     $('p-logo-rm-wrap').hidden = !emp.logo_url;
   };
   mostraLogo();
-  if ($('p-setor')) $('p-setor').value = emp.setor || '';
+  if ($('p-setor')) { U.setorOpcoes($('p-setor')); $('p-setor').value = emp.setor || ''; } // um campo só: o setor define o plano modelo
 
   // trocar de cliente pelo topo do menu (seletor com busca, como nas referências)
   (async () => {
@@ -327,7 +327,7 @@
   // a divisão de referência para este cliente: setor + estratégia (compra recorrente, preço baixo); o consultor decide
   const refEsforco = () => {
     const r = U.esforcoReferencia(emp.setor, p.como_vencer);
-    const nome = ((window.GangPresets || {}).SETORES || {})[emp.setor] || 'média geral';
+    const nome = U.setorNome(emp.setor).toLowerCase() || 'média geral';
     const usar = el('button', { class: 'link', type: 'button', onclick: () => {
       const sel = $('p-esforco'); if (![...sel.options].some((o) => o.value === String(r.pct))) sel.append(el('option', { value: r.pct }, r.pct + '% marca · ' + (100 - r.pct) + '% ativação (referência deste cliente)'));
       sel.value = String(r.pct); refEsforco();
@@ -430,7 +430,7 @@
     return { passos: (x.passos || []).map((t) => ({ t, ok: false })), tamanho: x.tam || null, ler_em_dias: x.ler || null, modelo: x.modelo || null, tipo: x.tipo || null };
   };
   const TAM = (window.GangPresets && window.GangPresets.TAMANHO) || { P: ['P', '', 1], M: ['M', '', 2], G: ['G', '', 4] };
-  const doSetor = (x) => !emp.setor || !x.setores || x.setores.includes(emp.setor);
+  const doSetor = (x) => !emp.setor || !x.setores || x.setores.includes(emp.setor) || x.setores.includes(U.setorBase(emp.setor));
   // carga do mês: mais de 5 ações ou mais de 8 pontos (P=1, M=2, G=4) é pesado demais para executar
   const cargaDe = (lista) => ({ n: lista.length, pts: lista.reduce((t, a) => t + ((TAM[a.tamanho || a.tam] || [, , 2])[2]), 0) });
   const pesado = (c) => c.n > 5 || c.pts > 8;
@@ -442,7 +442,7 @@
       sb.from('acoes').select('titulo, resultado, esforco, empresa_id').not('resultado', 'is', null),
       sb.from('empresas').select('id, setor'),
     ]);
-    const setorDe = Object.fromEntries(((emps && emps.data) || []).map((e) => [e.id, e.setor]));
+    const setorDe = Object.fromEntries(((emps && emps.data) || []).map((e) => [e.id, U.setorBase(e.setor)])); // aprende pelo setor-base (mais casos)
     historico = {};
     // ações de marca registram a execução (o efeito vem na pesquisa): não entram no "funcionou"
     // cada ação guarda o total e o resultado por setor (uma ação pode funcionar no varejo e não em serviços)
@@ -458,7 +458,7 @@
   // a evidência que vale para este cliente: a do setor dele, se já tiver 5 casos; senão, a de todos
   const evid = (titulo) => {
     const h = historico && historico[titulo]; if (!h) return null;
-    const st = emp.setor && h.setor && h.setor[emp.setor];
+    const st = emp.setor && h.setor && h.setor[U.setorBase(emp.setor)];
     if (st && st.n >= 5) return { n: st.n, pts: st.pts, doSetor: true };
     return h.n >= 5 ? { n: h.n, pts: h.pts, doSetor: false } : null; // com menos de 5 casos é sorte, não evidência
   };
@@ -495,6 +495,16 @@
 
   // ===== planejar o mês: veredito (o que passou) → foco (o mês) → ações sugeridas para o foco =====
   const MF = (window.GangPresets && window.GangPresets.modelosFoco) || {};
+  // o foco previsto de um mês: o foco da biblioteca que mais reúne as ações daquele mês (essencial conta em dobro)
+  const focoPrevisto = (itens) => {
+    let melhor = null; let pts = 0;
+    Object.entries(MF).forEach(([f, m]) => {
+      const n = itens.reduce((t, x) => t + (m.acoes.includes(x.titulo) ? (x.peso === 'essencial' ? 2 : 1) : 0), 0);
+      if (n > pts) { pts = n; melhor = f; }
+    });
+    return melhor;
+  };
+  let previsto = null; // foco previsto pelo plano para o mês aberto no Planejar o mês
   const PROMN = { vendas: 'Venda mais', pessoas: 'Para mais pessoas', valor: 'Com mais valor' };
   let BP = null; // dados do cliente para os números e a sugestão de foco
   const mesSel = () => $('f-mes').value || U.ref();
@@ -533,8 +543,10 @@
     return pts.filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([f]) => f);
   };
   const desenhaSug = () => {
-    const ss = sugestoes(); const atual = val('f-titulo');
-    $('pl-sug').replaceChildren(...(ss.length
+    const ss = sugestoes().filter((f) => f !== previsto); const atual = val('f-titulo');
+    const chip = (f) => el('button', { class: 'plan__chip' + (f === atual ? ' is-on' : ''), type: 'button', onclick: () => { setv('f-titulo', f); desenhaSug(); desenhaPlAcoes(); } }, f);
+    const doPlano = previsto ? [el('span', 'plan__sug-l', 'Previsto no plano'), chip(previsto)] : [];
+    $('pl-sug').replaceChildren(...doPlano, ...(ss.length
       ? [el('span', 'plan__sug-l', 'Sugeridos pelo veredito'), ...ss.map((f) => el('button', { class: 'plan__chip' + (f === atual ? ' is-on' : ''), type: 'button',
         onclick: () => { setv('f-titulo', f); desenhaSug(); desenhaPlAcoes(); } }, f))]
       : [el('span', 'plan__sug-l', 'Escolha o veredito e os focos que combinam aparecem aqui.')]));
@@ -569,7 +581,7 @@
           el('span', 'plan__ac-s', [x.tam ? 'Tamanho ' + x.tam + ' (' + TAM[x.tam][1] + ')' : null, x.esforco ? 'esforço de ' + (x.esforco === 'marca' ? 'marca' : 'venda') : null, x.promessa ? PROMN[x.promessa] : null].filter(Boolean).join(' · ')),
           el('span', 'plan__ac-tags', sug[x.texto] ? el('span', 'mtag mtag--date', 'Prazo sugerido: ' + U.dia(sug[x.texto])) : null, selo(x.texto),
             x.manutencao ? el('span', { class: 'aviso-chip aviso-chip--man', title: 'Cuida de quem já é cliente. Vale, mas não faz a marca crescer.' }, 'Manutenção') : null,
-            !doSetor(x) ? el('span', 'aviso-chip', 'Pouco usada em ' + (window.GangPresets.SETORES[emp.setor] || 'este setor').toLowerCase()) : null,
+            !doSetor(x) ? el('span', 'aviso-chip', 'Pouco usada em ' + (U.setorNome(emp.setor) || 'este setor').toLowerCase()) : null,
             x.antes && !todas.some((a) => a.titulo === x.antes) && !escolhidas.has(x.antes) ? el('span', 'aviso-chip', 'Antes: ' + x.antes.split(':')[0]) : null))),
         noMes ? el('span', 'chip chip--done', 'Já no mês') : feita ? el('span', 'chip chip--todo', 'Já feita antes') : ess);
     });
@@ -611,8 +623,14 @@
   };
   const carregaMes = async (mes) => {
     $('f-mes').value = mes;
-    const { data } = await sb.from('orientacoes').select('*').eq('empresa_id', id).eq('mes_ref', mes).order('publicada_em', { ascending: false }).limit(1);
-    preenche((data || [])[0] || null);
+    const [{ data }, { data: doMes }] = await Promise.all([
+      sb.from('orientacoes').select('*').eq('empresa_id', id).eq('mes_ref', mes).order('publicada_em', { ascending: false }).limit(1),
+      sb.from('acoes').select('titulo, peso').eq('empresa_id', id).eq('mes_previsto', mes)]);
+    previsto = focoPrevisto(doMes || []);
+    const f = (data || [])[0] || null;
+    preenche(f);
+    // mês ainda não publicado: o foco já vem com o previsto pelo plano (o consultor pode trocar pelo veredito)
+    if (!f && previsto) { setv('f-titulo', previsto); escolhidas.clear(); desenhaSug(); desenhaPlAcoes(); }
   };
   const resetFoco = async () => {
     // abre no mês que falta planejar: o atual, ou o próximo se o atual já foi publicado
@@ -935,7 +953,17 @@
   // modelo de plano por setor: o esqueleto de 18 meses, ajustado à duração e ao início do plano
   const MOD = P.modelos || {};
   $('mod-setor').replaceChildren(...Object.entries(MOD).map(([k, m]) => el('option', { value: k }, m.nome)));
-  if (emp.setor && MOD[emp.setor]) $('mod-setor').value = emp.setor; // o modelo do setor do cliente já vem escolhido
+  // o modelo vem do setor do cadastro (Novo cliente / Contrato): o consultor não escolhe de novo aqui
+  const modeloDoSetor = () => {
+    const k = MOD[emp.setor] ? emp.setor : MOD[U.setorBase(emp.setor)] ? U.setorBase(emp.setor) : '';
+    $('mod-setor').value = k;
+    $('mod-setor-txt').replaceChildren(...(k ? [U.setorNome(emp.setor), el('a', { class: 'link mod__setor-mudar', href: '#plano' }, 'Mudar em Contrato')]
+      : [el('span', 'is-falta', 'Setor não definido. '), el('a', { class: 'link', href: '#plano' }, 'Definir em Contrato')]));
+    $('mod-go').disabled = !k;
+    return k;
+  };
+  modeloDoSetor();
+  document.addEventListener('gang:setor', () => { modeloDoSetor(); if ($('acoes-modelo').open) desenhaModelo(); });
   // ===== o modelo cobre o prazo inteiro do cliente =====
   // 1. os marcos do modelo (pensado em 18 meses) caem no mês proporcional do plano: revisão semestral, anual, chegada;
   // 2. o que cairia no passado vai para o mês atual e o seguinte (nada nasce atrasado);
@@ -1186,7 +1214,8 @@
       n + (n === 1 ? ' ação executa' : ' ações executam') + ' a abordagem e ' + (n === 1 ? 'vem' : 'vêm') + ' primeiro.' + (fora ? ' ' + fora + (fora === 1 ? ' ação ficou' : ' ações ficaram') + ' de fora por contradizer a renúncia.' : '')));
   };
   const desenhaModelo = async () => {
-    const m = MOD[$('mod-setor').value]; if (!m) return;
+    const m = MOD[$('mod-setor').value];
+    if (!m) return $('mod-list').replaceChildren(el('li', 'lib__item', el('p', 'row__text', 'Defina o setor do cliente em Contrato para ver o plano modelo.')));
     if (!p.inicio) return $('mod-list').replaceChildren(el('li', 'lib__item', el('p', 'row__text', 'Cadastre o início do plano (em Plano) para ver o modelo distribuído nos meses.')));
     const E = await abordagemAtual();
     const plano = montaModelo(m, E.ab);
@@ -1198,14 +1227,15 @@
       el('li', 'lib__item mod__resumo', el('p', 'row__text', plano.length + ' ações em ' + meses.length + ' meses, de ' + U.nomeMes(meses[0]) + ' de ' + meses[0].slice(0, 4) + ' a ' + U.nomeMes(meses[meses.length - 1]) + ' de ' + meses[meses.length - 1].slice(0, 4) + '. Nenhum mês fica vazio; ajuste mês a mês no Planejar o mês, conforme os resultados.')),
       ...meses.map((mm) => el('li', 'lib__item mod__mes',
         el('div', 'lib__main', el('p', 'row__eyebrow', U.cap(U.nomeMes(mm)) + ' ' + mm.slice(0, 4)),
+          ((f) => (f ? el('p', 'mod__foco', el('span', 'mod__foco-l', 'Foco'), f) : null))(focoPrevisto(plano.filter((x) => x.mes === mm).map((x) => ({ titulo: x.titulo, peso: x.peso }))
+            .concat(acoes.filter((a) => a.mes_previsto === mm).map((a) => ({ titulo: a.titulo, peso: a.peso }))))),
           el('ul', 'mod__acs', plano.filter((x) => x.mes === mm).map((x) => el('li', null,
             el('span', 'mod__peso' + (x.peso === 'essencial' ? ' is-ess' : ''), x.peso === 'essencial' ? 'Essencial' : 'Ajuda'),
             el('span', null, x.titulo.split(':')[0], x.executa ? el('span', 'mod__exec', 'Estratégia') : null), el('span', 'mod__esf', x.esforco === 'marca' ? 'marca' : 'venda')))))))].filter(Boolean));
   };
-  $('mod-setor').addEventListener('change', desenhaModelo);
   // vindo da Estratégia: abre o modelo já com a prévia do plano alinhado; montar continua sendo um clique do consultor
   window.GangAbreModelo = () => {
-    if (emp.setor && MOD[emp.setor]) $('mod-setor').value = emp.setor;
+    modeloDoSetor();
     location.hash = '#acoes';
     const d = $('acoes-modelo'); d.open = true; desenhaModelo();
     setTimeout(() => d.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
@@ -1261,7 +1291,7 @@
           el('p', 'row__title', x.texto),
           el('div', 'plan__ac-tags', selo(x.texto),
             x.manutencao ? el('span', { class: 'aviso-chip aviso-chip--man', title: 'Cuida de quem já é cliente. Vale, mas não faz a marca crescer.' }, 'Manutenção') : null,
-            !doSetor(x) ? el('span', 'aviso-chip', 'Pouco usada em ' + (P.SETORES[emp.setor] || 'este setor').toLowerCase()) : null,
+            !doSetor(x) ? el('span', 'aviso-chip', 'Pouco usada em ' + (U.setorNome(emp.setor) || 'este setor').toLowerCase()) : null,
             x.antes && !acoes.some((a) => a.titulo === x.antes) ? el('span', 'aviso-chip', 'Antes: ' + x.antes.split(':')[0]) : null),
           x.porque ? el('p', 'lib__why', x.porque) : null,
           x.metrica ? el('p', 'row__text', 'Sucesso se: ' + x.metrica) : null),

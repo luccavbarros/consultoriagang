@@ -9,9 +9,9 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   const setorEmpresa = () => sb.from('empresas').select('setor').eq('id', id).maybeSingle().then((r) => (r.data ? r.data.setor : null), () => null);
   const MIN_ACOES_SETOR = 3; // abaixo disso o plano não consegue executar a abordagem naquele setor
   const agrupaPorSetor = (lista, setor) => {
-    const P = window.GangPresets || {}; const nome = ((P.SETORES || {})[setor] || '').toLowerCase();
+    const P = window.GangPresets || {}; const nome = (U.setorNome(setor) || '').toLowerCase(); const base = U.setorBase(setor);
     if (!setor || !nome) return { lista, grupos: false };
-    const serve = (t) => { const x = (P.acoes || []).find((y) => y.texto === t) || {}; return !x.setores || x.setores.includes(setor); };
+    const serve = (t) => { const x = (P.acoes || []).find((y) => y.texto === t) || {}; return !x.setores || x.setores.includes(setor) || x.setores.includes(base); };
     const n = (a) => (a.acoes ? a.acoes.filter(serve).length : MIN_ACOES_SETOR); // abordagem sem ações ligadas não é julgada
     const sim = lista.filter((a) => n(a) >= MIN_ACOES_SETOR); const nao = lista.filter((a) => n(a) < MIN_ACOES_SETOR);
     if (!nao.length) return { lista, grupos: false };
@@ -702,7 +702,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     const [{ data: emps }, { data: eu }] = await Promise.all([sb.from('empresas').select('id, nome, setor').neq('id', id).order('nome'), sb.from('empresas').select('setor').eq('id', id).maybeSingle()]);
     const setor = eu && eu.setor;
     const lista = (emps || []).sort((a, b) => (b.setor === setor) - (a.setor === setor));
-    const nomeSet = (s) => ((window.GangPresets || {}).SETORES || {})[s] || s;
+    const nomeSet = (s) => U.setorNome(s) || s;
     const msg = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite' });
     const sel = el('select', { class: 'field', id: 'cp-de' }, lista.length ? lista.map((e) => el('option', { value: e.id }, e.nome + (e.setor ? ' · ' + nomeSet(e.setor) : '') + (setor && e.setor === setor ? ' (mesmo setor)' : ''))) : el('option', { value: '' }, 'Nenhum outro cliente'));
     const caixas = COPIAS.map(([g, itens]) => el('fieldset', 'copia__g', el('legend', 'label', g), itens.map(([t, rot]) =>

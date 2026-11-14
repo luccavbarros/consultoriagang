@@ -842,6 +842,9 @@ alter table public.acoes add column if not exists travada text check (travada in
 alter table public.acoes add column if not exists travada_nota text check (length(travada_nota) <= 500);
 -- setor do cliente: as sugestões de ação mostram primeiro as que servem para ele
 alter table public.empresas add column if not exists setor text check (setor in ('servicos', 'varejo', 'b2b'));
+-- setores específicos (definem o plano modelo); herdam as ações do setor-base: saúde, beleza e educação = serviços; alimentação e loja online = varejo; tecnologia = B2B
+alter table public.empresas drop constraint if exists empresas_setor_check;
+alter table public.empresas add constraint empresas_setor_check check (setor in ('servicos', 'varejo', 'b2b', 'saude', 'beleza', 'educacao', 'alimentacao', 'loja_online', 'tecnologia'));
 
 -- o cliente marca ou desmarca um passo da ação
 create or replace function public.portal_passo_acao(p_acao uuid, p_i int, p_ok boolean)

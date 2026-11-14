@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="app/app.css?v=25" />
   <link rel="stylesheet" href="app/portal.css?v=65" />
-  <link rel="stylesheet" href="app/tema.css?v=155" />
+  <link rel="stylesheet" href="app/tema.css?v=160" />
   <script src="app/entrada.js?v=2"></script>
 </head>
 <body class="portal-body">
@@ -134,7 +134,7 @@
             </div>
             <div>
               <label class="label" for="p-setor">Setor (filtra as ações sugeridas)</label>
-              <select class="field" id="p-setor"><option value="">Não definido</option><option value="servicos">Serviços</option><option value="varejo">Varejo e lojas</option><option value="b2b">Indústria e B2B</option></select>
+              <select class="field" id="p-setor"><option value="">Não definido</option></select>
             </div>
             <div><label class="label" for="p-consultor">Consultor</label><select class="field" id="p-consultor"></select></div>
             <div><label class="label" for="p-meta">Meta de faturamento (%)</label><select class="field" id="p-meta" data-num><option value="">Sem meta</option><option value="10">+10%</option><option value="15">+15%</option><option value="20">+20%</option><option value="25">+25%</option><option value="30">+30%</option><option value="40">+40%</option><option value="50">+50%</option><option value="100">+100% (dobrar)</option></select></div>
@@ -318,7 +318,7 @@
       <details class="lib" id="acoes-modelo">
         <summary><span class="title-sm">Montar o plano a partir de um modelo</span><span class="small">Distribui as ações do setor pelos meses, na ordem da estratégia.</span></summary>
         <div class="lib__ctl">
-          <div><label class="label" for="mod-setor">Setor do cliente</label><select class="field" id="mod-setor"></select></div>
+          <div><p class="label">Setor do cliente</p><p class="mod__setor" id="mod-setor-txt"></p><select id="mod-setor" hidden></select></div>
           <div class="lib__go"><button class="btn btn--light btn--sm" type="button" id="mod-go">Montar o plano</button></div>
         </div>
         <ul class="lib__list" id="mod-list"></ul>
@@ -587,10 +587,10 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script src="app/config.js"></script>
   <script src="app/auth.js?v=2"></script>
-  <script src="app/ui.js?v=42"></script>
+  <script src="app/ui.js?v=43"></script>
   <script src="app/cerebro.js?v=1"></script>
-  <script src="app/admin-marca.js?v=46"></script>
-  <script src="app/saude.js?v=18"></script>
-  <script src="app/admin-cliente.js?v=113"></script>
+  <script src="app/admin-marca.js?v=47"></script>
+  <script src="app/saude.js?v=19"></script>
+  <script src="app/admin-cliente.js?v=115"></script>
 </body>
 </html>
