@@ -6489,3 +6489,43 @@
   add('verificacoes', ['Quem vê o anúncio sabe dizer de que marca é (testado com pessoas do público)',
     'Peça nova de uma campanha antiga diferente o bastante para não parecer repetida, mantendo os sinais da marca']);
 })();
+
+// ===== Rodada 40: qualidade comparada ao concorrente, dependência de promoção e leitura correta dos resultados da marca =====
+// Fonte: livro de professor de escola de negócios sobre métricas de marketing (pesquisa de 30 meses com empresas). Satisfação absoluta
+// não é confiável: há satisfeitos que trocam de marca e insatisfeitos que ficam por inércia; a qualidade percebida relativa ao concorrente
+// previu o lucro futuro melhor que a participação de mercado (estudo publicado). Promoções em 50% do tempo com 80% das vendas nelas indicam
+// marca fraca; linha de base de promoção puxada para baixo infla o ganho; promoções de preço quando os concorrentes também fazem podem
+// prejudicar. Estudos publicados em vários serviços: recomendação caiu com o tempo de cliente em 3 de 4 serviços; clientes antigos não eram
+// necessariamente mais baratos de atender nem menos sensíveis a preço. Medir divulgação pelo espaço ocupado nunca foi sólido. A marca muda
+// devagar: avaliação completa no máximo duas vezes por ano fora de crises. Vendas altas com marca enfraquecida (preço subindo e produto
+// encolhendo) enganam até a marca despencar. Marca nova precisa de conhecimento e experimentação; marca madura, de diferença frente aos imitadores.
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'Perguntar aos clientes como a empresa se compara ao principal concorrente em qualidade, não só se estão satisfeitos', esforco: 'marca', promessa: 'valor', tema: 'medicao', tipo: 'base', tam: 'P', ler: 90,
+      porque: 'A nota de satisfação sozinha engana: há clientes satisfeitos que trocam de marca e insatisfeitos que ficam só por comodidade. Um estudo publicado mostrou que a qualidade percebida em comparação com o concorrente prevê o lucro futuro melhor do que a participação de mercado. A pergunta comparada mostra se a marca está ganhando ou perdendo terreno na cabeça do cliente.',
+      metrica: 'Parte dos clientes que acha a empresa melhor que o principal concorrente, medida a cada semestre', passos: ['Escolher o concorrente que o cliente mais considera no lugar da empresa', 'Perguntar a pelo menos 20 clientes e 10 pessoas que compram na categoria: comparando as duas, qual tem mais qualidade? Qual você prefere?', 'Anotar a parte que diz "a empresa", "igual" e "o concorrente"', 'Repetir a cada semestre com as mesmas perguntas e o mesmo concorrente', 'Quando a diferença cair, perguntar o motivo e agir nele antes de mexer no preço'] },
+    { texto: 'Comparar a parte das vendas feita em promoção com a parte do tempo em que há promoção, para ver se a marca depende de desconto', esforco: 'venda', promessa: 'valor', tema: 'preco', tipo: 'base', tam: 'P', ler: 90,
+      porque: 'Se há promoção em metade do tempo, mas 80% das vendas acontecem nela, o cliente aprendeu a esperar o desconto: sinal de marca fraca. Os estudos citados mostram que promoções de preço muitas vezes não dão lucro nem no curto prazo, e que o ganho costuma ser inflado quando é medido contra um período de vendas baixo.',
+      metrica: 'Parte das vendas em promoção comparada à parte do tempo com promoção, a cada trimestre', passos: ['Contar em quantos dias do trimestre houve alguma promoção ou desconto aberto', 'Somar quanto foi vendido nesses dias e quanto foi vendido a preço cheio', 'Comparar: parte do tempo com promoção x parte das vendas com promoção', 'Se as vendas em promoção forem bem maiores que o tempo de promoção, reduzir a frequência dos descontos e reforçar a comunicação de marca', 'Repetir a conta no trimestre seguinte'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+
+  const add = (k, itens) => { if (P[k]) itens.forEach((t) => { if (!P[k].some((y) => y.texto === t)) P[k].push({ grupo: G, texto: t }); }); };
+  add('naoFazer', ['Medir o ganho de uma promoção comparando com o pior período de vendas: compare com a média normal ou com um local parecido sem promoção',
+    'Fazer promoção de preço só porque o concorrente fez: quando todos dão desconto, ninguém ganha cliente e todos perdem margem',
+    'Medir a divulgação na imprensa pelo tamanho da matéria ou por quanto custaria em anúncio: o que importa é o efeito em quem leu',
+    'Contar que clientes antigos indicam mais e aceitam preço maior sem conferir: em vários serviços estudados, a indicação caiu com o tempo de cliente',
+    'Refazer a avaliação completa da marca toda semana ou mês e mudar o rumo por oscilação: a marca muda devagar']);
+  add('verificacoes', ['Vendas boas no período conferidas contra a saúde da marca: não vieram de subir preço, encolher o produto ou cortar qualidade',
+    'Ao comparar crescimento ou participação, o mercado considerado é o mesmo do período anterior',
+    'Marca nova acompanhada primeiro por conhecimento e experimentação; marca já conhecida, pela diferença em relação aos imitadores']);
+
+  if (P.causas && P.desafios) {
+    const D = (ini) => (P.desafios.find((d) => d.texto.startsWith(ini)) || {}).texto;
+    [['A maior parte das vendas só acontece em promoção, e o preço cheio quase não vende', ['A proposta começa pelo preço', 'O cliente não vê diferença']],
+    ].forEach(([t, ds]) => { if (!P.causas.some((c) => c.texto === t)) P.causas.push({ grupo: G, texto: t, desafios: ds.map(D).filter(Boolean) }); });
+  }
+})();
