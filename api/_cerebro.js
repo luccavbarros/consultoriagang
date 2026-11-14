@@ -6182,3 +6182,310 @@
     'Aceitar o mercado atual como o único jeito possível de competir']);
   add('verificacoes', ['Condição mais duvidosa da estratégia testada antes de investir', 'Preferência dos clientes pela proposta inteira, comparada a 2 concorrentes']);
 })();
+
+// ===== Rodada 32: o que vem à mente, perfis em ordem, fiéis sem desconto, visitas que ouvem problemas e serviço novo com o mesmo nome =====
+// Fontes (leitura de um livro-texto de gestão estratégica de marcas, caps. 2, 3, 9, 10, 11 e diretrizes dos caps. 12 a 14):
+// associação livre é a técnica mais simples e muitas vezes a mais eficaz; a ordem em que as associações aparecem indica a força,
+// e comparar com as do concorrente mostra o que é único; o inventário da marca inclui os perfis digitais (abandonados, repetidos,
+// desatualizados, canais ausentes); clientes mais fiéis esperam pagar menos (estudo publicado em revista acadêmica de marketing),
+// então a recompensa deve vir por outros meios; boas visitas a clientes seguem um plano, vão além dos favoritos e pedem problemas,
+// não soluções; extensões dão certo quando há ajuste percebido com a marca, e a divulgação deve explicar o produto novo;
+// a categoria vem antes do diferencial numa marca nova; o diferencial é dito como benefício, com a característica como prova;
+// intenção de compra prevê melhor quando a pergunta tem situação e prazo concretos.
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'Perguntar a 10 clientes o que vem à mente sobre a empresa e sobre o principal concorrente, e separar o que só aparece para a empresa', esforco: 'marca', promessa: 'valor', tema: 'medicao', tipo: 'base', tam: 'P', ler: 30,
+      porque: 'Perguntar sem dar pistas é a forma mais simples de ver o que a marca significa para o cliente. O que aparece primeiro é o que está mais forte na memória. Fazer a mesma pergunta sobre o concorrente mostra o que é só da marca: o que aparece para os dois não diferencia.',
+      metrica: 'Ideias que aparecem só para a empresa entre as 3 primeiras citadas', passos: ['Perguntar: "O que vem à sua cabeça quando pensa em [empresa]?", sem dar pistas', 'Anotar as respostas na ordem em que aparecem', 'Depois perguntar o que mais gosta, o que menos gosta e o que acha único', 'Fazer as mesmas perguntas sobre o principal concorrente', 'Separar o que aparece só para a empresa e comparar com o que a marca quer ser'] },
+    { texto: 'Revisar todos os perfis e canais da marca: fechar os abandonados, juntar os repetidos e atualizar logo, horário e contato', esforco: 'marca', promessa: 'pessoas', tema: 'presenca', tipo: 'base', tam: 'P', ler: 30,
+      porque: 'Com o tempo, a marca deixa perfis esquecidos, páginas repetidas e informações velhas espalhadas. Quem encontra um desses vê uma marca parada ou desencontrada. A revisão também mostra onde a marca não está e deveria estar.',
+      metrica: 'Perfis e canais com logo, horário e contato atuais', passos: ['Listar todos os perfis, páginas, cadastros e mapas em que a marca aparece', 'Fechar ou atualizar os abandonados', 'Juntar os repetidos num só', 'Conferir logo, cores, horário e contato em cada um', 'Anotar onde os clientes procuram e a marca não está'] },
+    { texto: 'Recompensar os clientes mais antigos com atendimento e benefícios, e não com descontos maiores', esforco: 'venda', promessa: 'valor', tema: 'relacao', tipo: 'base', tam: 'P', ler: 90,
+      porque: 'Um estudo publicado em revista acadêmica de marketing mostrou que os clientes mais fiéis esperam pagar menos e negociam mais, porque se sabem valiosos. Se a única recompensa for desconto, a margem dos melhores clientes encolhe ano a ano. Prioridade, atendimento dedicado ou um extra mostram o mesmo reconhecimento sem baixar o preço.',
+      metrica: 'Margem dos clientes mais antigos comparada à dos demais', passos: ['Listar o que os clientes mais antigos recebem hoje e quanto de desconto têm', 'Escolher benefícios que não sejam preço: prioridade, atendimento dedicado, um extra', 'Orientar a equipe de vendas a oferecer esses benefícios antes de qualquer desconto', 'Acompanhar a margem desses clientes'] },
+    { texto: 'Visitar 12 clientes escolhidos por um plano, e não só os favoritos, para ouvir os problemas deles', esforco: 'venda', promessa: 'vendas', tema: 'medicao', tipo: 'base', tam: 'M', ler: 90, setores: ['b2b', 'servicos'],
+      porque: 'Visitar sempre os mesmos clientes favoritos dá uma visão confortável e parcial. Um método reconhecido de visitas recomenda escolher por um plano (tamanho, setor, satisfeitos e insatisfeitos), ver pelo menos uma dúzia e ouvir quem participa de cada etapa da compra. O cliente descreve bem o problema; a solução é trabalho da empresa.',
+      metrica: 'Problemas que se repetiram em pelo menos 3 visitas', passos: ['Escolher 12 clientes por um plano: tamanhos, setores, satisfeitos e insatisfeitos', 'Enviar antes a agenda da conversa', 'Ir em 2 ou 3 pessoas: uma conduz, outra anota as falas como foram ditas', 'Fazer perguntas abertas sobre problemas, e não pedir soluções', 'Conversar sobre o que ouviu logo depois de cada visita', 'Juntar o que se repetiu num resumo por tema'] },
+    { texto: 'Antes de lançar um serviço novo com o nome da marca, perguntar a clientes se esperariam isso dela e quais serviços acham que ela já oferece', esforco: 'marca', promessa: 'valor', tema: 'posicionamento', tipo: 'base', tam: 'P', ler: 60,
+      porque: 'Pesquisas sobre extensões de marca mostram que o produto novo vai bem quando a marca tem boa imagem e o cliente vê ligação entre os dois. Se muitos já acham que a empresa oferece aquilo, o risco é baixo. Se ninguém espera, o serviço pode confundir a marca. Na divulgação, funciona melhor explicar o serviço novo do que só repetir o nome da marca.',
+      metrica: 'Clientes que esperariam o serviço novo da marca', passos: ['Perguntar a 10 clientes quais serviços acham que a empresa já oferece', 'Descrever o serviço novo e perguntar se esperariam isso da marca, de 0 a 10', 'Perguntar o que vem à mente ao saber da novidade', 'Se a ligação for fraca, rever o serviço ou o nome', 'Na divulgação, explicar o que o serviço novo faz'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+
+  const add = (k, itens) => { if (P[k]) itens.forEach((t) => { if (!P[k].some((y) => y.texto === t)) P[k].push({ grupo: G, texto: t }); }); };
+  add('naoFazer', ['Fazer um anúncio chamativo que não deixa claro o que a empresa vende', 'Dar os maiores descontos justamente aos clientes mais fiéis',
+    'Pedir ao cliente que invente a solução em vez de contar o problema']);
+  add('verificacoes', ['Marca nova: a comunicação diz o que a empresa é antes de dizer por que é diferente', 'Diferencial dito como ganho para o cliente, com a característica como prova',
+    'Pontos em que a marca precisa ser "boa o suficiente" tirados dos diferenciais dos concorrentes', 'Pergunta de intenção de compra com situação e prazo concretos, conferida depois com as vendas']);
+
+  if (P.causas && P.desafios) {
+    const D = (ini) => (P.desafios.find((d) => d.texto.startsWith(ini)) || {}).texto;
+    [['O diferencial da marca foi copiado e virou o mínimo que todo concorrente oferece', ['Os concorrentes copiam rápido', 'Todos os concorrentes fazem igual', 'O cliente não vê diferença']],
+      ['Os clientes mais antigos recebem os maiores descontos e passaram a esperar preço menor', ['A empresa dá desconto para fechar', 'A marca é vista como barata']],
+      ['Perfis e cadastros da marca estão abandonados, repetidos ou com informação antiga', ['É difícil achar e comprar', 'A marca é lembrada por um produto ou fase antiga']],
+    ].forEach(([t, ds]) => { if (!P.causas.some((c) => c.texto === t)) P.causas.push({ grupo: G, texto: t, desafios: ds.map(D).filter(Boolean) }); });
+  }
+})();
+
+// ===== Rodada 33: boletim da marca, ponto físico para quem vende só on-line, mudar sinais conhecidos com cuidado, patrocínio que se mede e prova de clientes conhecidos =====
+// Fontes (segunda passada no mesmo livro-texto de gestão de marcas: caps. 1, 4 a 8, 14 e 16): boletim da marca com 10 pontos,
+// respondido também para o concorrente e comparado entre as pessoas; estudos publicados em revistas acadêmicas mostraram que abrir
+// showrooms aumentou as vendas também on-line e reduziu devoluções, e que somar lojas físicas ao on-line elevou a receita;
+// reformulações de embalagem e logo voltaram atrás em semanas quando os clientes deixaram de reconhecer a marca, e a mudança
+// precisa ser bem avaliada e explicada; patrocínio exige público igual ao da marca, verba de ativação e medida no público,
+// não só exposição; em B2B e serviços a credibilidade e a lista de clientes conhecidos reduzem o risco de quem compra;
+// promoções por localização rendem mais perto do concorrente que perto da própria loja (estudo publicado em revista acadêmica);
+// ao revitalizar, buscar público totalmente novo antes de segurar o atual é a opção mais arriscada.
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'Dar com a equipe uma nota de 1 a 10 à marca em 10 pontos, fazer o mesmo para o principal concorrente e comparar as notas de cada pessoa', esforco: 'marca', promessa: 'valor', tema: 'medicao', tipo: 'base', tam: 'P', ler: 365,
+      porque: 'Um boletim simples, proposto num artigo conhecido sobre gestão de marcas, mostra onde a marca está forte e onde está fraca. Fazer o mesmo para o concorrente coloca as notas em perspectiva. Comparar as notas entre as pessoas revela onde a equipe não concorda sobre a própria marca, o que já é um problema a resolver.',
+      metrica: 'Pontos com nota abaixo de 6 ou com notas muito diferentes entre as pessoas', passos: ['Dar nota de 1 a 10, cada pessoa sozinha, a: entrega o que o cliente mais quer; continua atual; preço segue o valor percebido; posicionamento claro; consistência; serviços organizados; usa bem todos os canais; equipe sabe o que a marca significa; recebe apoio constante; acompanha os próprios números', 'Responder como alguém de fora, sendo honesto', 'Fazer o mesmo para o principal concorrente', 'Comparar as notas entre as pessoas e conversar onde divergem', 'Escolher os 2 pontos mais fracos para o plano do próximo semestre'] },
+    { texto: 'Para quem vende só on-line: testar um ponto físico temporário (loja provisória, espaço dentro de outra loja ou evento) para os clientes verem e provarem', esforco: 'venda', promessa: 'pessoas', tema: 'distribuicao', tipo: 'ativacao', tam: 'M', ler: 90, setores: ['loja_online'],
+      porque: 'Estudos publicados em revistas acadêmicas de gestão mostraram que, quando uma marca nascida on-line abriu espaços para o cliente ver e provar, as vendas cresceram também no site e as devoluções caíram; somar lojas físicas a uma operação on-line elevou a receita total. Começar com algo temporário testa o efeito sem o custo de uma loja fixa.',
+      metrica: 'Vendas on-line da região do ponto, antes e depois', passos: ['Escolher a cidade ou o bairro com mais clientes on-line', 'Montar um ponto temporário: loja provisória, espaço numa loja parceira ou estande em evento', 'Deixar o cliente ver, provar e sair com um código de compra', 'Comparar vendas on-line e devoluções da região antes e depois'] },
+    { texto: 'Antes de mudar a frase, o logo ou a embalagem que os clientes já conhecem, listar o que eles reconhecem, testar a versão nova e explicar a mudança', esforco: 'marca', promessa: 'pessoas', tema: 'posicionamento', tipo: 'base', tam: 'P', ler: 90,
+      porque: 'Reformulações de embalagem e logo de marcas grandes voltaram atrás em uma a seis semanas porque os clientes deixaram de reconhecer o produto ou acharam o novo genérico. A reação inicial a mudanças tende a ser negativa. Por isso o elemento novo precisa ser bem avaliado por si, manter o que os clientes usam para reconhecer a marca e vir com uma explicação clara do porquê.',
+      metrica: 'Clientes que reconhecem a marca na versão nova', passos: ['Listar o que os clientes usam para reconhecer a marca hoje (cor, forma, frase, símbolo)', 'Decidir o que disso ainda serve e precisa ficar', 'Mostrar a versão nova a 10 clientes e ver se reconhecem e gostam', 'Explicar aos clientes o porquê da mudança quando ela for ao ar'] },
+    { texto: 'Patrocinar ou apoiar um evento só se o público dele for o da marca, separar verba para ativar a presença e perguntar ao público depois se lembra da marca', esforco: 'marca', promessa: 'pessoas', tema: 'presenca', tipo: 'marca', tam: 'M', ler: 60,
+      porque: 'O que faz um patrocínio funcionar é o que se faz junto com ele: amostras, experiência, conteúdo, promoção. Profissionais da área recomendam gastar com essa ativação de 2 a 3 vezes o valor da cota. Medir só quanto tempo a marca apareceu ignora se o público lembrou dela; pesquisas depois de grandes eventos mostram muita gente apontando como patrocinador quem não era.',
+      metrica: 'Pessoas do público que lembram da marca como apoiadora, sem ajuda', passos: ['Conferir se o público do evento é o público da marca', 'Preferir eventos com poucos patrocinadores', 'Separar verba para ativar: amostras, experiência, conteúdo', 'Perguntar a parte do público, depois, quais marcas lembram do evento'] },
+    { texto: 'Mostrar, com autorização, os clientes conhecidos que a empresa atende, sem deixar que eles apareçam mais que a própria marca', esforco: 'venda', promessa: 'vendas', tema: 'conteudo', tipo: 'base', tam: 'P', ler: 90, setores: ['b2b', 'servicos', 'tecnologia'],
+      porque: 'Para quem compra serviço ou compra para uma empresa, o maior medo é errar. A credibilidade da empresa é o principal atalho que o comprador usa para reduzir esse risco, e saber quem mais já confia nela transmite isso. O cuidado é não deixar a lista de clientes tomar o lugar da mensagem sobre a própria empresa.',
+      metrica: 'Propostas fechadas depois de mostrar os clientes atendidos', passos: ['Listar os clientes mais conhecidos ou respeitados no setor', 'Pedir autorização para citar o nome', 'Colocar a lista no site, na proposta e na apresentação, abaixo da promessa da empresa', 'Atualizar a lista a cada semestre'] },
+    { texto: 'Mostrar o anúncio de oferta a quem está perto do concorrente, e não só a quem já está perto da própria loja', esforco: 'venda', promessa: 'pessoas', tema: 'anuncio', tipo: 'ativacao', tam: 'P', ler: 30, setores: ['varejo', 'alimentacao', 'beleza'],
+      porque: 'Um estudo publicado em revista acadêmica de marketing testou promoções no celular por localização: mirar quem estava perto da loja do concorrente rendeu mais do que mirar quem estava perto da própria loja, que tende a comprar de qualquer jeito e só recebe o desconto. Quanto mais perto do momento da compra, maior a resposta.',
+      metrica: 'Clientes novos vindos do anúncio por localização', passos: ['Marcar no mapa as lojas dos principais concorrentes', 'Criar um anúncio de oferta com raio pequeno em volta delas', 'Rodar nos horários em que as pessoas compram', 'Comparar com o mesmo anúncio em volta da própria loja'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+
+  const add = (k, itens) => { if (P[k]) itens.forEach((t) => { if (!P[k].some((y) => y.texto === t)) P[k].push({ grupo: G, texto: t }); }); };
+  add('naoFazer', ['Com as vendas caindo, correr atrás de um público totalmente novo antes de segurar quem já compra',
+    'Usar bicho, bebê, humor ou famoso que chama mais atenção que a própria marca', 'Avaliar um patrocínio só pelo tempo que a marca apareceu',
+    'Mudar o produto ou serviço principal a ponto de o cliente não reconhecê-lo: melhor, não diferente']);
+  add('verificacoes', ['Mudança de logo, frase ou embalagem testada com clientes e explicada na estreia', 'Boletim da marca respondido pela equipe e comparado com o do principal concorrente']);
+
+  if (P.causas && P.desafios) {
+    const D = (ini) => (P.desafios.find((d) => d.texto.startsWith(ini)) || {}).texto;
+    [['A empresa correu atrás de um público novo e deixou de cuidar de quem já comprava', ['A marca cresceu e perdeu', 'Os clientes compram uma vez']],
+      ['A marca mudou algo que os clientes usavam para reconhecê-la (embalagem, logo, frase ou o próprio produto)', ['A marca é pouco lembrada', 'A marca cresceu e perdeu']],
+    ].forEach(([t, ds]) => { if (!P.causas.some((c) => c.texto === t)) P.causas.push({ grupo: G, texto: t, desafios: ds.map(D).filter(Boolean) }); });
+  }
+})();
+
+// ===== Rodada 34: lucro da campanha (e não faturamento), preço comparado ao concorrente, mostrar como os clientes são tratados,
+// duas frentes para compras pensadas, poucos canais pagos somados a canais não pagos, comparação entre lugares, perfil dos novos clientes e crise =====
+// Fontes (análise de 880 campanhas premiadas por eficácia no Reino Unido, publicada por uma associação de agências): cerca de 2/3 dos casos
+// calcularam retorno sobre faturamento e não sobre lucro; a margem certa é a de contribuição da venda a mais; maximizar o retorno percentual
+// leva a cortar verba e reduzir o lucro total; reduzir a sensibilidade a preço foi o objetivo de maior efeito no lucro e o preço relativo é o
+// termômetro quando não dá para medi-la; campanhas de fidelização que deram certo trouxeram sobretudo clientes novos (num caso de telefonia,
+// ~2/3 do ganho); quem está procurando quer informação, quem não está responde à emoção; ~3 mídias pagas é o ponto ótimo, e canais não pagos
+// somam; comparar lugares com mais e menos anúncio isola o efeito, enquanto testes com regiões sem anúncio quase sempre são inconclusivos;
+// o perfil de quem compra mudar na direção da estratégia é a prova mais forte sem modelagem; em tempos difíceis, marca + preço juntos.
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'Calcular se a última campanha deu lucro: vendas a mais do que o esperado sem ela, vezes a margem de cada venda, menos o custo da campanha', esforco: 'venda', promessa: 'valor', tema: 'medicao', tipo: 'base', tam: 'M', ler: 90,
+      porque: 'Numa análise de 880 campanhas premiadas por eficácia, cerca de dois terços calcularam o "retorno" sobre o faturamento, como se toda venda fosse lucro. A conta certa usa só as vendas a mais em relação ao que se venderia sem a campanha e a margem de cada venda extra (preço menos o custo de produzir ou entregar), que costuma ser bem maior que o lucro final da empresa.',
+      metrica: 'Lucro em reais de cada campanha, calculado com a mesma conta', passos: ['Estimar o que se venderia sem a campanha: mesmo período do ano anterior ou a tendência dos meses antes', 'Subtrair isso das vendas reais do período', 'Multiplicar pela margem de cada venda extra (preço menos o custo de produzir ou entregar)', 'Descontar o custo total da campanha', 'Anotar o resultado em reais e comparar com as próximas campanhas'] },
+    { texto: 'Acompanhar a cada trimestre o preço que a empresa consegue cobrar em comparação com os principais concorrentes e quanto das vendas sai com desconto', esforco: 'venda', promessa: 'valor', tema: 'preco', tipo: 'base', tam: 'P', ler: 90,
+      porque: 'Na mesma análise de 880 campanhas, as que buscaram reduzir a sensibilidade do cliente a preço tiveram os maiores efeitos no lucro, mas só 4% tinham esse objetivo. Com margem de 20%, cobrar 1% a mais rende cerca de cinco vezes o lucro de vender 1% a mais. Quando não dá para medir quanto o cliente reage ao preço, o preço comparado ao dos concorrentes é o termômetro.',
+      metrica: 'Preço médio comparado ao dos 3 principais concorrentes, a cada trimestre', passos: ['Escolher 3 concorrentes e 3 produtos ou serviços comparáveis', 'Anotar o preço de cada um a cada trimestre', 'Calcular o preço médio que a empresa realmente cobrou, já com descontos', 'Acompanhar se a diferença para os concorrentes sobe ou cai junto com as vendas'] },
+    { texto: 'Mostrar a quem ainda não é cliente como a empresa trata quem já compra: atendimento, benefícios e reconhecimento', esforco: 'marca', promessa: 'pessoas', tema: 'relacao', tipo: 'marca', tam: 'P', ler: 90,
+      porque: 'Numa análise de 880 campanhas premiadas, as campanhas de fidelização que deram certo funcionaram principalmente trazendo clientes novos. Num caso de telefonia que divulgou recompensas aos clientes, cerca de dois terços do ganho veio de clientes novos e um terço de menos cancelamentos. Mostrar em público que a empresa valoriza quem já compra atrai quem ainda não compra e leva os atuais a indicarem.',
+      metrica: 'Clientes novos que citam o tratamento aos clientes como motivo da escolha', passos: ['Listar o que os clientes atuais recebem e que pouca gente fora sabe', 'Escolher um ou dois benefícios fáceis de mostrar', 'Mostrar isso em anúncios, no site e nas redes, com clientes reais quando possível', 'Perguntar aos clientes novos o que os fez escolher a empresa'] },
+    { texto: 'Para compras pensadas com antecedência, manter duas frentes: comunicação de marca com emoção para quem ainda não está procurando e material completo, com detalhes e preço, para quem está procurando agora', esforco: 'marca', promessa: 'pessoas', tema: 'anuncio', tipo: 'marca', tam: 'M', ler: 90,
+      porque: 'Em compras feitas de tempos em tempos, as pessoas passam a maior parte do tempo sem procurar e só por um período estão de fato pesquisando. Numa análise de 880 campanhas premiadas, a emoção venceu na construção da marca, mas os argumentos racionais venceram na resposta imediata de quem já está no mercado. Uma montadora que separou as duas frentes dobrou sua participação em sete anos.',
+      metrica: 'Pedidos de orçamento ou visitas de quem já conhecia a marca antes de procurar', passos: ['Separar a comunicação em duas: marca (todo o tempo) e informação (para quem procura)', 'Na frente de marca, contar uma história com emoção, sem lista de características', 'Na frente de informação, reunir detalhes, comparações, preço e próximos passos', 'Colocar a informação onde quem pesquisa procura: site, buscas e atendimento', 'Perguntar a quem pede orçamento se já conhecia a marca'] },
+    { texto: 'Limitar a 3 os canais pagos de anúncio e somar a eles canais que não são anúncio: imprensa, indicação, ponto de venda e eventos', esforco: 'marca', promessa: 'pessoas', tema: 'anuncio', tipo: 'base', tam: 'P', ler: 180,
+      porque: 'Numa análise de 880 campanhas premiadas, as que usaram vários canais foram mais eficazes que as de um só, mesmo com a mesma verba. Mas nos anúncios pagos o ganho cai depois de cerca de 3 canais (4 para verbas grandes): o alcance para de crescer, a produção consome a verba e a marca perde destaque em cada um. Já os canais que não são anúncio somam, porque cumprem tarefas diferentes.',
+      metrica: 'Número de canais pagos e de canais não pagos em cada campanha', passos: ['Listar todos os canais pagos usados no último semestre e o que cada um trouxe', 'Ficar com os 3 mais fortes e passar a verba dos outros para eles', 'Escolher pelo menos 2 canais que não são anúncio para a mesma campanha', 'Usar a mesma mensagem e a mesma cara em todos'] },
+    { texto: 'Quando anunciar mais em alguns bairros, cidades ou lojas do que em outros, comparar as vendas desses lugares com as dos demais', esforco: 'venda', promessa: 'vendas', tema: 'medicao', tipo: 'base', tam: 'P', ler: 90,
+      porque: 'Comparar lugares com mais e menos anúncio isola o efeito da campanha, porque preço, produto e época são os mesmos em todos. Na análise de 880 campanhas premiadas, essas comparações foram mais confiáveis que testes com regiões totalmente sem anúncio, que perdem vendas e, numa revisão de testes desse tipo, deram resultado conclusivo em só 1 de 20.',
+      metrica: 'Diferença de vendas entre os lugares com mais e com menos anúncio', passos: ['Anotar quanto se anunciou em cada bairro, cidade ou loja', 'Anotar as vendas de cada lugar no mesmo período e no período anterior', 'Comparar o crescimento dos lugares com mais anúncio com o dos demais', 'Repetir por algumas campanhas antes de tirar conclusão'] },
+    { texto: 'Depois de uma campanha para um público novo, conferir se o perfil de quem passou a comprar mudou na direção planejada', esforco: 'venda', promessa: 'vendas', tema: 'medicao', tipo: 'base', tam: 'P', ler: 90,
+      porque: 'Na análise de 880 campanhas premiadas, a prova mais convincente de eficácia, sem modelos estatísticos, foi mostrar que o perfil de quem compra, ou o que se compra, mudou exatamente para onde a estratégia mirava. Mostrar que quem lembra do anúncio gosta mais da marca não prova nada: quem já é cliente costuma lembrar mais.',
+      metrica: 'Parte dos clientes novos que é do público-alvo, antes e depois', passos: ['Antes da campanha, anotar o perfil dos clientes novos (idade, região, tipo de empresa ou de compra)', 'Definir qual mudança a campanha quer causar', 'Depois, anotar o perfil dos novos clientes do mesmo jeito', 'Comparar e ver se a mudança foi na direção planejada'] },
+    { texto: 'Em época de crise no setor, manter a presença da marca e juntar a mensagem de marca com uma condição de preço ou pagamento', esforco: 'marca', promessa: 'pessoas', tema: 'anuncio', tipo: 'marca', tam: 'P', ler: 90,
+      porque: 'Na análise de 880 campanhas premiadas, em tempos de otimismo a emoção pura funcionou melhor; em tempos difíceis, as mais eficazes juntaram mensagem de marca com mensagem de preço ou condição. Estudos citados na mesma análise mostram que marcas que mantêm a presença durante a recessão se saem melhor depois, porque os concorrentes cortam e a mídia fica mais barata.',
+      metrica: 'Presença mantida durante a crise e participação comparada à dos concorrentes depois', passos: ['Manter um nível mínimo de presença combinado antes da crise', 'Juntar à mensagem de marca uma condição concreta: parcela, garantia ou pacote', 'Observar se os concorrentes cortaram a comunicação', 'Comparar as vendas com as do mercado, e não só com o ano anterior'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+
+  const add = (k, itens) => { if (P[k]) itens.forEach((t) => { if (!P[k].some((y) => y.texto === t)) P[k].push({ grupo: G, texto: t }); }); };
+  add('naoFazer', ['Chamar de retorno uma conta feita sobre o faturamento, sem descontar custos', 'Cortar a verba de anúncio só para o retorno percentual parecer maior',
+    'Usar "quem lembra do anúncio compra mais" como prova de que o anúncio funciona', 'Pôr emoção só como enfeite numa oferta racional, em vez de no centro da campanha',
+    'Espalhar a verba de anúncio por mais de 3 ou 4 canais pagos']);
+  add('verificacoes', ['Retorno da campanha calculado sobre o lucro da venda a mais, e não sobre o faturamento', 'Resultado comparado com o mercado e com os concorrentes antes de julgar a campanha',
+    'Previsão do teste da peça conferida depois com o resultado real', 'Meta ajustada ao momento: em mercado difícil, manter as vendas já pode ser vitória']);
+
+  if (P.causas && P.desafios) {
+    const D = (ini) => (P.desafios.find((d) => d.texto.startsWith(ini)) || {}).texto;
+    [['As campanhas são julgadas pelo faturamento, sem descontar custos nem o que se venderia sem elas', ['A comunicação fala só com quem já está pronto', 'A comunicação é irregular']],
+      ['A verba de anúncio foi cortada para o retorno de curto prazo parecer melhor', ['A marca é pouco lembrada', 'A comunicação é irregular']],
+      ['A comunicação se concentra em segurar quem já compra e quase não fala com quem nunca comprou', ['A marca só é lembrada por quem já é cliente', 'A comunicação fala só com quem já está pronto']],
+    ].forEach(([t, ds]) => { if (!P.causas.some((c) => c.texto === t)) P.causas.push({ grupo: G, texto: t, desafios: ds.map(D).filter(Boolean) }); });
+  }
+})();
+
+// ===== Rodada 35: descadastros no resultado das campanhas, testar a procura antes de montar, ligar/desligar quando não dá para dividir clientes =====
+// Fontes (livro de referência sobre experimentos controlados em grandes empresas digitais): a medida de e-mail baseada só na receita
+// dos cliques sempre melhora com mais envios; ao descontar o valor perdido com cada descadastro, mais da metade das campanhas passou a
+// dar resultado negativo; "porta pintada" mede a procura antes de construir (só ter o campo de cupom reduziu a receita); 100 ms a mais
+// reduziram vendas em 1% e scripts de terceiros no topo deixam a página lenta; metas precisam de métricas de proteção e são burladas
+// quando ligadas a prêmio (frango só frito depois do pedido); quando não dá para sortear grupos, ligar e desligar várias vezes
+// (vigilância por helicóptero e arrombamentos); estudos observacionais exageram muito o efeito de anúncios (871–1198% contra 5,4%
+// medido em experimento); o que se diz em grupo de conversa difere do que se escolhe; aumentar preço sobe a receita agora e reduz depois.
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'Em cada campanha por e-mail ou WhatsApp, contar quantos se descadastram ou bloqueiam e descontar essa perda do resultado', esforco: 'venda', promessa: 'valor', tema: 'relacao', tipo: 'base', tam: 'P', ler: 90,
+      porque: 'Medida só pelas vendas que gera, uma campanha por mensagem sempre parece melhor quanto mais se envia, e isso leva ao excesso. Numa grande loja on-line, quando se passou a descontar o valor perdido com cada pessoa que se descadastra (que nunca mais recebe nada), mais da metade das campanhas automáticas passou a dar resultado negativo.',
+      metrica: 'Vendas da campanha menos o valor perdido com descadastros e bloqueios', passos: ['Anotar, em cada envio, as vendas e quantos se descadastraram ou bloquearam', 'Estimar quanto um contato da lista costuma comprar por ano', 'Descontar dos ganhos da campanha esse valor vezes os descadastros', 'Cortar ou espaçar os tipos de envio que dão resultado negativo', 'Deixar o cliente escolher receber menos, em vez de só sair de tudo'] },
+    { texto: 'Antes de montar um serviço ou oferta nova, anunciar que está chegando com uma lista de interesse e contar quantos se inscrevem', esforco: 'venda', promessa: 'vendas', tema: 'venda', tipo: 'base', tam: 'P', ler: 60,
+      porque: 'Um livro de referência sobre experimentos mostra que mesmo equipes experientes erram o valor das ideias: em grandes empresas digitais, só de 10% a um terço das ideias testadas melhorou o resultado. Medir a procura antes de construir evita gastar com o que ninguém quer; num caso, só mostrar um campo de cupom já derrubou as vendas, e a ideia foi abandonada antes de ser montada. O anúncio precisa ser honesto: dizer que é novidade e pedir o contato.',
+      metrica: 'Inscritos na lista de interesse em relação a quem viu o anúncio', passos: ['Descrever a oferta nova em poucas linhas, com preço aproximado', 'Divulgar que está chegando, com um botão para deixar o contato', 'Definir antes quantos inscritos justificam montar', 'Contar os inscritos em 2 a 4 semanas', 'Avisar os inscritos sobre a decisão, qualquer que seja'] },
+    { texto: 'Quando não der para dividir os clientes em dois grupos, ligar e desligar a ação em semanas alternadas, várias vezes, e comparar os períodos', esforco: 'venda', promessa: 'vendas', tema: 'medicao', tipo: 'base', tam: 'M', ler: 90,
+      porque: 'Sem grupo de comparação, é fácil confundir o efeito da ação com a época do ano. Ligar e desligar várias vezes reduz esse risco: num estudo, a cada vez que a vigilância de uma região era ligada, os arrombamentos caíam, e a cada vez que era desligada, subiam. Comparações soltas costumam exagerar muito: em anúncios, análises sem grupo de comparação estimaram efeitos centenas de vezes maiores que o medido num experimento.',
+      metrica: 'Diferença média entre as semanas com e sem a ação', passos: ['Escolher a ação: anúncio, oferta no balcão, mensagem automática', 'Alternar semanas com e sem a ação por pelo menos 6 semanas', 'Anotar o resultado de cada semana e o que mais aconteceu nela (feriado, chuva, promoção)', 'Comparar a média das semanas com e sem a ação'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+
+  const add = (k, itens) => { if (P[k]) itens.forEach((t) => { if (!P[k].some((y) => y.texto === t)) P[k].push({ grupo: G, texto: t }); }); };
+  add('naoFazer', ['Concluir que um benefício funciona porque quem o usa compra mais: pode ser só que são os clientes mais ativos',
+    'Decidir entre opções pelo que os clientes disseram numa conversa em grupo, sem ver o que escolhem de fato', 'Julgar um aumento de preço ou mais mensagens só pelo resultado do primeiro mês',
+    'Parar um teste no dia em que o resultado "deu certo"']);
+  add('verificacoes', ['Teste com duração definida antes, de pelo menos uma semana inteira', 'Resultado bom demais conferido antes de comemorar (dados repetidos, erro de registro)',
+    'Grupos do teste com o tamanho combinado e recebendo a mensagem no mesmo horário', 'Efeito acompanhado semana a semana: se cai, era só novidade',
+    'Teste com clientes que a empresa aceitaria aplicar a todos, sem enganar ninguém']);
+
+  if (P.causas && P.desafios) {
+    const D = (ini) => (P.desafios.find((d) => d.texto.startsWith(ini)) || {}).texto;
+    [['Mensagens frequentes demais fizeram clientes se descadastrarem ou bloquearem a empresa', ['Os clientes compram uma vez', 'O cliente troca de fornecedor']],
+    ].forEach(([t, ds]) => { if (!P.causas.some((c) => c.texto === t)) P.causas.push({ grupo: G, texto: t, desafios: ds.map(D).filter(Boolean) }); });
+  }
+})();
+
+// ===== Rodada 36: tamanho do mercado por decomposição, 5 casos sorteados
+// e gráfico de campanhas passadas =====
+// Fontes (livro de referência sobre medição para decisões): decompor uma estimativa muito incerta em até 5 partes reduziu o erro de 10 a 100
+// vezes; tamanho de mercado de seguros numa cidade estimado com dados públicos (carros × prêmio × comissão ÷ agências); amostragem por
+// instantes (12 de 100 observações → 8% a 18% do tempo); regra dos cinco (93,75% de chance de a mediana estar entre o menor e o maior de 5
+// sorteados); experimento com 30 atendentes treinados e a pergunta "para quantos amigos recomendou?"; regressão de semanas de divulgação ×
+// audiência (correlação 0,7); modelos lineares simples com pesos iguais superam especialistas e entrevistas sem estrutura; discussão em grupo
+// aumenta a confiança, não a qualidade; painéis sem gatilhos raramente mudam decisões; notas alto/médio/baixo e pesos arbitrários sem evidência.
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'Estimar o tamanho do mercado da região com números públicos: quantos podem comprar, quantos compram de fato, quanto gastam por ano e entre quantas empresas isso se divide', esforco: 'venda', promessa: 'vendas', tema: 'medicao', tipo: 'base', tam: 'M', ler: 365,
+      porque: 'Um livro de referência sobre medição para decisões mostra que dividir uma estimativa muito incerta em até cinco partes reduziu o erro de 10 a 100 vezes. Num caso real, a decisão de abrir uma agência de seguros numa cidade foi tomada com dados públicos: número de carros, valor médio do seguro, comissão e número de agências. A conta mostra também qual parte é a mais incerta e merece ser medida.',
+      metrica: 'Faixa do faturamento possível na região e parte que a empresa já tem', passos: ['Escrever a decisão: abrir unidade, contratar, entrar em outro bairro', 'Quebrar o mercado em partes: quantos podem comprar × quantos compram × gasto por ano', 'Buscar cada número em fontes públicas (órgãos de estatística, prefeitura, associações do setor)', 'Dar um mínimo e um máximo para os números que não achar', 'Dividir pelo número de concorrentes e comparar com o faturamento atual'] },
+    { texto: 'Quando faltar um número para decidir, medir primeiro em 5 casos sorteados antes de esperar uma pesquisa grande', esforco: 'venda', promessa: 'valor', tema: 'medicao', tipo: 'base', tam: 'P', ler: 90,
+      porque: 'A regra dos cinco, mostrada num livro de referência sobre medição: sorteando 5 casos, há 93,75% de chance de o valor do meio de todos estar entre o menor e o maior deles. Quando se sabe pouco, poucas observações ensinam muito; a crença de que só centenas de respostas servem impede de medir. Os casos precisam ser sorteados, não escolhidos.',
+      metrica: 'Faixa obtida com os 5 casos e se ela muda a decisão', passos: ['Escrever qual número falta e a partir de que valor a decisão muda', 'Sortear 5 casos (clientes, pedidos, dias) de uma lista completa', 'Medir o número em cada um', 'Ver se a faixa entre o menor e o maior já fica de um lado do limite', 'Se não ficar, medir mais casos'] },
+    { texto: 'Montar um gráfico com as campanhas e lançamentos passados: quanto tempo ou verba de divulgação cada um teve e quanto vendeu', esforco: 'venda', promessa: 'vendas', tema: 'medicao', tipo: 'base', tam: 'P', ler: 365,
+      porque: 'Os dados para decidir quanto divulgar muitas vezes já existem. Num caso relatado num livro de referência sobre medição, um gráfico com as semanas de divulgação e a audiência de 28 estreias mostrou correlação clara: cada semana a mais valia um ganho que justificou mudar o processo. O primeiro passo é sempre o gráfico de pontos; a correlação não prova causa sozinha, mas aumenta a confiança quando há um motivo para ela.',
+      metrica: 'Ganho de vendas por semana (ou real) a mais de divulgação, segundo o histórico', passos: ['Listar as campanhas ou lançamentos dos últimos anos', 'Anotar de cada um: semanas de divulgação ou verba, e vendas no período', 'Fazer um gráfico de pontos numa planilha', 'Ver se os pontos sobem juntos e calcular a inclinação', 'Usar o resultado para planejar a próxima campanha'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+
+  const add = (k, itens) => { if (P[k]) itens.forEach((t) => { if (!P[k].some((y) => y.texto === t)) P[k].push({ grupo: G, texto: t }); }); };
+  add('naoFazer', ['Medir só o que é fácil, como custos e horas, e deixar de fora os benefícios incertos que decidem', 'Desistir de medir por achar que só centenas de respostas servem',
+    'Pedir estimativas em reunião sem que cada um anote a sua antes de ouvir os outros']);
+  add('verificacoes', ['Decisão escrita com as alternativas e o número que faria mudar de ideia', 'Faixa de estimativa testada: preferiria apostar nela ou numa roleta com 90% de chance?',
+    'Perguntas da pesquisa revisadas por outra pessoa: uma coisa por pergunta e nenhuma palavra que puxe a resposta', 'Custo de uma escolha "por princípio" calculado e mostrado antes de decidir']);
+
+  if (P.causas && P.desafios) {
+    const D = (ini) => (P.desafios.find((d) => d.texto.startsWith(ini)) || {}).texto;
+    [['As decisões grandes são tomadas por palpite, sem estimar a chance de dar errado nem quanto se perderia', ['A empresa faz de tudo um pouco']],
+    ].forEach(([t, ds]) => { if (!P.causas.some((c) => c.texto === t)) P.causas.push({ grupo: G, texto: t, desafios: ds.map(D).filter(Boolean) }); });
+  }
+})();
+
+// ===== Rodada 37: marca desde o primeiro quadro do anúncio, motivações em três níveis e uma ideia por campanha =====
+// Fonte: livro sobre eficácia de propaganda baseado em experimentos com grupo exposto × grupo de controle. Os números agregados do livro
+// (desperdício total, percentuais de campanhas que falham) são da própria consultoria dos autores e NÃO foram usados. Usados só casos medidos:
+// anúncio on-line que mostrava marca e imagem juntas desde o início aumentou o volume de vendas em 14% (a versão que guardava a marca
+// para o fim falhou); anúncio de macarrão com 15% de lembrança mudava a percepção da marca e vendia; pessoas atribuíram a TV e revista
+// o efeito de anúncios que só viram on-line; creme dental que fracassou com mensagem de gengivite e vendeu com "proteção o dia todo",
+// mesma fórmula; loja cuja associação com roupas caía cada vez que entrava a campanha de utensílios domésticos; anúncio parecido com o
+// de um concorrente que lançou antes reforçou o concorrente.
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'Nos anúncios em vídeo ou animados, mostrar o nome e o símbolo da marca junto com a imagem principal desde o primeiro quadro, e não só no final', esforco: 'marca', promessa: 'pessoas', tema: 'anuncio', tipo: 'marca', tam: 'P', ler: 90,
+      porque: 'Num experimento com grupo exposto e grupo de controle, um anúncio on-line de creme facial que contava uma história e só mostrava a marca nos últimos segundos não funcionou. A nova versão, com a mesma mulher, a mesma frase e o logo aparecendo junto com ela desde o início, aumentou o volume de vendas em 14%. Quem vê anúncio está distraído e passa rápido; se a marca não aparece logo, o anúncio pode ajudar a categoria ou o concorrente.',
+      metrica: 'Anúncios com a marca visível desde o primeiro quadro', passos: ['Rever os anúncios em vídeo e animados em uso', 'Marcar em que segundo a marca aparece pela primeira vez', 'Refazer os que só mostram a marca no fim, pondo nome e símbolo junto da imagem principal', 'Manter a marca visível em todos os quadros, mesmo pequena'] },
+    { texto: 'Escrever por que os clientes compram em três níveis: por que compram a categoria, por que escolhem esse tipo de produto ou serviço e por que escolhem a marca, incluindo por que alguns escolhem o concorrente ou não compram', esforco: 'marca', promessa: 'valor', tema: 'posicionamento', tipo: 'base', tam: 'M', ler: 365,
+      porque: 'Um livro sobre eficácia de propaganda relata um creme dental que fracassou falando de gengivite e dentistas e virou sucesso, com a mesma fórmula, quando passou a falar de proteção que dura o dia todo; com a mensagem certa, os clientes até acharam o sabor melhor. Em outro caso, a equipe achava que o público de um programa queria o prêmio, e queria aprender com os melhores. Escrever as motivações em três níveis, com os motivos do concorrente e de quem não compra, deixa as suposições à vista para serem conferidas.',
+      metrica: 'Motivações escritas nos três níveis e conferidas com clientes', passos: ['Listar por que as pessoas compram a categoria (o problema que resolvem)', 'Listar por que escolhem esse tipo e não outro (ex.: serviço completo × fazer sozinho)', 'Listar por que escolhem a marca e por que escolhem o concorrente', 'Listar por que algumas pessoas não compram', 'Separar o que é funcional, emocional e social', 'Conferir a lista em conversas com 5 clientes e 3 não clientes'] },
+    { texto: 'Planejar a sequência das campanhas para que cada período reforce uma ideia só sobre a marca, sem alternar temas que disputam o mesmo espaço na cabeça do cliente', esforco: 'marca', promessa: 'pessoas', tema: 'posicionamento', tipo: 'marca', tam: 'P', ler: 180,
+      porque: 'Num acompanhamento contínuo de uma grande loja, a associação "lugar para comprar roupas" subia durante a campanha de moda e caía rapidamente cada vez que entrava a campanha de utensílios domésticos. Quem vê anúncios com pouca atenção guarda uma ideia simples sobre a marca; mensagens que se revezam sobre o que a marca é podem apagar uma à outra.',
+      metrica: 'Campanhas do ano ligadas à mesma ideia central da marca', passos: ['Escrever a ideia principal que a marca quer deixar na cabeça do cliente', 'Listar as campanhas planejadas para o ano', 'Ver se alguma comunica uma ideia que compete com a principal', 'Reordenar ou reescrever para que cada uma reforce a mesma ideia', 'Quando precisar falar de outra linha, ligar a ela a mesma ideia central'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+
+  const add = (k, itens) => { if (P[k]) itens.forEach((t) => { if (!P[k].some((y) => y.texto === t)) P[k].push({ grupo: G, texto: t }); }); };
+  add('naoFazer', ['Tirar um anúncio do ar só porque poucas pessoas lembram de tê-lo visto', 'Decidir em que canal investir perguntando aos clientes onde viram o anúncio',
+    'Fazer um anúncio parecido com o de um concorrente que lançou antes: ele pode acabar lembrando a marca do concorrente']);
+  add('verificacoes', ['Sucesso da campanha definido sem ambiguidade e o que fazer se ficar abaixo, combinado antes de começar']);
+
+  if (P.causas && P.desafios) {
+    const D = (ini) => (P.desafios.find((d) => d.texto.startsWith(ini)) || {}).texto;
+    [['Campanhas seguidas falam de coisas diferentes sobre a marca e uma apaga a ideia da outra', ['A comunicação é irregular', 'A marca tenta atender todo mundo']],
+    ].forEach(([t, ds]) => { if (!P.causas.some((c) => c.texto === t)) P.causas.push({ grupo: G, texto: t, desafios: ds.map(D).filter(Boolean) }); });
+  }
+})();
+
+// ===== Rodada 38: avaliar o anúncio pelo sentimento que deixa sobre a marca e escolher símbolos pelo sentimento que carregam =====
+// Fonte: livro de um pesquisador acadêmico de publicidade sobre processamento com pouca atenção. Estudo publicado com dados dos EUA e do
+// Reino Unido: só o "poder emotivo" dos anúncios se correlacionou com a melhora da simpatia pela marca; o poder da mensagem racional não
+// (no Reino Unido, relação inversa). Anúncios aumentaram a preferência pela marca até entre quem não lembrava deles (estudos publicados com
+// ração e seguradora). Quanto mais atenção se dá a uma afirmação persuasiva, mais ela é contestada (pesquisa de resposta cognitiva).
+// Casos de elementos emocionais mantidos por anos junto à marca: bebês dos pneus (segurança), cachorrinho do papel higiênico (carinho e maciez).
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'Avaliar cada anúncio também pelo sentimento que ele deixa sobre a marca: mostrar a 10 pessoas do público e perguntar como se sentem em relação à marca, não só o que entenderam', esforco: 'marca', promessa: 'pessoas', tema: 'anuncio', tipo: 'base', tam: 'P', ler: 90,
+      porque: 'Um estudo publicado com anúncios dos EUA e do Reino Unido mediu separadamente a força emocional e a força da mensagem de cada anúncio. Só a força emocional acompanhou o aumento da simpatia pela marca; a mensagem racional não ajudou e, no Reino Unido, quanto mais evidente, menor o efeito. Outros estudos mostraram anúncios melhorando a preferência pela marca até entre quem não lembrava de tê-los visto. Perguntar só "o que você entendeu?" deixa de fora o que mais pesa.',
+      metrica: 'Anúncios avaliados pelo sentimento sobre a marca antes de ir ao ar', passos: ['Mostrar o anúncio a 10 pessoas do público, uma de cada vez', 'Perguntar: depois de ver, como você se sente em relação a esta marca? (pior, igual, melhor e por quê)', 'Pedir 3 palavras que descrevam o jeito da marca no anúncio', 'Comparar com o sentimento que a marca quer deixar', 'Ajustar música, imagem, tom ou ritmo quando o sentimento não bater'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+
+  const add = (k, itens) => { if (P[k]) itens.forEach((t) => { if (!P[k].some((y) => y.texto === t)) P[k].push({ grupo: G, texto: t }); }); };
+  add('naoFazer', ['Encher o anúncio de afirmações e argumentos que o cliente pode contestar, no lugar de um sentimento claro sobre a marca']);
+  add('verificacoes', ['Personagem, música ou símbolo da marca escolhido pelo sentimento que desperta (cuidado, segurança, alegria) e mantido por anos']);
+})();
+
+// ===== Rodada 39: novidade contada sem confusão, lançamentos com peso suficiente, renovação que não pareça repetição e ligação com a marca =====
+// Fonte: livro de pesquisador de rastreamento de anúncios (banco com dezenas de milhares de comerciais medidos 3 semanas após a estreia,
+// ligado a dados de audiência). Gostar do anúncio explicou 58% da variação na lembrança de anúncios de alimentos (duração, 2%), e "gostar"
+// não é humor: notícia relevante e identificação aumentam, confusão, irritação e "já vi igual" diminuem; em 65 anúncios de produtos novos,
+// notícia relevante foi o principal fator da experimentação; humor somado à notícia confunde. Anúncios novos precisam passar de um limiar
+// com peso concentrado; vários lançados juntos sem peso ficaram com baixo impacto. Em 800 comerciais, só cerca de 1 em 4 pessoas reconhecia
+// o anúncio e dizia a marca certa; renovações que mudam pouco se desgastam rápido por familiaridade.
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const add = (k, itens) => { if (P[k]) itens.forEach((t) => { if (!P[k].some((y) => y.texto === t)) P[k].push({ grupo: G, texto: t }); }); };
+  add('naoFazer', ['Num anúncio de novidade, cobrir a notícia com humor ou cenas demais: com novidade, conte a novidade com clareza',
+    'Lançar vários anúncios novos ao mesmo tempo dividindo a verba, sem peso suficiente para nenhum ser notado']);
+  add('verificacoes', ['Quem vê o anúncio sabe dizer de que marca é (testado com pessoas do público)',
+    'Peça nova de uma campanha antiga diferente o bastante para não parecer repetida, mantendo os sinais da marca']);
+})();
