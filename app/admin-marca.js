@@ -452,24 +452,35 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     return { resumo, causas: cs || [], fatores: fs || [], ind: P.desafiosDoDiagnostico ? P.desafiosDoDiagnostico(cs || [], fs || [], resumo) : new Map() };
   };
   // monta a lista de desafios deste cliente (os indicados pelo diagnóstico primeiro) e o resumo que fica acima do desafio
-  const diagnosticoNaEstrategia = async () => {
+  const diagnosticoNaEstrategia = async (atual) => {
     const P = window.GangPresets || {};
     const { resumo, causas, fatores, ind } = await lerDiagnostico();
     const todos = P.desafios || [];
     // os desafios da frase do diagnóstico vêm primeiro; depois, os indicados por mais motivos
     const peso = (t) => ind.get(t).length + (ind.get(t).some((m) => m.startsWith('em uma frase:')) ? 100 : 0);
     const indicados = todos.filter((d) => ind.has(d.texto)).sort((a, b) => peso(b.texto) - peso(a.texto));
-    P.desafiosCliente = [...indicados.map((d) => ({ ...d, grupo: 'Indicado pelo diagnóstico' })),
-      ...todos.filter((d) => !ind.has(d.texto)).map((d) => ({ ...d, grupo: indicados.length ? 'Outros desafios' : 'Desafios' }))]; // grupos neutros: a fonte nunca aparece
+    // uma decisão leva à outra: com diagnóstico, o campo do desafio mostra só os desafios que saem dele (os da frase primeiro);
+    // sem diagnóstico, mostra todos. Um desafio fora da lista ainda pode ser escrito em "Outro…" (grupos neutros: a fonte nunca aparece)
+    const ehDaFrase = (d) => ind.get(d.texto).some((m) => m.startsWith('em uma frase:'));
+    P.desafiosCliente = indicados.length
+      ? [...indicados.filter(ehDaFrase).map((d) => ({ ...d, grupo: 'Continua o diagnóstico' })),
+        ...indicados.filter((d) => !ehDaFrase(d)).map((d) => ({ ...d, grupo: 'Ligado às causas do diagnóstico' }))]
+      : todos.map((d) => ({ ...d, grupo: 'Desafios' }));
     const faltas = fatores.filter((f) => f.posicao === 'nao_entrega' || f.posicao === 'entrega_mal');
     if (!resumo && !causas.length && !faltas.length) {
       return el('div', 'ed-diag is-vazio', el('p', 'ed-diag__t', 'Do diagnóstico'),
         el('p', 'ed-diag__s', 'O Diagnóstico ainda não tem a frase nem as causas. Preencha primeiro: é dele que o desafio deve sair.'));
     }
     // só a frase do Diagnóstico aparece; as causas e os fatores continuam pesando, por trás, na ordem dos desafios sugeridos
+    // se o desafio salvo não continua a frase atual (o Diagnóstico mudou depois), avisa e mostra os que continuam; não troca sozinho
+    const daFrase = indicados.filter((d) => ind.get(d.texto).some((m) => m.startsWith('em uma frase:'))).map((d) => d.texto);
+    const salvo = atual && atual.desafio;
+    const destoa = resumo && salvo && daFrase.length && !daFrase.includes(salvo);
     return el('div', 'ed-diag', el('p', 'ed-diag__t', 'Do diagnóstico'),
       resumo ? el('p', 'ed-diag__frase', resumo) : el('p', 'ed-diag__s', 'Escolha a frase do Diagnóstico para ver aqui o ponto de partida.'),
-      el('p', 'ed-diag__s', indicados.length ? 'Os desafios que continuam esse diagnóstico estão no topo da lista do campo 1.' : 'Nenhum desafio da biblioteca responde a esse diagnóstico: escreva o desafio à mão no campo 1.'));
+      destoa ? el('div', 'ed-diag__aviso', el('p', null, 'O desafio salvo não continua este diagnóstico. Os que continuam:'),
+        el('ul', null, daFrase.map((t) => el('li', null, t)))) : null,
+      el('p', 'ed-diag__s', indicados.length ? 'O campo 1 mostra só os desafios que saem deste diagnóstico, e o campo 2 só as abordagens do desafio escolhido.' : 'Nenhum desafio da biblioteca responde a esse diagnóstico: escreva o desafio à mão no campo 1.'));
   };
 
   montar('pane-estrategia', [

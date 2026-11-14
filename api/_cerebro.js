@@ -6735,3 +6735,46 @@
     if (m && !P.resumoDesafios.some(([ini]) => ini === nova)) P.resumoDesafios.push([nova, m[1]]);
   });
 })();
+
+// ===== Rodada 44: o teste mais duro da lealdade e respostas de clientes separadas das de não clientes =====
+// Fonte: manual de métricas de marketing de professores de escolas de negócios (2ª ed. em português e 1ª ed. em inglês).
+// "Disposição para procurar": parte dos clientes que adiaria a compra, mudaria de loja ou compraria menos para não trocar de marca,
+// chamada de teste ácido da lealdade; lealdade de comportamento pode ser só inércia ou hábito. Em pesquisas de conhecimento, atitude
+// e uso, separar as respostas de clientes e de não clientes, que podem ser muito diferentes.
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'Perguntar aos clientes o que fariam se a empresa não pudesse atendê-los agora: esperar, procurar outro jeito de contratar a empresa ou ir para um concorrente', esforco: 'marca', promessa: 'valor', tema: 'medicao', tipo: 'base', tam: 'P', ler: 60,
+      porque: 'Essa pergunta é chamada de teste mais duro da lealdade: mostra quantos clientes preferem esperar ou se esforçar a trocar de marca. Comprar sempre da mesma empresa pode ser só hábito ou comodidade; quem aceita esperar tem um apego real, e essa parte tende a sustentar preço e indicação.',
+      metrica: 'Parte dos clientes que esperaria ou procuraria a empresa em vez de ir a um concorrente', passos: ['Escolher 20 clientes ativos', 'Perguntar: se não pudéssemos atender você nas próximas semanas, o que faria? (esperaria, procuraria outro jeito de contratar a empresa, iria para outra empresa)', 'Contar a parte de cada resposta', 'Perguntar a quem iria embora o que faria esperar valer a pena', 'Repetir a cada semestre e acompanhar a parte que esperaria'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+  const add = (k, itens) => { if (P[k]) itens.forEach((t) => { if (!P[k].some((y) => y.texto === t)) P[k].push({ grupo: G, texto: t }); }); };
+  add('verificacoes', ['Nas pesquisas de marca, as respostas de clientes e de quem ainda não é cliente são lidas separadas']);
+})();
+
+// ===== Rodada 45: mudar a peça antes de pôr mais verba, promoção que ensina a esperar desconto e saída gradual das promoções =====
+// Fontes: livro acadêmico sobre a história da ciência do marketing (capítulos de publicidade e de promoções, com centenas de
+// experimentos de mercado publicados) e livro de um prêmio Nobel de economia comportamental. Em 120 testes de mercado, mudar a peça
+// alterou as vendas em 47% dos casos e mudar a verba em 30%; em 19 experimentos de uma marca de sopas, mudar a verba quase não mexeu
+// nas vendas, enquanto mudar texto, mídia e público mexeu; quando as vendas subiram, subiram logo no começo. Em mais de 8 anos de dados,
+// a publicidade reduziu e as promoções aumentaram a sensibilidade dos clientes a preço e a promoção (estudo publicado). Em 72 anúncios
+// usados em 23 mercados, argumentos e especialistas funcionaram mais em mercados novos e emoção em mercados antigos (estudo publicado).
+// Duas lojas de departamento cortaram de uma vez os cupons a que os clientes estavam acostumados e as vendas despencaram; os cupons voltaram.
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'Antes de pôr mais verba num anúncio, testar outra peça ou mensagem; se a peça não mostrar efeito nas primeiras semanas, trocá-la em vez de aumentar a verba', esforco: 'marca', promessa: 'vendas', tema: 'anuncio', tipo: 'base', tam: 'P', ler: 60,
+      porque: 'Em centenas de experimentos de mercado publicados, mudar a peça ou a mensagem mexeu nas vendas com mais frequência do que mudar a verba: em 120 testes, a troca de peça alterou as vendas em quase metade dos casos, e a de verba em menos de um terço. Quando as vendas subiram, subiram logo no começo, e não depois de muita repetição.',
+      metrica: 'Peças trocadas por falta de efeito antes de qualquer aumento de verba', passos: ['Definir o sinal de efeito do anúncio (pedidos, buscas pelo nome, visitas) e medir antes de começar', 'Rodar a peça por algumas semanas com a verba atual', 'Se o sinal não subir, trocar a peça ou a mensagem, mantendo a verba', 'Comparar duas peças lado a lado quando possível', 'Só aumentar a verba de uma peça que já mostrou efeito'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+  const add = (k, itens) => { if (P[k]) itens.forEach((t) => { if (!P[k].some((y) => y.texto === t)) P[k].push({ grupo: G, texto: t }); }); };
+  add('naoFazer', ['Trocar anúncios de marca por promoções de preço: com o tempo, a publicidade deixa o cliente menos sensível a preço e a promoção o deixa mais',
+    'Cortar de uma vez todas as promoções a que o cliente se acostumou: reduza aos poucos, mostrando o valor, ou as vendas despencam']);
+  add('verificacoes', ['Em mercado novo para a categoria, anúncios com argumentos e especialistas; em mercado já conhecido, mais emoção']);
+})();

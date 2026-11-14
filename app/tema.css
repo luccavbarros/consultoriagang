@@ -2197,3 +2197,6 @@ html.side-abrindo .side__plan .badge { display: none; }
 .ed-sug__add:hover { background: #262626; color: #fff; }
 .ed-sug__todas { justify-self: start; }
 .ed-montar { margin-left: auto; }
+.ed-diag__aviso { display: grid; gap: 4px; padding: 10px 12px; border-radius: 8px; background: rgba(245, 166, 35, .08); border: 1px solid rgba(245, 166, 35, .35); font-size: 13px; color: #f3d9a8; }
+.ed-diag__aviso p { margin: 0; }
+.ed-diag__aviso ul { margin: 0; padding-left: 18px; list-style: disc; color: #e6e6e6; }
