@@ -6842,3 +6842,75 @@
     'E-mails e mensagens para clientes usam o nome da pessoa',
     'Grupos de clientes definidos pelo benefício que buscam, e não só por idade, renda ou região']);
 })();
+
+// ===== Rodada 47: mudança grande por etapas, opção de comparação na tabela, pergunta de intenção, testes confiáveis =====
+// Fontes: livro técnico sobre experimentos controlados em empresas digitais (caps. 12 a 22, leitura completa) e manual acadêmico de
+// psicologia do consumidor (caps. de tomada de decisão e de escolha guiada por objetivos, leitura completa). Mudanças grandes vão primeiro
+// a um grupo pequeno e são ampliadas por etapas. Ganho num grupo pequeno precisa ser diluído pelo peso dele no total. Clientes muito
+// grandes podem inverter um resultado. Ofertas testadas não podem aparecer antes do ponto do teste. Grupos que dividem a mesma verba
+// interferem um no outro. Comparar dois grupos iguais revela se o método está errado (~6% dos testes numa grande empresa tinham grupos
+// desbalanceados). Pôr ao lado de uma opção outra parecida e claramente pior aumenta a escolha da primeira (estudos publicados). Trocas
+// difíceis e carregadas de emoção levam o cliente a adiar ou ficar com o que já tem (estudos publicados). Perguntar a intenção de escolher
+// uma marca bem avaliada aumentou a escolha real dela (estudo publicado).
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'Fazer uma mudança grande (preço, nome, forma de atender) primeiro com uma parte dos clientes e só ampliar se os números se mantiverem', esforco: 'marca', promessa: 'vendas', tema: 'medicao', tipo: 'base', tam: 'P', ler: 60,
+      porque: 'Empresas que testam muito começam mudanças grandes por um grupo pequeno e ampliam por etapas, olhando a cada etapa se nada importante piorou. Assim um erro atinge poucos clientes e pode ser desfeito antes de virar prejuízo para a marca.',
+      metrica: 'Mudanças grandes feitas por etapas, com números conferidos antes de ampliar', passos: ['Escolher a mudança e os números que não podem piorar (vendas, reclamações, cancelamentos)', 'Aplicar primeiro numa parte dos clientes, numa unidade ou num canal', 'Comparar com quem ainda não recebeu a mudança por pelo menos uma semana inteira', 'Ampliar só se os números se mantiverem; se piorarem, voltar atrás', 'Registrar o que se aprendeu em cada etapa'] },
+    { texto: 'Na tabela de preços, pôr ao lado do pacote que a marca quer vender uma opção parecida e claramente menos vantajosa', esforco: 'venda', promessa: 'valor', tema: 'preco', tipo: 'base', tam: 'P', ler: 30,
+      porque: 'Estudos publicados mostram que acrescentar uma opção parecida, mas pior em tudo, aumenta a escolha da opção que ela faz parecer melhor. A comparação dá ao cliente uma razão fácil para decidir e justificar a escolha.',
+      metrica: 'Parte dos clientes que escolhe o pacote principal, antes e depois', passos: ['Escolher o pacote que a marca quer que mais gente escolha', 'Criar ao lado uma opção parecida, com preço próximo e claramente menos vantajosa', 'Manter as opções reais e honestas: a menos vantajosa precisa poder ser comprada', 'Comparar a escolha do pacote principal antes e depois por um mês'] },
+    { texto: 'Perguntar a clientes satisfeitos, no fim do atendimento, se pretendem voltar ou indicar a empresa', esforco: 'venda', promessa: 'vendas', tema: 'relacao', tipo: 'base', tam: 'P', ler: 30,
+      porque: 'Um estudo publicado mostrou que perguntar às pessoas se pretendiam escolher uma marca de que gostavam aumentou a escolha real dessa marca. Dizer a intenção em voz alta reforça o compromisso de quem já está satisfeito.',
+      metrica: 'Recompra e indicações de quem respondeu à pergunta comparadas às de quem não respondeu', passos: ['Escolher o momento: fim do atendimento ou da entrega, com o cliente satisfeito', 'Fazer uma pergunta simples: pretende voltar? indicaria a alguém?', 'Anotar a resposta junto ao cadastro', 'Comparar recompra e indicações de quem respondeu e de quem não respondeu'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+  const add = (k, itens) => { if (P[k]) itens.forEach((t) => { if (!P[k].some((y) => y.texto === t)) P[k].push({ grupo: G, texto: t }); }); };
+  add('naoFazer', ['Deixar o cliente pesar sozinho prós e contras difíceis (saúde, segurança, muito dinheiro): diante de trocas difíceis ele adia ou fica com o que já tem',
+    'Comparar dois anúncios ou ofertas que gastam da mesma verba sem separar o orçamento: o que gasta mais rápido parece melhor',
+    'Comemorar o ganho de um grupo pequeno de clientes como se fosse da empresa toda: o ganho precisa ser medido pelo peso desse grupo nas vendas']);
+  add('verificacoes', ['Clientes muito grandes olhados à parte no resultado de um teste, para não inverterem a conclusão',
+    'Nenhuma das ofertas testadas anunciada antes do ponto em que o teste acontece',
+    'Antes de confiar num jeito de testar, comparar dois grupos que receberam a mesma coisa: se der diferença, o método está errado']);
+})();
+
+// ===== Rodada 48: experiência que melhora com o tempo, espera aproveitada, uso de planos pagos de uma vez, catálogo organizado =====
+// Fonte: manual acadêmico de psicologia do consumidor, capítulos de felicidade no consumo, preço e contabilidade mental (início) e
+// variedade de produtos (leitura completa). As pessoas se adaptam ao que é constante e reagem às mudanças; preferem sequências que
+// melhoram; experiências quase sempre boas, com quedas raras, agradam mais que o contrário (estudos publicados). A espera traz prazer
+// de antecipação, maior quando a pessoa conhece ou imagina bem a experiência (estudo publicado). Em academias, quem pagava por mês
+// usava de forma constante; quem pagava de uma vez usava cada vez menos até o pagamento seguinte (estudo publicado). Escolhas comparadas
+// lado a lado valorizam diferenças que pouco mudam a experiência no uso. Descontos têm um mínimo para serem notados e um ponto de
+// saturação (estudo publicado). Exposição organizada aumentou a variedade percebida e o consumo (de 12,7 para 28,3 itens); cortar 50%
+// dos itens de categorias fortes não mudou a variedade percebida e facilitou a compra; uma marca que passou de 1 para 5 versões
+// diferentes em coisas não comparáveis caiu de 53% para 40% de participação (estudos publicados).
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'Organizar pacotes, sessões ou etapas do serviço para que a experiência melhore ao longo do tempo, deixando um ponto alto para o fim', esforco: 'marca', promessa: 'valor', tema: 'experiencia', tipo: 'base', tam: 'P', ler: 60, setores: ['servicos'],
+      porque: 'As pessoas se acostumam com o que é constante e reagem às mudanças. Estudos publicados mostram que elas preferem sequências que melhoram e que experiências quase sempre boas, com poucas quedas, agradam mais que experiências comuns com raros momentos especiais.',
+      metrica: 'Satisfação no fim do pacote e recompra de quem completou', passos: ['Desenhar as etapas do pacote ou do serviço na ordem em que o cliente passa', 'Garantir que nenhuma etapa fique abaixo do padrão da marca', 'Guardar um ponto alto para o fim (resultado mostrado, brinde útil, conversa de fechamento)', 'Perguntar a satisfação no fim e comparar com o desenho anterior'] },
+    { texto: 'Entre a compra e o atendimento, mandar ao cliente o que vai acontecer, com fotos ou vídeo, para ele aproveitar a espera', esforco: 'marca', promessa: 'valor', tema: 'relacao', tipo: 'base', tam: 'P', ler: 30,
+      porque: 'A espera também dá prazer: imaginar a experiência faz parte do valor da compra. Um estudo publicado mostrou que esse prazer é maior quando a pessoa conhece ou consegue imaginar bem o que vai viver; sem isso, a espera vira ansiedade.',
+      metrica: 'Faltas, cancelamentos e dúvidas antes do atendimento, antes e depois', passos: ['Escolher o momento entre a compra e o atendimento ou a entrega', 'Preparar uma mensagem curta com o que vai acontecer, passo a passo', 'Incluir fotos ou vídeo do lugar, da equipe ou do resultado', 'Enviar logo após a compra e perto da data', 'Comparar faltas, cancelamentos e dúvidas antes e depois'] },
+    { texto: 'Em planos e pacotes pagos de uma vez, lembrar o cliente de usar e marcar os próximos usos ao longo de todo o período', esforco: 'venda', promessa: 'vendas', tema: 'relacao', tipo: 'base', tam: 'P', ler: 60, setores: ['servicos'],
+      porque: 'Num estudo publicado com academias, quem pagava por mês usava de forma constante; quem pagava de uma vez usava cada vez menos à medida que o pagamento ficava distante. Quem deixa de usar sente menos o valor do que comprou na hora de renovar.',
+      metrica: 'Uso mês a mês de quem pagou de uma vez e renovação no fim do período', passos: ['Listar quem pagou plano anual, semestral ou pacote de sessões', 'Acompanhar o uso mês a mês', 'Mandar lembrete com o que o cliente ainda tem direito, sem tom de cobrança', 'Oferecer horário para o próximo uso', 'Comparar a renovação de quem usou com a de quem não usou'] },
+    { texto: 'Organizar o cardápio, o catálogo ou a vitrine por tipo, uso ou ocasião, em vez de uma lista corrida', esforco: 'venda', promessa: 'vendas', tema: 'experiencia', tipo: 'base', tam: 'P', ler: 60, setores: ['varejo'],
+      porque: 'Estudos publicados mostram que a mesma variedade, quando organizada, parece maior e facilita a escolha: com a exposição organizada, o consumo subiu de 12,7 para 28,3 itens. Desorganizada, a variedade extra não fez diferença.',
+      metrica: 'Itens por pedido e tempo até a escolha, antes e depois', passos: ['Agrupar os itens por tipo, uso ou ocasião, do jeito que o cliente pensa', 'Dar um título claro a cada grupo', 'Pôr os mais procurados no começo de cada grupo', 'Aplicar no cardápio, no site e na loja', 'Comparar itens por pedido antes e depois'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+  const add = (k, itens) => { if (P[k]) itens.forEach((t) => { if (!P[k].some((y) => y.texto === t)) P[k].push({ grupo: G, texto: t }); }); };
+  add('naoFazer', ['Fazer um atendimento comum na maior parte das vezes e caprichar só de vez em quando: experiências quase sempre boas, com quedas raras, agradam mais',
+    'Vender só pelas diferenças que aparecem na comparação lado a lado (tamanho, quantidade, potência) e que o cliente pouco sente no uso',
+    'Dar descontos pequenos demais para serem notados ou grandes demais sem ganho a mais: a resposta ao desconto tem um mínimo e um teto',
+    'Lançar várias versões de um produto que diferem em coisas difíceis de comparar entre si: uma marca perdeu participação (de 53% para 40%) ao fazer isso']);
+  add('verificacoes', ['Ao reduzir a linha ou o cardápio, os itens favoritos dos clientes continuam disponíveis',
+    'Clientes de planos pagos de uma vez acompanhados no uso mês a mês']);
+})();

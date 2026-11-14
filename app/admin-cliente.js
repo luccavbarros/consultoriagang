@@ -405,6 +405,7 @@
     if (a.error || b.error) return say($('plan-msg'), 'Não foi possível salvar.', 'error');
     Object.assign(p, row); emp.nome = nome; emp.logo_url = logo; emp.setor = $('p-setor').value || null; $('name').textContent = nome; sub();
     $('p-logo').value = ''; $('p-logo-rm').checked = false; mostraLogo();
+    document.dispatchEvent(new CustomEvent('gang:setor', { detail: emp.setor })); // a Estratégia reagrupa as abordagens pelo setor novo
     say($('plan-msg'), 'Salvo.', 'ok');
   });
 

@@ -5,6 +5,18 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   const U = window.GangUI;
   const { $, el, say } = U;
   const nomeEmpresa = sb.from('empresas').select('nome').eq('id', id).maybeSingle().then((r) => (r.data ? r.data.nome : ''));
+  // setor do cadastro (Contrato): separa as abordagens que têm ações para o setor das que quase não têm
+  const setorEmpresa = () => sb.from('empresas').select('setor').eq('id', id).maybeSingle().then((r) => (r.data ? r.data.setor : null), () => null);
+  const MIN_ACOES_SETOR = 3; // abaixo disso o plano não consegue executar a abordagem naquele setor
+  const agrupaPorSetor = (lista, setor) => {
+    const P = window.GangPresets || {}; const nome = ((P.SETORES || {})[setor] || '').toLowerCase();
+    if (!setor || !nome) return { lista, grupos: false };
+    const serve = (t) => { const x = (P.acoes || []).find((y) => y.texto === t) || {}; return !x.setores || x.setores.includes(setor); };
+    const n = (a) => (a.acoes ? a.acoes.filter(serve).length : MIN_ACOES_SETOR); // abordagem sem ações ligadas não é julgada
+    const sim = lista.filter((a) => n(a) >= MIN_ACOES_SETOR); const nao = lista.filter((a) => n(a) < MIN_ACOES_SETOR);
+    if (!nao.length) return { lista, grupos: false };
+    return { lista: sim.map((a) => ({ ...a, grupo: 'Combinam com ' + nome })).concat(nao.map((a) => ({ ...a, grupo: 'Poucas ações para ' + nome + ' (o plano fica com o setor)' }))), grupos: true };
+  };
 
   const safeName = (n) => n.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.-]+/g, '-').slice(-80);
   const sobe = async (file, pasta) => {
@@ -201,21 +213,29 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     // campos que dependem de outro (ex.: as abordagens coerentes com o desafio escolhido)
     fields.filter((f) => f.depende).forEach((f) => {
       const P = window.GangPresets || {}; const idc = pre + f.k; const idDe = pre + f.depende.de;
+      let setor = null;
       const filtra = (manter) => {
         const fonte = (P[f.depende.lista] || []).find((x) => x.texto === U.comboValue(idDe));
         const todas = P[f.presets] || [];
-        const lista = fonte && fonte[f.depende.chave] ? todas.filter((a) => fonte[f.depende.chave].includes(a.texto)) : todas;
+        const doDesafio = fonte && fonte[f.depende.chave] ? todas.filter((a) => fonte[f.depende.chave].includes(a.texto)) : todas;
+        const porSetor = f.presets === 'abordagens' ? agrupaPorSetor(doDesafio, setor) : { lista: doDesafio, grupos: false };
+        const lista = porSetor.lista;
         const velho = $(idc) && $(idc).closest('.combo'); if (!velho) return;
         const atualV = U.comboValue(idc);
         // só libera depois que o campo de origem (o desafio) tem valor; sem ele, fica desativado e vazio
         const livre = !!U.comboValue(idDe);
         const valor = !livre ? null : manter || (atualV && lista.some((a) => a.texto === atualV)) ? atualV : null;
-        const novo = U.combo(idc, lista, valor, { semGrupos: true, longo: !!f.longo, vazio: livre ? 'Escolha…' : 'Escolha o desafio primeiro' });
+        const novo = U.combo(idc, lista, valor, { semGrupos: !porSetor.grupos, longo: !!f.longo, vazio: livre ? 'Escolha…' : 'Escolha o desafio primeiro' });
         novo.querySelectorAll('select, input').forEach((x) => { x.disabled = !livre; });
         novo.classList.toggle('is-travado', !livre);
         velho.replaceWith(novo);
       };
       filtra(true);
+      if (f.presets === 'abordagens') {
+        setorEmpresa().then((s) => { if (s) { setor = s; if (!form.dataset.sujo) filtra(true); } });
+        const novoSetor = (ev) => { if (!form.isConnected) { document.removeEventListener('gang:setor', novoSetor); return; } setor = ev.detail || null; filtra(true); };
+        document.addEventListener('gang:setor', novoSetor);
+      }
       const sel = $(idDe); if (sel) sel.addEventListener('change', () => filtra(false));
       const outro = $(idDe + '-outro'); if (outro) outro.addEventListener('input', () => { clearTimeout(outro._t); outro._t = setTimeout(() => filtra(true), 250); });
     });
