@@ -480,7 +480,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       resumo ? el('p', 'ed-diag__frase', resumo) : el('p', 'ed-diag__s', 'Escolha a frase do Diagnóstico para ver aqui o ponto de partida.'),
       destoa ? el('div', 'ed-diag__aviso', el('p', null, 'O desafio salvo não continua este diagnóstico. Os que continuam:'),
         el('ul', null, daFrase.map((t) => el('li', null, t)))) : null,
-      el('p', 'ed-diag__s', indicados.length ? 'O campo 1 mostra só os desafios que saem deste diagnóstico, e o campo 2 só as abordagens do desafio escolhido.' : 'Nenhum desafio da biblioteca responde a esse diagnóstico: escreva o desafio à mão no campo 1.'));
+      indicados.length ? null : el('p', 'ed-diag__s', 'Nenhum desafio da biblioteca responde a esse diagnóstico: escreva o desafio à mão no campo 1.'));
   };
 
   montar('pane-estrategia', [

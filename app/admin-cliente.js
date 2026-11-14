@@ -959,12 +959,18 @@
     return 2;
   };
   const montaModelo = (m, ab) => {
+    // o setor é o do modelo escolhido (não o do cadastro): cada setor tem o seu plano, inclusive nas ações que executam a estratégia.
+    // Os modelos mais específicos usam também as ações do setor-base (saúde, beleza e educação = serviços; alimentação e loja online = varejo)
+    const chaveM = Object.keys(MOD).find((k) => MOD[k] === m);
+    const BASE_M = { saude: 'servicos', educacao: 'servicos', beleza: 'servicos', alimentacao: 'varejo', loja_online: 'varejo', tecnologia: 'b2b' };
+    const doSetor = (x) => !x.setores || x.setores.includes(chaveM) || x.setores.includes(BASE_M[chaveM] || chaveM);
     const foraDaEstrategia = new Set(ab ? ab.fora || [] : []);
     const dur = p.duracao_meses || 18; const ini = U.ref(p.inicio); const fim = U.addRef(ini, dur - 1);
     const de = ini > U.ref() ? ini : U.ref();
     const meses = []; for (let r = de; nRef(r) <= nRef(fim); r = U.addRef(r, 1)) meses.push(r);
     if (!meses.length) return [];
-    const doModelo = m.acoes.map(([mes, peso, promessa, esforco, titulo, porque, metrica]) => ({ mes: U.addRef(ini, Math.round((mes - 1) * (dur - 1) / 17)), peso, promessa, esforco, titulo, porque, metrica }));
+    const doModelo = m.acoes.map(([mes, peso, promessa, esforco, titulo, porque, metrica]) => ({ mes: U.addRef(ini, Math.round((mes - 1) * (dur - 1) / 17)), peso, promessa, esforco, titulo, porque, metrica }))
+      .filter((x) => doSetor((P.acoes || []).find((y) => y.texto === x.titulo) || {})); // o esqueleto também respeita o setor do modelo
     const ja = (t) => foraDaEstrategia.has(t) || acoes.some((a) => a.titulo === t) || novas.some((x) => x.titulo === t);
     const novas = [];
     // carga do mês em pontos (P=1, M=2, G=4): 7 pontos ou 5 ações. Um mês de ações rápidas recebe mais; um mês com uma ação grande, menos
@@ -1172,6 +1178,7 @@
     if (!E.texto) return el('li', 'lib__item mod__estr is-falta', el('p', 'row__text', 'Sem estratégia: o plano segue só o setor. Escolha o desafio e a abordagem em Estratégia para ele sair alinhado.'));
     if (!E.ab) return el('li', 'lib__item mod__estr is-falta', el('p', 'row__text', 'A abordagem foi escrita à mão, então o modelo não sabe quais ações a executam: o plano segue o setor. Marque as ações da estratégia no Planejar o mês.'));
     const n = plano.filter((x) => x.executa).length;
+    if (!n) return el('li', 'lib__item mod__estr is-falta', el('p', 'row__text', 'Nenhuma ação desta abordagem serve para este setor: o plano segue o setor. Confira se a abordagem combina com o tipo de negócio do cliente.'));
     const fora = (E.ab.fora || []).length;
     return el('li', 'lib__item mod__estr', el('p', 'row__text', el('strong', null, 'Alinhado à estratégia: ' + E.ab.curto + '.'), el('br'),
       n + (n === 1 ? ' ação executa' : ' ações executam') + ' a abordagem e ' + (n === 1 ? 'vem' : 'vêm') + ' primeiro.' + (fora ? ' ' + fora + (fora === 1 ? ' ação ficou' : ' ações ficaram') + ' de fora por contradizer a renúncia.' : '')));

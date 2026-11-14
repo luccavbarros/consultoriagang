@@ -6778,3 +6778,31 @@
     'Cortar de uma vez todas as promoções a que o cliente se acostumou: reduza aos poucos, mostrando o valor, ou as vendas despencam']);
   add('verificacoes', ['Em mercado novo para a categoria, anúncios com argumentos e especialistas; em mercado já conhecido, mais emoção']);
 })();
+
+// ===== Setores das ações gerais: as de venda consultiva (reunião, proposta, orçamento, quem decide) não entram no plano de varejo =====
+// Pedido do usuário: cada setor deve ter um plano próprio. Os modelos específicos herdam do setor-base (saúde, beleza e educação = serviços;
+// alimentação e loja online = varejo; tecnologia = B2B), então basta marcar com os setores-base.
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const CONSULTIVA = ['servicos', 'b2b'];
+  const SO_B2B = ['b2b'];
+  [
+    ['Antes de cada reunião com cliente, escrever 3 hipóteses', CONSULTIVA],
+    ['Calcular com o cliente, na primeira reunião, quanto o problema custa', CONSULTIVA],
+    ['Combinar com o cliente o acompanhamento depois da proposta', CONSULTIVA],
+    ['Dar a quem usa o serviço um resumo simples do resultado', SO_B2B],
+    ['Dar um nome próprio ao método ou ao serviço principal', CONSULTIVA],
+    ['Escrever uma página para cada serviço usando o nome que o cliente digita', CONSULTIVA],
+    ['Identificar se o cliente compra por preço, por valor ou por relação', CONSULTIVA],
+    ['Mandar ao cliente, no mesmo dia, um resumo escrito de cada reunião', CONSULTIVA],
+    ['Medir quantos orçamentos viram venda', CONSULTIVA],
+    ['Ouvir quem usa o serviço no dia a dia e levar o que ele pede para a conversa com quem decide', SO_B2B],
+    ['Preparar uma ideia que ensine algo novo ao cliente sobre o negócio dele', SO_B2B],
+    ['Refazer a tabela de preços a partir do valor que cada serviço gera', CONSULTIVA],
+    ['Reescrever o modelo de proposta', CONSULTIVA],
+    ['Pedir indicações de forma direta, dizendo que tipo de cliente a empresa procura', CONSULTIVA],
+    ['Listar os 10 melhores clientes (compraram rápido, pagaram sem negociar, indicaram)', CONSULTIVA],
+    ['Escrever o perfil do cliente ideal e os sinais de quem não é cliente', CONSULTIVA],
+    ['No espaço físico, escolher aroma e música', ['varejo', 'servicos']],
+  ].forEach(([ini, st]) => { P.acoes.filter((a) => a.texto.startsWith(ini) && !a.setores).forEach((a) => { a.setores = st.slice(); }); });
+})();
