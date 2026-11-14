@@ -431,12 +431,15 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       return el('div', 'ed-diag is-vazio', el('p', 'ed-diag__t', 'Do diagnóstico'),
         el('p', 'ed-diag__s', 'O Diagnóstico ainda não tem a frase nem as causas. Preencha primeiro: é dele que o desafio deve sair.'));
     }
-    const itens = [...causas.map((c) => c.texto), ...faltas.map((f) => (f.posicao === 'nao_entrega' ? 'Não entrega: ' : 'Entrega mal: ') + f.texto)];
+    // cada parte com o nome que ela tem no Diagnóstico, para o consultor saber de onde veio
+    const bloco = (rotulo, xs) => xs.length ? el('div', 'ed-diag__b', el('p', 'ed-diag__r', rotulo),
+      el('ul', 'ed-diag__l', xs.slice(0, 4).map((t) => el('li', null, t))),
+      xs.length > 4 ? el('p', 'ed-diag__s', 'e mais ' + (xs.length - 4) + ' no Diagnóstico.') : null) : null;
     return el('div', 'ed-diag', el('p', 'ed-diag__t', 'Do diagnóstico'),
       resumo ? el('p', 'ed-diag__frase', resumo) : null,
-      itens.length ? el('ul', 'ed-diag__l', itens.slice(0, 6).map((t) => el('li', null, t))) : null,
-      itens.length > 6 ? el('p', 'ed-diag__s', 'e mais ' + (itens.length - 6) + ' no Diagnóstico.') : null,
-      el('p', 'ed-diag__s', indicados.length ? indicados.length + (indicados.length === 1 ? ' desafio indicado aparece' : ' desafios indicados aparecem') + ' primeiro na lista.' : 'Nenhum desafio da biblioteca responde a esse diagnóstico: escreva o desafio à mão.'));
+      bloco('Causas', causas.map((c) => c.texto)),
+      bloco('Onde a marca falha', faltas.map((f) => f.texto + (f.posicao === 'nao_entrega' ? ' (não entrega)' : ' (entrega mal)'))),
+      el('p', 'ed-diag__s', indicados.length ? 'Os desafios que respondem a isso estão no topo da lista do campo 1.' : 'Nenhum desafio da biblioteca responde a esse diagnóstico: escreva o desafio à mão no campo 1.'));
   };
 
   montar('pane-estrategia', [

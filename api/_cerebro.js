@@ -6650,3 +6650,88 @@
     ].forEach(([t, ds]) => { if (!P.causas.some((c) => c.texto === t)) P.causas.push({ grupo: G, texto: t, desafios: ds.map(D).filter(Boolean) }); });
   }
 })();
+
+// ===== Rodada 43: aroma e música que combinam, preço que o cliente vê como justo e testes de design sem distorcer a escolha =====
+// Fonte: manual acadêmico de psicologia do consumidor (47 capítulos de revisão; lidos os de sentidos, persuasão, associações, preço,
+// preço justo, estética, marcas, ambiente e música). Aroma e música combinados no mesmo clima (agitado ou calmo) aumentaram avaliação,
+// satisfação e intenção de visita; combinados de forma errada, efeito nulo ou negativo (estudos publicados em loja). Música que chama
+// atenção para si atrapalha a lembrança da mensagem. Locução um pouco mais rápida e de tom grave gerou menos contra-argumentos e atitude
+// melhor com a marca (estudo publicado). Preço justo: aumento por custo maior é aceito; por procura alta ou falta de oferta é visto como
+// injusto (Kahneman, Knetsch e Thaler); preços diferentes para clientes parecidos sem motivo claro foram vistos como injustos por 71% a 94%
+// mesmo quando sabiam da prática; regra de preço transparente aumenta a justiça percebida. Explicar em palavras por que gosta de um design
+// muda a preferência e a afasta do comportamento real (Wilson e Schooler).
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'No espaço físico, escolher aroma e música que combinem entre si e com o que a marca vende (os dois calmos ou os dois animados)', esforco: 'marca', promessa: 'valor', tema: 'experiencia', tipo: 'base', tam: 'P', ler: 60,
+      porque: 'Estudos publicados em lojas mostraram que aroma e música no mesmo clima aumentaram a avaliação da loja, a satisfação e a vontade de voltar. Quando não combinavam (aroma calmo com música agitada, por exemplo), o efeito sumiu ou piorou. Aroma ligado à categoria também fez as pessoas prestarem mais atenção às marcas.',
+      metrica: 'Aroma e música escolhidos juntos e avaliação do espaço pelos clientes', passos: ['Definir o clima que a marca quer no espaço: calmo e acolhedor ou animado e energético', 'Escolher um aroma e uma seleção de músicas com esse mesmo clima e ligados ao que a empresa vende', 'Manter a música em volume baixo, sem chamar atenção para si', 'Perguntar a 10 clientes como se sentiram no espaço antes e depois da mudança', 'Manter a combinação por meses para virar parte da marca'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+
+  const add = (k, itens) => { if (P[k]) itens.forEach((t) => { if (!P[k].some((y) => y.texto === t)) P[k].push({ grupo: G, texto: t }); }); };
+  add('naoFazer', ['Subir o preço porque a procura aumentou ou faltam concorrentes: o cliente vê como injusto; aumento por custo maior é aceito',
+    'Cobrar preços diferentes de clientes parecidos sem uma regra clara: mesmo quem sabe da prática acha injusto',
+    'Ao testar logo, embalagem, fachada ou anúncio, pedir que as pessoas expliquem por que gostam antes de escolher: explicar muda a preferência; peça a escolha primeiro',
+    'Usar no anúncio uma música que chama mais atenção que a mensagem: ela atrapalha a lembrança do que foi dito']);
+  add('verificacoes', ['Regra de preço que o cliente entende: ele sabe por que paga o que paga e por que outro pode pagar diferente',
+    'Locução dos anúncios firme e num ritmo um pouco mais rápido que o normal, sem pausas longas']);
+
+  if (P.causas && P.desafios) {
+    const D = (ini) => (P.desafios.find((d) => d.texto.startsWith(ini)) || {}).texto;
+    [['Os clientes acham o preço injusto: não entendem por que pagam o que pagam', ['A marca é vista como a mais cara', 'A proposta começa pelo preço']],
+    ].forEach(([t, ds]) => { if (!P.causas.some((c) => c.texto === t)) P.causas.push({ grupo: G, texto: t, desafios: ds.map(D).filter(Boolean) }); });
+  }
+})();
+
+// ===== Diagnóstico "em uma frase" reescrito como o que foi observado (sinais concretos), para não repetir o desafio da Estratégia =====
+// O diagnóstico descreve o que se via; o desafio nomeia o obstáculo. As frases antigas continuam valendo para quem já as escolheu.
+(function () {
+  const P = window.GangPresets; if (!P || !P.resumosDiagnostico || !P.resumoDesafios) return;
+  [
+    ['A marca entregava o básico que o setor exige', 'Os clientes diziam que o serviço era bom, mas não sabiam dizer o que a empresa tinha de diferente, e a maioria comparava orçamentos só pelo valor.'],
+    ['A marca era bem avaliada por quem já era cliente', 'Quase todos os clientes novos vinham de quem já conhecia a empresa; fora desse círculo, pouca gente tinha ouvido falar dela.'],
+    ['A qualidade do trabalho era alta, mas não aparecia', 'O trabalho entregue era elogiado, mas o site, as redes e as propostas não mostravam nenhum resultado, caso ou número.'],
+    ['A marca era conhecida, mas parada no tempo', 'O visual e a forma de falar eram os mesmos de anos atrás, enquanto a empresa já oferecia serviços e atendia clientes bem diferentes.'],
+    ['Cada canal falava de um jeito', 'Cada canal usava cores, versões do logo e mensagens diferentes, e os clientes não ligavam as peças à mesma empresa.'],
+    ['A empresa dependia quase só de indicação', 'Quase todos os clientes chegavam por indicação, e os meses sem indicações eram meses sem vendas novas.'],
+    ['A marca tentava atender todo tipo de cliente', 'A empresa aceitava qualquer tipo de cliente e de pedido, e a comunicação falava com todos sem citar ninguém em especial.'],
+    ['A promessa da venda era boa, mas a entrega variava', 'As reclamações mudavam conforme quem atendia: o mesmo serviço saía ótimo com uma pessoa e fraco com outra.'],
+    ['A marca aparecia pouco nos momentos', 'Quem procurava o serviço na hora da necessidade encontrava primeiro os concorrentes; a empresa só aparecia para quem já a conhecia.'],
+    ['Os clientes compravam uma vez e não voltavam', 'A maior parte dos clientes fazia uma única compra, e a empresa não tinha nenhum contato com eles depois da entrega.'],
+    ['A marca era difícil de achar e de comprar', 'Os contatos chegavam por canais espalhados e sem resposta rápida, e parte de quem procurava desistia antes de conseguir falar com a empresa.'],
+    ['A comunicação vinha em campanhas soltas', 'A empresa anunciava em campanhas curtas com meses de silêncio entre elas, e os pedidos subiam e caíam junto.'],
+    ['A empresa investia só em ofertas', 'Quase toda a comunicação eram ofertas do mês; quando as promoções paravam, as vendas paravam junto.'],
+    ['O cliente esperava uma coisa e recebia outra', 'Depois da compra apareciam queixas de que o serviço não era o que a propaganda tinha mostrado.'],
+    ['As empresas da categoria pareciam todas iguais', 'Os sites, as fotos e as promessas das empresas do setor eram quase idênticos, e os da empresa também.'],
+    ['O maior concorrente da marca não era outra empresa', 'Muitos que precisavam do serviço resolviam sozinhos ou deixavam para depois, e a comunicação nunca falava com eles.'],
+    ['O cliente comparava a marca com as empresas erradas', 'Nos orçamentos, o cliente colocava a empresa ao lado de opções mais simples e baratas, que não faziam o mesmo trabalho.'],
+    ['A marca não tinha sinais próprios', 'Sem o nome escrito, ninguém reconhecia uma peça da empresa: não havia cor, símbolo ou frase que fosse só dela.'],
+    ['A marca era vista como a opção barata', 'Os clientes escolhiam a empresa por ser a mais em conta e reagiam mal a qualquer aumento, mesmo elogiando o resultado.'],
+    ['A marca cobrava como as melhores, mas não mostrava', 'O preço estava entre os mais altos do setor, mas nada na proposta explicava a diferença, e muitos sumiam depois do orçamento.'],
+    ['A maior parte do faturamento vinha de poucos clientes', 'Dois ou três clientes respondiam pela maior parte do faturamento, e a saída de um deles derrubava o mês.'],
+    ['A empresa fazia tudo do jeito de sempre', 'Os canais, o processo de venda e a comunicação eram os mesmos de muitos anos, enquanto os clientes já pesquisavam e compravam de outro jeito.'],
+    ['A marca era conhecida pelo dono', 'Os clientes ligavam pedindo pelo dono e confiavam no que ele dizia, mais do que no nome da empresa.'],
+    ['A empresa tinha clientes satisfeitos, mas nenhum processo', 'Os clientes diziam estar satisfeitos, mas quase nenhum indicava a empresa, porque ninguém pedia.'],
+    ['Quem decidia a compra não era quem usava', 'Quem usava o serviço gostava dele, mas quem aprovava a compra recebia outras informações e decidia pelo preço.'],
+    ['A marca era bonita, mas não dizia o que a empresa fazia', 'As peças chamavam atenção e recebiam elogios, mas as pessoas não sabiam dizer o que a empresa fazia.'],
+    ['A equipe de vendas e a comunicação diziam coisas diferentes', 'O que o vendedor dizia não batia com o site e as redes, e os clientes chegavam com dúvidas sobre qual versão valia.'],
+    ['A empresa era nova e sem histórico', 'Com pouco tempo de mercado e sem casos para mostrar, a empresa perdia para nomes conhecidos mesmo cobrando menos.'],
+    ['O maior concorrente da marca era a não compra', 'A maior parte das pessoas que poderiam contratar ainda não estava procurando, e nenhuma ação da empresa chegava até elas.'],
+    ['A marca não tinha opinião', 'A empresa nunca se posicionava sobre nada do setor, e seus textos poderiam ser assinados por qualquer concorrente.'],
+    ['A empresa vendia o serviço, mas o cliente comprava o alívio', 'A comunicação descrevia etapas e técnicas, enquanto os clientes, ao contratar, falavam do problema que queriam tirar da frente.'],
+    ['A marca era competente, mas fria', 'Os clientes confiavam no trabalho, mas descreviam o contato com a empresa como distante e burocrático.'],
+    ['O preço era calculado pelo custo', 'O preço era montado somando custos e uma margem, sem levar em conta quanto o cliente ganhava com o resultado.'],
+    ['Um único preço para todos', 'Havia um só preço e uma só oferta: quem queria mais não tinha opção, e quem podia menos ia embora.'],
+    ['O esforço de comunicação estava espalhado', 'A verba e o tempo estavam divididos em muitos canais, e em nenhum deles a empresa aparecia com frequência.'],
+    ['Nada prendia o cliente à marca', 'Muitos clientes saíam na primeira oferta de outro fornecedor, e nada na relação os fazia pensar duas vezes.'],
+    ['A marca falava só com quem já estava procurando', 'Toda a comunicação estava no momento da busca, e quem só ia precisar nos meses seguintes nunca tinha contato com a empresa.'],
+  ].forEach(([velha, nova]) => {
+    const r = P.resumosDiagnostico.find((x) => x.texto.startsWith(velha));
+    const m = P.resumoDesafios.find(([ini]) => ini === velha);
+    if (r) r.texto = nova;
+    if (m && !P.resumoDesafios.some(([ini]) => ini === nova)) P.resumoDesafios.push([nova, m[1]]);
+  });
+})();

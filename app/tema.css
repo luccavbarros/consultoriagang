@@ -2115,7 +2115,10 @@ td.clients__empty { color: var(--ganggrey); font-size: var(--t-ui); }
 .ed-diag { display: grid; gap: 6px; margin: 4px 0 2px; padding: 12px 14px; border-radius: var(--r-sm); background: #161616; border: 1px solid var(--line); }
 .ed-diag__t { margin: 0; font-size: 12px; color: var(--ganggrey); }
 .ed-diag__frase { margin: 0; font-size: 14px; line-height: 1.45; color: #fff; }
-.ed-diag__l { margin: 0; padding-left: 18px; display: grid; gap: 2px; font-size: 13px; color: #e6e6e6; }
+.ed-diag__l { margin: 0; padding-left: 18px; display: grid; gap: 2px; font-size: 13px; color: #e6e6e6; list-style: disc; }
+.ed-diag__l li::marker { color: #6b6b6b; }
+.ed-diag__b { display: grid; gap: 4px; }
+.ed-diag__r { margin: 0; font-size: 12px; color: var(--ganggrey); }
 .ed-diag__s { margin: 0; font-size: 12px; color: var(--ganggrey); }
 
 /* planos de acesso à plataforma (mensal, semestral, anual) */
