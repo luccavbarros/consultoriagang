@@ -7166,11 +7166,20 @@
   P.frasesDasCausas = (causasTextos, quantas) => {
     const cs = (causasTextos || []).map((t) => [t, daBiblioteca(t)]).filter(([, c]) => c && c.desafios && c.desafios.length);
     if (!cs.length) return { frases: [], lidas: 0 };
+    // nota = quantas causas a frase reúne (o principal) + a força das ligações: o 1º desafio de cada causa é o mais direto
+    // e pesa mais; causa ligada a poucos desafios é mais específica e pesa mais. No empate final, vence a frase ligada a
+    // conquistar quem ainda não compra ou não lembra da marca (o que mais faz marcas crescerem, nos estudos da biblioteca).
+    const CRESCER = /lembr|novos|não conhece|quem ainda|não aparece|não é vista|não encontra|primeiro os concorrentes|fora desse círculo/i;
+    const peso = (k) => (k === 0 ? 1 : k === 1 ? 0.6 : 0.4);
     const frases = (P.resumosDiagnostico || []).map((f) => {
       const ds = desafiosDaFrase(f.texto); if (!ds.length) return null;
-      const liga = cs.filter(([, c]) => c.desafios.some((d) => ds.some((pre) => d.startsWith(pre))));
-      const fortes = cs.reduce((n, [, c]) => n + c.desafios.filter((d) => ds.some((pre) => d.startsWith(pre))).length, 0);
-      return liga.length ? { texto: f.texto, causas: liga.map(([t]) => t), nota: liga.length + fortes / 100 } : null;
+      const bate = (d) => ds.some((pre) => d.startsWith(pre));
+      // o 1º desafio da frase é o principal dela: ligar a ele vale mais do que ligar ao 2º
+      const pesoFrase = (d) => { const j = ds.findIndex((pre) => d.startsWith(pre)); return j < 0 ? 0 : j === 0 ? 1 : 0.6; };
+      const liga = cs.filter(([, c]) => c.desafios.some(bate));
+      const forca = cs.reduce((n, [, c]) => n + c.desafios.reduce((m, d, k) => m + pesoFrase(d) * peso(k) / Math.sqrt(c.desafios.length), 0), 0);
+      const cresce = CRESCER.test(f.texto) || ds.some((pre) => CRESCER.test(pre)) ? 0.001 : 0;
+      return liga.length ? { texto: f.texto, causas: liga.map(([t]) => t), nota: liga.length + forca / 10 + cresce } : null;
     }).filter(Boolean).sort((a, b) => b.nota - a.nota).slice(0, quantas || 3);
     return { frases, lidas: cs.length };
   };

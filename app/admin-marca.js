@@ -310,7 +310,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
           if (!editando && ordem) row.ordem = rows.reduce((m, x) => Math.max(m, x.ordem || 0), 0) + 1;
           const r = editando ? await sb.from(tabela).update(row).eq('id', editando.id) : await sb.from(tabela).insert(row);
           if (r.error) throw new Error('Não foi possível salvar.');
-          lista(mount, cfg); document.dispatchEvent(new CustomEvent('gang:marca-salva'));
+          lista(mount, cfg); document.dispatchEvent(new CustomEvent('gang:marca-salva', { detail: { tabela } }));
         } catch (err) { say(msg, err.message, 'error'); btn.disabled = false; }
       });
       formBox.replaceChildren(form); addBtn.hidden = true;
@@ -434,11 +434,16 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     if (!r.frases.length) return el('div', 'ed-diag ed-frases', el('p', 'ed-diag__r', 'As causas marcadas não batem com nenhuma frase da biblioteca. Escolha a frase abaixo ou escreva uma.'));
     const usar = (t) => { const sel = $('fi-diagnosticos-resumo'); if (!sel) return; sel.value = t; sel.dispatchEvent(new Event('change', { bubbles: true })); };
     const dividido = r.frases[0].causas.length < Math.ceil(r.lidas / 2);
+    // a recomendada é a que reúne mais causas; no empate, a que se liga a mais desafios delas (o problema que puxa os outros)
+    const [a1, a2] = r.frases;
+    const empate = a2 && a2.causas.length === a1.causas.length && Math.abs(a2.nota - a1.nota) < 0.0005;
+    const porque = 'Recomendada: reúne ' + a1.causas.length + ' de ' + r.lidas + ' causas' + (a2 && a2.causas.length === a1.causas.length && !empate ? ' e é a que mais se liga aos problemas delas' : '') + '.'
+      + (empate ? ' Está empatada com a seguinte: decida pelos números ou pela pesquisa.' : '');
     return el('div', 'ed-diag ed-frases',
       el('p', 'ed-diag__b', 'Frases que as causas marcadas sustentam'),
       dividido ? el('p', 'ed-diag__aviso', 'As causas apontam para lados diferentes: nenhuma frase reúne a maioria delas. Confira com os números ou com a pesquisa antes de fechar o diagnóstico.') : null,
-      el('ul', 'ed-frases__l', r.frases.map((f) => el('li', 'ed-frases__i' + (f.texto === emUso ? ' is-on' : ''),
-        el('div', 'ed-frases__t', el('p', null, f.texto), el('p', 'ed-frases__por', 'Indicada por ' + f.causas.length + ' de ' + r.lidas + ': ' + f.causas.join('; '))),
+      el('ul', 'ed-frases__l', r.frases.map((f, k) => el('li', 'ed-frases__i' + (f.texto === emUso ? ' is-on' : '') + (k === 0 && !dividido ? ' is-rec' : ''),
+        el('div', 'ed-frases__t', k === 0 && !dividido ? el('p', 'ed-frases__rec', porque) : null, el('p', null, f.texto), el('p', 'ed-frases__por', 'Indicada por ' + f.causas.length + ' de ' + r.lidas + ': ' + f.causas.join('; '))),
         f.texto === emUso ? el('span', 'ed-frases__ok', 'Em uso') : el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => usar(f.texto) }, 'Usar esta frase')))),
       el('p', 'ed-diag__r', 'O que o cliente relata nem sempre é a causa real: a frase também depende do que todo cliente exige, do que faz escolher e dos números.'));
   };
@@ -584,7 +589,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     const salvo = atual && atual.desafio;
     const destoa = resumo && salvo && daFrase.length && !daFrase.includes(salvo);
     return el('div', 'ed-diag', el('p', 'ed-diag__t', 'Do diagnóstico'),
-      resumo ? el('p', 'ed-diag__frase', resumo) : el('p', 'ed-diag__s', 'Escolha a frase do Diagnóstico para ver aqui o ponto de partida.'),
+      resumo ? el('p', 'ed-diag__frase', resumo) : el('p', 'ed-diag__s', 'Escolha a frase do Diagnóstico', el('br'), 'para ver aqui o ponto de partida.'),
       destoa ? el('div', 'ed-diag__aviso', el('p', null, 'O desafio salvo não continua este diagnóstico. Os que continuam:'),
         el('ul', null, daFrase.map((t) => el('li', null, t)))) : null,
       indicados.length ? null : el('p', 'ed-diag__s', 'Nenhum desafio da biblioteca responde a esse diagnóstico: escreva o desafio à mão no campo 1.'));

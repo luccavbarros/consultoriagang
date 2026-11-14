@@ -1119,10 +1119,11 @@ span.task__status { cursor: default; }
 .mod__resumo .row__text { color: #e6e6e6; }
 .mod__acs { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 4px; }
 .mod__acs li { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #e6e6e6; }
-.mod__peso { flex: none; padding: 1px 7px; border-radius: 6px; background: #262626; font-size: 12px; color: #a3a3a3; }
+.mod__peso { flex: none; min-width: 72px; box-sizing: border-box; text-align: center; padding: 1px 7px; border-radius: 6px; background: #262626; font-size: 12px; color: #a3a3a3; }
 .mod__peso.is-ess { background: #f3f3f3; color: #0a0a0a; }
 .mod__esf { margin-left: auto; font-size: 12px; color: var(--ganggrey); }
 .mod__mes { padding-block: 10px; }
+.mod__mes .lib__main { flex: 1; } /* a lista ocupa a largura toda: "marca"/"venda" ficam todos na mesma coluna */
 /* meses recolhidos no plano de ações do consultor */
 details.month > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 details.month > summary::-webkit-details-marker { display: none; }
@@ -2239,3 +2240,5 @@ html.side-abrindo .side__plan .badge { display: none; }
 .ed-head__acts { display: flex; align-items: center; gap: 8px; margin-left: auto; flex: none; }
 .ed-limpar { padding: 4px 11px; border-radius: 999px; border: 1px solid var(--line-2); background: transparent; color: var(--ganggrey); font: inherit; font-size: 12px; cursor: pointer; transition: color .2s, border-color .2s, background-color .2s; }
 .ed-limpar:hover { color: #f1b0b0; border-color: #5a3a3a; background: rgba(255, 90, 90, .06); }
+.ed-frases__i.is-rec { border-color: #5b6b5f; }
+.ed-frases__t .ed-frases__rec { margin-bottom: 4px; font-size: 11.5px; letter-spacing: .01em; color: #8fd6a8; }
