@@ -177,8 +177,9 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
         const r = await sb.from(tabela).upsert({ empresa_id: id, ...row }).select('*').single();
         if (r.error) throw new Error('Não foi possível salvar.');
         await ficha(mount, cfg); // redesenha com os arquivos atuais
-        document.dispatchEvent(new CustomEvent('gang:marca-salva'));
+        document.dispatchEvent(new CustomEvent('gang:marca-salva', { detail: { tabela } }));
         say(mount.querySelector('.msg'), 'Salvo. O cliente já vê no portal.', 'ok');
+        if (cfg.depoisDeSalvar) cfg.depoisDeSalvar(mount, r.data);
         return;
       } catch (err) { say(msg, err.message, 'error'); }
       btn.disabled = false;
@@ -209,7 +210,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   };
 
   // ----- lista: vários itens com ordem -----
-  const lista = async (mount, { titulo, nota, tabela, fields, fixo = {}, resumo, pasta, vazio, ordem = true, icone, tom, largo, max, aoAbrir }) => {
+  const lista = async (mount, { titulo, nota, tabela, fields, fixo = {}, resumo, pasta, vazio, ordem = true, icone, tom, largo, max, aoAbrir, sugere }) => {
     if (largo) mount.classList.add('is-largo');
     const pre = 'li-' + tabela + '-' + Object.values(fixo).join('-') + '-';
     let q = sb.from(tabela).select('*').eq('empresa_id', id);
@@ -246,6 +247,21 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       form.querySelector('input, textarea, select').focus();
     };
     const addBtn = el('button', { class: 'ed-add', type: 'button', onclick: () => abreForm(null) }, ico('mais'), 'Adicionar');
+    // sugestões que o consultor adiciona com um clique (ex.: as causas que costumam vir com a frase do Diagnóstico); nada entra sozinho
+    // compara pelo começo das palavras, para "não mostrava" e "não mostra" contarem como a mesma causa
+    const pal = (t) => new Set(String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter((w) => w.length > 2).map((w) => w.slice(0, 5)));
+    const igual = (x, y) => { const A = pal(x); const Bs = pal(y); const c = [...A].filter((w) => Bs.has(w)).length; return c / Math.max(1, new Set([...A, ...Bs]).size) >= 0.6; };
+    const sugT = sugere ? (await sugere()) || [] : [];
+    const sug = sugT.filter((t) => !rows.some((r) => igual(r.texto, t))); sug.titulo = sugT.titulo;
+    const insere = async (ts) => {
+      const base = rows.reduce((m, x) => Math.max(m, x.ordem || 0), 0);
+      const r = await sb.from(tabela).insert(ts.map((t, k) => ({ empresa_id: id, texto: t, ...fixo, ...(ordem ? { ordem: base + k + 1 } : {}) })));
+      if (r.error) return say(msg, 'Não foi possível adicionar.', 'error');
+      lista(mount, cfg); document.dispatchEvent(new CustomEvent('gang:marca-salva', { detail: { tabela } }));
+    };
+    const sugBox = sug.length ? el('div', 'ed-sug', el('p', 'ed-sug__t', sug.titulo || 'Sugestões'),
+      el('ul', 'ed-sug__l', sug.map((t) => el('li', null, el('span', null, t), el('button', { class: 'ed-sug__add', type: 'button', onclick: () => insere([t]) }, 'Adicionar')))),
+      sug.length > 1 ? el('button', { class: 'btn btn--ghost btn--sm ed-sug__todas', type: 'button', onclick: () => insere(sug) }, 'Adicionar todas') : null) : null;
 
     const move = (i, d) => {
       if (!rows[i + d]) return;
@@ -289,6 +305,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
         el('div', 'ed-head__txt', el('h3', 'ed-head__t', titulo, el('span', 'ed-n', String(rows.length))), nota ? el('p', 'ed-head__n', nota) : null),
         addBtn),
       formBox,
+      sugBox,
       ul),
       );
     ul.append(...(rows.length ? rows.map((r, i) => {
@@ -301,7 +318,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
             btn('lapis', 'Editar', () => abreForm(r)),
             btn('lixo', 'Excluir', async () => { if (!confirm('Excluir “' + (typeof t === 'string' ? t : 'este item') + '”?')) return; await sb.from(tabela).delete().eq('id', r.id); lista(mount, cfg); document.dispatchEvent(new CustomEvent('gang:marca-salva')); }, ' ed-acao--bad')));
       }) : [el('li', 'ed-vazio', vazio || 'Nada cadastrado ainda.')]));
-    const cfg = { titulo, nota, tabela, fields, fixo, resumo, pasta, vazio, ordem, icone, tom, largo, max, aoAbrir };
+    const cfg = { titulo, nota, tabela, fields, fixo, resumo, pasta, vazio, ordem, icone, tom, largo, max, aoAbrir, sugere };
     if (max && rows.length >= max) addBtn.hidden = true;
   };
 
@@ -313,6 +330,24 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   };
   const POS = [['entrega', 'Entregava'], ['entrega_mal', 'Entregava mal'], ['nao_entrega', 'Não entregava']];
   const POS_T = Object.fromEntries(POS);
+
+  // as causas da biblioteca que levam aos mesmos desafios que a frase do Diagnóstico indica (as que levam a mais deles primeiro)
+  const causasDaFrase = async () => {
+    const P = window.GangPresets || {};
+    const { data } = await sb.from('diagnosticos').select('resumo').eq('empresa_id', id).maybeSingle();
+    const resumo = (data && data.resumo || '').trim(); if (!resumo || !P.desafiosDoDiagnostico) return [];
+    const ds = [...P.desafiosDoDiagnostico([], [], resumo).keys()];
+    const xs = (P.causas || []).map((c) => [c.texto, (c.desafios || []).filter((d) => ds.includes(d)).length]).filter(([, n]) => n)
+      .sort((a, b) => b[1] - a[1]).slice(0, 4).map(([t]) => t);
+    xs.titulo = 'Causas que costumam vir com a frase do Diagnóstico';
+    return xs;
+  };
+  // ao trocar a frase, as sugestões de causas se atualizam
+  document.addEventListener('gang:marca-salva', (e) => {
+    if (!e.detail || e.detail.tabela !== 'diagnosticos') return;
+    const m = [...document.querySelectorAll('#pane-diagnostico .editor-block')].find((x) => x.montagem && x.montagem[1].tabela === 'causas');
+    if (m) m.montagem[0](m, m.montagem[1]);
+  });
 
   montar('pane-diagnostico', [
     [ficha, { icone: 'pulso', titulo: 'Diagnóstico', nota: 'O ponto de partida da marca, como\u00a0o\u00a0cliente\u00a0vê\u00a0em\u00a0Diagnóstico.', tabela: 'diagnosticos', fields: [
@@ -336,7 +371,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     [lista, { icone: 'estrela', tom: 'gang', titulo: 'O que faz escolher uma marca', nota: 'Discriminadores: o que diferencia.', tabela: 'fatores', fixo: { tipo: 'discriminador' }, fields: [
       { k: 'texto', label: 'Item', req: true, type: 'preset', presets: 'discriminadores' }, { k: 'posicao', label: 'A marca…', type: 'select', options: POS }],
     resumo: (r) => [r.texto, POS_T[r.posicao]] }],
-    [lista, { icone: 'alvo', largo: true, titulo: 'As causas que o plano ataca', nota: 'Os motivos por trás dos números, não os números. Prefira causas em que a empresa consegue agir.', tabela: 'causas', fields: [{ k: 'texto', label: 'Causa', req: true, full: true, type: 'preset', presets: 'causas' }], resumo: (r) => [r.texto] }],
+    [lista, { icone: 'alvo', largo: true, titulo: 'As causas que o plano ataca', nota: 'Os motivos por trás dos números, não os números. Prefira causas em que a empresa consegue agir.', tabela: 'causas', fields: [{ k: 'texto', label: 'Causa', req: true, full: true, type: 'preset', presets: 'causas' }], resumo: (r) => [r.texto], sugere: () => causasDaFrase() }],
   ]);
 
   // ===== Teste de estratégia ruim: o que costuma faltar numa estratégia que é só desejo =====
@@ -431,19 +466,14 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       return el('div', 'ed-diag is-vazio', el('p', 'ed-diag__t', 'Do diagnóstico'),
         el('p', 'ed-diag__s', 'O Diagnóstico ainda não tem a frase nem as causas. Preencha primeiro: é dele que o desafio deve sair.'));
     }
-    // cada parte com o nome que ela tem no Diagnóstico, para o consultor saber de onde veio
-    const bloco = (rotulo, xs) => xs.length ? el('div', 'ed-diag__b', el('p', 'ed-diag__r', rotulo),
-      el('ul', 'ed-diag__l', xs.slice(0, 4).map((t) => el('li', null, t))),
-      xs.length > 4 ? el('p', 'ed-diag__s', 'e mais ' + (xs.length - 4) + ' no Diagnóstico.') : null) : null;
+    // só a frase do Diagnóstico aparece; as causas e os fatores continuam pesando, por trás, na ordem dos desafios sugeridos
     return el('div', 'ed-diag', el('p', 'ed-diag__t', 'Do diagnóstico'),
-      resumo ? el('p', 'ed-diag__frase', resumo) : null,
-      bloco('Causas', causas.map((c) => c.texto)),
-      bloco('Onde a marca falha', faltas.map((f) => f.texto + (f.posicao === 'nao_entrega' ? ' (não entrega)' : ' (entrega mal)'))),
-      el('p', 'ed-diag__s', indicados.length ? 'Os desafios que respondem a isso estão no topo da lista do campo 1.' : 'Nenhum desafio da biblioteca responde a esse diagnóstico: escreva o desafio à mão no campo 1.'));
+      resumo ? el('p', 'ed-diag__frase', resumo) : el('p', 'ed-diag__s', 'Escolha a frase do Diagnóstico para ver aqui o ponto de partida.'),
+      el('p', 'ed-diag__s', indicados.length ? 'Os desafios que continuam esse diagnóstico estão no topo da lista do campo 1.' : 'Nenhum desafio da biblioteca responde a esse diagnóstico: escreva o desafio à mão no campo 1.'));
   };
 
   montar('pane-estrategia', [
-    [ficha, { icone: 'mapa', titulo: 'O cerne da estratégia', nota: 'O desafio que a marca precisa vencer e\u00a0a\u00a0abordagem\u00a0para\u00a0vencê-lo.', tabela: 'planos', pasta: 'estrategia', antes: diagnosticoNaEstrategia, fields: [
+    [ficha, { icone: 'mapa', depoisDeSalvar: (mount, row) => { if (!row || !row.como_vencer) return; const pe = mount.querySelector('.ed-foot'); if (pe) pe.append(el('button', { class: 'btn btn--light btn--sm ed-montar', type: 'button', onclick: () => window.GangAbreModelo && window.GangAbreModelo() }, 'Montar o plano alinhado a esta estratégia')); }, titulo: 'O cerne da estratégia', nota: 'O desafio que a marca precisa vencer e\u00a0a\u00a0abordagem\u00a0para\u00a0vencê-lo.', tabela: 'planos', pasta: 'estrategia', antes: diagnosticoNaEstrategia, fields: [
       { k: 'desafio', label: '1. O desafio (o obstáculo principal)', full: true, longo: true, type: 'preset', presets: 'desafiosCliente', comGrupos: true,
         dica: 'Vários problemas? Escolha o que, resolvido, destrava os outros. Os demais entram como causas no Diagnóstico.' },
       { k: 'como_vencer', label: '2. A abordagem (como vencer o desafio)', full: true, longo: true, type: 'preset', presets: 'abordagens', depende: { de: 'desafio', lista: 'desafios', chave: 'abordagens' } },

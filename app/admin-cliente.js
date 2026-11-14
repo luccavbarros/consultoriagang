@@ -933,6 +933,7 @@
   // modelo de plano por setor: o esqueleto de 18 meses, ajustado à duração e ao início do plano
   const MOD = P.modelos || {};
   $('mod-setor').replaceChildren(...Object.entries(MOD).map(([k, m]) => el('option', { value: k }, m.nome)));
+  if (emp.setor && MOD[emp.setor]) $('mod-setor').value = emp.setor; // o modelo do setor do cliente já vem escolhido
   // ===== o modelo cobre o prazo inteiro do cliente =====
   // 1. os marcos do modelo (pensado em 18 meses) caem no mês proporcional do plano: revisão semestral, anual, chegada;
   // 2. o que cairia no passado vai para o mês atual e o seguinte (nada nasce atrasado);
@@ -1193,6 +1194,13 @@
             el('span', null, x.titulo.split(':')[0], x.executa ? el('span', 'mod__exec', 'Estratégia') : null), el('span', 'mod__esf', x.esforco === 'marca' ? 'marca' : 'venda')))))))].filter(Boolean));
   };
   $('mod-setor').addEventListener('change', desenhaModelo);
+  // vindo da Estratégia: abre o modelo já com a prévia do plano alinhado; montar continua sendo um clique do consultor
+  window.GangAbreModelo = () => {
+    if (emp.setor && MOD[emp.setor]) $('mod-setor').value = emp.setor;
+    location.hash = '#acoes';
+    const d = $('acoes-modelo'); d.open = true; desenhaModelo();
+    setTimeout(() => d.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+  };
   $('acoes-modelo').addEventListener('toggle', desenhaModelo);
   $('mod-go').addEventListener('click', async () => {
     if (!p.inicio) return say($('acoes-msg'), 'Cadastre o início do plano (em Plano) antes de montar as ações.', 'error');
