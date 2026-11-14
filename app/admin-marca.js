@@ -208,7 +208,15 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     const msg = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite' });
     const form = el('form', { class: 'ed-card ed-card--ficha', novalidate: true },
       el('div', 'ed-head', tile(cfg.icone || 'pulso'), el('div', 'ed-head__txt', el('h3', 'ed-head__t', titulo), nota ? el('p', 'ed-head__n', nota) : null),
-        el('span', { class: 'ed-auto', title: 'As mudanças são salvas sozinhas' }, 'Salva sozinho')),
+        el('div', 'ed-head__acts',
+          cfg.limpar && atual && fields.some((f) => atual[f.k] != null && atual[f.k] !== '') ? el('button', { class: 'ed-limpar', type: 'button', onclick: async () => {
+            if (!confirm('Limpar todos os campos de “' + titulo + '”? Isso não pode ser desfeito.')) return;
+            const r = await sb.from(tabela).upsert({ empresa_id: id, ...Object.fromEntries(fields.map((f) => [f.k, null])) }).select('*').single();
+            if (r.error) return say(msg, 'Não foi possível limpar.', 'error');
+            document.dispatchEvent(new CustomEvent('gang:marca-salva', { detail: { tabela } }));
+            ficha(mount, cfg);
+          } }, 'Limpar') : null,
+          el('span', { class: 'ed-auto', title: 'As mudanças são salvas sozinhas' }, 'Salva sozinho'))),
       extra,
       el('div', 'new-client ed-campos', fields.map((f) => campo(f, atual ? atual[f.k] : null, pre))),
       el('div', 'ed-foot', msg));
@@ -273,7 +281,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   };
 
   // ----- lista: vários itens com ordem -----
-  const lista = async (mount, { titulo, nota, tabela, fields, fixo = {}, resumo, pasta, vazio, ordem = true, icone, tom, largo, max, aoAbrir, sugere }) => {
+  const lista = async (mount, { titulo, nota, tabela, fields, fixo = {}, resumo, pasta, vazio, ordem = true, icone, tom, largo, max, aoAbrir, sugere, limpar }) => {
     if (largo) mount.classList.add('is-largo');
     const pre = 'li-' + tabela + '-' + Object.values(fixo).join('-') + '-';
     let q = sb.from(tabela).select('*').eq('empresa_id', id);
@@ -366,7 +374,16 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     mount.replaceChildren(el('div', 'ed-card',
       el('div', 'ed-head', tile(icone || 'pulso', tom),
         el('div', 'ed-head__txt', el('h3', 'ed-head__t', titulo, el('span', 'ed-n', String(rows.length))), nota ? el('p', 'ed-head__n', nota) : null),
-        addBtn),
+        el('div', 'ed-head__acts',
+          limpar && rows.length ? el('button', { class: 'ed-limpar', type: 'button', onclick: async () => {
+            if (!confirm('Apagar ' + (rows.length === 1 ? 'o item' : 'os ' + rows.length + ' itens') + ' de “' + titulo + '”? Isso não pode ser desfeito.')) return;
+            let q = sb.from(tabela).delete().eq('empresa_id', id);
+            Object.entries(fixo).forEach(([k, v]) => { q = q.eq(k, v); });
+            const r = await q;
+            if (r.error) return say(msg, 'Não foi possível limpar.', 'error');
+            lista(mount, cfg); document.dispatchEvent(new CustomEvent('gang:marca-salva', { detail: { tabela } }));
+          } }, 'Limpar') : null,
+          addBtn)),
       formBox,
       sugBox,
       ul),
@@ -381,7 +398,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
             btn('lapis', 'Editar', () => abreForm(r)),
             btn('lixo', 'Excluir', async () => { if (!confirm('Excluir “' + (typeof t === 'string' ? t : 'este item') + '”?')) return; await sb.from(tabela).delete().eq('id', r.id); lista(mount, cfg); document.dispatchEvent(new CustomEvent('gang:marca-salva', { detail: { tabela } })); }, ' ed-acao--bad')));
       }) : [el('li', 'ed-vazio', vazio || 'Nada cadastrado ainda.')]));
-    const cfg = { titulo, nota, tabela, fields, fixo, resumo, pasta, vazio, ordem, icone, tom, largo, max, aoAbrir, sugere };
+    const cfg = { titulo, nota, tabela, fields, fixo, resumo, pasta, vazio, ordem, icone, tom, largo, max, aoAbrir, sugere, limpar };
     if (max && rows.length >= max) addBtn.hidden = true;
   };
 
@@ -389,7 +406,8 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   const montar = (pane, blocos) => {
     const box = $(pane);
     box.replaceChildren(); box.classList.add('ed-grade');
-    blocos.forEach(([fn, cfg]) => { const m = el('div', 'editor-block'); m.montagem = [fn, cfg]; box.append(m); fn(m, cfg); });
+    const limpavel = pane === 'pane-diagnostico' || pane === 'pane-estrategia'; // "Limpar" para começar de novo
+    blocos.forEach(([fn, cfg]) => { if (limpavel) cfg.limpar = true; const m = el('div', 'editor-block'); m.montagem = [fn, cfg]; box.append(m); fn(m, cfg); });
   };
   const POS = [['entrega', 'Entregava'], ['entrega_mal', 'Entregava mal'], ['nao_entrega', 'Não entregava']];
   const POS_T = Object.fromEntries(POS);
