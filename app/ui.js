@@ -522,7 +522,12 @@
   const MINI = 'gang-side-mini';
   const lerMini = () => { try { return localStorage.getItem(MINI) === '1'; } catch (e) { return false; } };
   if (lerMini()) document.documentElement.classList.add('side-mini');
+  let abrindoT = null;
   const poeMini = (on) => {
+    // ao abrir, o selo do plano só aparece quando a barra termina de se estender (antes, ele quebraria a linha e pularia)
+    const h = document.documentElement; clearTimeout(abrindoT);
+    if (!on && h.classList.contains('side-mini')) { h.classList.add('side-abrindo'); abrindoT = setTimeout(() => h.classList.remove('side-abrindo'), 300); }
+    else h.classList.remove('side-abrindo');
     document.documentElement.classList.toggle('side-mini', on);
     try { localStorage.setItem(MINI, on ? '1' : '0'); } catch (e) { /* sem armazenamento: vale só nesta página */ }
     const b = document.querySelector('.side__mini');

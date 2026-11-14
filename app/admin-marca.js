@@ -183,6 +183,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       } catch (err) { say(msg, err.message, 'error'); }
       btn.disabled = false;
     });
+    form.addEventListener('input', () => { form.dataset.sujo = '1'; }); // edição ainda não salva
     mount.replaceChildren(form);
     // campos que dependem de outro (ex.: as abordagens coerentes com o desafio escolhido)
     fields.filter((f) => f.depende).forEach((f) => {
@@ -308,7 +309,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   const montar = (pane, blocos) => {
     const box = $(pane);
     box.replaceChildren(); box.classList.add('ed-grade');
-    blocos.forEach(([fn, cfg]) => { const m = el('div', 'editor-block'); box.append(m); fn(m, cfg); });
+    blocos.forEach(([fn, cfg]) => { const m = el('div', 'editor-block'); m.montagem = [fn, cfg]; box.append(m); fn(m, cfg); });
   };
   const POS = [['entrega', 'Entregava'], ['entrega_mal', 'Entregava mal'], ['nao_entrega', 'Não entregava']];
   const POS_T = Object.fromEntries(POS);
@@ -391,7 +392,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     const ok = T.filter((x) => x[0]).length;
     mount.replaceChildren(el('div', 'ed-card',
       el('div', 'ed-head', tile('check'), el('div', 'ed-head__txt', el('h3', 'ed-head__t', 'Teste da estratégia', el('span', 'ed-n', ok + '/' + T.length)),
-        el('p', 'ed-head__n', 'O que separa uma estratégia de verdade de uma lista de desejos. Atualiza a cada mudança.'))),
+        el('p', 'ed-head__n', 'O que separa uma estratégia de verdade de\u00a0uma\u00a0lista\u00a0de\u00a0desejos. Atualiza a cada mudança.'))),
       el('ul', 'ed-lista teste', T.map(([bom, t, d]) => el('li', 'ed-item teste__i' + (bom ? ' is-ok' : ''),
         el('span', { class: 'teste__q', 'aria-hidden': 'true' }, bom ? '✓' : '!'),
         el('div', 'ed-item__main', el('p', 'ed-item__t', t), el('p', 'ed-item__s', d)))))));
@@ -406,57 +407,74 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   const CON_T = Object.fromEntries(CON);
   // ===== a estratégia sai do diagnóstico =====
   const lerDiagnostico = async () => {
-    const [{ data: cs }, { data: fs }] = await Promise.all([
+    const [{ data: cs }, { data: fs }, { data: dg }] = await Promise.all([
       sb.from('causas').select('texto').eq('empresa_id', id).order('ordem'),
       sb.from('fatores').select('tipo, texto, posicao').eq('empresa_id', id),
+      sb.from('diagnosticos').select('resumo').eq('empresa_id', id).maybeSingle(),
     ]);
     const P = window.GangPresets || {};
-    return { causas: cs || [], fatores: fs || [], ind: P.desafiosDoDiagnostico ? P.desafiosDoDiagnostico(cs || [], fs || []) : new Map() };
+    const resumo = (dg && dg.resumo || '').trim();
+    return { resumo, causas: cs || [], fatores: fs || [], ind: P.desafiosDoDiagnostico ? P.desafiosDoDiagnostico(cs || [], fs || [], resumo) : new Map() };
   };
   // monta a lista de desafios deste cliente (os indicados pelo diagnóstico primeiro) e o resumo que fica acima do desafio
   const diagnosticoNaEstrategia = async () => {
     const P = window.GangPresets || {};
-    const { causas, fatores, ind } = await lerDiagnostico();
+    const { resumo, causas, fatores, ind } = await lerDiagnostico();
     const todos = P.desafios || [];
-    const indicados = todos.filter((d) => ind.has(d.texto)).sort((a, b) => ind.get(b.texto).length - ind.get(a.texto).length);
+    // os desafios da frase do diagnóstico vêm primeiro; depois, os indicados por mais motivos
+    const peso = (t) => ind.get(t).length + (ind.get(t).some((m) => m.startsWith('em uma frase:')) ? 100 : 0);
+    const indicados = todos.filter((d) => ind.has(d.texto)).sort((a, b) => peso(b.texto) - peso(a.texto));
     P.desafiosCliente = [...indicados.map((d) => ({ ...d, grupo: 'Indicado pelo diagnóstico' })),
       ...todos.filter((d) => !ind.has(d.texto)).map((d) => ({ ...d, grupo: indicados.length ? 'Outros desafios' : 'Desafios' }))]; // grupos neutros: a fonte nunca aparece
     const faltas = fatores.filter((f) => f.posicao === 'nao_entrega' || f.posicao === 'entrega_mal');
-    if (!causas.length && !faltas.length) {
+    if (!resumo && !causas.length && !faltas.length) {
       return el('div', 'ed-diag is-vazio', el('p', 'ed-diag__t', 'Do diagnóstico'),
-        el('p', 'ed-diag__s', 'O Diagnóstico ainda não tem causas. Preencha primeiro: é dele que o desafio deve sair.'));
+        el('p', 'ed-diag__s', 'O Diagnóstico ainda não tem a frase nem as causas. Preencha primeiro: é dele que o desafio deve sair.'));
     }
     const itens = [...causas.map((c) => c.texto), ...faltas.map((f) => (f.posicao === 'nao_entrega' ? 'Não entrega: ' : 'Entrega mal: ') + f.texto)];
     return el('div', 'ed-diag', el('p', 'ed-diag__t', 'Do diagnóstico'),
-      el('ul', 'ed-diag__l', itens.slice(0, 6).map((t) => el('li', null, t))),
+      resumo ? el('p', 'ed-diag__frase', resumo) : null,
+      itens.length ? el('ul', 'ed-diag__l', itens.slice(0, 6).map((t) => el('li', null, t))) : null,
       itens.length > 6 ? el('p', 'ed-diag__s', 'e mais ' + (itens.length - 6) + ' no Diagnóstico.') : null,
-      el('p', 'ed-diag__s', indicados.length ? indicados.length + (indicados.length === 1 ? ' desafio indicado aparece' : ' desafios indicados aparecem') + ' primeiro na lista.' : 'Nenhum desafio da biblioteca responde a essas causas: escreva o desafio à mão.'));
+      el('p', 'ed-diag__s', indicados.length ? indicados.length + (indicados.length === 1 ? ' desafio indicado aparece' : ' desafios indicados aparecem') + ' primeiro na lista.' : 'Nenhum desafio da biblioteca responde a esse diagnóstico: escreva o desafio à mão.'));
   };
 
   montar('pane-estrategia', [
-    [ficha, { icone: 'mapa', titulo: 'O cerne da estratégia', nota: 'O desafio que a marca precisa vencer e a abordagem para vencê-lo.', tabela: 'planos', pasta: 'estrategia', antes: diagnosticoNaEstrategia, fields: [
+    [ficha, { icone: 'mapa', titulo: 'O cerne da estratégia', nota: 'O desafio que a marca precisa vencer e\u00a0a\u00a0abordagem\u00a0para\u00a0vencê-lo.', tabela: 'planos', pasta: 'estrategia', antes: diagnosticoNaEstrategia, fields: [
       { k: 'desafio', label: '1. O desafio (o obstáculo principal)', full: true, longo: true, type: 'preset', presets: 'desafiosCliente', comGrupos: true,
         dica: 'Vários problemas? Escolha o que, resolvido, destrava os outros. Os demais entram como causas no Diagnóstico.' },
       { k: 'como_vencer', label: '2. A abordagem (como vencer o desafio)', full: true, longo: true, type: 'preset', presets: 'abordagens', depende: { de: 'desafio', lista: 'desafios', chave: 'abordagens' } },
       { k: 'estrategia_aprovada_em', label: 'Aprovada em', type: 'date' }, { k: 'proxima_revisao_estrategia', label: 'Próxima revisão', type: 'date' },
       { k: 'estrategia_pdf', label: 'Plano completo (PDF)', type: 'file', accept: 'application/pdf' }] }],
     [testeEstrategia, {}],
-    [lista, { icone: 'alvo', tom: 'gang', titulo: 'Objetivos', nota: 'Negócio (com o número em destaque), Marca e Comunicação (notar, acreditar, sentir). As ações se ligam a eles.', tabela: 'objetivos', fields: [
+    [lista, { icone: 'alvo', tom: 'gang', titulo: 'Objetivos', nota: 'Negócio (com o número em destaque), Marca\u00a0e\u00a0Comunicação\u00a0(notar,\u00a0acreditar,\u00a0sentir). As ações se ligam a eles.', tabela: 'objetivos', fields: [
       { k: 'titulo', label: 'Objetivo', full: true, type: 'preset', presets: 'objetivos', fill: { nivel: 'nivel' }, dicaId: 'objetivo',
         dica: 'No objetivo de negócio, diga de onde para onde e até quando (ex.: faturamento de R$ 80 mil para R$ 110 mil por mês até dezembro de 2027). Uma meta sem linha de chegada não orienta a equipe.' },
       { k: 'nivel', label: 'Nível', type: 'select', options: NIV }, { k: 'destaque', label: 'Número em destaque (negócio)', type: 'preset', presets: 'destaques' },
       { k: 'notar', label: 'Notar (comunicação)', type: 'preset', presets: 'notar' }, { k: 'acreditar', label: 'Acreditar (comunicação)', type: 'preset', presets: 'acreditar' }, { k: 'sentir', label: 'Sentir (comunicação)', type: 'preset', presets: 'sentir' }],
     resumo: (r) => [NIV_T[r.nivel] + ': ' + (r.destaque ? r.destaque + ' ' : '') + (r.titulo || ''), r.nivel === 'comunicacao' ? ['Notar ' + (r.notar || '—'), 'acreditar ' + (r.acreditar || '—'), 'sentir ' + (r.sentir || '—')].join(' · ') : null] }],
-    [lista, { icone: 'pin', titulo: 'Situações de compra', nota: 'Os momentos em que alguém pensa na categoria. Ex.: “vou reformar antes de alugar”, “apareceu uma infiltração”. Entram na pesquisa e nas ações.', tabela: 'situacoes', fields: [
+    [lista, { icone: 'pin', titulo: 'Situações de compra', nota: 'Os momentos em que alguém pensa na categoria. Entram na pesquisa e nas ações.', tabela: 'situacoes', fields: [
       { k: 'texto', label: 'Situação', req: true, full: true, type: 'preset', presets: 'situacoes', dicaId: 'situacao',
         dica: 'Escreva um momento da vida de quem compra (quando, onde, por quê), não um motivo. Use de 5 a 10, sempre as mesmas: são elas que a pesquisa mede.' }], resumo: (r) => [r.texto] }],
     [lista, { icone: 'check', tom: 'ok', titulo: 'Onde atuamos: prioridade', tabela: 'escolhas', fixo: { tipo: 'prioridade' }, fields: [{ k: 'texto', label: 'Prioridade', req: true, full: true, type: 'preset', presets: 'prioridades' }], resumo: (r) => [r.texto] }],
     [lista, { icone: 'menos', titulo: 'Onde atuamos: deixamos de lado', tabela: 'escolhas', fixo: { tipo: 'deixa_de_lado' }, fields: [{ k: 'texto', label: 'Deixamos de lado', req: true, full: true, type: 'preset', presets: 'deixados' }], resumo: (r) => [r.texto] }],
-    [lista, { icone: 'radar', largo: true, titulo: 'O que acompanhamos', nota: 'Condições que precisam continuar verdadeiras. Quando uma vira “Não se confirma”, o cliente vê o aviso e o tema entra na pauta do próximo encontro.', tabela: 'condicoes', fields: [
+    [lista, { icone: 'radar', largo: true, titulo: 'O que acompanhamos', nota: 'Condições que precisam continuar verdadeiras. Quando uma vira “Não se confirma”, o cliente vê o aviso e\u00a0o\u00a0tema entra na pauta do próximo encontro.', tabela: 'condicoes', fields: [
       { k: 'texto', label: 'Condição', req: true, full: true, type: 'preset', presets: 'condicoes' }, { k: 'como_verificar', label: 'Como verificamos', type: 'preset', presets: 'verificacoes' }, { k: 'status', label: 'Hoje', type: 'select', options: CON, def: 'sem_dados' },
       { k: 'checar_em', label: 'Próxima checagem', type: 'date' }],
     resumo: (r) => [r.texto, [r.como_verificar, CON_T[r.status], r.checar_em ? 'próxima: ' + U.dia(r.checar_em) : null].filter(Boolean).join(' · ')] }],
   ]);
+  // quando o Diagnóstico muda em outra aba, a Estratégia se atualiza ao ser aberta (sem recarregar a página)
+  let estrategiaVelha = false;
+  document.addEventListener('gang:marca-salva', () => { if (location.hash !== '#estrategia') estrategiaVelha = true; });
+  window.addEventListener('hashchange', async () => {
+    if (location.hash !== '#estrategia' || !estrategiaVelha) return;
+    estrategiaVelha = false;
+    const m = document.querySelector('#pane-estrategia .editor-block'); if (!m || !m.montagem) return;
+    const form = m.querySelector('form');
+    if (form && form.dataset.sujo) { const v = m.querySelector('.ed-diag'); const novo = await diagnosticoNaEstrategia(); if (v) v.replaceWith(novo); } // não apaga o que foi digitado
+    else await m.montagem[0](m, m.montagem[1]);
+    refazTeste();
+  });
 
   const FAC = [['aparencia', 'Aparência', 'facetaAparencia'], ['personalidade', 'Personalidade', 'facetaPersonalidade'], ['valores', 'Valores', 'facetaValores'],
     ['relacao', 'Relação com o cliente', 'facetaRelacao'], ['cliente_projetado', 'Cliente que projeta', 'facetaClienteProjetado'], ['autoimagem', 'Como o cliente se sente', 'facetaAutoimagem']];

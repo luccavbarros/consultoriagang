@@ -6007,7 +6007,30 @@
   MAPA.forEach(([ini, ds]) => { const c = P.causas.find((x) => x.texto.startsWith(ini)); if (c) c.desafios = ds.map(D).filter(Boolean); });
 
   // o que o diagnóstico indica: causas (pelo texto, inclusive escritas à mão que batem com a biblioteca) e fatores em que a marca não entrega bem
-  P.desafiosDoDiagnostico = (causas, fatores) => {
+  // o diagnóstico "em uma frase" também indica desafios (início de cada frase da biblioteca -> desafios)
+  const RESUMO = [
+    ['A marca entregava o básico que o setor exige', [DIF, PROP]], ['A marca era bem avaliada por quem já era cliente', [SO_CLI, LEMB]],
+    ['A qualidade do trabalho era alta, mas não aparecia', [PROVA, CARA]], ['A marca era conhecida, mas parada no tempo', [ANTIGA, PERDEU]],
+    ['Cada canal falava de um jeito', [LEMB, IRREG]], ['A empresa dependia quase só de indicação', [CANAL1]],
+    ['A marca tentava atender todo tipo de cliente', [TODOS]], ['A promessa da venda era boa, mas a entrega variava', [EXP, VENDAS]],
+    ['A marca aparecia pouco nos momentos', [LEMB, ACHAR]], ['Os clientes compravam uma vez e não voltavam', [VOLTA]],
+    ['A marca era difícil de achar e de comprar', [ACHAR]], ['A comunicação vinha em campanhas soltas', [IRREG]],
+    ['A empresa investia só em ofertas', [DESCONTO, IRREG]], ['O cliente esperava uma coisa e recebia outra', [EXP, VENDAS]],
+    ['As empresas da categoria pareciam todas iguais', [IGUAL, DIF]], ['O maior concorrente da marca não era outra empresa', [NAOCOMPRA]],
+    ['O cliente comparava a marca com as empresas erradas', [CATEG, CARA]], ['A marca não tinha sinais próprios', [LEMB, DIF]],
+    ['A marca era vista como a opção barata', [BARATA]], ['A marca cobrava como as melhores, mas não mostrava', [CARA, PROVA]],
+    ['A maior parte do faturamento vinha de poucos clientes', [CANAL1]], ['A empresa fazia tudo do jeito de sempre', [JEITO, ANTIGA]],
+    ['A marca era conhecida pelo dono', [DONO]], ['A empresa tinha clientes satisfeitos, mas nenhum processo', [SO_CLI]],
+    ['Quem decidia a compra não era quem usava', [PROP, DIF]], ['A marca era bonita, mas não dizia o que a empresa fazia', [CATEG]],
+    ['A equipe de vendas e a comunicação diziam coisas diferentes', [VENDAS]], ['A empresa era nova e sem histórico', [NOVA, PROVA]],
+    ['O maior concorrente da marca era a não compra', [NAOCOMPRA, PRONTO]], ['A marca não tinha opinião', [OPINIAO]],
+    ['A empresa vendia o serviço, mas o cliente comprava o alívio', [TECNICO, GANHA]], ['A marca era competente, mas fria', [TECNICO]],
+    ['O preço era calculado pelo custo', [GANHA, BARATA]], ['Um único preço para todos', [CARA, BARATA]],
+    ['O esforço de comunicação estava espalhado', [ESPALHA]], ['Nada prendia o cliente à marca', [TROCA]],
+    ['A marca falava só com quem já estava procurando', [PRONTO, NAOCOMPRA]],
+  ];
+  P.resumoDesafios = RESUMO;
+  P.desafiosDoDiagnostico = (causas, fatores, resumo) => {
     const ind = new Map();
     const soma = (d, motivo) => { if (!d) return; if (!ind.has(d)) ind.set(d, []); if (!ind.get(d).includes(motivo)) ind.get(d).push(motivo); };
     // a causa do cliente pode ter sido ajustada à mão ("não mostrava" em vez de "não mostra"): vale a da biblioteca mais parecida
@@ -6023,6 +6046,17 @@
       const ds = f.tipo === 'discriminador' ? [D(DIF), D(IGUAL)] : [D(EXP)];
       ds.forEach((d) => soma(d, (f.tipo === 'discriminador' ? 'faz escolher, e a marca ' : 'todo cliente exige, e a marca ') + (f.posicao === 'nao_entrega' ? 'não entrega: ' : 'entrega mal: ') + f.texto));
     });
+    // a frase do diagnóstico: a da biblioteca pelo começo; escrita à mão, vale a frase da biblioteca mais parecida
+    if (resumo && String(resumo).trim()) {
+      const r = String(resumo).trim();
+      let m = RESUMO.find(([ini]) => r.startsWith(ini));
+      if (!m) {
+        const a = new Set(pal(r)); let nota = 0;
+        (P.resumosDiagnostico || []).forEach((y) => { const b = new Set(pal(y.texto)); const j = [...a].filter((w) => b.has(w)).length / Math.max(1, new Set([...a, ...b]).size); const x = RESUMO.find(([ini]) => y.texto.startsWith(ini)); if (x && j > nota) { nota = j; m = x; } });
+        if (nota < 0.4) m = null;
+      }
+      if (m) m[1].map(D).forEach((d) => soma(d, 'em uma frase: ' + r));
+    }
     return ind;
   };
 })();
