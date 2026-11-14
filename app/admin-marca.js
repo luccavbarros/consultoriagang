@@ -739,4 +739,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
             if (total) setTimeout(() => location.reload(), 900); else ev.currentTarget.disabled = false;
           } }, 'Copiar'),
           el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => dlg.close() }, 'Cancelar'), msg)));
-    dlg.add
+    dlg.addEventListener('close', () => dlg.remove());
+    document.body.append(dlg); dlg.showModal();
+  };
+});

@@ -307,4 +307,4 @@ begin
     from (select id, row_number() over (order by id) as k from public.respostas where empresa_id = e) x where r.id = x.id;
 end $$;
 
-select 'Empresa Exemplo pronta. No painel, abra a empresa e crie um acesso de cliente par
+select 'Empresa Exemplo pronta. No painel, abra a empresa e crie um acesso de cliente para ela.' as resultado;

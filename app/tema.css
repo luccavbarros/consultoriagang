@@ -2206,3 +2206,7 @@ html.side-abrindo .side__plan .badge { display: none; }
 .ed-diag__aviso p { margin: 0; }
 .ed-diag__aviso ul { margin: 0; padding-left: 18px; list-style: disc; color: #e6e6e6; }
 .ed-auto { flex: none; align-self: flex-start; margin-left: auto; padding: 4px 10px; border-radius: 999px; font-size: 12px; color: var(--ganggrey); border: 1px solid var(--line); }
+
+/* dias da semana (Contrato): lista que abre com caixas de marcar */
+.dias__op { display: flex; align-items: center; gap: 10px; }
+.dias__op input { accent-color: #ececec; width: 15px; height: 15px; margin: 0; }

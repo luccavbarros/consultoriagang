@@ -3320,4 +3320,7 @@
   window.addEventListener('hashchange', () => go(true));
   $('menu-btn').addEventListener('click', () => {
     const open = side.classList.toggle('is-open');
-    $('menu-btn').setAttribute('aria-expanded
+    $('menu-btn').setAttribute('aria-expanded', String(open));
+  });
+  go(false);
+})();
