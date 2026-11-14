@@ -23,6 +23,7 @@
     m.replaceWith(U.combo(idc, lista, '', { onPick, vazio: m.dataset.vazio, semGrupos: m.hasAttribute('data-semgrupos') || !(idc === 'x-titulo' || m.hasAttribute('data-grupos')), max: m.dataset.max ? Number(m.dataset.max) : undefined })); // fonte e autor ficam só por trás; o consultor vê as opções sem rótulo de autor
   });
   document.querySelectorAll('[data-multi]').forEach((m) => m.replaceWith(U.multi(m.dataset.id, P[m.dataset.multi], [])));
+  document.querySelectorAll('[data-dias]').forEach((i) => U.diasSemana(i)); // dias da semana: o consultor marca, não digita
   const ehCombo = (fid) => { const n = $(fid); return !!(n && n.parentElement && n.parentElement.classList.contains('combo')); };
   const setv = (fid, v) => { if (ehCombo(fid)) U.comboSet(fid, v || ''); else if ($(fid).hasAttribute('data-moeda')) U.moedaSet($(fid), v); else $(fid).value = v ?? ''; };
 

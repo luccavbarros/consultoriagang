@@ -385,6 +385,8 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     [ficha, { icone: 'pulso', titulo: 'Diagnóstico', nota: 'O ponto de partida da marca, como\u00a0o\u00a0cliente\u00a0vê\u00a0em\u00a0Diagnóstico.', tabela: 'diagnosticos', fields: [
       { k: 'data', label: 'Data do diagnóstico', type: 'date' }, { k: 'proximo', label: 'Próximo diagnóstico', type: 'date' },
       { k: 'resumo', label: 'Em uma frase', full: true, type: 'preset', presets: 'resumosDiagnostico' }] }],
+    // logo abaixo do Diagnóstico: as causas são o que o consultor mais consulta junto com a frase
+    [lista, { icone: 'alvo', largo: true, titulo: 'As causas que o plano ataca', nota: 'Os motivos por trás dos números, não os números. Prefira causas em que a empresa consegue agir.', tabela: 'causas', fields: [{ k: 'texto', label: 'Causa', req: true, full: true, type: 'preset', presets: 'causas' }], resumo: (r) => [r.texto], sugere: () => causasDaFrase() }],
     [lista, { icone: 'olho', tom: 'gang', titulo: 'A marca do cliente', nota: 'Como as pessoas viam a marca antes do trabalho.', tabela: 'impressoes', fixo: { eh_cliente: true }, max: 1,
       vazio: 'Ainda sem a leitura da marca do cliente.', aoAbrir: (pre) => nomeEmpresa.then((n) => { const i = $(pre + 'marca_nome'); if (i && !i.value) i.value = n || ''; }), fields: [
       { k: 'marca_nome', label: 'Marca', req: true },
@@ -403,7 +405,6 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     [lista, { icone: 'estrela', tom: 'gang', titulo: 'O que faz escolher uma marca', nota: 'Discriminadores: o que diferencia.', tabela: 'fatores', fixo: { tipo: 'discriminador' }, fields: [
       { k: 'texto', label: 'Item', req: true, type: 'preset', presets: 'discriminadores' }, { k: 'posicao', label: 'A marca…', type: 'select', options: POS }],
     resumo: (r) => [r.texto, POS_T[r.posicao]] }],
-    [lista, { icone: 'alvo', largo: true, titulo: 'As causas que o plano ataca', nota: 'Os motivos por trás dos números, não os números. Prefira causas em que a empresa consegue agir.', tabela: 'causas', fields: [{ k: 'texto', label: 'Causa', req: true, full: true, type: 'preset', presets: 'causas' }], resumo: (r) => [r.texto], sugere: () => causasDaFrase() }],
   ]);
 
   // ===== Teste de estratégia ruim: o que costuma faltar numa estratégia que é só desejo =====
@@ -738,7 +739,4 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
             if (total) setTimeout(() => location.reload(), 900); else ev.currentTarget.disabled = false;
           } }, 'Copiar'),
           el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => dlg.close() }, 'Cancelar'), msg)));
-    dlg.addEventListener('close', () => dlg.remove());
-    document.body.append(dlg); dlg.showModal();
-  };
-});
+    dlg.add

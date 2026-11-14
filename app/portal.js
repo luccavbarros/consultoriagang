@@ -237,7 +237,7 @@
     $('c-name').textContent = c.nome || 'Seu consultor';
     $('c-ini').replaceWith(avatar(c));
     $('c-talk').addEventListener('click', () => abrirConversa());
-    if ($('c-dias')) $('c-dias').textContent = 'Responde às ' + ((D.plano && D.plano.dias_resposta) || 'terças e quintas');
+    if ($('c-dias')) $('c-dias').textContent = 'Responde ' + U.diasComArtigo((D.plano && D.plano.dias_resposta) || 'terças e quintas');
     if (soAcesso) { $('c-talk').firstChild.textContent = 'Falar com a GANG '; document.querySelector('.consultant__role').textContent = 'Consultoria GANG'; }
   }
 
@@ -461,7 +461,7 @@
   };
 
   // ===== acesso ao consultor: o encontro é o lugar dele =====
-  const diasResposta = () => (D.plano && D.plano.dias_resposta) || 'terças e quintas';
+  const diasResposta = () => U.diasComArtigo((D.plano && D.plano.dias_resposta) || 'terças e quintas'); // já vem com "às"/"aos"
   const quandoEncontro = () => (D.proximo ? 'no encontro de ' + U.dia(D.proximo.inicio) : 'no próximo encontro');
   const levarEncontro = async (texto, acaoId) => {
     const { error } = await sb.rpc('portal_levar_encontro', { p_texto: texto, p_acao: acaoId || null });
@@ -2831,7 +2831,7 @@
   conv.append(el('div', 'dialog__body',
     el('div', 'chat__head', D.consultor ? avatar(D.consultor) : null,
       el('div', null, el('h2', { class: 'title-sm', id: 'chat-t' }, 'Mensagem ao consultor'),
-        el('p', 'small', (D.consultor && D.consultor.nome ? D.consultor.nome.split(' ')[0] + ' responde' : 'O consultor responde') + ' às ' + diasResposta() + '. Dúvidas sobre uma ação rendem mais no encontro: abra a ação e use “Levar para o encontro”.'))),
+        el('p', 'small', (D.consultor && D.consultor.nome ? D.consultor.nome.split(' ')[0] + ' responde' : 'O consultor responde') + ' ' + diasResposta() + '. Dúvidas sobre uma ação rendem mais no encontro: abra a ação e use “Levar para o encontro”.'))),
     fio, chatForm));
   document.body.append(conv);
   const desenhaFio = () => {
@@ -2865,7 +2865,7 @@
     if (error) return U.say($('chat-msg'), 'Não foi possível enviar. Tente de novo.', 'error');
     await lerMensagens(); // quem respondeu já viu a mensagem do consultor
     await recarregaMsgs();
-    $('chat-txt').value = ''; U.say($('chat-msg'), 'Enviada. A resposta chega às ' + diasResposta() + '. Enquanto o consultor não ler, você pode cancelar.', 'ok'); desenhaFio();
+    $('chat-txt').value = ''; U.say($('chat-msg'), 'Enviada. A resposta chega ' + diasResposta() + '. Enquanto o consultor não ler, você pode cancelar.', 'ok'); desenhaFio();
   });
   $('chat-txt').addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) chatForm.requestSubmit(); });
   marcaNaoLidas();
@@ -2895,7 +2895,7 @@
       btn.disabled = true;
       const { error } = await sb.rpc('portal_enviar_mensagem', { p_texto: 'Quero ativar o plano ' + nome.toLowerCase() + ' da plataforma.' });
       btn.disabled = false;
-      U.say(msg, error ? 'Não foi possível enviar. Tente de novo.' : 'Pedido enviado. A GANG responde às ' + diasResposta() + ' com a forma de pagamento.', error ? 'error' : 'ok');
+      U.say(msg, error ? 'Não foi possível enviar. Tente de novo.' : 'Pedido enviado. A GANG responde ' + diasResposta() + ' com a forma de pagamento.', error ? 'error' : 'ok');
     };
     return el('div', 'planos-ac', el('div', 'planos-ac__l', CICLOS.map(([k, nome, sub]) => {
       const b = el('button', { class: 'btn btn--light btn--sm', type: 'button' }, 'Quero este');
@@ -3320,7 +3320,4 @@
   window.addEventListener('hashchange', () => go(true));
   $('menu-btn').addEventListener('click', () => {
     const open = side.classList.toggle('is-open');
-    $('menu-btn').setAttribute('aria-expanded', String(open));
-  });
-  go(false);
-})();
+    $('menu-btn').setAttribute('aria-expanded

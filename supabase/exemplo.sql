@@ -53,7 +53,7 @@ begin
   -- diagnóstico
   insert into public.diagnosticos (empresa_id, data, proximo, resumo) values
     (e, m0, (m0 + interval '12 months')::date,
-     'A marca entregava o básico que o setor exige, mas não tinha uma diferença clara, por isso competia principalmente por preço.');
+     'Os clientes diziam que o serviço era bom, mas não sabiam dizer o que a empresa tinha de diferente, e a maioria comparava orçamentos só pelo valor.');
   insert into public.impressoes (empresa_id, marca_nome, eh_cliente, notam, acreditam, sentem, ordem) values
     (e, 'Empresa Exemplo', true, 'Fachada antiga, logo pouco lembrado', 'Bom preço, entrega no prazo', 'Confiança, mas sem orgulho de comprar', 1),
     (e, 'Concorrente A', false, 'Marca forte, muita propaganda', 'Grande e confiável', 'Distância, atendimento frio', 2),
@@ -307,4 +307,4 @@ begin
     from (select id, row_number() over (order by id) as k from public.respostas where empresa_id = e) x where r.id = x.id;
 end $$;
 
-select 'Empresa Exemplo pronta. No painel, abra a empresa e crie um acesso de cliente para ela.' as resultado;
+select 'Empresa Exemplo pronta. No painel, abra a empresa e crie um acesso de cliente par

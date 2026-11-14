@@ -195,6 +195,61 @@
     sel.before(btn);
     rotulo();
   };
+  // ===== dias da semana: lista que abre com caixas de marcar; o valor fica num campo escondido, em texto ("terças e quintas") =====
+  const DIAS = [['segundas', 'Segunda'], ['tercas', 'Terça'], ['quartas', 'Quarta'], ['quintas', 'Quinta'], ['sextas', 'Sexta'], ['sabados', 'Sábado'], ['domingos', 'Domingo']];
+  const DIAS_TXT = ['segundas', 'terças', 'quartas', 'quintas', 'sextas', 'sábados', 'domingos'];
+  const semAc = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const diasLer = (t) => { // texto salvo → índices dos dias marcados
+    const s = semAc(t);
+    if (/todos os dias/.test(s)) return [0, 1, 2, 3, 4, 5, 6];
+    if (/dias uteis/.test(s)) return [0, 1, 2, 3, 4];
+    return DIAS.map(([k], i) => (s.includes(k.slice(0, 4)) ? i : -1)).filter((i) => i >= 0);
+  };
+  const juntaE = (xs) => (xs.length < 2 ? xs.join('') : xs.slice(0, -1).join(', ') + ' e ' + xs[xs.length - 1]);
+  const diasTexto = (idx) => (idx.length === 7 ? 'todos os dias' : juntaE(idx.slice().sort((a, b) => a - b).map((i) => DIAS_TXT[i])));
+  // para frases do portal: "às terças e quintas", "aos sábados", "às sextas e aos sábados", "todos os dias"
+  const diasComArtigo = (t) => {
+    const idx = diasLer(t);
+    if (!idx.length) return 'às ' + t; // texto antigo que não é lista de dias: mantém como estava
+    if (idx.length === 7) return 'todos os dias';
+    const fem = idx.filter((i) => i < 5); const mas = idx.filter((i) => i >= 5);
+    if (!mas.length) return 'às ' + diasTexto(fem);
+    if (!fem.length) return 'aos ' + diasTexto(mas);
+    return 'às ' + diasTexto(fem) + ' e aos ' + diasTexto(mas);
+  };
+  const diasSemana = (input, opts = {}) => { // input: campo escondido que guarda o texto
+    const btn = el('button', { type: 'button', class: 'field combo__btn', 'aria-haspopup': 'true', 'aria-expanded': 'false', id: input.id + '-btn' });
+    const pain = el('div', { class: 'combo__lista is-curta dias__lista', hidden: true });
+    const caixas = DIAS.map(([k, nome], i) => el('label', 'combo__op dias__op', el('input', { type: 'checkbox', value: String(i) }), nome));
+    pain.append(...caixas);
+    const marcados = () => caixas.map((c, i) => (c.querySelector('input').checked ? i : -1)).filter((i) => i >= 0);
+    const rotulo = () => {
+      const v = input.value;
+      btn.replaceChildren(el('span', 'combo__txt' + (v ? '' : ' is-vazio'), v ? v.charAt(0).toUpperCase() + v.slice(1) : opts.vazio || 'Escolha os dias'), el('span', { class: 'combo__seta', 'aria-hidden': 'true' }));
+    };
+    const sincroniza = () => { const idx = diasLer(input.value); caixas.forEach((c, i) => { c.querySelector('input').checked = idx.includes(i); c.classList.toggle('is-on', idx.includes(i)); }); rotulo(); };
+    pain.addEventListener('change', () => {
+      const idx = marcados(); caixas.forEach((c, i) => c.classList.toggle('is-on', idx.includes(i)));
+      input.value = idx.length ? diasTexto(idx) : ''; rotulo();
+      input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    const posiciona = () => { const r = btn.getBoundingClientRect(); pain.style.left = r.left + 'px'; pain.style.width = Math.max(r.width, 220) + 'px'; pain.style.top = r.bottom + 6 + 'px'; pain.style.maxHeight = Math.max(200, window.innerHeight - r.bottom - 18) + 'px'; };
+    const fecha = () => { if (pain.hidden) return; pain.hidden = true; pain.remove(); btn.setAttribute('aria-expanded', 'false'); if (aberto === fecha) aberto = null;
+      document.removeEventListener('pointerdown', fora, true); document.removeEventListener('keydown', tecla, true); window.removeEventListener('scroll', rola, true); window.removeEventListener('resize', fecha); };
+    const fora = (e) => { if (!pain.contains(e.target) && !btn.contains(e.target)) fecha(); };
+    const rola = (e) => { if (!pain.contains(e.target)) fecha(); };
+    const tecla = (e) => { if (e.key === 'Escape' || e.key === 'Tab') { fecha(); if (e.key === 'Escape') btn.focus(); } };
+    const abre = () => { if (aberto) aberto(); sincroniza(); document.body.append(pain); pain.hidden = false; posiciona(); btn.setAttribute('aria-expanded', 'true'); aberto = fecha;
+      document.addEventListener('pointerdown', fora, true); document.addEventListener('keydown', tecla, true); window.addEventListener('scroll', rola, true); window.addEventListener('resize', fecha);
+      caixas[0].querySelector('input').focus({ preventScroll: true }); };
+    btn.addEventListener('click', () => (pain.hidden ? abre() : fecha()));
+    const lbl = document.querySelector('label[for="' + input.id + '"]'); if (lbl) lbl.setAttribute('for', btn.id);
+    // o código da plataforma muda o valor direto (input.value = …): a etiqueta acompanha
+    const VI = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+    Object.defineProperty(input, 'value', { configurable: true, get() { return VI.get.call(input); }, set(v) { VI.set.call(input, v); sincroniza(); } });
+    input.after(btn); sincroniza();
+    return btn;
+  };
   const comboValue = (idc) => {
     const sel = document.getElementById(idc);
     if (!sel) return null;
@@ -702,5 +757,5 @@
   // a situação que aparece no selo: Ativo, Pausado, Encerrado ou Pagamento pendente (acesso vencido)
   const situacaoPlano = (p) => (!p ? null : p.status === 'encerrado' ? [' is-off', 'Encerrado'] : p.status === 'pausado' ? [' is-warn', 'Pausado']
     : acessoVencido(p) ? [' is-warn', 'Pagamento pendente'] : ['', 'Ativo']);
-  window.GangUI = { buscaFonte, acessoVence, acessoVencido, acessoDiasRestantes, situacaoPlano, graficos, esforcoPadrao, ESFORCO_SETOR, metaMarcaMes, mesesDeHistorico, metaMarcaPlano, esforcoReferencia, addDias, moedaFmt, moedaValor, moedaSet, PROMESSAS, promessaDe, tipoEsforco, pesoTamanho, combo, comboValue, comboSet, multi, multiValue, avatar, iniciais, $, el, say, day, fmt, cap, dia, diaAno, mesAno, hora, quando, ref, refDate, addRef, nomeMes, nomeMesCurto, mesesEntre, mesDoPlano, diasAte, reais, pct };
+  window.GangUI = { buscaFonte, acessoVence, acessoVencido, acessoDiasRestantes, situacaoPlano, graficos, esforcoPadrao, ESFORCO_SETOR, metaMarcaMes, mesesDeHistorico, metaMarcaPlano, esforcoReferencia, addDias, moedaFmt, moedaValor, moedaSet, PROMESSAS, promessaDe, tipoEsforco, pesoTamanho, combo, comboValue, comboSet, diasSemana, diasComArtigo, multi, multiValue, avatar, iniciais, $, el, say, day, fmt, cap, dia, diaAno, mesAno, hora, quando, ref, refDate, addRef, nomeMes, nomeMesCurto, mesesEntre, mesDoPlano, diasAte, reais, pct };
 })();
