@@ -6914,3 +6914,24 @@
   add('verificacoes', ['Ao reduzir a linha ou o cardápio, os itens favoritos dos clientes continuam disponíveis',
     'Clientes de planos pagos de uma vez acompanhados no uso mês a mês']);
 })();
+
+// ===== Rodada 49: avaliações online, emoção que faz compartilhar, comentários por rede, compras B2B, excesso de funções =====
+// Fonte: livro acadêmico sobre a história da ciência do marketing, capítulos de valor da marca, internet como meio social, marketing de
+// serviços e compra organizacional (leitura completa). Quem avalia por conta própria e com frequência dá notas mais baixas; quem está
+// satisfeito e pouco envolvido tende a não avaliar (estudo publicado). Avaliações negativas pesam mais nas vendas que as positivas.
+// Conteúdo com emoção de alta ativação (surpresa, entusiasmo, admiração, também raiva) é mais compartilhado (estudo publicado). O que
+// se diz da marca muda conforme a rede; comparar dentro da mesma rede ao longo do tempo antecipou pesquisas de marca (estudo publicado).
+// O alcance de uma cascata depende mais da receptividade do público que de um influenciador especial (estudo publicado). Em compras de
+// empresas, uma só pessoa representa bem a decisão só nas recompras de rotina (estudo publicado). Funções demais atraem na compra e
+// cansam no uso (estudo publicado). Capítulo de valor da marca: credibilidade, garantia e extensões já estavam na biblioteca.
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const add = (k, itens) => { if (P[k]) itens.forEach((t) => { if (!P[k].some((y) => y.texto === t)) P[k].push({ grupo: G, texto: t }); }); };
+  add('naoFazer', ['Encher o serviço de opcionais e funções porque o cliente gosta deles na hora de comprar: no uso, o excesso cansa e reduz a satisfação',
+    'Contar com um único influenciador "especial" para espalhar a marca: o alcance depende mais de quão receptivo é o público do que de quem começa']);
+  add('verificacoes', ['Avaliações pedidas a todos os clientes atendidos, não só aos que se oferecem: quem avalia por conta própria costuma dar notas mais baixas',
+    'Comentários sobre a marca comparados dentro da mesma rede ao longo do tempo, sem misturar redes diferentes',
+    'Posts feitos para serem compartilhados despertam emoção forte (surpresa, entusiasmo, admiração), e não só informam',
+    'Em compras novas ou de valor alto, mais de uma pessoa da empresa cliente ouvida: uma pessoa só representa bem a empresa nas recompras de rotina']);
+})();
