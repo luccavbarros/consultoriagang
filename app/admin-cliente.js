@@ -2040,4 +2040,12 @@
     if (body.password.length < 8) return say($('a-msg'), 'A senha precisa ter pelo menos 8 caracteres.', 'error');
     const submit = card.querySelector('[type=submit]');
     submit.disabled = true; say($('a-msg'), 'Criando…');
-  
+    try {
+      await adminApi(body);
+      say($('a-msg'), 'Acesso criado. Envie para o cliente: ' + body.email + ' / ' + body.password, 'ok');
+      $('a-name').value = ''; $('a-email').value = ''; $('a-pass').value = randomPass();
+      await loadAcc();
+    } catch (err) { say($('a-msg'), err.message, 'error'); }
+    submit.disabled = false;
+  });
+})();
