@@ -34,7 +34,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     const xs = [r.frase, ...r.deixados]; xs.titulo = 'Do que a abordagem escolhida abre mão'; return xs;
   };
   const verifDaEstrategia = () => { const P = window.GangPresets || {}; return P.sugereDaEstrategia && ctxEst.ab ? P.sugereDaEstrategia('verificacoes', ctxEst.ab, ctxEst.setor, [], 4) : []; };
-  const MIN_ACOES_SETOR = 3; // abaixo disso o plano não consegue executar a abordagem naquele setor
+  const MIN_ACOES_SETOR = 4; // abaixo disso o plano não consegue executar a abordagem naquele setor (o plano modelo pede pelo menos 4 ações da estratégia)
   const agrupaPorSetor = (lista, setor) => {
     const P = window.GangPresets || {}; const nome = (U.setorNome(setor) || '').toLowerCase(); const base = U.setorBase(setor);
     if (!setor || !nome) return { lista, grupos: false };
