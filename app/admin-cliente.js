@@ -1083,13 +1083,13 @@
     // 2. a estratégia: as ações que executam a abordagem viram essenciais nos 3 primeiros meses (até 3 por mês)
     // no máximo 8: estratégia é foco, e mais que isso não cabe nos 3 primeiros meses junto com a fundação
     const daEstrategia = ab ? (ab.acoes || []).filter((t) => !ja(t) && (doSetor(libDe(t)) || doModelo.some((x) => x.titulo === t))) : [];
-    // a 9ª em diante não entra depois pela continuidade com o selo de estratégia: estratégia atrasada vira só mais uma tarefa
-    if (!opt.legado) daEstrategia.slice(8).forEach((t) => foraDaEstrategia.add(t));
+    // a 9ª em diante pode entrar depois pela continuidade, mas sem o selo de estratégia: o selo marca o núcleo da estratégia, que vem no início
+    const capE = opt.capEstr || 8; const semSelo = new Set(opt.legado ? [] : daEstrategia.slice(capE));
     // estratégia definida com o plano andando: o que é base da estratégia (posicionamento, proposta) vem antes do resto dela,
     // no primeiro mês com espaço, para caber ainda na janela da base
     const estrNova = !!ab && nRef(de) > nRef(ini) && !acoes.some((a) => a.executa === ab.curto);
     const base1 = (t) => off > 0 && faseDe(t) === 1;
-    if (ab) daEstrategia.slice(0, 8).sort((a, b) => base1(b) - base1(a)).forEach((t, k) => {
+    if (ab) daEstrategia.slice(0, capE).sort((a, b) => base1(b) - base1(a)).forEach((t, k) => {
       // se não couber, vai para o mês mais leve dos 3 primeiros: a estratégia nunca escorrega para depois do início
       // exceção: na marca nova, a ação que depende de histórico espera o histórico existir (ou fica de fora, se o plano acabar antes)
       const h = desdeHist(t);
@@ -1098,7 +1098,10 @@
       const ini3a = meses.slice(Math.min(h, meses.length - 1), Math.max(Math.min(3, meses.length), h + 1));
       const naJanela = ini3a.filter((mm) => meses.indexOf(mm) <= w1 && carga(mm) + ptsT(t) <= LIM && cabeN(mm, t));
       const ini3 = base1(t) && naJanela.length ? naJanela : ini3a; // na janela só se couber: mês lotado é pior que base um mês depois
-      novas.push({ ...daLib(t, 'essencial'), executa: ab.curto, mes: ini3.includes(alvo) ? alvo : ini3.reduce((x, y) => (carga(y) < carga(x) ? y : x), ini3[0]) });
+      const mesE = ini3.includes(alvo) ? alvo : ini3.reduce((x, y) => (carga(y) < carga(x) ? y : x), ini3[0]);
+      // plano refeito com a mesma estratégia: a base dela que não foi feita no começo não vira tarefa tardia (a da estratégia nova, sim)
+      if (!opt.legado && off > 0 && !estrNova && faseDe(t) === 1 && meses.indexOf(mesE) > w1) { semEspaco += 1; return; }
+      novas.push({ ...daLib(t, 'essencial'), executa: ab.curto, mes: mesE });
     });
     // 2b. lançamento: a virada de "experimente" para "lembre da marca" entra no 12º mês do plano (a meta de marca vira no 13º)
     if (pMeta.esforco_marca_pct === 35 || (ab && ab.lancamento)) {
@@ -1195,7 +1198,7 @@
       if (!doMes().some((a) => a.peso === 'essencial')) { const x = novas.find((y) => y.mes === mes); if (x) x.peso = 'essencial'; }
     });
     // o que já vinha do setor e também executa a abordagem ganha o selo
-    if (ab) novas.forEach((x) => { if ((ab.acoes || []).includes(x.titulo)) x.executa = ab.curto; });
+    if (ab) novas.forEach((x) => { if ((ab.acoes || []).includes(x.titulo) && !semSelo.has(x.titulo)) x.executa = ab.curto; });
     // acerto final do equilíbrio: se a marca passou da meta do setor (mais de 8 pontos), troca ações de marca de ajuda por ativação
     // no mesmo mês, das mais pesadas para as mais leves. Nunca mexe na estratégia, na base, nas essenciais, nos marcos,
     // no piso de alcance, de situação de compra e de ativos (o que passa do piso pode ser trocado), nem deixa um mês sem marca
@@ -1337,6 +1340,26 @@
       // a reorganização piorou o plano pelos critérios? volta para a versão de antes dela
       if (!opt.legado && custo(confere()) > antes.custo) { novas.splice(0, novas.length, ...antes.novas); pool.splice(0, pool.length, ...antes.pool); }
     });
+    // os pisos de evidência (alcance 2, situação de compra 1, ativos 2, prova 1) que ficaram sem vaga: troca uma ação opcional do mesmo
+    // tipo (marca por marca, venda por venda) por uma que cumpra o piso, no mesmo mês. Se a troca piorar o plano, é desfeita
+    if (!opt.legado) {
+      const antesF = { novas: novas.map((x) => ({ ...x })), pool: pool.slice(), custo: custo(confere()) };
+      const PISOS = [[ALC, 2], [CEP, 1], [ATIVOS, 2], [PROVA_P, 1]];
+      const protegePiso = (t) => PISOS.some(([re, mi]) => re.test(t) && noPlano(re) <= mi);
+      PISOS.forEach(([re, mi]) => {
+        for (let volta = 0; volta < 3 && noPlano(re) < mi; volta += 1) {
+          const cands = novas.filter((y) => y.origem && y.peso !== 'essencial' && !y.executa && !marco(y.titulo) && !protegePiso(y.titulo));
+          let feito = false;
+          for (const y of cands) {
+            kMes = Math.max(0, meses.indexOf(y.mes)); const tp = U.tipoEsforco({ titulo: y.titulo, tipo: y.tipo, esforco: y.esforco });
+            const z = pega((w) => re.test(w.texto) && tipoLib(w) === tp && (TAM[w.tam] || [, , 2])[2] <= LIM - carga(y.mes) + ptsT(y.titulo));
+            if (z) { Object.assign(y, { promessa: z.promessa || null, esforco: z.esforco || null, tipo: z.tipo || undefined, titulo: z.texto, porque: z.porque || null, metrica: z.metrica || null, origem: 'piso' }); feito = true; break; }
+          }
+          if (!feito) break;
+        }
+      });
+      if (custo(confere()) > antesF.custo) { novas.splice(0, novas.length, ...antesF.novas); pool.splice(0, pool.length, ...antesF.pool); }
+    }
     // a promessa inteira (vender mais, para mais pessoas, com mais valor) precisa de pelo menos 3 ações em cada parte: troca uma ação
     // de ajuda da parte que sobra por outra do mesmo tipo (marca por marca, venda por venda) da parte que falta, no mesmo mês
     {
@@ -1372,7 +1395,7 @@
   };
   // o motor monta o plano de algumas formas (marcos no mês real ou proporcionais; janelas das fases contadas do início do plano ou de hoje)
   // e entrega a que cumpre mais critérios de eficácia, pelo peso de cada um. A primeira é a preferida: só perde para outra que seja melhor
-  const montaModelo = (m, ab) => [{ marcosReais: true, janelaAbs: true }, { marcosReais: false, janelaAbs: true }, { marcosReais: true, janelaAbs: false }, { marcosReais: false, janelaAbs: false }, { legado: true }]
+  const montaModelo = (m, ab) => [{ marcosReais: true, janelaAbs: true }, { marcosReais: false, janelaAbs: true }, { marcosReais: true, janelaAbs: false }, { marcosReais: false, janelaAbs: false }, { marcosReais: true, janelaAbs: true, capEstr: 6 }, { legado: true }]
     .map((opt) => montaUma(m, ab, opt)).reduce((a, b) => (b.custo < a.custo ? b : a));
   // o aviso de como a estratégia entrou no modelo
   const notaEstrategia = (E, plano) => {

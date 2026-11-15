@@ -7033,6 +7033,89 @@
   add('verificacoes', ['Resultado medido pelo que o cliente fez (compras, agendamentos, retornos), e não só pelo que ele diz que fez: o comportamento declarado infla o que é bem visto']);
 })();
 
+// ===== Rodada 54: preço — cobrar pelo valor também no varejo (preço por público, promoção dirigida, justiça no aumento) =====
+// Fontes: livro-texto de referência em estratégia de preços (capítulos de valor econômico, comunicação de valor e estrutura de preços
+// lidos inteiros; páginas de varejo e consumidor dos capítulos de política e nível de preço) e livro de um consultor de preços (capítulos
+// de psicologia e de diferenciação lidos inteiros; números de projetos da consultoria descartados). Cobrar pelo valor é montar uma
+// estrutura de preços que acompanha o valor de cada público: versões por público, cobrar à parte o que só alguns valorizam, dar a quem é
+// sensível a preço um extra que só ele valoriza em vez de baixar o preço, e regras de quantidade que separam quem compra mais. Estudos
+// publicados sobre preço justo: repassar aumento de custo é aceito; tirar um desconto é visto como mais justo do que subir a tabela;
+// subir o preço porque a procura aumentou é visto como abuso. Promoção aberta a todos dá desconto a quem já pagaria o preço cheio, faz o
+// cliente estocar e ensina a esperar; há evidência de que comprar com desconto reduz a disposição a pagar depois. Em academias, pagar por
+// mês manteve o uso e a renovação mais altos do que pagar o ano adiantado (estudo publicado).
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'Quando precisar aumentar o preço, cortar primeiro descontos e condições especiais, e só depois mexer no preço de tabela', esforco: 'venda', promessa: 'valor', tema: 'preco', tipo: 'base', tam: 'P', ler: 60,
+      porque: 'Estudos publicados sobre preço justo mostram que o cliente aceita bem que a empresa repasse um aumento de custo, e aceita melhor a retirada de um desconto do que a subida do preço de tabela. Recuperar a margem por esse caminho dá menos sensação de abuso e preserva a relação.',
+      metrica: 'Margem recuperada sem queda na recompra dos clientes atuais', passos: ['Listar os descontos e condições especiais em vigor', 'Calcular quanto da margem perdida volta só cortando parte deles', 'Avisar os clientes com antecedência e explicar o motivo (o custo que subiu)', 'Só depois, se ainda faltar, revisar a tabela', 'Acompanhar a recompra dos clientes atuais nos meses seguintes'] },
+    { texto: 'Fazer promoção só para quem ainda não compra da marca (primeira compra ou cupom de boas-vindas) e limitar a uma por cliente', esforco: 'venda', promessa: 'valor', tema: 'preco', tipo: 'ativacao', tam: 'P', ler: 60, setores: ['varejo'],
+      porque: 'Promoção aberta a todos dá desconto a quem já compraria pelo preço cheio, faz o cliente fiel estocar e ensina a esperar a próxima oferta; há evidência de que comprar com desconto reduz o quanto a pessoa aceita pagar depois. Dirigida a quem ainda não compra, a promoção cumpre o papel de fazer experimentar sem baratear a marca para quem já é cliente.',
+      metrica: 'Novos clientes vindos da promoção e parte das vendas aos clientes atuais feita com desconto', passos: ['Definir quem conta como novo (primeira compra, cadastro novo ou quem levou o concorrente)', 'Criar o cupom ou a condição só para esse público', 'Limitar a uma por pessoa', 'Não anunciar o desconto para a base de clientes atuais', 'Contar quantos novos voltaram a comprar pelo preço cheio'] },
+    { texto: 'Dar desconto por quantidade só para quem leva mais (embalagem maior, combo família ou a partir de um número de unidades), em vez de baixar o preço de cada unidade para todos', esforco: 'venda', promessa: 'valor', tema: 'preco', tipo: 'base', tam: 'P', ler: 60, setores: ['varejo'],
+      porque: 'Quem compra mais costuma ser mais sensível a preço e sai mais barato de atender por unidade. Uma regra de quantidade separa esse cliente sem tirar o preço cheio de quem compra pouco. O desconto que vale só para o que passa do limite protege mais a margem do que o desconto sobre o total.',
+      metrica: 'Ticket médio e margem nas vendas com desconto por quantidade', passos: ['Escolher os produtos que o cliente costuma levar em quantidade', 'Definir a regra: embalagem maior, combo ou desconto a partir de certa quantidade', 'Fazer o desconto valer só para o que passa do limite, quando possível', 'Mostrar a regra na loja, no site e no cardápio', 'Comparar ticket médio e margem antes e depois'] },
+    { texto: 'Em planos de uso contínuo (aulas, academia, tratamento ou assinatura), cobrar por mês em vez de cobrar o ano adiantado', esforco: 'venda', promessa: 'vendas', tema: 'preco', tipo: 'base', tam: 'P', ler: 60, setores: ['servicos'],
+      porque: 'Um estudo publicado com academias mostrou que, logo depois de pagar, o cliente usa mais para aproveitar o que pagou, e o uso cai à medida que o pagamento fica distante. Com cobrança mensal, o uso se manteve alto e a renovação foi maior. Quem usa vê resultado e continua.',
+      metrica: 'Frequência de uso e taxa de renovação dos planos', passos: ['Listar os planos pagos de uma vez para muitos meses', 'Criar a opção mensal com o mesmo valor total ou próximo', 'Oferecer a mensal como padrão na venda', 'Acompanhar frequência de uso por forma de pagamento', 'Comparar a renovação das duas formas'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+  const add = (k, itens) => { if (P[k]) itens.forEach((t) => { if (!P[k].some((y) => y.texto === t)) P[k].push({ grupo: G, texto: t }); }); };
+  add('naoFazer', ['Subir o preço porque a procura aumentou (data de pico, falta do produto, emergência): o cliente vê como abuso e lembra disso depois']);
+  // as ações que montam o preço por público passam a executar "Cobrar pela diferença de valor"; servem também a varejo, alimentação e loja online
+  const ab = (P.abordagens || []).find((a) => a.texto.startsWith('Cobrar pela diferença de valor') && a.acoes);
+  if (ab) ['Dar a cada serviço ou linha um público e uma faixa de preço próprios, para que não disputem o mesmo cliente',
+    'Criar uma versão premium do serviço principal',
+    'Separar do preço principal os extras que hoje saem de graça e cobrar por eles',
+    'Oferecer um brinde ou um extra em vez de baixar o preço',
+    'Dar desconto por quantidade só para quem leva mais (embalagem maior, combo família ou a partir de um número de unidades), em vez de baixar o preço de cada unidade para todos',
+  ].forEach((t) => { if (P.acoes.some((a) => a.texto === t) && !ab.acoes.includes(t)) ab.acoes.push(t); });
+})();
+
+// ===== Rodada 55: varejo — loja especialista, equipe que domina o assunto, quem usa e quem paga =====
+// Fontes: livro-texto de gestão de varejo (capítulos de tipos de varejistas, comportamento do consumidor e comunicação no varejo,
+// páginas lidas) e livro-texto de marketing de serviços (capítulos de posicionamento e de participação do cliente). Lojas especializadas
+// concentram-se em poucas categorias, com sortimento mais completo nelas e vendedores que conhecem o assunto, e estão entre os varejistas
+// mais lucrativos; lojas gerais perdem categorias para elas. Quando sortimento e preço se parecem, as redes especializadas se diferenciam
+// pela orientação da equipe (contratam e treinam gente do ramo) e por aulas que ensinam o cliente a usar o que compra. Na compra em
+// família, quem escolhe a loja, quem escolhe a marca e quem usa podem ser pessoas diferentes, e a criança influencia muito; lojas criam
+// programas para quem usa ao lado de quem paga, e lista de presentes para quem ganha escolher. Em serviços, empresas focadas num
+// segmento ganham expertise reconhecida e podem cobrar mais. Blogs e conteúdo próprio da loja criam comunidade e boca a boca.
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const G = 'Da biblioteca';
+  const NOVAS = [
+    { texto: 'Concentrar a loja numa linha de produtos ou num tipo de cliente, com sortimento mais completo nessa linha do que o das lojas gerais, sem deixar de atender quem compra a categoria em geral', esforco: 'marca', promessa: 'valor', tema: 'posicionamento', tipo: 'base', tam: 'M', ler: 60, setores: ['varejo'],
+      porque: 'Lojas especializadas, com poucas categorias, sortimento completo nelas e vendedores que conhecem o assunto, estão entre os varejistas mais lucrativos, e lojas que vendem de tudo costumam perder essas categorias para elas. Ser a referência numa linha dá um motivo claro para o cliente escolher a loja e sustenta preço.',
+      metrica: 'Vendas e margem da linha de especialidade', passos: ['Escolher a linha ou o tipo de cliente em que a loja pode ser referência', 'Comparar o sortimento dessa linha com o das lojas gerais da região', 'Completar o que falta: tamanhos, versões, acessórios e reposição', 'Mostrar a especialidade na fachada, no site, nas redes e no atendimento', 'Acompanhar vendas e margem da linha a cada mês'] },
+    { texto: 'Treinar os vendedores no assunto da categoria (uso, técnica e cuidados) para orientarem a compra como especialistas', esforco: 'venda', promessa: 'valor', tema: 'equipe', tipo: 'base', tam: 'M', ler: 60, setores: ['varejo'],
+      porque: 'Quando várias lojas vendem as mesmas marcas pelo mesmo preço, a orientação da equipe vira o diferencial. Redes especializadas contratam gente do ramo e mantêm programas de treinamento para que o vendedor ajude o cliente a escolher e a usar o produto, e isso dá ao cliente confiança para comprar.',
+      metrica: 'Clientes atendidos que compraram e devoluções por escolha errada', passos: ['Listar as dúvidas mais comuns dos clientes na categoria', 'Montar um treino curto por tema (uso, técnica, cuidados, comparação de modelos)', 'Treinar toda a equipe e repetir a cada novidade', 'Pedir que o vendedor recomende com base no uso que o cliente descreveu', 'Acompanhar conversão e devoluções por escolha errada'] },
+    { texto: 'Para quem usa mas não paga (a criança, quem ganha o presente, o paciente), criar uma atividade ou um espaço próprio, e dar a quem paga as informações de que ele precisa para decidir', esforco: 'venda', promessa: 'pessoas', tema: 'relacao', tipo: 'ativacao', tam: 'M', ler: 60, setores: ['servicos', 'varejo'],
+      porque: 'Em muitas compras, quem escolhe a loja, quem escolhe a marca e quem usa são pessoas diferentes, e quem usa influencia muito a decisão (as crianças, por exemplo). Lojas criam programas para quem usa ao lado de atividades para quem paga, para que os dois saiam querendo voltar.',
+      metrica: 'Clientes que voltaram depois de participar da atividade', passos: ['Mapear quem usa, quem escolhe e quem paga na compra principal', 'Criar uma atividade ou espaço para quem usa (oficina, demonstração, cantinho)', 'Preparar para quem paga as informações que ele pede: preço, prazo, segurança, resultado', 'Divulgar a atividade para os clientes atuais', 'Contar quantos participantes voltaram ou compraram'] },
+    { texto: 'Oferecer lista de presentes ou de desejos: quem vai usar escolhe os itens e quem paga compra pela lista', esforco: 'venda', promessa: 'vendas', tema: 'venda', tipo: 'ativacao', tam: 'P', ler: 30, setores: ['varejo'],
+      porque: 'Quando quem usa é diferente de quem paga, a lista junta os dois: quem vai usar escolhe o que quer, e quem paga compra com segurança de acertar. Lojas especializadas oferecem esse serviço junto com a orientação da equipe.',
+      metrica: 'Listas criadas e vendas feitas por elas', passos: ['Definir como a lista é criada (na loja, no site ou pelo WhatsApp)', 'Permitir compartilhar a lista com quem vai comprar', 'Avisar quem criou a lista quando um item for comprado', 'Divulgar a lista nas datas de presente', 'Contar listas criadas e vendas por elas'] },
+  ];
+  NOVAS.forEach((x) => { if (!P.acoes.some((a) => a.texto === x.texto)) P.acoes.push({ grupo: G, ...x }); });
+  if (P.metricasSucesso) NOVAS.forEach((x) => { if (!P.metricasSucesso.some((m) => m.texto === x.metrica)) P.metricasSucesso.push({ grupo: G, texto: x.metrica }); });
+  // opinião publicada com regularidade também vale para lojas (blogs e conteúdo próprio criam comunidade e boca a boca)
+  const op = P.acoes.find((a) => a.texto === 'Publicar uma vez por mês uma opinião forte da empresa sobre um tema do setor');
+  if (op && op.setores && !op.setores.includes('varejo')) op.setores = op.setores.concat('varejo');
+  // as ações que executam cada estratégia também no varejo
+  const liga = (ini, itens) => { const ab = (P.abordagens || []).find((a) => a.texto.startsWith(ini) && a.acoes); if (ab) itens.forEach((t) => { if (P.acoes.some((a) => a.texto === t) && !ab.acoes.includes(t)) ab.acoes.push(t); }); };
+  const [especial, treino, quemUsa, lista] = NOVAS.map((x) => x.texto);
+  const ENSINAR = 'Ensinar o cliente a ficar melhor naquilo que ele quer fazer com o produto ou serviço';
+  liga('Ser a especialista', [especial, treino, ENSINAR, 'Dar uma palestra ou aula aberta sobre o tema da empresa em um evento do setor', 'Dar uma recomendação útil já na primeira conversa, antes de fechar qualquer coisa']);
+  liga('Começar por um nicho', [especial, treino]);
+  liga('Vender conhecimento e diagnóstico', [treino, ENSINAR, 'Treinar a equipe da loja a abordar com uma pergunta útil, e não com "posso ajudar?"']);
+  liga('Ser a fornecedora de confiança', ['Criar uma garantia clara, por escrito, que tira o risco do cliente']);
+  liga('Conquistar quem usa', [quemUsa, lista]);
+})();
+
 // ===== Temas dos itens de "não fazer" e das verificações, e sugestão a partir da estratégia =====
 // Cada item ganha os temas que o próprio texto deixa claros (regras abaixo); item sem tema claro não é sugerido.
 // A sugestão olha os temas das ações da abordagem escolhida (só as que servem ao setor do cliente) e devolve os itens
