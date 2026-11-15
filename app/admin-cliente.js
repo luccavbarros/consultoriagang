@@ -1018,6 +1018,9 @@
   };
   // as ações que aplicam a identidade entregue pela GANG (passo 1) nos canais do cliente: sempre essenciais no plano
   const IDENTIDADE = /^(Atualizar redes sociais com a nova identidade|Padronizar WhatsApp Business|Trocar a fachada \/ ambiente para a nova identidade)/;
+  // no 1º mês do plano e fora do limite de 5 ações e 7 pontos: aplicar nas redes e no WhatsApp a identidade que a GANG já entregou
+  // é óbvio e rápido, então não tira vaga de nenhuma outra ação (a fachada, que é obra, conta normalmente)
+  const IDENTIDADE_INICIO = /^(Atualizar redes sociais com a nova identidade|Padronizar WhatsApp Business)/;
   const montaUma = (m, ab, opt) => {
     // o setor é o do modelo escolhido (não o do cadastro): cada setor tem o seu plano, inclusive nas ações que executam a estratégia.
     // Os modelos mais específicos usam também as ações do setor-base (saúde, beleza e educação = serviços; alimentação e loja online = varejo)
@@ -1040,8 +1043,9 @@
     // carga do mês em pontos (P=1, M=2, G=4): 7 pontos ou 5 ações. Um mês de ações rápidas recebe mais; um mês com uma ação grande, menos
     const LIM = 7; const LIM_N = 5;
     const ptsT = (t) => (TAM[(libDe(t) || {}).tam] || [, , 2])[2];
-    const carga = (mm) => acoes.filter((a) => a.mes_previsto === mm).reduce((t, a) => t + (TAM[a.tamanho] || [, , 2])[2], 0) + novas.filter((x) => x.mes === mm).reduce((t, x) => t + ptsT(x.titulo), 0);
-    const nMes = (mm) => acoes.filter((a) => a.mes_previsto === mm).length + novas.filter((x) => x.mes === mm).length;
+    const conta = (t) => !IDENTIDADE_INICIO.test(t); // a aplicação da identidade não ocupa vaga no mês
+    const carga = (mm) => acoes.filter((a) => a.mes_previsto === mm && conta(a.titulo)).reduce((t, a) => t + (TAM[a.tamanho] || [, , 2])[2], 0) + novas.filter((x) => x.mes === mm && conta(x.titulo)).reduce((t, x) => t + ptsT(x.titulo), 0);
+    const nMes = (mm) => acoes.filter((a) => a.mes_previsto === mm && conta(a.titulo)).length + novas.filter((x) => x.mes === mm && conta(x.titulo)).length;
     const idx = (mm) => Math.max(0, meses.indexOf(mm));
     // o primeiro mês com espaço a partir de "desde" (se nenhum tiver, o mais leve)
     // uma vaga de cada mês fica reservada para a ação de marca, até o mês ter uma: a marca não pode sumir por falta de espaço
@@ -1092,6 +1096,18 @@
       + novas.filter((x) => U.tipoEsforco({ titulo: x.titulo, esforco: x.esforco }) === t).reduce((s2, x) => s2 + ptsT(x.titulo), 0);
     const emFalta = (mm) => { const m = pesoPlano('marca'); const a = pesoPlano('ativacao'); return m + a === 0 || m / (m + a) < alvoDe(mm) ? 'marca' : 'ativacao'; };
     // a ordem de encaixe é a ordem de prioridade: quem entra primeiro pega os primeiros meses
+    // 1b. a identidade que a GANG entregou entra no início do plano, antes de tudo: redes e WhatsApp/documentos no 1º mês,
+    // a fachada (obra maior) nos 3 primeiros. Num plano refeito, o que ainda não foi aplicado entra no 1º mês da nova montagem
+    if (!opt.legado) {
+      const idT = (P.FUNDACAO || []).filter((t) => IDENTIDADE_INICIO.test(t)).concat(doModelo.filter((x) => IDENTIDADE.test(x.titulo)).map((x) => x.titulo));
+      [...new Set(idT)].forEach((t) => {
+        if (ja(t) || !doSetor(libDe(t))) return;
+        const ate = IDENTIDADE_INICIO.test(t) ? 1 : 3;
+        const mm = IDENTIDADE_INICIO.test(t) ? meses[0] : meses.slice(0, ate).find((o) => carga(o) + ptsT(t) <= LIM && cabeN(o, t)) || meses[0];
+        const doMod = doModelo.find((x) => x.titulo === t);
+        novas.push({ ...(doMod || daLib(t, 'essencial')), peso: 'essencial', mes: mm });
+      });
+    }
     // 2. a estratégia: as ações que executam a abordagem viram essenciais nos 3 primeiros meses (até 3 por mês)
     // no máximo 8: estratégia é foco, e mais que isso não cabe nos 3 primeiros meses junto com a fundação
     const daEstrategia = ab ? (ab.acoes || []).filter((t) => !ja(t) && (doSetor(libDe(t)) || doModelo.some((x) => x.titulo === t))) : [];
@@ -1185,7 +1201,8 @@
     const pegaAtiv = (cabe) => { const pr = promFalta(); const ok = (w) => tipoLib(w) === 'ativacao' && (TAM[w.tam] || [, , 2])[2] <= cabe; return (pr && pega((w) => ok(w) && w.promessa === pr)) || pega(ok); };
     // dependência: ação com pré-requisito ("antes") só entra se ele já foi feito ou já está no plano até aquele mês
     const preOk = (t, mm) => { const a = libDe(t).antes; return !a || acoes.some((y) => y.titulo === a) || novas.some((y) => y.titulo === a && nRef(y.mes) <= nRef(mm)); };
-    const pega = (filtro) => { const k = pool.findIndex((x) => filtro(x) && naFase(x) && !ja(x.texto) && (opt.legado || preOk(x.texto, meses[kMes]))); return k < 0 ? null : pool.splice(k, 1)[0]; };
+    const idOk = (t) => opt.legado || !IDENTIDADE.test(t) || kMes <= (IDENTIDADE_INICIO.test(t) ? 0 : 2); // a identidade é do início do plano
+    const pega = (filtro) => { const k = pool.findIndex((x) => filtro(x) && naFase(x) && !ja(x.texto) && idOk(x.texto) && (opt.legado || preOk(x.texto, meses[kMes]))); return k < 0 ? null : pool.splice(k, 1)[0]; };
     meses.forEach((mes, km) => {
       kMes = km;
       const doMes = () => acoes.filter((a) => a.mes_previsto === mes).concat(novas.filter((x) => x.mes === mes));
@@ -1219,6 +1236,7 @@
     // A ação opcional que não cabe vai para outro mês em que caiba (na janela da fase dela); sem lugar, sai do plano
     const opcional = (y) => !y.executa && !marco(y.titulo) && y.peso !== 'essencial' && !(P.FUNDACAO || []).includes(y.titulo);
     const naJanelaDe = (t, mm) => { const f = faseDe(t); const i = meses.indexOf(mm); return f === 1 ? i <= w1 : f === 3 ? i >= f3 : true; };
+    let reparaLimites = () => {}; // o acerto dos limites roda aqui e de novo no fim, depois do equilíbrio
     if (!opt.legado) {
       novas.slice().forEach((y) => { if (!preOk(y.titulo, y.mes) && opcional(y)) { novas.splice(novas.indexOf(y), 1); semEspaco += 1; } });
       const ehM = (z) => U.tipoEsforco({ titulo: z.titulo, tipo: z.tipo, esforco: z.esforco }) === 'marca';
@@ -1226,7 +1244,7 @@
       const pisoNoLimite = (t) => [[ALC, 2], [CEP, 1], [ATIVOS, 2], [PROVA_P, 1]].some(([re, mi]) => re.test(t) && noPlano(re) <= mi);
       const cabeEm = (y, o) => naJanelaDe(y.titulo, o) && preOk(y.titulo, o) && carga(o) + ptsT(y.titulo) <= LIM && nMes(o) < LIM_N
         && !novas.some((z) => libDe(z.titulo).antes === y.titulo && nRef(z.mes) < nRef(o));
-      meses.forEach((mm) => {
+      reparaLimites = () => meses.forEach((mm) => {
         for (let volta = 0; volta < 12 && (carga(mm) > LIM || nMes(mm) > LIM_N); volta += 1) {
           const cands = novas.filter((z) => z.mes === mm && opcional(z)).sort((a, b) => ptsT(b.titulo) - ptsT(a.titulo));
           // 1º: mudar de mês uma ação opcional (a marca única do mês só se o outro mês já tiver marca... ela não sai do mês)
@@ -1243,9 +1261,20 @@
           // 3º: tirar uma ação opcional que não seja a marca única do mês nem garanta um mínimo de evidência
           const sai = cands.find((y) => !(ehM(y) && marcasEm(mm) <= 1) && !pisoNoLimite(y.titulo));
           if (sai) { novas.splice(novas.indexOf(sai), 1); semEspaco += 1; continue; }
+          // 4º: a estratégia lotou o mês. A ação dela vai para outro dos 3 primeiros meses em que caiba; se não houver, e ficarem
+          // pelo menos 4 com o selo, ela segue no plano mais adiante como ação comum (sem o selo, como a 9ª em diante)
+          const exs = novas.filter((z) => z.mes === mm && z.executa).sort((u, v) => ptsT(v.titulo) - ptsT(u.titulo));
+          const cabe3 = (y) => meses.slice(0, 3).find((o) => o !== mm && preOk(y.titulo, o) && carga(o) + ptsT(y.titulo) <= LIM && nMes(o) < LIM_N
+            && !novas.some((z) => libDe(z.titulo).antes === y.titulo && nRef(z.mes) < nRef(o)));
+          const ex1 = exs.find((y) => cabe3(y));
+          if (ex1) { ex1.mes = cabe3(ex1); continue; }
+          const nEx = novas.filter((z) => z.executa).length + acoes.filter((z) => z.executa).length;
+          const ex2 = nEx > 4 && exs.find((y) => !novas.some((z) => libDe(z.titulo).antes === y.titulo) && meses.some((o) => nRef(o) > nRef(mm) && cabeEm(y, o)));
+          if (ex2) { delete ex2.executa; ex2.peso = 'ajuda'; ex2.mes = meses.find((o) => nRef(o) > nRef(mm) && cabeEm(ex2, o)); semSelo.add(ex2.titulo); continue; }
           break;
         }
       });
+      reparaLimites();
     }
     // o que já vinha do setor e também executa a abordagem ganha o selo
     if (ab) novas.forEach((x) => { if ((ab.acoes || []).includes(x.titulo) && !semSelo.has(x.titulo)) x.executa = ab.curto; });
@@ -1434,6 +1463,8 @@
       if (!opt.legado && custo(confere()) > antesP.custo) { novas.splice(0, novas.length, ...antesP.novas); pool.splice(0, pool.length, ...antesP.pool); }
     }
     // no máximo 2 essenciais por mês: o que passar disso vira ajuda (foco, não lista de urgências); as da estratégia têm a vez
+    // o equilíbrio e a continuidade podem ter lotado um mês: o limite é regra, então o acerto roda de novo
+    if (!opt.legado) reparaLimites();
     // última conferência dos pré-requisitos: a ação que não pode sair (estratégia, fundação, essencial) e ficou sem o pré-requisito
     // leva ele junto, no primeiro mês até o dela em que caiba; se nenhum couber, ele toma o lugar de uma ação opcional desses meses
     if (!opt.legado) {
@@ -1486,7 +1517,12 @@
   // e entrega a que cumpre mais critérios de eficácia, pelo peso de cada um. A primeira é a preferida: só perde para outra que seja melhor
   const variantes = (m, ab) => [{ marcosReais: true, janelaAbs: true }, { marcosReais: false, janelaAbs: true }, { marcosReais: true, janelaAbs: false }, { marcosReais: false, janelaAbs: false }, { marcosReais: true, janelaAbs: true, capEstr: 6 }, { legado: true }]
     .map((opt) => montaUma(m, ab, opt));
-  const melhorDe = (vs) => vs.reduce((a, b) => (b.custo < a.custo ? b : a));
+  // em qualquer variante (inclusive a lógica anterior), redes e WhatsApp ficam no 1º mês da montagem: são exceção ao limite, então não lotam nada
+  // (só quando o mês de onde ela sai continua com outra ação de marca: a marca não pode sumir de um mês)
+  const ehMarcaX = (x) => U.tipoEsforco({ titulo: x.titulo, tipo: x.tipo, esforco: x.esforco }) === 'marca';
+  const noInicio = (pl) => { const m0 = pl.map((x) => x.mes).sort()[0]; pl.forEach((x) => {
+    if (IDENTIDADE_INICIO.test(x.titulo) && x.mes !== m0 && pl.some((y) => y !== x && y.mes === x.mes && ehMarcaX(y))) x.mes = m0; }); return pl; };
+  const melhorDe = (vs) => noInicio(vs.reduce((a, b) => (b.custo < a.custo ? b : a)));
   const montaModelo = (m, ab) => melhorDe(variantes(m, ab));
   // ===== otimização exata: para o plano que o motor por tentativas não fecha =====
   // Quando o plano montado tem alguma pendência (critério de eficácia não cumprido, mês acima do limite ou ação antes do pré-requisito),
@@ -1531,7 +1567,9 @@
     // o que fica onde está: ações já existentes no prazo e os marcos que o motor pôs
     const fixos = acoes.filter((a) => nRef(a.mes_previsto) >= nRef(ini) && nRef(a.mes_previsto) <= nRef(fim))
       .map((a) => ({ t: a.titulo, mes: a.mes_previsto, ex: !!a.executa || ABset.has(a.titulo), tipo: U.tipoEsforco(a), p: pts(a.titulo, a.tamanho), pr: libDe(a.titulo).promessa || a.promessa }))
-      .concat(base.filter((x) => MARCO.test(x.titulo) || !lib.has(x.titulo)).map((x) => ({ t: x.titulo, mes: x.mes, ex: false, tipo: 'base', p: 2, pr: null })));
+      // os marcos não contam no equilíbrio; o que o motor criou fora da biblioteca (a nova campanha de alcance anual) conta pelo tipo dele
+      .concat(base.filter((x) => MARCO.test(x.titulo) || !lib.has(x.titulo)).map((x) => ({ t: x.titulo, mes: x.mes, ex: false,
+        tipo: MARCO.test(x.titulo) ? 'base' : U.tipoEsforco({ titulo: x.titulo, tipo: x.tipo, esforco: x.esforco }), p: 2, pr: null })));
     const feitos = new Set(acoes.map((a) => a.titulo));
     const obrig = new Set(base.filter((x) => lib.has(x.titulo) && !MARCO.test(x.titulo) && (x.executa || (P.FUNDACAO || []).includes(x.titulo) || essModelo.has(x.titulo))).map((x) => x.titulo));
     const exObrig = new Set(base.filter((x) => x.executa).map((x) => x.titulo));
@@ -1543,6 +1581,7 @@
       meses.forEach((mm, i) => {
         if (kAbs(mm) < h) return;
         const naJan = ABset.has(t) && i < 3;
+        if (IDENTIDADE_INICIO.test(t) ? i > 0 : IDENTIDADE.test(t) && i > 2) return; // a identidade é do início do plano
         if (exObrig.has(t) && !naJan) return; // a estratégia fica nos 3 meses seguintes à definição
         if (!obrig.has(t)) {
           if (f === 1 && kAbs(mm) > w1 && !(estrNova && naJan)) return;
@@ -1560,7 +1599,7 @@
     const linha = (arr, op, rhs) => { L.push(' r' + (nr += 1) + ':' + termo(arr) + ' ' + op + ' ' + rhs); };
     porT.forEach((js, t) => linha(js.map((j) => [x(j), 1]), obrig.has(t) ? '=' : '<=', 1));
     meses.forEach((mm) => {
-      const fx = fixos.filter((f) => f.mes === mm); const vs = V.map((v, j) => [v, j]).filter(([v]) => v.mm === mm);
+      const fx = fixos.filter((f) => f.mes === mm && !IDENTIDADE_INICIO.test(f.t)); const vs = V.map((v, j) => [v, j]).filter(([v]) => v.mm === mm && !IDENTIDADE_INICIO.test(v.t));
       linha(vs.map(([, j]) => [x(j), 1]), '<=', 5 - fx.length);
       if (fx.length === 0) linha(vs.map(([, j]) => [x(j), 1]), '>=', 1);
       linha(vs.map(([v, j]) => [x(j), pts(v.t)]), '<=', 7 - fx.reduce((s, f) => s + f.p, 0));
@@ -1649,7 +1688,7 @@
       try { const ex = await comLimite(otimizaExato(m, ab, b), 10000); if (ex && ex.custo < melhor.custo) melhor = ex; } catch (e) { highsPronto = null; break; }
       if (!melhor.custo) break;
     }
-    return melhor;
+    return noInicio(melhor);
   };
   // o aviso de como a estratégia entrou no modelo
   const notaEstrategia = (E, plano) => {
