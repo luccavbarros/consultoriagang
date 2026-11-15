@@ -5872,12 +5872,9 @@
     'O inesperado é lembrado e comentado, e pode render indicação. Mas atinge só quem já compra muito, então vale como gesto de cuidado com a base, não como forma de crescer.',
     'Indicações vindas de quem recebeu, comparadas ao custo dos presentes');
 
-  // 6) identidade nova: manter o que os clientes já reconhecem. Trocar tudo apaga a memória da marca (a Tropicana perdeu 20% das vendas)
-  const MANTER = 'Listar o que os clientes já reconhecem na marca (cor, símbolo, formato, frase) e manter na versão nova';
-  ['Trocar a fachada / ambiente para a nova identidade', 'Atualizar redes sociais com a nova identidade'].forEach((t) => {
-    const a = (P.acoes || []).find((x) => x.texto === t);
-    if (a && Array.isArray(a.passos) && !a.passos.includes(MANTER)) a.passos.unshift(MANTER);
-  });
+  // 6) identidade nova: a GANG cria a marca e a identidade visual antes do plano (passo 1). Manter o que os clientes já reconhecem é parte
+  //    desse design, feito pela GANG; nas ações do plano (aplicar a identidade nas redes e na fachada) a identidade já está pronta, por isso
+  //    o passo "listar o que os clientes reconhecem e manter na versão nova" não entra nelas.
 
   // 7) objetivo e veredito que mediam a frequência: a recompra acompanha o tamanho da base, então se lê junto com os clientes novos
   const troca = (lista, ant, novo) => { const x = (P[lista] || []).find((y) => y.texto === ant); if (x) x.texto = novo; };
@@ -7114,6 +7111,17 @@
   liga('Vender conhecimento e diagnóstico', [treino, ENSINAR, 'Treinar a equipe da loja a abordar com uma pergunta útil, e não com "posso ajudar?"']);
   liga('Ser a fornecedora de confiança', ['Criar uma garantia clara, por escrito, que tira o risco do cliente']);
   liga('Conquistar quem usa', [quemUsa, lista]);
+})();
+
+// ===== Redesenho da marca não entra no plano do cliente =====
+// A GANG cria a marca e a identidade visual antes do plano (passo 1); manter os sinais que os clientes já reconhecem e testar a versão
+// nova fazem parte desse design, feito pela GANG. No plano (passo 2) a identidade já está pronta, então as ações de redesenhar logo,
+// embalagem, site ou fachada saem da biblioteca de ações do cliente (decisão do usuário, 16/11/2026). Planos que já as têm salvas não mudam.
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const FORA = ['Antes de mudar a frase, o logo ou a embalagem que os clientes já conhecem, listar o que eles reconhecem, testar a versão nova e explicar a mudança',
+    'Antes de redesenhar logo, embalagem, site ou fachada, listar os sinais pelos quais o cliente reconhece a marca e mantê-los no novo desenho'];
+  P.acoes = P.acoes.filter((a) => !FORA.includes(a.texto));
 })();
 
 // ===== Temas dos itens de "não fazer" e das verificações, e sugestão a partir da estratégia =====
