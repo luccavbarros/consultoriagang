@@ -87,15 +87,18 @@
     const txt = el('input', { class: 'field combo__outro', id: idc + '-outro', maxlength: opts.max || 400, placeholder: opts.placeholder || 'Escreva', 'aria-label': 'Escreva outra opção' });
     const box = el('div', 'combo', sel, txt);
     const mostra = () => { txt.hidden = sel.value !== OUTRO; };
+    let anterior = ''; // o que estava escolhido antes de ir para "Outro…"
     const set = (v) => {
-      if (!v) sel.value = '';
-      else if (itens.some((i) => i.texto === v)) sel.value = v;
+      if (!v) { sel.value = ''; txt.value = ''; }
+      else if (itens.some((i) => i.texto === v)) { sel.value = v; txt.value = ''; }
       else { sel.value = OUTRO; txt.value = v; }
-      mostra();
+      anterior = sel.value; mostra();
     };
     sel.addEventListener('change', () => {
       mostra();
-      if (sel.value === OUTRO) { txt.focus(); return; }
+      // "Outro… (escrever)" começa com o texto que estava escolhido: dá para personalizar uma palavra sem reescrever tudo
+      if (sel.value === OUTRO) { if (!txt.value && anterior && anterior !== OUTRO) txt.value = anterior; txt.focus(); anterior = sel.value; return; }
+      anterior = sel.value;
       const item = itens.find((i) => i.texto === sel.value);
       if (item && opts.onPick) opts.onPick(item);
     });

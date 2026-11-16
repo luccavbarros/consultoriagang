@@ -709,9 +709,13 @@
     const ps = Array.isArray(a.passos) ? a.passos : [];
     const feitos = ps.filter((x) => x.ok).length;
     const marcaPasso = async (i, ok) => {
-      const antes = ps[i].ok; ps[i].ok = ok; if (ok && a.status === 'a_fazer') a.status = 'em_andamento'; render();
+      // marcou um passo: a ação começou; desmarcou o último: volta para "a fazer" (sem passo feito não está em andamento)
+      const antes = ps[i].ok; const stAntes = a.status; ps[i].ok = ok;
+      if (ok && a.status === 'a_fazer') a.status = 'em_andamento';
+      if (!ok && a.status === 'em_andamento' && !ps.some((x) => x.ok)) a.status = 'a_fazer';
+      render();
       const { error } = await sb.rpc('portal_passo_acao', { p_acao: a.id, p_i: i, p_ok: ok });
-      if (error) { ps[i].ok = antes; render(); return anuncia('Não foi possível salvar o passo.'); }
+      if (error) { ps[i].ok = antes; a.status = stAntes; render(); return anuncia('Não foi possível salvar o passo.'); }
       if (ok && ps.every((x) => x.ok) && a.status !== 'feita') anuncia('Todos os passos feitos. Marque a ação como feita quando terminar.');
     };
     // ação grande (G): cada passo ganha uma data, repartida entre o começo do mês e o prazo (progresso toda semana, sem ficar parada)
