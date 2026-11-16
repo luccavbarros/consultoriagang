@@ -785,7 +785,15 @@
       esforco: val('x-esforco'), resultado: status === 'feita' ? val('x-resultado') : null, aprendizado: status === 'feita' ? val('x-aprendizado') : null, situacao_id: val('x-sit'), peso: $('x-peso').value, porque: val('x-porque'), observacao: val('x-obs'), promessa: $('x-promessa').value || null,
       atualizada_por: me.id, atualizada_em: new Date().toISOString(),
     };
-    const r = aid ? await sb.from('acoes').update(row).eq('id', aid) : await sb.from('acoes').insert({ ...detalheDe(row.titulo), ...row });
+    // renomeou uma ação da biblioteca: guarda o título original, para o motor continuar reconhecendo a ação
+    if (antiga && row.titulo !== antiga.titulo) {
+      const naLib = (t) => (window.GangPresets.acoes || []).some((x) => x.texto === t);
+      const orig = antiga.titulo_base || (naLib(antiga.titulo) ? antiga.titulo : null);
+      row.titulo_base = orig && orig !== row.titulo ? orig : null;
+    }
+    let r = aid ? await sb.from('acoes').update(row).eq('id', aid) : await sb.from('acoes').insert({ ...detalheDe(row.titulo), ...row });
+    // o banco ainda sem a coluna do título original (rode o portal.sql): salva o resto mesmo assim
+    if (r.error && 'titulo_base' in row && /titulo_base/.test(r.error.message || '')) { delete row.titulo_base; r = await sb.from('acoes').update(row).eq('id', aid); }
     if (r.error) return say($('x-msg'), 'Não foi possível salvar.', 'error');
     if ($('x-sug').value) await sb.from('sugestoes').update({ status: 'aceita' }).eq('id', $('x-sug').value);
     fechaForm(); say($('acoes-msg'), aid ? 'Ação atualizada.' : 'Ação criada. O cliente já vê em Ações.', 'ok');
@@ -1021,7 +1029,11 @@
   // no 1º mês do plano e fora do limite de 5 ações e 7 pontos: aplicar nas redes e no WhatsApp a identidade que a GANG já entregou
   // é óbvio e rápido, então não tira vaga de nenhuma outra ação (a fachada, que é obra, conta normalmente)
   const IDENTIDADE_INICIO = /^(Atualizar redes sociais com a nova identidade|Padronizar WhatsApp Business)/;
+  // o consultor pode renomear uma ação da biblioteca para a linguagem do cliente; para o motor ela continua sendo a original
+  // (já feita, pré-requisito cumprido, não volta a ser sugerida)
+  const acoesMotor = () => acoes.map((a) => (a.titulo_base ? { ...a, titulo: a.titulo_base } : a));
   const montaUma = (m, ab, opt) => {
+    const acoes = acoesMotor();
     // o setor é o do modelo escolhido (não o do cadastro): cada setor tem o seu plano, inclusive nas ações que executam a estratégia.
     // Os modelos mais específicos usam também as ações do setor-base (saúde, beleza e educação = serviços; alimentação e loja online = varejo)
     const chaveM = Object.keys(MOD).find((k) => MOD[k] === m);
@@ -1538,6 +1550,7 @@
     const s = document.createElement('script'); s.src = base + 'highs.js'; s.onload = usa; s.onerror = falha; document.head.append(s);
   }).catch((e) => { highsPronto = null; throw e; }));
   const otimizaExato = async (m, ab, base) => {
+    const acoes = acoesMotor();
     const highs = await carregaHighs();
     const chaveM = Object.keys(MOD).find((k) => MOD[k] === m);
     const BASE_M = { saude: 'servicos', educacao: 'servicos', beleza: 'servicos', alimentacao: 'varejo', loja_online: 'varejo', tecnologia: 'b2b' };
