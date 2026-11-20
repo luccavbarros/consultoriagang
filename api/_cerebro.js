@@ -7279,3 +7279,88 @@
 // Rodada 56 (leitura do livro sobre comportamento de compra dentro da loja): as 3 ações que saíram dele (corredores livres, repor os
 // mais vendidos, altura da prateleira) foram retiradas a pedido: são operação da loja, não crescimento da marca. O que o livro tem de
 // marca (itens que mais vendem no caminho principal, custo escondido da promoção) já estava no cérebro.
+
+// ===================== Rodada 57 — o que a GANG entrega no passo 1 não vira tarefa do cliente =====================
+// A GANG entrega diagnóstico, estratégia, narrativa e identidade visual (passo 1); o plano é a execução (passo 2).
+// Saem as ações que constroem essas entregas (o dono refaria o que já foi entregue). As que misturam decisão e aplicação ficam só
+// com a aplicação. Ficam com o dono as que dependem do conhecimento do próprio negócio e não estão na entrega (melhores clientes,
+// perfil do cliente ideal, perfil de compra). Planos já gravados com os títulos antigos continuam reconhecidos (P.renomeadas).
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const SAI = new Set([
+    // identidade visual
+    'Testar o logo bem pequeno, como ícone de celular, carimbo e bordado, e criar uma versão reduzida se precisar',
+    'Conferir o contraste das cores da marca em textos e botões para que todos consigam ler',
+    'Limitar a marca a 2 fontes e definir tamanhos fixos para títulos e textos',
+    'Reunir os arquivos da marca numa pasta única com as versões finais e acesso para toda a equipe',
+    'Criar modelos editáveis de posts, propostas e apresentações para a equipe não improvisar',
+    'Ao atualizar a identidade, manter os elementos que as pessoas já reconhecem',
+    'Antes de trocar o nome da marca, medir quantos lembram do nome atual e manter os sinais conhecidos na transição',
+    'Renovar o visual, os formatos e as campanhas sem mexer na identidade central nem nos sinais próprios',
+    'Testar o nome da marca ou do serviço: é fácil de dizer, de escrever e de achar na busca?',
+    // narrativa
+    'Escrever o roteiro da marca: o cliente é o herói, a marca é o guia',
+    'Escrever o plano em 3 passos e a chamada principal e aplicar no site e nas peças atuais',
+    'Escrever o glossário da marca: as palavras que a marca usa e as que evita',
+    'Completar a proposta de valor com os três benefícios: o que a marca resolve, como faz o cliente se sentir e o que a escolha diz sobre ele',
+    'Descrever o negócio pela necessidade que ele resolve, e não pelo produto que vende',
+    'Dar um nome próprio ao método ou ao serviço principal',
+    // diagnóstico e estratégia
+    'Fazer uma oficina de 1 hora com os sócios: o que o cliente usaria se a empresa não existisse e o que só ela faz',
+    'Escrever o que a empresa deixa de fazer neste ano para focar no que importa',
+    'Escrever em um parágrafo o principal obstáculo ao crescimento e as 3 ações que atacam ele',
+    'Antes de escolher a abordagem, escrever dois caminhos que não dá para seguir juntos e, para cada um, o que teria que ser verdade para dar certo',
+    'Listar as 10 situações em que alguém precisa do que a empresa vende: quando, onde, com quem e por quê',
+    'Mapear os códigos da categoria: o que todos repetem, o que está ficando velho e o que está surgindo',
+    'Escrever por que os clientes compram em três níveis: por que compram a categoria, por que escolhem esse tipo de produto ou serviço e por que escolhem a marca, incluindo por que alguns escolhem o concorrente ou não compram',
+  ]);
+  const NOVO = {
+    'Escolher a especialidade principal e mostrá-la em tudo, sem deixar de falar com toda a categoria':
+      { texto: 'Mostrar a especialidade principal em tudo, sem deixar de falar com toda a categoria', passos: ['Pegar a especialidade definida na estratégia', 'Destacar no site, nas redes e nas propostas', 'Manter a comunicação aberta a toda a categoria', 'Contar os contatos que citam a especialidade'] },
+    'Identificar uma tensão que o cliente vive na sociedade e colocar a marca do lado dele':
+      { texto: 'Mostrar na comunicação de que lado a marca está na tensão que o cliente vive', passos: ['Pegar a tensão e a posição definidas na estratégia', 'Expressar a posição em uma peça de marca', 'Publicar nos canais principais', 'Medir a reação do público'] },
+    'Escrever o objetivo principal do ano no formato "de X para Y até quando" e mostrar para toda a equipe':
+      { texto: 'Mostrar para toda a equipe o objetivo principal do ano, no formato "de X para Y até quando"', passos: ['Pegar o objetivo principal da estratégia', 'Escrever onde está hoje, aonde quer chegar e até quando', 'Mostrar para toda a equipe', 'Perguntar a 3 pessoas qual é o objetivo um mês depois'] },
+    'Dar nome à categoria que a empresa quer liderar e usar sempre o mesmo nome':
+      { texto: 'Usar sempre o mesmo nome para a categoria que a empresa quer liderar', passos: ['Pegar o nome da categoria definido na estratégia', 'Trocar os nomes diferentes que aparecem nos canais', 'Usar o mesmo nome no site, nas redes e nas propostas', 'Ver se os clientes passam a usar o nome ao pedir orçamento'] },
+    'Definir a identidade central da marca (de 2 a 4 ideias que não mudam) e usar como filtro para aprovar peças, parcerias e novos serviços':
+      { texto: 'Usar a identidade central como filtro para aprovar peças, parcerias e novos serviços', passos: ['Deixar a identidade central à vista de quem aprova', 'Conferir cada peça, parceria ou serviço novo contra ela', 'Recusar ou ajustar o que contradiz', 'Anotar o que foi recusado e por quê'] },
+    'Escolher a palavra que a marca quer ocupar na cabeça do cliente e repeti-la em tudo':
+      { texto: 'Repetir em tudo a palavra que a marca quer ocupar na cabeça do cliente', passos: ['Pegar a palavra definida na narrativa', 'Usar em título, site e atendimento', 'Conferir as peças do mês', 'Medir na pesquisa se ela aparece'] },
+  };
+  P.renomeadas = Object.assign(P.renomeadas || {}, Object.fromEntries(Object.entries(NOVO).map(([a, n]) => [a, n.texto])));
+  // a ficha da ação: título novo e passos de aplicação
+  P.acoes.forEach((a) => { const n = NOVO[a.texto]; if (n) { a.texto = n.texto; if (n.passos) a.passos = n.passos; } });
+  // tira e renomeia em todo o cérebro: listas das estratégias, modelos dos setores, focos, detalhes e pré-requisitos
+  const troca = (t) => (NOVO[t] ? NOVO[t].texto : t);
+  const vistos = new WeakSet();
+  const anda = (o) => {
+    if (!o || typeof o !== 'object' || vistos.has(o)) return; vistos.add(o);
+    if (Array.isArray(o)) {
+      for (let i = o.length - 1; i >= 0; i -= 1) {
+        const v = o[i];
+        if (typeof v === 'string') { if (SAI.has(v)) o.splice(i, 1); else o[i] = troca(v); }
+        else if (Array.isArray(v) && typeof v[4] === 'string' && SAI.has(v[4])) o.splice(i, 1); // linha de modelo de setor
+        else if (v && typeof v === 'object' && typeof v.texto === 'string' && SAI.has(v.texto)) o.splice(i, 1);
+        else { if (Array.isArray(v) && typeof v[4] === 'string') v[4] = troca(v[4]); anda(v); }
+      }
+      return;
+    }
+    Object.keys(o).forEach((k) => {
+      const v = o[k];
+      if (k === 'antes' && typeof v === 'string') { if (SAI.has(v)) delete o[k]; else o[k] = troca(v); return; }
+      if (SAI.has(k)) { delete o[k]; return; }
+      if (NOVO[k]) { o[NOVO[k].texto] = v; delete o[k]; }
+      if (typeof v === 'string') { const n = troca(v); if (n !== v) o[NOVO[k] ? NOVO[k].texto : k] = n; }
+      else if (typeof v !== 'function') anda(v);
+    });
+  };
+  anda(P);
+  // "Escolher contra quem é comparada" perdeu a oficina e a descrição pela necessidade (são da estratégia e da narrativa entregues):
+  // entram duas aplicações que já estão na biblioteca e executam a escolha da comparação
+  const ab = (P.abordagens || []).find((y) => y.curto === 'Escolher contra quem é comparada');
+  if (ab && ab.acoes) ['Mostrar ao lado do preço uma referência para o cliente comparar: o custo do problema ou o da alternativa que ele usa',
+    'Admitir na comunicação uma limitação honesta da empresa, ao lado do que ela faz de melhor',
+    'Tirar o preço como mensagem principal dos anúncios e mostrar o que a empresa faz melhor']
+    .forEach((t) => { if (P.acoes.some((x) => x.texto === t) && !ab.acoes.includes(t)) ab.acoes.push(t); });
+})();
