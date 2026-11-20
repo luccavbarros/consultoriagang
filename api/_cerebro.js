@@ -7275,3 +7275,7 @@
     return { frases, lidas: cs.length };
   };
 })();
+
+// Rodada 56 (leitura do livro sobre comportamento de compra dentro da loja): as 3 ações que saíram dele (corredores livres, repor os
+// mais vendidos, altura da prateleira) foram retiradas a pedido: são operação da loja, não crescimento da marca. O que o livro tem de
+// marca (itens que mais vendem no caminho principal, custo escondido da promoção) já estava no cérebro.
