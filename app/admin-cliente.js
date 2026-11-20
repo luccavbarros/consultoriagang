@@ -1032,7 +1032,8 @@
   const IDENTIDADE_INICIO = /^(Atualizar redes sociais com a nova identidade|Padronizar WhatsApp Business)/;
   // o consultor pode renomear uma ação da biblioteca para a linguagem do cliente; para o motor ela continua sendo a original
   // (já feita, pré-requisito cumprido, não volta a ser sugerida)
-  const acoesMotor = () => acoes.map((a) => (a.titulo_base ? { ...a, titulo: a.titulo_base } : a));
+  // e uma ação da biblioteca que mudou de título (P.renomeadas) continua sendo a mesma para o motor
+  const acoesMotor = () => acoes.map((a) => { const t = a.titulo_base || a.titulo; const n = (P.renomeadas || {})[t] || t; return n !== a.titulo ? { ...a, titulo: n } : a; });
   const montaUma = (m, ab, opt) => {
     const acoes = acoesMotor();
     // o setor é o do modelo escolhido (não o do cadastro): cada setor tem o seu plano, inclusive nas ações que executam a estratégia.
