@@ -179,6 +179,14 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
   .site-header__brand { gap: 182px; } /* the tagline sits well apart from the logo */
   .site-header .btn--gray { background: #fff; color: #000; font-size: 13px; }
   .site-header .btn--gray:hover { background: #d4d4d4; }
+  /* Windows: the blend mode turns off the system's text smoothing and the small header text looks blurry and heavy.
+     There the header does not blend: a small script (end of the page) reads whether the section behind it is light or dark
+     and the colors switch directly, which looks the same and keeps the text sharp */
+  .win .site-header { mix-blend-mode: normal; }
+  .win[data-cabeca="claro"] .site-header__tag, .win[data-cabeca="claro"] .site-header__login, .win[data-cabeca="claro"] .site-header__lang { color: #050505; }
+  .win[data-cabeca="claro"] .site-header img { filter: invert(1); }
+  .win[data-cabeca="claro"] .site-header .btn--gray { background: #050505; color: #fff; }
+  .win[data-cabeca="claro"] .site-header .btn--gray:hover { background: #2b2b2b; }
   /* arrival: the logo starts in the middle of the screen (set here, so it is there before the scripts load) and glides left (main.js) */
   .intro .site-header .site-header__bar { width: 100%; overflow: visible; }
   .intro .site-header__logo { transform: translateX(calc(50vw - var(--gutter) - 50px)); }
@@ -1748,6 +1756,38 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
       if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window) {
         new IntersectionObserver(([e]) => palco.classList.toggle('is-viva', e.isIntersecting), { rootMargin: '100px' }).observe(media);
       }
+    })();
+  </script>
+  <script>
+    // Windows: the header does not blend (see the CSS); here it reads the color of the section behind it and switches light/dark
+    (() => {
+      const ua = navigator.userAgentData ? navigator.userAgentData.platform : navigator.userAgent;
+      if (!/Windows|Win32|Win64/i.test(ua || '')) return;
+      const html = document.documentElement; html.classList.add('win');
+      const header = document.querySelector('.site-header'); if (!header) return;
+      const fundo = (el) => { // the first opaque background from the element up
+        for (let e = el; e && e !== document.documentElement; e = e.parentElement) {
+          const c = getComputedStyle(e).backgroundColor.match(/[\d.]+/g);
+          if (c && (c.length < 4 || +c[3] > 0.5)) return c.slice(0, 3).map(Number);
+        }
+        return getComputedStyle(document.body).backgroundColor.match(/[\d.]+/g).slice(0, 3).map(Number);
+      };
+      let pendente = false;
+      const le = () => {
+        pendente = false;
+        const r = header.getBoundingClientRect(); const y = r.top + r.height / 2;
+        const xs = [innerWidth * 0.25, innerWidth * 0.5, innerWidth * 0.75];
+        const lum = xs.map((x) => {
+          const el = document.elementsFromPoint(x, y).find((e) => !e.closest('.site-header, .top-blur'));
+          const [R, G, B] = el ? fundo(el) : [243, 243, 243];
+          return 0.2126 * R + 0.7152 * G + 0.0722 * B;
+        }).reduce((a, b) => a + b, 0) / xs.length;
+        html.dataset.cabeca = lum > 128 ? 'claro' : 'escuro';
+      };
+      const pede = () => { if (!pendente) { pendente = true; requestAnimationFrame(le); } };
+      addEventListener('scroll', pede, { passive: true }); addEventListener('resize', pede);
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', le); else le();
+      setInterval(pede, 400); // also covers the pinned and animated sections, which move without scrolling the page
     })();
   </script>
   <script src="i18n.js?v=12" defer></script> <!-- English version: runs before main.js -->
