@@ -89,8 +89,8 @@
     'Compreende o cenário completo.': 'Understands the whole picture.',
 
     // section 04
-    'O que fazemos': 'What we do',
-    'Aplicamos estratégia de marca ao seu marketing para que as pessoas compreendam o valor do que sua empresa oferece.': 'We apply brand strategy to your marketing so people understand the value of what your company offers.',
+    'Nossa metodologia': 'Our methodology',
+    'Com o Plano™, nossa metodologia de Brand-Led Growth, transformamos a estratégia da sua marca em ações de marketing que ajudam as pessoas a perceber o valor do que sua empresa oferece.': 'With Plano™, our Brand-Led Growth methodology, we turn your brand strategy into marketing actions that help people see the value of what your company offers.',
     'Diagnóstico': 'Diagnosis',
     'Entenda seu mercado': 'Understand your market',
     'Uma análise para entender como as pessoas percebem sua marca, como ela se posiciona diante dos concorrentes e onde estão as oportunidades de crescimento.': 'An analysis of how people perceive your brand, how it stands against competitors and where the growth opportunities are.',
