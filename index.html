@@ -45,6 +45,7 @@
   --font-label: "Hanken Grotesk", var(--font);
 
   --gutter: clamp(16px, 5.56vw, 80px);
+  --gutter: round(clamp(16px, 5.56vw, 80px), 1px); /* whole pixels: text that lands between pixels looks blurry on Windows (older browsers keep the line above) */
   --container: 1280px;
 }
 
@@ -107,6 +108,12 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   white-space: nowrap;
   border: 1px solid transparent;
   transition: background-color .3s ease, color .3s ease, border-color .3s ease;
+}
+/* the site uses the system font (SF on Apple). Windows has no SF and fell back to a web font that, at the small sizes of the
+   header and the buttons, comes out blurry and heavy there. On Windows those small labels use its own system font, drawn for
+   its screen, just as the Mac gets SF (the "win" class is set by a small script at the end of the page) */
+.win .btn, .win .site-header__tag, .win .site-header__login, .win .site-header__lang, .win .consent__actions button {
+  font-family: "Segoe UI Variable Text", "Segoe UI", var(--font);
 }
 /* label roll on hover: the text leaves upwards and a copy comes in from below (labels set up in main.js) */
 .roll { position: relative; display: block; overflow: hidden; margin: -.15em 0; }
