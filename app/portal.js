@@ -213,7 +213,7 @@
     D.encontros.forEach((e) => out.push({ grupo: 'Encontros', titulo: (TIPO_ENCONTRO[e.tipo] || 'Encontro') + ' · ' + U.quando(e.inicio), sub: (e.pauta || []).slice(0, 2).join(' · '), href: '#consultoria', extra: (e.decisoes || []).join(' ') }));
     const P = D.plataforma;
     if (P) {
-      if (P.posicionamento) out.push({ grupo: 'Sua marca', titulo: 'Posicionamento', sub: P.posicionamento.slice(0, 80) + '…', href: '#plataforma', extra: P.posicionamento });
+      if (P.posicionamento) out.push({ grupo: 'Sua marca', titulo: 'Posicionamento', sub: P.posicionamento.slice(0, 80) + '…', href: '#estrategia', extra: P.posicionamento });
       if (P.mensagem_central) out.push({ grupo: 'Sua marca', titulo: 'Mensagem central', sub: P.mensagem_central, href: '#plataforma' });
     }
     (D.objetivos || []).forEach((o) => o.titulo && out.push({ grupo: 'Sua marca', titulo: U.cap(o.titulo), sub: 'Objetivo · Estratégia', href: '#estrategia' }));
@@ -2335,8 +2335,7 @@
       ['Quem a marca é', facN + ' de ' + FACETAS.length, 'facetas definidas'],
       ['Exemplos aprovados', String(exN), exN ? 'para usar de referência' : 'aparecem quando houver']]));
 
-    if (P.posicionamento) out.push(el('section', { class: 'focus focus--single', 'aria-labelledby': 'pos-t' },
-      el('div', 'focus__text', el('p', { class: 'eyebrow', id: 'pos-t' }, 'Posicionamento'), el('p', 'focus__title focus__title--long', P.posicionamento))));
+    // o posicionamento é escolha estratégica: fica na tela Estratégia
 
     // o que nunca muda: o filtro para decidir se uma peça, parceria ou serviço combina com a marca
     const IC = D.identidade_central || [];
@@ -2682,7 +2681,8 @@
       p.proxima_revisao_estrategia ? 'próxima revisão em ' + U.mesAno(p.proxima_revisao_estrategia) : null].filter(Boolean).join(' · '),
     'Estratégia', 'O desafio da marca, como vamos vencê-lo e\u00a0as\u00a0escolhas\u00a0que\u00a0fizemos. Toda ação do plano sai daqui.',
     p.estrategia_pdf ? baixar(p.estrategia_pdf, 'Baixar plano completo (PDF)') : null)];
-    if (!D.objetivos.length && !D.escolhas.length && !p.como_vencer && !p.desafio && !D.condicoes.length) return out.concat(vazio());
+    const posic = D.plataforma && D.plataforma.posicionamento;
+    if (!D.objetivos.length && !D.escolhas.length && !p.como_vencer && !p.desafio && !D.condicoes.length && !posic) return out.concat(vazio());
     const conf = D.condicoes.filter((c) => c.status === 'se_confirma').length;
     out.push(faixa([
       D.objetivos.length ? ['Objetivos', String(D.objetivos.length)] : null,
@@ -2698,6 +2698,8 @@
           passo(1, 'O desafio', p.desafio ? el('p', 'cerne__t', p.desafio) : el('p', 'cerne__vazio', 'O consultor ainda vai escrever.')),
           passo(2, 'Como vamos vencer', p.como_vencer ? el('p', 'cerne__t', p.como_vencer) : el('p', 'cerne__vazio', 'O consultor ainda vai escrever.')))));
     }
+    if (posic) out.push(el('section', { class: 'focus focus--single', 'aria-labelledby': 'pos-t' },
+      el('div', 'focus__text', el('p', { class: 'eyebrow', id: 'pos-t' }, 'Posicionamento'), el('p', 'focus__title focus__title--long', posic))));
 
     if (D.objetivos.length) {
       // cartão de objetivo (como os cartões de indicador do designer): nível com ícone, o objetivo e, no rodapé, como medimos

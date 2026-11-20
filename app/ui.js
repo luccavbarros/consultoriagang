@@ -478,7 +478,7 @@
     document.body.append(pop);
     const sem = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
     let itens = []; let ativo = 0;
-    const paginas = () => [...nav.querySelectorAll('.side__link')].map((a) => ({ grupo: 'Páginas', titulo: a.querySelector('span').textContent, href: a.getAttribute('href'), onclick: null }));
+    const paginas = () => [...nav.querySelectorAll('.side__link')].filter((a) => !a.closest('[hidden]')).map((a) => ({ grupo: 'Páginas', titulo: a.querySelector('span').textContent, href: a.getAttribute('href'), onclick: null }));
     const posiciona = () => {
       const r = box.getBoundingClientRect();
       pop.style.left = Math.round(r.left) + 'px'; pop.style.top = Math.round(r.bottom + 6) + 'px';

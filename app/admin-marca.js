@@ -608,6 +608,10 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       { k: 'estrategia_aprovada_em', label: 'Aprovada em', type: 'date' }, { k: 'proxima_revisao_estrategia', label: 'Próxima revisão', type: 'date' },
       { k: 'estrategia_pdf', label: 'Plano completo (PDF)', type: 'file', accept: 'application/pdf' }] }],
     [testeEstrategia, {}],
+    [ficha, { icone: 'forma', titulo: 'Posicionamento', nota: 'A escolha de para quem a marca é e contra o quê ela compete. A Narrativa traduz isto em mensagem.', tabela: 'plataformas', pasta: 'plataforma', fields: [
+      { k: 'posicionamento', label: 'Posicionamento', type: 'textarea', rows: 3, full: true, placeholder: 'Para [quem], [marca] é [o quê] que [benefício], porque [prova], ao contrário de [alternativa].',
+        dica: 'Comece pela alternativa real: o que o cliente faria se a marca não existisse. Depois, o que só a marca tem, o valor disso e quem se importa muito com esse valor. Por último, escolha a categoria em que ela vira a escolha óbvia.' },
+    ] }],
     [lista, { icone: 'alvo', tom: 'gang', titulo: 'Objetivos', nota: 'Negócio (com o número em destaque), Marca\u00a0e\u00a0Comunicação\u00a0(notar,\u00a0acreditar,\u00a0sentir). As ações se ligam a eles.', tabela: 'objetivos', fields: [
       { k: 'titulo', label: 'Objetivo', full: true, type: 'preset', presets: 'objetivos', fill: { nivel: 'nivel' }, dicaId: 'objetivo',
         dica: 'No objetivo de negócio, diga de onde para onde e até quando (ex.: faturamento de R$ 80 mil para R$ 110 mil por mês até dezembro de 2027). Uma meta sem linha de chegada não orienta a equipe.' },
@@ -662,8 +666,6 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   montar('pane-plataforma', [
     [ficha, { icone: 'forma', titulo: 'Plataforma de marca', tabela: 'plataformas', pasta: 'plataforma', fields: [
       { k: 'entregue_em', label: 'Entregue em', type: 'date' }, { k: 'pdf', label: 'Plataforma em PDF', type: 'file', accept: 'application/pdf' },
-      { k: 'posicionamento', label: 'Posicionamento', type: 'textarea', rows: 3, placeholder: 'Para [quem], [marca] é [o quê] que [benefício], porque [prova], ao contrário de [alternativa].',
-        dica: 'Comece pela alternativa real: o que o cliente faria se a marca não existisse. Depois, o que só a marca tem, o valor disso e quem se importa muito com esse valor. Por último, escolha a categoria em que ela vira a escolha óbvia.' },
       { k: 'mensagem_central', label: 'Mensagem central', full: true, type: 'preset', presets: 'mensagensCentrais',
         dica: 'Uma ideia só, que o cliente entende em segundos. Teste: troque o nome da marca pelo de um concorrente. Se a frase continuar verdadeira, ainda não é a mensagem.' }] }],
     [lista, { icone: 'alvo', largo: true, titulo: 'Identidade central', nota: 'De 2 a 4 ideias que não mudam com o tempo. Teste de cada uma: se a marca não tivesse isto, ainda seria ela? Pelo menos uma que se vê e uma que se sente, e nenhuma que qualquer concorrente diria.', tabela: 'identidade_central', max: 4,
@@ -725,12 +727,13 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     ['diagnostico', 'Diagnóstico', 'O ponto de partida e a comparação com os concorrentes', async () => {
       const [d, i] = await Promise.all([sb.from('diagnosticos').select('empresa_id').eq('empresa_id', id).maybeSingle(), sb.from('impressoes').select('id').limit(1).eq('empresa_id', id)]);
       return !!d.data && (i.data || []).length > 0; }],
-    ['estrategia', 'Estratégia', 'Objetivos, onde jogamos e o que acompanhamos', async () => {
-      const [o, e] = await Promise.all([sb.from('objetivos').select('id').limit(1).eq('empresa_id', id), sb.from('escolhas').select('id').limit(1).eq('empresa_id', id)]);
-      return (o.data || []).length > 0 && (e.data || []).length > 0; }],
-    ['plataforma', 'Narrativa', 'Posicionamento, mensagem central e tom de voz', async () => {
-      const r = await sb.from('plataformas').select('posicionamento, mensagem_central').eq('empresa_id', id).maybeSingle();
-      return !!(r.data && r.data.posicionamento && r.data.mensagem_central); }],
+    ['estrategia', 'Estratégia', 'Posicionamento, objetivos, onde jogamos e o que acompanhamos', async () => {
+      const [o, e, pl] = await Promise.all([sb.from('objetivos').select('id').limit(1).eq('empresa_id', id), sb.from('escolhas').select('id').limit(1).eq('empresa_id', id),
+        sb.from('plataformas').select('posicionamento').eq('empresa_id', id).maybeSingle()]);
+      return (o.data || []).length > 0 && (e.data || []).length > 0 && !!(pl.data && pl.data.posicionamento); }],
+    ['plataforma', 'Narrativa', 'Mensagem central e tom de voz', async () => {
+      const r = await sb.from('plataformas').select('mensagem_central').eq('empresa_id', id).maybeSingle();
+      return !!(r.data && r.data.mensagem_central); }],
     ['identidade', 'Identidade visual', 'Logos, cores e fontes', async () => {
       const [c, t] = await Promise.all([sb.from('cores').select('id').limit(1).eq('empresa_id', id), sb.from('tipografias').select('id').limit(1).eq('empresa_id', id)]);
       return (c.data || []).length > 0 && (t.data || []).length > 0; }],
