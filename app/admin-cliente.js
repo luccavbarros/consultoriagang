@@ -376,7 +376,7 @@
     const [{ data }, { data: em }, { data: abertas }] = await Promise.all([
       sb.from('pagamentos').select('*').eq('empresa_id', id).order('pago_em', { ascending: false }).limit(12),
       sb.from('empresas').select('*').eq('id', id).maybeSingle(),
-      sb.from('cobrancas').select('*').eq('empresa_id', id).eq('status', 'aberta').gte('criada_em', new Date(Date.now() - 3 * 864e5).toISOString()),
+      sb.from('cobrancas').select('*').eq('empresa_id', id).eq('status', 'aberta').gte('criada_em', new Date(Date.now() - 3 * 864e5).toISOString()).order('criada_em', { ascending: false }).limit(1),
     ]);
     const METODO = { cartao: 'Cartão', pix: 'Pix' };
     const ult = (data || [])[0];
@@ -397,7 +397,7 @@
     const [{ data }, { data: em }, { data: abertas }] = await Promise.all([
       sb.from('pagamentos').select('*').eq('empresa_id', id).order('pago_em', { ascending: false }).limit(12),
       sb.from('empresas').select('*').eq('id', id).maybeSingle(),
-      sb.from('cobrancas').select('*').eq('empresa_id', id).eq('status', 'aberta').gte('criada_em', new Date(Date.now() - 3 * 864e5).toISOString()),
+      sb.from('cobrancas').select('*').eq('empresa_id', id).eq('status', 'aberta').gte('criada_em', new Date(Date.now() - 3 * 864e5).toISOString()).order('criada_em', { ascending: false }).limit(1),
     ]);
     const METODO = { cartao: 'Cartão', pix: 'Pix' };
     const ult = (data || [])[0];

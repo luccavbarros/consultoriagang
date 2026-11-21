@@ -2965,7 +2965,7 @@
   const quadro = (n, l, cls) => el('div', 'pag-res__t' + (cls ? ' ' + cls : ''), el('p', 'pag-res__n', n), el('p', 'pag-res__l', l));
   const historicoPagamentos = (lista, abertas) => {
     const linhas = [];
-    (abertas || []).forEach((c) => linhas.push(el('li', 'row',
+    (abertas || []).slice(0, 1).forEach((c) => linhas.push(el('li', 'row',
       el('div', 'row__main', el('p', 'row__eyebrow', U.diaAno(String(c.criada_em).slice(0, 10)) + ' · ' + METODO_NOME[c.metodo]),
         el('p', 'row__title', (soAcesso ? 'Plano ' + CICLO_NOME[c.ciclo].toLowerCase() : 'Mensalidade') + ' · ' + reaisC(c.valor / 100)),
         el('p', 'row__text', 'Aguardando o pagamento.')),
