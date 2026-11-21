@@ -87,18 +87,27 @@ const criar = async (req, res, body) => {
   const cob = await um(c); if (!cob || !cob.id) return fail(res, 500, 'Não foi possível iniciar o pagamento. Tente de novo.');
   const descricao = consultoria ? 'Consultoria de marca GANG · mensalidade' : 'Acesso à plataforma GANG · ' + CICLOS[ciclo][0];
   const callback = { successUrl: SITE + '/cliente#assinatura', autoRedirect: true };
+  // a volta para o site depois de pagar exige o domínio cadastrado no Asaas (Minha conta > Informações > Site);
+  // sem ele, o Asaas recusa o pedido: tenta de novo sem a volta, e o cliente paga do mesmo jeito
+  const criaNoAsaas = async (caminho, dados) => {
+    let r = await as(caminho, { method: 'POST', body: JSON.stringify({ ...dados, callback }) });
+    let out = await r.json().catch(() => ({}));
+    if (!r.ok && /dom[ií]nio|callback|site/i.test(erroAsaas(out, r))) {
+      r = await as(caminho, { method: 'POST', body: JSON.stringify(dados) });
+      out = await r.json().catch(() => ({}));
+    }
+    return { r, out };
+  };
   let url = null; let ref = null; let erro = null;
   if (metodo === 'pix') {
     // Pix: uma cobrança do ciclo inteiro, vencendo amanhã
-    const r = await as('/payments', { method: 'POST', body: JSON.stringify({ customer: cli.id, billingType: 'PIX', value: centavos / 100, dueDate: hoje(1),
-      description: descricao, externalReference: 'cob:' + cob.id, callback }) });
-    const out = await r.json().catch(() => ({}));
+    const { r, out } = await criaNoAsaas('/payments', { customer: cli.id, billingType: 'PIX', value: centavos / 100, dueDate: hoje(1),
+      description: descricao, externalReference: 'cob:' + cob.id });
     if (r.ok && out.invoiceUrl) { url = out.invoiceUrl; ref = out.id; } else erro = erroAsaas(out, r);
   } else {
     // cartão: a assinatura do ciclo; a primeira cobrança é hoje, e a página dela é onde o cliente cadastra o cartão
-    const r = await as('/subscriptions', { method: 'POST', body: JSON.stringify({ customer: cli.id, billingType: 'CREDIT_CARD', value: centavos / 100, nextDueDate: hoje(0),
-      cycle: CICLOS[ciclo][1], description: descricao, externalReference: 'emp:' + empresaId + ':' + ciclo, callback }) });
-    const out = await r.json().catch(() => ({}));
+    const { r, out } = await criaNoAsaas('/subscriptions', { customer: cli.id, billingType: 'CREDIT_CARD', value: centavos / 100, nextDueDate: hoje(0),
+      cycle: CICLOS[ciclo][1], description: descricao, externalReference: 'emp:' + empresaId + ':' + ciclo });
     if (r.ok && out.id) {
       ref = out.id;
       const l = await as('/subscriptions/' + out.id + '/payments');
