@@ -3090,7 +3090,7 @@
     const col = el('div', 'ass-col', renova, soAcesso ? null : planos);
     const grade = el('div', 'ass-grade', col, historico);
     carregar().then(() => grade.classList.toggle('is-uma', !col.querySelector('section')));
-    return [head('Conta', 'Meu plano', soAcesso ? 'Seu plano, até quando vale e os comprovantes de pagamento.' : 'Sua consultoria, a mensalidade e os comprovantes de pagamento.'),
+    return [head('Conta', 'Meu plano', soAcesso ? ['Seu plano, até quando vale', el('br'), 'e os comprovantes de pagamento.'] : ['Sua consultoria, a mensalidade', el('br'), 'e os comprovantes de pagamento.']),
       el('section', { class: 'pag-res', 'aria-label': 'Resumo do plano' }, ...quadros),
       soAcesso ? planos : null, grade];
   };
