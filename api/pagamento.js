@@ -2,6 +2,7 @@
    - POST { acao: 'criar', ciclo, metodo, documento }   o cliente logado escolhe o plano. Pix: uma cobrança do ciclo inteiro.
        Cartão: uma assinatura (o Asaas cobra sozinho a cada ciclo). Nos dois casos devolve a página de pagamento do Asaas
        (invoiceUrl): o cartão é digitado lá, nunca passa por aqui.
+   - POST { acao: 'cancelar' }                          o cliente cancela a renovação automática do cartão (o acesso pago continua até o fim).
    - POST com o cabeçalho asaas-access-token            o aviso do Asaas. Não confia no que chega: busca a cobrança no Asaas
        e só libera o acesso se ela estiver paga, uma vez por cobrança.
    Variáveis no Vercel: ASAAS_API_KEY (a chave do ambiente de teste primeiro), ASAAS_WEBHOOK_TOKEN (uma senha longa qualquer, a
@@ -62,6 +63,17 @@ const criar = async (req, res, body) => {
   const centavos = Number((cfg.precos || {})[ciclo]);
   if (!(centavos > 0)) return fail(res, 500, 'Preço do plano não configurado. Fale com a GANG.');
   const empresaId = quem.perfil.empresa_id;
+  // com a renovação automática ativa, o cartão já cobra sozinho: trocar de plano pede cancelar antes (evita cobrar duas vezes)
+  const atual = await um(await sb('/rest/v1/empresas?select=asaas_assinatura&id=eq.' + empresaId));
+  if (atual && atual.asaas_assinatura) return fail(res, 400, 'Sua assinatura no cartão já renova sozinha. Para trocar de plano, cancele a renovação em Assinatura.');
+  // assinaturas no cartão começadas e nunca pagas: removidas no Asaas, para ele não seguir gerando cobranças
+  if (metodo === 'cartao') {
+    const velhas = await (await sb('/rest/v1/cobrancas?select=id,link_id&empresa_id=eq.' + empresaId + '&metodo=eq.cartao&status=eq.aberta')).json().catch(() => []);
+    for (const v of Array.isArray(velhas) ? velhas : []) {
+      if (v.link_id && /^sub_/.test(v.link_id)) await as('/subscriptions/' + v.link_id, { method: 'DELETE' });
+      await sb('/rest/v1/cobrancas?id=eq.' + v.id, { method: 'PATCH', body: JSON.stringify({ status: 'cancelada' }) });
+    }
+  }
   const cli = await clienteAsaas(empresaId, quem.perfil, quem.user.email, body.documento);
   if (cli.error) return res.status(cli.pedeDocumento ? 400 : 502).json({ error: cli.error, pedeDocumento: !!cli.pedeDocumento });
 
@@ -128,10 +140,35 @@ const aviso = async (req, res, body) => {
   const lib = await sb('/rest/v1/rpc/liberar_pagamento_pagarme', { method: 'POST',
     body: JSON.stringify({ p_empresa: empresa, p_ciclo: ciclo, p_valor: Number(pay.value) || 0, p_ref: pay.id }) });
   if (!lib.ok) return fail(res, 500, 'Não foi possível liberar o acesso.'); // o Asaas tenta de novo
+  // o que o cliente vê na aba Assinatura: a forma de pagamento e o comprovante do Asaas
+  await sb('/rest/v1/pagamentos?ref_pagarme=eq.' + encodeURIComponent(pay.id), { method: 'PATCH',
+    body: JSON.stringify({ metodo: pay.billingType === 'PIX' ? 'pix' : pay.billingType === 'CREDIT_CARD' ? 'cartao' : null,
+      comprovante_url: pay.transactionReceiptUrl || pay.invoiceUrl || null }) });
+  // pago no cartão: a assinatura fica guardada (renovação automática ativa), para o cliente poder cancelar
+  if (pay.subscription && pay.billingType === 'CREDIT_CARD') {
+    await sb('/rest/v1/empresas?id=eq.' + empresa, { method: 'PATCH', body: JSON.stringify({ asaas_assinatura: pay.subscription, assinatura_ciclo: ciclo }) });
+  }
   // a cobrança da plataforma: a do Pix pelo código; a da assinatura, a aberta mais recente desta empresa no mesmo ciclo
   const alvo = cobId ? 'id=eq.' + cobId : 'empresa_id=eq.' + empresa + '&ciclo=eq.' + ciclo + '&status=eq.aberta';
   await sb('/rest/v1/cobrancas?' + alvo, { method: 'PATCH', body: JSON.stringify({ status: 'paga', paga_em: new Date().toISOString() }) });
   return res.status(200).json({ ok: true, liberado: ciclo });
+};
+
+// cancelar a renovação automática: confere que a assinatura é desta empresa e a remove no Asaas; o acesso pago continua até o fim
+const cancelar = async (req, res) => {
+  const quem = await cliente(req); if (quem.error) return fail(res, 403, quem.error);
+  const empresaId = quem.perfil.empresa_id;
+  const emp = await um(await sb('/rest/v1/empresas?select=asaas_cliente,asaas_assinatura&id=eq.' + empresaId));
+  if (!emp || !emp.asaas_assinatura) return fail(res, 400, 'Não há renovação automática ativa.');
+  const s = await as('/subscriptions/' + emp.asaas_assinatura);
+  const sub = await s.json().catch(() => ({}));
+  if (s.ok && sub.customer && sub.customer !== emp.asaas_cliente) return fail(res, 403, 'Esta assinatura não é da sua empresa.');
+  if (s.ok && !sub.deleted) {
+    const d = await as('/subscriptions/' + emp.asaas_assinatura, { method: 'DELETE' });
+    if (!d.ok) return fail(res, 502, 'O Asaas não cancelou agora. Tente de novo em instantes.');
+  }
+  await sb('/rest/v1/empresas?id=eq.' + empresaId, { method: 'PATCH', body: JSON.stringify({ asaas_assinatura: null, assinatura_ciclo: null }) });
+  return res.status(200).json({ ok: true });
 };
 
 module.exports = async (req, res) => {
@@ -142,5 +179,6 @@ module.exports = async (req, res) => {
   if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { return fail(res, 400, 'Pedido inválido.'); } }
   if (req.headers['asaas-access-token'] !== undefined || body.event) return aviso(req, res, body);
   if (body.acao === 'criar') return criar(req, res, body);
+  if (body.acao === 'cancelar') return cancelar(req, res);
   return fail(res, 400, 'Ação desconhecida.');
 };
