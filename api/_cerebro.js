@@ -7364,3 +7364,44 @@
     'Tirar o preço como mensagem principal dos anúncios e mostrar o que a empresa faz melhor']
     .forEach((t) => { if (P.acoes.some((x) => x.texto === t) && !ab.acoes.includes(t)) ab.acoes.push(t); });
 })();
+
+// ===================== Rodada 58 — o que o consultor decide não fazer e o espaço físico chegam ao plano =====================
+// "O que decidimos não fazer" (aba Ações) e "Deixamos de lado" (Estratégia) eram só registro. Agora os itens da lista pronta que
+// contradizem ações do plano tiram essas ações (ligação feita item a item, não por palavras parecidas). Itens escritos à mão
+// continuam só como registro. E quando o briefing diz que o cliente não tem espaço físico de atendimento, saem as ações de loja.
+(function () {
+  const P = window.GangPresets; if (!P || !P.acoes) return;
+  const PROMO = ['Fazer uma ação de ativação com prazo (oferta ou condição especial)', 'Oferecer uma condição melhor nos horários e dias de pouco movimento'];
+  const M = {
+    'Promoções de preço frequentes': PROMO,
+    'Dar desconto para fechar no fim do mês': [PROMO[0]],
+    'Competir com quem joga só no preço': PROMO,
+    'Mudar o preço com frequência': [PROMO[1]],
+    'Trocar anúncios de marca por promoções de preço: com o tempo, a publicidade deixa o cliente menos sensível a preço e a promoção o deixa mais': PROMO,
+    'Cliente que só busca preço': PROMO, // de "Deixamos de lado"
+  };
+  const existe = (t) => P.acoes.some((a) => a.texto === t);
+  P.naoFazerExclui = Object.fromEntries(Object.entries(M).map(([k, v]) => [k, v.filter(existe)]).filter(([, v]) => v.length));
+  // ações que só existem com um espaço onde o cliente é atendido (loja, clínica, escritório, salão)
+  P.acoesDeEspacoFisico = [
+    'Trocar a fachada / ambiente para a nova identidade',
+    'Revisar a vitrine e a entrada: em 3 segundos dá para saber o que a loja vende e de quem é?',
+    'Deixar os itens que mais vendem fáceis de achar no caminho principal da loja, e os de impulso perto do caixa',
+    'Revisar o ambiente onde o cliente espera e é atendido: limpeza, luz, som, conforto e a marca à vista',
+    'Fazer degustação, demonstração ou teste no ponto de venda',
+    'Colocar os ativos da marca no balcão, no caixa e na entrega, onde o cliente está decidindo',
+    'Criar uma marca sensorial no espaço: um cheiro, uma música ou um material que seja sempre o mesmo',
+    'Deixar cestas ou sacolas ao alcance na entrada e ao longo da loja',
+    'Tirar das primeiras passadas da loja as ofertas e avisos importantes e colocá-los onde o cliente já desacelerou',
+    'Virar placas e ofertas para o caminho que o cliente realmente faz, e não para a porta principal',
+    'Medir em cada área da loja quantos clientes passam, quantos param e quantos compram, e mudar o que não para ninguém',
+    'Treinar a equipe da loja a abordar com uma pergunta útil, e não com "posso ajudar?"',
+  ].filter(existe);
+  // para o motor: a partir da lista do cliente, as ações que não entram
+  P.excluidasDoCliente = (descartadas, deixados, semEspaco) => {
+    const s = new Set();
+    [...(descartadas || []), ...(deixados || [])].forEach((t) => (P.naoFazerExclui[t] || []).forEach((a) => s.add(a)));
+    if (semEspaco) P.acoesDeEspacoFisico.forEach((a) => s.add(a));
+    return s;
+  };
+})();
