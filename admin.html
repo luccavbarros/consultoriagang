@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="app/app.css?v=25" />
   <link rel="stylesheet" href="app/portal.css?v=65" />
-  <link rel="stylesheet" href="app/tema.css?v=169" />
+  <link rel="stylesheet" href="app/tema.css?v=170" />
   <script src="app/entrada.js?v=2"></script>
 </head>
 <body class="portal-body">
@@ -30,6 +30,7 @@
         <ul aria-labelledby="g1">
           <li><a class="side__link" href="#geral" data-view-link="geral" aria-current="page"><span>Visão geral</span><span class="side__ind is-hot" id="side-pend" hidden></span></a></li>
           <li><a class="side__link" href="#novo" id="side-new" data-view-link="novo"><span>Novo cliente</span></a></li>
+          <li id="side-cons-li" hidden><a class="side__link" href="#consultores" data-view-link="consultores"><span>Consultores</span></a></li>
           <li><a class="side__link" href="#aprendizado" data-view-link="aprendizado"><span>O que funciona</span></a></li>
           <li><a class="side__link" href="#perfil" data-view-link="perfil"><span>Seu perfil</span></a></li>
         </ul>
@@ -138,6 +139,20 @@ Com menos de 5 casos é sorte, não evidência.</p>
       <div id="apr-corpo"><p class="msg">Carregando…</p></div>
     </section>
 
+    <section class="app-section" aria-labelledby="t-cons" id="consultores" data-view="consultores" hidden>
+      <h1 class="title-xl" id="t-cons">Consultores</h1>
+      <p class="small">Cada consultor só vê e trabalha nos clientes que você direcionar para ele (na lista de clientes, em Visão geral).<br />Ele não cadastra clientes nem vê o contrato, os valores e os pagamentos. Você continua vendo tudo.</p>
+      <form class="card" id="cons-form" novalidate>
+        <div class="new-client">
+          <div><label class="label" for="cons-nome">Nome</label><input class="field" id="cons-nome" required maxlength="120" /></div>
+          <div><label class="label" for="cons-email">E-mail</label><input class="field" id="cons-email" type="email" required /></div>
+          <div><label class="label" for="cons-pass">Senha inicial</label><input class="field" id="cons-pass" minlength="8" required /></div>
+        </div>
+        <div class="new-client__foot"><button class="btn btn--light btn--sm" type="submit">Cadastrar consultor</button><p class="msg" id="cons-msg" role="status" aria-live="polite"></p></div>
+      </form>
+      <ul class="rows" id="cons-lista"></ul>
+    </section>
+
     <section class="app-section" aria-labelledby="t-me" id="perfil" data-view="perfil" hidden>
       <h1 class="title-xl" id="t-me">Seu perfil</h1>
       <form class="card" id="me-card" novalidate>
@@ -169,6 +184,6 @@ Com menos de 5 casos é sorte, não evidência.</p>
   <script src="app/ui.js?v=45"></script>
   <script src="app/cerebro.js?v=1"></script>
   <script src="app/saude.js?v=19"></script>
-  <script src="app/admin.js?v=25"></script>
+  <script src="app/admin.js?v=26"></script>
 </body>
 </html>
