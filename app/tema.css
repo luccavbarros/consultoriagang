@@ -2351,3 +2351,10 @@ html.side-abrindo .side__plan .badge { display: none; }
 .screen--assinatura .rows .row { align-items: flex-start; }
 .pag-res__t.is-ok .pag-res__n { color: var(--ok); }
 .screen--assinatura .pag-res__t.is-warn .pag-res__n { color: var(--warn); }
+/* histórico: etiqueta e botão do mesmo tamanho, colados no alto da linha, na altura da data */
+.screen--assinatura .row__actions { align-items: flex-start; }
+.screen--assinatura .row__actions .btn { min-height: 0; height: auto; padding-block: 4px; line-height: 18px; }
+.screen--assinatura .row__actions .chip { line-height: 18px; }
+/* a cobrança pendente: contorno em volta da linha, ligando a etiqueta e o botão à mensalidade */
+.screen--assinatura .rows .row--pendente { border: 1px solid var(--line-2); border-radius: var(--r-sm); padding: 12px 14px; margin-bottom: 8px; }
+.screen--assinatura .rows .row--pendente + .row { border-top: 0; }

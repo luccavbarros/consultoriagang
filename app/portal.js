@@ -2963,14 +2963,16 @@
   const CICLO_NOME = { mensal: 'Mensal', semestral: 'Semestral', anual: 'Anual' };
   const METODO_NOME = { cartao: 'Cartão', pix: 'Pix' };
   const quadro = (n, l, cls) => el('div', 'pag-res__t' + (cls ? ' ' + cls : ''), el('p', 'pag-res__n', n), el('p', 'pag-res__l', l));
-  const historicoPagamentos = (lista, abertas) => {
+  // a pendência: etiqueta e o botão de pagar, na própria linha da cobrança (que ganha um contorno para mostrar que vão juntos)
+  const acoesPendente = (c) => el('div', 'row__actions', chip('todo', 'Pendente'),
+    c.link_url ? el('a', { class: 'btn btn--ghost btn--sm', href: c.link_url, target: '_blank', rel: 'noopener' }, 'Pagar') : null);
+  const historicoPagamentos = (lista, abertas, topo) => {
     const linhas = [];
-    (abertas || []).slice(0, 1).forEach((c) => linhas.push(el('li', 'row',
+    (abertas || []).slice(0, 1).forEach((c) => linhas.push(el('li', 'row row--pendente',
       el('div', 'row__main', el('p', 'row__eyebrow', U.diaAno(String(c.criada_em).slice(0, 10)) + ' · ' + METODO_NOME[c.metodo]),
         el('p', 'row__title', (soAcesso ? 'Plano ' + CICLO_NOME[c.ciclo].toLowerCase() : 'Mensalidade') + ' · ' + reaisC(c.valor / 100)),
         el('p', 'row__text', 'Aguardando o pagamento.')),
-      el('div', 'row__actions', chip('todo', 'Pendente'),
-        c.link_url ? el('a', { class: 'btn btn--ghost btn--sm', href: c.link_url, target: '_blank', rel: 'noopener' }, 'Pagar') : null))));
+      topo ? null : acoesPendente(c))));
     lista.forEach((p) => linhas.push(el('li', 'row',
       el('div', 'row__main', el('p', 'row__eyebrow', U.diaAno(p.pago_em) + (p.metodo ? ' · ' + METODO_NOME[p.metodo] : p.ref_pagarme ? '' : ' · Registrado pela GANG')),
         el('p', 'row__title', (soAcesso ? 'Plano ' + (CICLO_NOME[p.ciclo] || p.ciclo).toLowerCase() : 'Mensalidade') + (p.valor != null ? ' · ' + reaisC(p.valor) : '')),
@@ -3081,7 +3083,8 @@
         quadro(vence ? U.diaAno(vence) : '—', vence ? 'Próxima fatura · ' + prazo.toLowerCase() : 'Próxima fatura', dias != null && dias <= 5 ? (dias < 0 ? 'is-hot' : 'is-warn') : ''),
         pagamento];
     // lado a lado: à esquerda o que fazer (renovação ou pagar), à direita o histórico; no Só acesso, os planos ficam acima, na largura toda
-    const historico = el('section', { class: 'box', 'aria-labelledby': 'hist-pag-t' }, el('h2', { class: 'box__title', id: 'hist-pag-t' }, 'Pagamentos'), hist,
+    const historico = el('section', { class: 'box', 'aria-labelledby': 'hist-pag-t' },
+      el('h2', { class: 'box__title', id: 'hist-pag-t' }, 'Pagamentos'), hist,
       soAcesso ? null : el('p', 'box__note', 'Contrato desde ' + (ini ? U.diaAno(ini) : '—') + ',', el('br'), 'com término previsto em ' + (fim ? U.diaAno(fim) : '—') + '.'),
       el('p', 'box__note', 'O comprovante abre no Asaas.', el('br'), 'Dúvidas sobre cobrança? Fale com a GANG.'));
     const col = el('div', 'ass-col', renova, soAcesso ? null : planos);
