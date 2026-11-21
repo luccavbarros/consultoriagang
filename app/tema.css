@@ -2325,3 +2325,11 @@ html.side-abrindo .side__plan .badge { display: none; }
 .pag-res__t.is-warn .pag-res__n { color: var(--warn); }
 .pag-res__t.is-hot .pag-res__n { color: var(--bad); }
 .planos-ac__doc { display: grid; gap: 6px; max-width: 360px; margin-bottom: 12px; }
+/* aba Assinatura do cliente */
+/* ícone de cartão: Assinatura do cliente e Pagamentos do painel */
+:root { --i-card: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2.5' y='5' width='19' height='14' rx='2'/%3E%3Cpath d='M2.5 10h19'/%3E%3Cpath d='M6.5 15h4'/%3E%3C/svg%3E"); }
+.side__link[href="#assinatura"], .side__link[href="#pagamentos"] { --ico: var(--i-card); }
+.screen--assinatura .box:empty, .screen--assinatura div:empty { display: none; }
+.ass-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
+.ass-acoes[hidden] { display: none; }
+.pag-res__t.is-off .pag-res__n { color: var(--ganggrey); }

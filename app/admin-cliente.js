@@ -368,11 +368,26 @@
     if (!$('p-acesso-ate').value) pv.acesso_ate = null;
     const vence = U.acessoVence(pv); const dias = U.acessoDiasRestantes(pv);
     const pago = !!p.acesso_ciclo && !!p.acesso_ate;
-    $('acesso-sit').replaceChildren(!vence ? '' : el('p', 'acesso-sit__t' + (dias < 0 ? ' is-off' : dias <= 10 ? ' is-warn' : ''),
+    const linhaSit = (!vence ? '' : el('p', 'acesso-sit__t' + (dias < 0 ? ' is-off' : dias <= 10 ? ' is-warn' : ''),
       dias < 0 ? 'Pagamento pendente desde ' + U.diaAno(vence) + '. O cliente vê só a identidade visual e a narrativa.'
         : (pago ? 'Pago até ' + U.diaAno(vence) + ' (' + CICLO_T[p.acesso_ciclo] + ')' : 'Grátis até ' + U.diaAno(vence)) + (dias <= 10 ? ' · termina em ' + (dias === 0 ? 'hoje' : dias + (dias === 1 ? ' dia' : ' dias')) : '') + '.'));
-    const { data } = await sb.from('pagamentos').select('*').eq('empresa_id', id).order('pago_em', { ascending: false }).limit(12);
-    $('pag-hist').replaceChildren(...(data || []).map((g) => el('li', null, U.dia(g.pago_em) + ' · ' + U.cap(CICLO_T[g.ciclo]) + (g.valor != null ? ' · ' + U.reais(g.valor) : '') + ' · até ' + U.diaAno(g.liberado_ate))));
+    $('acesso-sit').replaceChildren(linhaSit);
+    // o mesmo que o cliente vê na aba Assinatura do portal e o que aparece em Pagamentos no painel
+    const [{ data }, { data: em }, { data: abertas }] = await Promise.all([
+      sb.from('pagamentos').select('*').eq('empresa_id', id).order('pago_em', { ascending: false }).limit(12),
+      sb.from('empresas').select('*').eq('id', id).maybeSingle(),
+      sb.from('cobrancas').select('*').eq('empresa_id', id).eq('status', 'aberta').gte('criada_em', new Date(Date.now() - 3 * 864e5).toISOString()),
+    ]);
+    const METODO = { cartao: 'Cartão', pix: 'Pix' };
+    const ult = (data || [])[0];
+    const renova = em && em.asaas_assinatura ? 'Renovação automática no cartão ativa' + (vence ? ': cobra de novo em ' + U.diaAno(vence) : '') + '.'
+      : ult && ult.metodo ? 'Sem renovação automática. O cliente renova pelo portal, em Assinatura.' : null;
+    $('acesso-sit').replaceChildren(...[linhaSit || null, renova ? el('p', 'acesso-sit__t', renova) : null,
+      ...(abertas || []).map((c) => el('p', 'acesso-sit__t is-warn', 'Pagamento iniciado em ' + U.dia(String(c.criada_em).slice(0, 10)) + ' pelo ' + METODO[c.metodo] + ' · plano ' + CICLO_T[c.ciclo] + ', aguardando.'))].filter(Boolean));
+    $('pag-hist').replaceChildren(...(data || []).map((g) => el('li', null, U.diaAno(g.pago_em) + ' · ' + U.cap(CICLO_T[g.ciclo]) + (g.valor != null ? ' · ' + U.reais(g.valor) : '')
+      + ' · ' + (g.metodo ? METODO[g.metodo] : g.ref_pagarme ? 'Online' : 'Registro manual') + ' · até ' + U.diaAno(g.liberado_ate),
+      g.comprovante_url ? [' · ', el('a', { href: g.comprovante_url, target: '_blank', rel: 'noopener' }, 'Comprovante')] : null)));
+    if (me.principal && !$('pag-ver-todos')) $('pag-hist').after(el('a', { class: 'link', id: 'pag-ver-todos', href: 'admin.html#pagamentos' }, 'Ver todos os clientes em Pagamentos'));
   };
   ['p-tipo', 'p-gratis', 'p-acesso-ate', 'p-inicio'].forEach((f) => $(f).addEventListener('change', desenhaAcesso));
   document.querySelectorAll('#fset-acesso [data-ciclo]').forEach((b) => b.addEventListener('click', async () => {

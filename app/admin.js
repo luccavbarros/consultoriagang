@@ -318,24 +318,44 @@
       el('p', 'row__title', (nome[c.empresa_id] || 'Cliente') + ' · ' + U.cap(c.ciclo) + ' · ' + U.reais(c.valor / 100))),
       el('div', 'row__actions', el('span', 'badge ' + (c.status === 'paga' ? 'is-ok' : c.status === 'aberta' ? 'is-mid' : 'is-off'), ST[c.status] || c.status)))) : [el('li', 'clients__empty', 'Nenhuma cobrança ainda.')]));
   };
-  // quem está pagando: todos os clientes com acesso à plataforma, a situação de cada um e o que vence logo
+  // quem está pagando: todos os clientes (Só acesso e consultoria), com o mesmo que aparece no Contrato de cada um
+  // e na aba Assinatura/Contrato do portal do cliente
   const quemPaga = async (cobs, nome) => {
-    const [{ data: pls }, { data: pags }] = await Promise.all([
-      sb.from('planos').select('*').eq('tipo', 'acesso'),
+    const [{ data: pls }, { data: pags }, { data: emps }] = await Promise.all([
+      sb.from('planos').select('*'),
       sb.from('pagamentos').select('*').order('pago_em', { ascending: false }),
+      sb.from('empresas').select('*'),
     ]);
+    const renovaAuto = new Set((emps || []).filter((e) => e.asaas_assinatura).map((e) => e.id));
     const CIC_T = { mensal: 'Mensal', semestral: 'Semestral', anual: 'Anual' };
-    const linhas = (pls || []).map((p) => {
-      const ult = (pags || []).find((g) => g.empresa_id === p.empresa_id);
-      const cob = (cobs || []).find((c) => c.empresa_id === p.empresa_id && c.status === 'paga');
+    const hojeD = new Date().toLocaleDateString('sv-SE');
+    const diasAte = (v) => Math.round((new Date(String(v).slice(0, 10) + 'T12:00:00') - new Date(hojeD + 'T12:00:00')) / 864e5);
+    const plano = Object.fromEntries((pls || []).map((p) => [p.empresa_id, p]));
+    const linhas = (emps || []).map((e) => {
+      const p = plano[e.id] || { empresa_id: e.id };
+      const ult = (pags || []).find((g) => g.empresa_id === e.id);
+      const cob = (cobs || []).find((c) => c.empresa_id === e.id && c.status === 'paga');
+      const parado = p.status === 'encerrado' ? ['Encerrado', 'is-off', 9] : p.status === 'pausado' ? ['Pausado', 'is-mid', 8] : null;
+      if (p.tipo !== 'acesso') {
+        // consultoria: o pagamento é combinado com a GANG; vale a mensalidade e a próxima fatura do Contrato
+        const dias = p.proxima_fatura ? diasAte(p.proxima_fatura) : null;
+        const sit = parado || (!p.inicio ? ['Sem contrato', 'is-mid', 7] : dias == null ? ['Ativo', 'is-ok', 2]
+          : dias < 0 ? ['Fatura de ' + U.diaAno(p.proxima_fatura) + ' em aberto', 'is-hot', 0]
+          : dias <= 15 ? ['Fatura em ' + dias + (dias === 1 ? ' dia' : ' dias'), 'is-warn', 1] : ['Ativo', 'is-ok', 2]);
+        return { e, nome: nome[e.id] || e.nome || 'Cliente', plano: 'Consultoria' + (p.mensalidade ? ' · ' + U.reais(p.mensalidade) + '/mês' : ''),
+          forma: ult ? (ult.metodo ? (ult.metodo === 'pix' ? 'Pix' : 'Cartão') : 'Registro manual') : 'Combinado com a GANG',
+          sit, data: p.proxima_fatura ? 'Fatura ' + U.diaAno(p.proxima_fatura) : '—', dias, ult };
+      }
       const dias = U.acessoDiasRestantes(p); const vence = U.acessoVence(p);
       const gratis = !ult; // nunca pagou: ainda no período grátis (ou vencido sem pagar)
-      const sit = p.status === 'encerrado' ? ['Encerrado', 'is-off', 9] : p.status === 'pausado' ? ['Pausado', 'is-mid', 8]
-        : dias == null ? ['Sem data', 'is-mid', 7] : dias < 0 ? ['Vencido há ' + -dias + (dias === -1 ? ' dia' : ' dias'), 'is-hot', 0]
-        : dias <= 15 ? ['Vence em ' + dias + (dias === 1 ? ' dia' : ' dias'), 'is-warn', 1] : [gratis ? 'Período grátis' : 'Em dia', 'is-ok', 2];
-      const forma = cob ? (cob.metodo === 'pix' ? 'Pix' : 'Cartão (assinatura)') : ult ? (ult.ref_pagarme ? 'Pagamento online' : 'Registro manual') : '—'; // ref_pagarme guarda o código do Asaas
-      return { p, nome: nome[p.empresa_id] || 'Cliente', plano: CIC_T[p.acesso_ciclo] || (gratis ? 'Grátis' : '—'), forma, sit, vence, dias };
-    }).sort((a, b) => a.sit[2] - b.sit[2] || (a.dias ?? 999) - (b.dias ?? 999));
+      const sit = parado || (dias == null ? ['Sem data', 'is-mid', 7] : dias < 0 ? ['Vencido há ' + -dias + (dias === -1 ? ' dia' : ' dias'), 'is-hot', 0]
+        : dias <= 15 ? ['Vence em ' + dias + (dias === 1 ? ' dia' : ' dias'), 'is-warn', 1] : [gratis ? 'Período grátis' : 'Em dia', 'is-ok', 2]);
+      // a mesma leitura da aba Assinatura do cliente: cartão com renovação automática, Pix, ou registro manual
+      const metodo = (ult && ult.metodo) || (cob && cob.metodo);
+      const forma = renovaAuto.has(e.id) ? 'Cartão · renova sozinho' : metodo ? (metodo === 'pix' ? 'Pix' : 'Cartão · sem renovação') : ult ? (ult.ref_pagarme ? 'Online' : 'Registro manual') : '—'; // ref_pagarme guarda o código do Asaas
+      return { e, nome: nome[e.id] || e.nome || 'Cliente', plano: 'Só acesso · ' + (CIC_T[p.acesso_ciclo] || (gratis ? 'grátis' : '—')).toLowerCase(), forma, sit,
+        data: vence ? 'Acesso ' + U.diaAno(vence) : '—', dias, ult };
+    }).sort((a, b) => a.sit[2] - b.sit[2] || (a.dias ?? 999) - (b.dias ?? 999) || a.nome.localeCompare(b.nome));
     const mes = new Date().toISOString().slice(0, 7);
     const receita = (pags || []).filter((g) => String(g.pago_em).slice(0, 7) === mes).reduce((t, g) => t + (Number(g.valor) || 0), 0);
     const conta = (f) => linhas.filter(f).length;
@@ -345,11 +365,13 @@
       tile(String(conta((x) => x.sit[2] === 1)), 'vencem em até 15 dias', conta((x) => x.sit[2] === 1) ? 'is-warn' : ''),
       tile(String(conta((x) => x.sit[2] === 0)), 'vencidos', conta((x) => x.sit[2] === 0) ? 'is-hot' : ''),
       tile(U.reais(receita), 'recebido em ' + U.nomeMes(mes)));
-    const cab = el('thead', null, el('tr', null, ['Cliente', 'Plano', 'Forma', 'Situação', 'Acesso até'].map((h) => el('th', { scope: 'col' }, h))));
+    const cab = el('thead', null, el('tr', null, ['Cliente', 'Plano', 'Forma', 'Situação', 'Vence', 'Último pagamento'].map((h) => el('th', { scope: 'col' }, h))));
     const corpo = el('tbody', null, linhas.length ? linhas.map((x) => el('tr', null,
-      el('th', { scope: 'row' }, el('a', { href: 'admin-cliente.html?id=' + x.p.empresa_id + '#plano' }, x.nome)),
+      el('th', { scope: 'row' }, el('a', { href: 'admin-cliente.html?id=' + x.e.id + '#plano', title: 'Abrir o Contrato' }, x.nome)),
       el('td', null, x.plano), el('td', null, x.forma), el('td', null, el('span', 'badge ' + x.sit[1], x.sit[0])),
-      el('td', null, x.vence ? U.diaAno(x.vence) : '—'))) : [el('tr', null, el('td', { colspan: 5 }, 'Nenhum cliente com acesso à plataforma ainda.'))]);
+      el('td', null, x.data),
+      el('td', null, x.ult ? [U.diaAno(x.ult.pago_em) + (x.ult.valor != null ? ' · ' + U.reais(x.ult.valor) : ''),
+        x.ult.comprovante_url ? [' · ', el('a', { href: x.ult.comprovante_url, target: '_blank', rel: 'noopener' }, 'Comprovante')] : null] : '—'))) : [el('tr', null, el('td', { colspan: 6 }, 'Nenhum cliente ainda.'))]);
     $('pag-tab').replaceChildren(cab, corpo);
   };
   if ($('pag-form')) $('pag-form').addEventListener('submit', async (ev) => {
