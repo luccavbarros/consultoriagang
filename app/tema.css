@@ -344,6 +344,7 @@ a.kpi:hover { background: #1f1f1f; }
 .side__link:hover::before, .side__link[aria-current="page"]::before { content: ""; color: #fff; background: currentColor; }
 .side__link[aria-current="page"]::before { position: static; top: auto; bottom: auto; width: 16px; }
 .side__link[href="#novo"] { --ico: var(--i-userplus); }
+.side__link[href="#consultores"] { --ico: var(--i-users); }
 .side__link[href="#perfil"] { --ico: var(--i-user); }
 .side__link[href^="admin-cliente"] { --ico: var(--i-building); }
 .side__link[href="#fechamento"] { --ico: var(--i-calcheck); }
@@ -2305,3 +2306,7 @@ html.side-abrindo .side__plan .badge { display: none; }
 .bf-hip__i.is-desc .bf-hip__txt > span:first-child { color: var(--ganggrey); text-decoration: line-through; }
 .bf-hip__add { display: grid; gap: 8px; }
 @media (max-width: 640px) { .bf-hip__i { flex-wrap: wrap; } .bf-hip__acts, .bf-hip__conf { width: 100%; justify-content: flex-start; } }
+
+/* consultor de cada cliente, na lista da conta principal */
+.cons-de { display: inline-flex; align-items: center; gap: 6px; }
+.cons-de .field { padding: 5px 10px; font-size: 12px; width: auto; }

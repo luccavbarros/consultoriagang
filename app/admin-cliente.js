@@ -91,6 +91,12 @@
   });
 
   // ===== seções pelo menu lateral (lembradas no endereço: #plano, #acessos…) =====
+  // consultor (não a conta principal): sem a aba Contrato, onde ficam o plano contratado, os valores e os pagamentos
+  if (!me.principal) {
+    const c = document.querySelector('[data-tab="plano"]'); if (c) c.closest('li').remove();
+    const pane = $('pane-plano'); if (pane) pane.hidden = true; // fica na página, escondido: o resto do painel ainda lê os campos do plano
+    if (location.hash === '#plano') history.replaceState(null, '', '#fechamento');
+  }
   const links = [...document.querySelectorAll('[data-tab]')];
   const show = (focus) => {
     let name = location.hash.slice(1);

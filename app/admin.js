@@ -7,6 +7,10 @@
   const me = await guard('admin');
   if (!me) return;
 
+  // conta principal: vê e faz tudo. Consultor: só os clientes direcionados a ele, sem cadastrar clientes nem ver o financeiro
+  const principal = !!me.principal;
+  if (!principal) { const li = $('side-new') && $('side-new').closest('li'); if (li) li.hidden = true; }
+  else $('side-cons-li').hidden = false;
   $('who').textContent = me.name || me.email;
   U.avatar($('me-dot'), me.name || me.email, me.foto_url);
 
@@ -25,7 +29,7 @@
   U.buscaFonte(() => clientesBusca.map((e) => ({ grupo: 'Clientes', titulo: e.nome, href: 'admin-cliente.html?id=' + e.id })));
   const load = async () => {
     const [emp, planos, perfis, sug, ped, enc, msg, resp] = await Promise.all([
-      sb.from('empresas').select('id, nome, created_at, setor, logo_url').order('nome'),
+      sb.from('empresas').select('*').order('nome'),
       sb.from('planos').select('empresa_id, inicio, duracao_meses, status, tipo'),
       sb.from('profiles').select('id, name, email, active, empresa_id').eq('role', 'client'),
       sb.from('sugestoes').select('empresa_id, texto, criada_em, tipo').eq('status', 'nova'),
@@ -43,6 +47,22 @@
     say($('list-msg'), '');
 
     const plano = Object.fromEntries(planos.data.map((p) => [p.empresa_id, p]));
+    // os consultores (a principal vê todos; o consultor só se vê)
+    const { data: equipe } = await sb.from('profiles').select('id, name, email, active, principal').eq('role', 'admin');
+    const nomeCons = (cid) => { const c = (equipe || []).find((x) => x.id === cid); return c ? (c.id === me.id ? 'Você' : c.name || c.email) : 'Sem consultor'; };
+    const direciona = async (eid, cid) => {
+      const r1 = await sb.from('empresas').update({ consultor_id: cid || null }).eq('id', eid);
+      const r2 = await sb.from('planos').update({ consultor_id: cid || null }).eq('empresa_id', eid);
+      say($('list-msg'), r1.error || r2.error ? 'Não foi possível direcionar. Rodou o supabase/portal.sql?' : 'Consultor do cliente atualizado.', r1.error || r2.error ? 'error' : 'ok');
+    };
+    const consDe = (e) => {
+      if (!principal) return null;
+      const s = el('select', { class: 'field field--sm cons-sel', 'aria-label': 'Consultor de ' + e.nome },
+        (equipe || []).filter((c) => c.active !== false).map((c) => el('option', { value: c.id }, c.id === me.id ? 'Você' : (c.name || c.email))),
+        el('option', { value: '' }, 'Sem consultor'));
+      s.value = e.consultor_id || ''; s.addEventListener('change', () => direciona(e.id, s.value));
+      return el('label', 'cons-de', el('span', 'small', 'Consultor'), s);
+    };
     const pend = {};
     // urgente: peças no prazo de revisão, pedidos de remarcar e mensagens; ideias e dúvidas esperam o encontro
     [ped, enc, msg].forEach((r) => r.data.forEach((x) => { pend[x.empresa_id] = (pend[x.empresa_id] || 0) + 1; }));
@@ -96,7 +116,7 @@
       const status = !p ? 'Sem plano' : p.status !== 'ativo' ? el('span', 'badge selo-plano' + sit[0], sit[1]) : p.tipo === 'acesso' ? 'Só acesso à marca' : 'Mês ' + mesDoPlano(p) + ' de ' + p.duracao_meses;
       list.append(el('li', 'client client--link',
         el('a', { class: 'client__name client__name--logo', href: 'admin-cliente.html?id=' + e.id }, logo(e), el('span', null, e.nome)),
-        el('div', 'client__company', status, p && p.status === 'ativo' ? el('span', 'badge selo-plano' + sit[0], sit[1]) : null),
+        el('div', 'client__company', status, p && p.status === 'ativo' ? el('span', 'badge selo-plano' + sit[0], sit[1]) : null, consDe(e)),
         el('div', 'client__mail', acessos.length ? acessos.length + (acessos.length > 1 ? ' acessos' : ' acesso') : 'Sem acesso'),
         pend[e.id] ? el('span', 'badge is-warn', pend[e.id] + (pend[e.id] > 1 ? ' pedidos' : ' pedido')) : el('span'),
       ));
@@ -241,8 +261,46 @@
         el('p', 'small', (P.acoes || []).length + ' ações na biblioteca · ' + usadas.size + ' já usadas em planos · ' + nunca + ' nunca usadas · ' + semEvid + ' com menos de 5 avaliações (ainda sem evidência).')));
   };
 
+  // ===== consultores (só a conta principal): cadastrar, ver quantos clientes cada um tem, desativar e trocar a senha =====
+  const consultores = async () => {
+    if (!principal) return;
+    if (!$('cons-pass').value) $('cons-pass').value = randomPass();
+    const [{ data: equipe }, { data: emps }] = await Promise.all([
+      sb.from('profiles').select('id, name, email, active, principal').eq('role', 'admin').order('name'),
+      sb.from('empresas').select('id, nome, consultor_id'),
+    ]);
+    const outros = (equipe || []).filter((c) => !c.principal);
+    $('cons-lista').replaceChildren(...(outros.length ? outros.map((c) => {
+      const deles = (emps || []).filter((e) => e.consultor_id === c.id);
+      const msg = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite' });
+      return el('li', 'row', el('div', 'row__main',
+        el('p', 'row__eyebrow', (c.active === false ? 'Desativado · ' : '') + c.email),
+        el('p', 'row__title', c.name || c.email),
+        el('p', 'row__text', deles.length ? deles.length + (deles.length === 1 ? ' cliente: ' : ' clientes: ') + deles.map((e) => e.nome).join(', ') : 'Nenhum cliente ainda. Direcione em Visão geral, na lista de clientes.'), msg),
+        el('div', 'row__actions',
+          el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: async () => {
+            const nova = randomPass();
+            try { await adminApi({ action: 'set_password', id: c.id, password: nova }); say(msg, 'Nova senha: ' + nova + ' (copie e envie ao consultor)', 'ok'); } catch (err) { say(msg, err.message, 'error'); } } }, 'Nova senha'),
+          el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: async () => {
+            if (c.active !== false && !confirm('Desativar ' + (c.name || c.email) + '? Ele deixa de entrar, e os clientes dele continuam com você.')) return;
+            try { await adminApi({ action: 'set_active', id: c.id, active: c.active === false }); consultores(); } catch (err) { say(msg, err.message, 'error'); } } }, c.active === false ? 'Ativar' : 'Desativar')));
+    }) : [el('li', 'clients__empty', 'Nenhum consultor ainda.')]));
+  };
+  if ($('cons-form')) $('cons-form').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const nome = $('cons-nome').value.trim(); const email = $('cons-email').value.trim(); const senha = $('cons-pass').value;
+    if (!nome || !email || senha.length < 8) return say($('cons-msg'), 'Preencha nome, e-mail e uma senha de pelo menos 8 caracteres.', 'error');
+    say($('cons-msg'), 'Cadastrando…');
+    try {
+      await adminApi({ action: 'create', role: 'consultor', name: nome, email, password: senha });
+      say($('cons-msg'), 'Consultor cadastrado. Envie a ele o e-mail e a senha: ' + senha, 'ok');
+      $('cons-nome').value = ''; $('cons-email').value = ''; $('cons-pass').value = randomPass(); consultores(); load();
+    } catch (err) { say($('cons-msg'), err.message, 'error'); }
+  });
+
   // ===== telas separadas pelo menu: visão geral, novo cliente, seu perfil =====
-  const ROTULO = { geral: 'Visão geral', novo: 'Novo cliente', aprendizado: 'O que funciona', perfil: 'Seu perfil' };
+  const ROTULO = principal ? { geral: 'Visão geral', novo: 'Novo cliente', consultores: 'Consultores', aprendizado: 'O que funciona', perfil: 'Seu perfil' }
+    : { geral: 'Visão geral', aprendizado: 'O que funciona', perfil: 'Seu perfil' };
   const mostraTela = (foco) => {
     let v = location.hash.slice(1); if (!ROTULO[v]) v = 'geral';
     document.querySelectorAll('[data-view]').forEach((n) => {
@@ -253,6 +311,7 @@
     document.querySelectorAll('[data-view-link]').forEach((a) => { if (a.dataset.viewLink === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     $('crumb').textContent = 'Painel / ' + ROTULO[v];
     if (v === 'aprendizado') aprendizado();
+    if (v === 'consultores') consultores();
     if (v === 'novo') {
       if ($('nc-setor').options.length < 2) U.setorOpcoes($('nc-setor'), 'Escolha o setor');
       if (!$('nc-pass').value) $('nc-pass').value = randomPass();
@@ -278,7 +337,7 @@
     submit.disabled = true; say($('nc-msg'), 'Criando…');
     let empresaId = null;
     try {
-      const e = await sb.from('empresas').insert({ nome: empresa, setor: $('nc-setor').value }).select('id').single();
+      const e = await sb.from('empresas').insert({ nome: empresa, setor: $('nc-setor').value, consultor_id: me.id }).select('id').single();
       if (e.error) throw new Error('Não foi possível criar a empresa.');
       empresaId = e.data.id;
       const p = await sb.from('planos').insert({
