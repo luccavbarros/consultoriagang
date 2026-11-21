@@ -7,7 +7,8 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id } }) => {
   const P = window.GangPresets || {};
   const box = document.getElementById('pane-briefing'); if (!box) return;
   let dados = {};
-  window.GangBriefing = { dados: () => dados };
+  // o Diagnóstico também escreve no briefing (hipótese descartada, o que confirmou a causa): passa por aqui para salvar do mesmo jeito
+  window.GangBriefing = { dados: () => dados, set: (k, v) => set(k, v) };
 
   // ===== salvar sozinho =====
   const estado = el('span', 'bf-salvo', '');

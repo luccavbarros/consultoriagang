@@ -417,7 +417,6 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   // ===== Da cascata: o briefing (app/admin-briefing.js) sugere; o consultor adiciona com um clique. Nada entra sozinho =====
   const BF = () => (window.GangBriefing && window.GangBriefing.dados()) || {};
   const comTitulo = (xs, t) => { xs.titulo = t; return xs; };
-  const bfCausas = () => comTitulo((BF().obstaculos || []).slice(), 'Hipóteses do briefing: adicione as que a pesquisa e a comparação confirmarem');
   const bfConcorrentes = () => comTitulo((BF().concorrentes || []).filter((c) => c && c.nome).map((c) => ({ t: c.nome, row: { marca_nome: c.nome } })), 'Concorrentes citados no briefing');
   const bfFatores = (k) => () => comTitulo((BF()[k] || []).filter((f) => f && f.texto).map((f) => ({ t: f.texto + (f.posicao ? ' · ' + (POS_T[f.posicao] || '') : ''), row: { texto: f.texto, posicao: f.posicao || null } })),
     'Do briefing (a leitura do consultor): confira com a pesquisa antes de adicionar');
@@ -435,22 +434,72 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       : 'Faturamento ' + pct + '% maior até ' + quando + ', medido pelos números do mês';
     return comTitulo([{ t, row: { titulo: t, nivel: 'negocio', destaque: '+' + pct + '%' } }], 'Da ambição e dos números do briefing');
   };
-  // o diagnóstico com o briefing ao lado: cada hipótese do consultor, confirmada ou ainda a confirmar
+  // ===== As causas que o plano ataca: as hipóteses do briefing são confirmadas ou descartadas aqui, com um clique =====
+  // A causa confirmada vai para a mesma tabela de sempre (o portal, a Estratégia e o motor leem dela). O que confirmou e o que foi
+  // descartado ficam no briefing. Sem briefing (clientes antigos), o "+ Causa" faz o mesmo que o cartão de antes.
   const hipotesesBriefing = async (mount) => {
     mount.classList.add('is-largo');
-    const B = BF(); const hip = B.obstaculos || [];
+    const P = window.GangPresets || {};
+    const B = BF(); const hip = B.obstaculos || []; const desc = B.hipDescartadas || []; const evid = B.evidencias || {};
     const fat = [...(B.motivadores || []), ...(B.discriminadores || [])].filter((f) => f && f.texto && f.posicao && f.posicao !== 'entrega');
-    if (!hip.length && !fat.length) { mount.replaceChildren(); mount.hidden = true; return; }
-    mount.hidden = false;
-    const [{ data: cs }, { data: fs }] = await Promise.all([sb.from('causas').select('texto').eq('empresa_id', id), sb.from('fatores').select('texto, posicao').eq('empresa_id', id)]);
-    const tem = (t) => (cs || []).some((c) => c.texto === t);
-    const st = (ok) => el('span', 'badge ' + (ok ? 'is-ok' : 'is-mid'), ok ? 'Confirmada' : 'A confirmar');
-    const linhas = hip.map((t) => el('li', 'bf-hip__i', el('span', null, t), st(tem(t))))
-      .concat(fat.map((f) => { const r = (fs || []).find((x) => x.texto === f.texto);
-        return el('li', 'bf-hip__i', el('span', null, f.texto + ' · o consultor leu: ' + (POS_T[f.posicao] || '').toLowerCase()), r ? el('span', 'badge ' + (r.posicao === f.posicao ? 'is-ok' : 'is-warn'), r.posicao === f.posicao ? 'Confirmada' : 'A pesquisa mostrou: ' + (POS_T[r.posicao] || '—').toLowerCase()) : st(false)); }));
-    mount.replaceChildren(el('div', 'ed-card bf-hip', el('div', 'ed-head', tile('pulso', 'gang'), el('div', 'ed-head__txt', el('h3', 'ed-head__t', 'O que o briefing levantou'),
-      el('p', 'ed-head__n', 'As hipóteses do encontro de início. Confirme com a pesquisa e a comparação antes de adicionar; o que a pesquisa contrariar vira conversa com o cliente.'))),
-      el('ul', 'bf-hip__l', linhas), el('a', { class: 'btn btn--ghost btn--sm', href: '#briefing' }, 'Abrir o briefing')));
+    const [{ data: cs }, { data: fs }] = await Promise.all([sb.from('causas').select('*').eq('empresa_id', id).order('ordem'), sb.from('fatores').select('texto, posicao').eq('empresa_id', id)]);
+    const causas = cs || [];
+    const msg = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite' });
+    const avisa = () => { document.dispatchEvent(new CustomEvent('gang:marca-salva', { detail: { tabela: 'causas' } })); hipotesesBriefing(mount); };
+    const salvaBf = (k, v) => window.GangBriefing && window.GangBriefing.set && window.GangBriefing.set(k, v);
+    const insere = async (t, nota) => {
+      const r = await sb.from('causas').insert({ empresa_id: id, texto: t, ordem: causas.reduce((m, x) => Math.max(m, x.ordem || 0), 0) + 1 });
+      if (r.error) return say(msg, 'Não foi possível salvar a causa.', 'error');
+      if (nota) salvaBf('evidencias', { ...(BF().evidencias || {}), [t]: nota });
+      if ((BF().hipDescartadas || []).includes(t)) salvaBf('hipDescartadas', BF().hipDescartadas.filter((x) => x !== t));
+      avisa();
+    };
+    const tira = async (c) => { if (!confirm('Tirar a causa “' + c.texto + '”?')) return; await sb.from('causas').delete().eq('id', c.id); avisa(); };
+    // confirmar: abre um campo curto e opcional com o que confirmou (a pesquisa, a comparação, um número)
+    const confirma = (t, li) => {
+      const inp = el('input', { class: 'field', placeholder: 'O que confirmou (opcional). Ex.: pesquisa, 18% lembram da marca' });
+      const ok = el('button', { class: 'btn btn--light btn--sm', type: 'button', onclick: () => insere(t, inp.value.trim()) }, 'Confirmar');
+      li.querySelector('.bf-hip__acts').replaceWith(el('div', 'bf-hip__conf', inp, ok));
+      inp.focus(); inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') ok.click(); });
+    };
+    const pend = hip.filter((t) => !causas.some((c) => c.texto === t) && !desc.includes(t));
+    const linhas = [
+      // confirmadas: as causas do diagnóstico (vindas do briefing ou não)
+      ...causas.map((c) => el('li', 'bf-hip__i', el('div', 'bf-hip__txt', el('span', null, c.texto),
+        evid[c.texto] ? el('span', 'bf-hip__ev', 'Confirmou: ' + evid[c.texto]) : hip.includes(c.texto) ? el('span', 'bf-hip__ev', 'Hipótese do briefing') : null),
+        el('div', 'bf-hip__acts', el('span', 'badge is-ok', 'Confirmada'), el('button', { class: 'bf-tag__x', type: 'button', 'aria-label': 'Tirar a causa', title: 'Tirar', onclick: () => tira(c) }, '×')))),
+      // a confirmar: as hipóteses do briefing que ainda não viraram causa
+      ...pend.map((t) => { const li = el('li', 'bf-hip__i is-pend', el('div', 'bf-hip__txt', el('span', null, t), el('span', 'bf-hip__ev', 'Hipótese do briefing · a confirmar')),
+        el('div', 'bf-hip__acts', el('button', { class: 'btn btn--light btn--sm', type: 'button', onclick: () => confirma(t, li) }, 'Confirmar'),
+          el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => { salvaBf('hipDescartadas', [...(BF().hipDescartadas || []), t]); setTimeout(() => hipotesesBriefing(mount), 700); } }, 'Descartar')));
+        return li; }),
+      // descartadas: ficam à vista, são o argumento da conversa ("você achava que era isso; a pesquisa mostrou outra coisa")
+      ...desc.filter((t) => hip.includes(t)).map((t) => el('li', 'bf-hip__i is-desc', el('div', 'bf-hip__txt', el('span', null, t), el('span', 'bf-hip__ev', 'Descartada pela pesquisa')),
+        el('div', 'bf-hip__acts', el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => { salvaBf('hipDescartadas', BF().hipDescartadas.filter((x) => x !== t)); setTimeout(() => hipotesesBriefing(mount), 700); } }, 'Voltar a considerar')))),
+      // a leitura dos fatores no briefing, comparada com o que a pesquisa registrou
+      ...fat.map((f) => { const r = (fs || []).find((x) => x.texto === f.texto);
+        return el('li', 'bf-hip__i', el('div', 'bf-hip__txt', el('span', null, f.texto), el('span', 'bf-hip__ev', 'Fator · o consultor leu: ' + (POS_T[f.posicao] || '').toLowerCase())),
+          el('div', 'bf-hip__acts', r ? el('span', 'badge ' + (r.posicao === f.posicao ? 'is-ok' : 'is-warn'), r.posicao === f.posicao ? 'Confirmado' : 'A pesquisa mostrou: ' + (POS_T[r.posicao] || '—').toLowerCase()) : el('span', 'badge is-mid', 'A confirmar'))); }),
+    ];
+    // + causa que a pesquisa revelou: a mesma lista da biblioteca de antes, ou escrita
+    const lista = P.causas || []; const grupos = [...new Set(lista.map((x) => x.grupo))];
+    const sel = el('select', { class: 'field', 'aria-label': 'Causa que a pesquisa revelou' }, el('option', { value: '' }, '+ Causa que a pesquisa revelou…'),
+      grupos.map((g) => el('optgroup', { label: g }, lista.filter((x) => x.grupo === g && !causas.some((c) => c.texto === x.texto)).map((x) => el('option', { value: x.texto }, x.texto)))),
+      el('option', { value: '__outro' }, 'Outro… (escrever)'));
+    const outro = el('input', { class: 'field', placeholder: 'Escreva a causa', hidden: true });
+    sel.addEventListener('change', () => { if (sel.value === '__outro') { outro.hidden = false; outro.focus(); sel.value = ''; return; } if (sel.value) insere(sel.value, ''); });
+    outro.addEventListener('keydown', (e) => { if (e.key === 'Enter' && outro.value.trim()) insere(outro.value.trim(), ''); });
+    // as causas que costumam vir com a frase do Diagnóstico (a sugestão do cartão antigo continua)
+    const daFrase = (await causasDaFrase()).filter((t) => !causas.some((c) => c.texto === t) && !hip.includes(t));
+    const sugFrase = daFrase.length ? el('div', 'ed-sug', el('p', 'ed-sug__t', daFrase.titulo || 'Sugestões'),
+      el('ul', 'ed-sug__l', daFrase.map((t) => el('li', null, el('span', null, t), el('button', { class: 'ed-sug__add', type: 'button', onclick: () => insere(t, '') }, 'Adicionar'))))) : null;
+    mount.replaceChildren(el('div', 'ed-card bf-hip', el('div', 'ed-head', tile('alvo', 'gang'), el('div', 'ed-head__txt',
+      el('h3', 'ed-head__t', 'As causas que o plano ataca', el('span', 'ed-n', String(causas.length))),
+      el('p', 'ed-head__n', hip.length ? 'As hipóteses do briefing: confirme o que a pesquisa e a comparação mostraram, descarte o que não se sustentou. Só as confirmadas vão para a Estratégia e para o cliente.'
+        : 'Sem briefing para este cliente: adicione as causas que o diagnóstico mostrou.'))),
+      linhas.length ? el('ul', 'bf-hip__l', linhas) : el('p', 'ed-vazio', 'Nenhuma causa ainda.'),
+      el('div', 'bf-hip__add', sel, outro), sugFrase, msg,
+      hip.length ? null : el('a', { class: 'btn btn--ghost btn--sm', href: '#briefing' }, 'Fazer o briefing')));
   };
   // a estratégia com o briefing ao lado: ambição, recursos e para quem
   const briefingNaEstrategia = async (mount) => {
@@ -526,8 +575,6 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
 
   montar('pane-diagnostico', [
     [hipotesesBriefing, {}],
-    // primeiro as causas que o cliente relatou; delas sai a sugestão da frase do Diagnóstico
-    [lista, { icone: 'alvo', largo: true, titulo: 'As causas que o plano ataca', nota: 'Marque o que o cliente relatou na reunião. As\u00a0frases\u00a0que\u00a0essas\u00a0causas\u00a0sustentam\u00a0aparecem\u00a0abaixo.', tabela: 'causas', fields: [{ k: 'texto', label: 'Causa', req: true, full: true, type: 'preset', presets: 'causas' }], resumo: (r) => [r.texto], sugere: async () => { const h = bfCausas(); return h.length ? h : causasDaFrase(); } }],
     [ficha, { icone: 'pulso', titulo: 'Diagnóstico', nota: 'O ponto de partida da marca, como\u00a0o\u00a0cliente\u00a0vê\u00a0em\u00a0Diagnóstico.', tabela: 'diagnosticos', antes: frasesSug, fields: [
       { k: 'data', label: 'Data do diagnóstico', type: 'date' }, { k: 'proximo', label: 'Próximo diagnóstico', type: 'date' },
       { k: 'resumo', label: 'Em uma frase', full: true, type: 'preset', presets: 'resumosDiagnostico' }] }],
