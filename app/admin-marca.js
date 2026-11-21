@@ -322,16 +322,18 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     // compara pelo começo das palavras, para "não mostrava" e "não mostra" contarem como a mesma causa
     const pal = (t) => new Set(String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter((w) => w.length > 2).map((w) => w.slice(0, 5)));
     const igual = (x, y) => { const A = pal(x); const Bs = pal(y); const c = [...A].filter((w) => Bs.has(w)).length; return c / Math.max(1, new Set([...A, ...Bs]).size) >= 0.6; };
+    // cada sugestão é um texto ou { t: o que aparece, row: os campos que entram } (ex.: o concorrente do briefing vira marca_nome)
+    const rot = (x) => (typeof x === 'string' ? x : x.t);
     const sugT = sugere ? (await sugere()) || [] : [];
-    const sug = sugT.filter((t) => !rows.some((r) => igual(r.texto, t))); sug.titulo = sugT.titulo;
+    const sug = sugT.filter((x) => !rows.some((r) => igual(r.texto || r.marca_nome || r.titulo, rot(x)))); sug.titulo = sugT.titulo;
     const insere = async (ts) => {
       const base = rows.reduce((m, x) => Math.max(m, x.ordem || 0), 0);
-      const r = await sb.from(tabela).insert(ts.map((t, k) => ({ empresa_id: id, texto: t, ...fixo, ...(ordem ? { ordem: base + k + 1 } : {}) })));
+      const r = await sb.from(tabela).insert(ts.map((x, k) => ({ empresa_id: id, ...(typeof x === 'string' ? { texto: x } : x.row), ...fixo, ...(ordem ? { ordem: base + k + 1 } : {}) })));
       if (r.error) return say(msg, 'Não foi possível adicionar.', 'error');
       lista(mount, cfg); document.dispatchEvent(new CustomEvent('gang:marca-salva', { detail: { tabela } }));
     };
     const sugBox = sug.length ? el('div', 'ed-sug', el('p', 'ed-sug__t', sug.titulo || 'Sugestões'),
-      el('ul', 'ed-sug__l', sug.map((t) => el('li', null, el('span', null, t), el('button', { class: 'ed-sug__add', type: 'button', onclick: () => insere([t]) }, 'Adicionar')))),
+      el('ul', 'ed-sug__l', sug.map((t) => el('li', null, el('span', null, rot(t)), el('button', { class: 'ed-sug__add', type: 'button', onclick: () => insere([t]) }, 'Adicionar')))),
       sug.length > 1 ? el('button', { class: 'btn btn--ghost btn--sm ed-sug__todas', type: 'button', onclick: () => insere(sug) }, 'Adicionar todas') : null) : null;
 
     const move = (i, d) => {
@@ -412,6 +414,65 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   const POS = [['entrega', 'Entregava'], ['entrega_mal', 'Entregava mal'], ['nao_entrega', 'Não entregava']];
   const POS_T = Object.fromEntries(POS);
 
+  // ===== Da cascata: o briefing (app/admin-briefing.js) sugere; o consultor adiciona com um clique. Nada entra sozinho =====
+  const BF = () => (window.GangBriefing && window.GangBriefing.dados()) || {};
+  const comTitulo = (xs, t) => { xs.titulo = t; return xs; };
+  const bfCausas = () => comTitulo((BF().obstaculos || []).slice(), 'Hipóteses do briefing: adicione as que a pesquisa e a comparação confirmarem');
+  const bfConcorrentes = () => comTitulo((BF().concorrentes || []).filter((c) => c && c.nome).map((c) => ({ t: c.nome, row: { marca_nome: c.nome } })), 'Concorrentes citados no briefing');
+  const bfFatores = (k) => () => comTitulo((BF()[k] || []).filter((f) => f && f.texto).map((f) => ({ t: f.texto + (f.posicao ? ' · ' + (POS_T[f.posicao] || '') : ''), row: { texto: f.texto, posicao: f.posicao || null } })),
+    'Do briefing (a leitura do consultor): confira com a pesquisa antes de adicionar');
+  const bfSituacoes = () => comTitulo((BF().situacoes || []).slice(), 'Situações do briefing');
+  const juntaSug = (...fs) => async () => { const ls = await Promise.all(fs.map((f) => f())); const xs = [].concat(...ls.map((l) => l || []));
+    xs.titulo = ls.filter((l) => l && l.length).map((l) => l.titulo).filter(Boolean).join(' · '); return xs; };
+  const bfDeixados = () => { const n = (BF().nao_cliente || '').trim(); return comTitulo(n ? [n] : [], 'Quem não é cliente, segundo o briefing'); };
+  const bfObjetivo = () => {
+    const B = BF(); const n = B.numeros || {}; const a = B.ambicao || {};
+    const fat = Number(n.faturamento) || 0; const pct = Number(a.pct) || 0; const meses = Number(a.meses) || 12;
+    if (!fat || !pct) return [];
+    const alvo = Math.round(fat * (1 + pct / 100) / 1000) * 1000; const ate = new Date(); ate.setMonth(ate.getMonth() + meses);
+    const t = 'Faturamento de ' + U.reais(fat) + ' para ' + U.reais(alvo) + ' por mês até ' + U.nomeMes(ate.toISOString().slice(0, 7)) + ' de ' + ate.getFullYear();
+    return comTitulo([{ t, row: { titulo: t, nivel: 'negocio', destaque: '+' + pct + '%' } }], 'Da ambição e dos números do briefing');
+  };
+  // o diagnóstico com o briefing ao lado: cada hipótese do consultor, confirmada ou ainda a confirmar
+  const hipotesesBriefing = async (mount) => {
+    mount.classList.add('is-largo');
+    const B = BF(); const hip = B.obstaculos || [];
+    const fat = [...(B.motivadores || []), ...(B.discriminadores || [])].filter((f) => f && f.texto && f.posicao && f.posicao !== 'entrega');
+    if (!hip.length && !fat.length) { mount.replaceChildren(); mount.hidden = true; return; }
+    mount.hidden = false;
+    const [{ data: cs }, { data: fs }] = await Promise.all([sb.from('causas').select('texto').eq('empresa_id', id), sb.from('fatores').select('texto, posicao').eq('empresa_id', id)]);
+    const tem = (t) => (cs || []).some((c) => c.texto === t);
+    const st = (ok) => el('span', 'badge ' + (ok ? 'is-ok' : 'is-mid'), ok ? 'Confirmada' : 'A confirmar');
+    const linhas = hip.map((t) => el('li', 'bf-hip__i', el('span', null, t), st(tem(t))))
+      .concat(fat.map((f) => { const r = (fs || []).find((x) => x.texto === f.texto);
+        return el('li', 'bf-hip__i', el('span', null, f.texto + ' · o consultor leu: ' + (POS_T[f.posicao] || '').toLowerCase()), r ? el('span', 'badge ' + (r.posicao === f.posicao ? 'is-ok' : 'is-warn'), r.posicao === f.posicao ? 'Confirmada' : 'A pesquisa mostrou: ' + (POS_T[r.posicao] || '—').toLowerCase()) : st(false)); }));
+    mount.replaceChildren(el('div', 'ed-card bf-hip', el('div', 'ed-head', tile('pulso', 'gang'), el('div', 'ed-head__txt', el('h3', 'ed-head__t', 'O que o briefing levantou'),
+      el('p', 'ed-head__n', 'As hipóteses do encontro de início. Confirme com a pesquisa e a comparação antes de adicionar; o que a pesquisa contrariar vira conversa com o cliente.'))),
+      el('ul', 'bf-hip__l', linhas), el('a', { class: 'btn btn--ghost btn--sm', href: '#briefing' }, 'Abrir o briefing')));
+  };
+  // a estratégia com o briefing ao lado: ambição, recursos e para quem
+  const briefingNaEstrategia = async (mount) => {
+    mount.classList.add('is-largo');
+    const B = BF(); const r = B.recursos || {}; const a = B.ambicao || {}; const n = B.numeros || {};
+    const itens = [
+      a.pct ? ['Ambição', '+' + a.pct + '% em ' + (a.meses || 12) + ' meses' + (a.nota ? ' · ' + a.nota : '')] : null,
+      n.faturamento ? ['Hoje', U.reais(Number(n.faturamento)) + ' por mês' + (n.clientes ? ' · ' + n.clientes + ' clientes' : '')] : null,
+      (B.cliente || '').trim() ? ['Cliente que importa', B.cliente] : null,
+      (B.nao_cliente || '').trim() ? ['Quem não é cliente', B.nao_cliente] : null,
+      r.verba || r.horas ? ['Recursos', [r.verba ? 'verba de mídia ' + U.reais(Number(r.verba)) + '/mês' : null, r.horas ? r.horas + ' h por semana' : null, r.executa || null].filter(Boolean).join(' · ')] : null,
+      r.espaco ? ['Espaço físico', r.espaco === 'sim' ? 'Tem (loja, clínica, escritório)' : 'Não tem: ações de loja ficam fora do plano'] : null,
+    ].filter(Boolean);
+    if (!itens.length) { mount.replaceChildren(); mount.hidden = true; return; }
+    mount.hidden = false;
+    const avisoVerba = r.verba != null && r.verba !== '' && Number(r.verba) < 1000
+      ? el('p', 'bf-aviso', 'Verba de mídia abaixo de R$ 1 mil por mês: abordagens que dependem de aparecer muito (alcance, lembrança na região) andam devagar. Prefira começar por prova e indicação.') : null;
+    mount.replaceChildren(el('div', 'ed-card', el('div', 'ed-head', tile('mapa', 'gang'), el('div', 'ed-head__txt', el('h3', 'ed-head__t', 'Do briefing'),
+      el('p', 'ed-head__n', 'O que o encontro de início definiu e a estratégia precisa respeitar.'))),
+      el('dl', 'bf-dl', itens.map(([k, v]) => el('div', null, el('dt', null, k), el('dd', null, v)))), avisoVerba));
+  };
+  window.addEventListener('gang:briefing', () => ['pane-diagnostico', 'pane-estrategia'].forEach((p) =>
+    [...document.querySelectorAll('#' + p + ' .editor-block')].forEach((m) => m.montagem && m.montagem[0](m, m.montagem[1]))));
+
   // as causas da biblioteca que levam aos mesmos desafios que a frase do Diagnóstico indica (as que levam a mais deles primeiro)
   const causasDaFrase = async () => {
     const P = window.GangPresets || {};
@@ -461,8 +522,9 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   });
 
   montar('pane-diagnostico', [
+    [hipotesesBriefing, {}],
     // primeiro as causas que o cliente relatou; delas sai a sugestão da frase do Diagnóstico
-    [lista, { icone: 'alvo', largo: true, titulo: 'As causas que o plano ataca', nota: 'Marque o que o cliente relatou na reunião. As\u00a0frases\u00a0que\u00a0essas\u00a0causas\u00a0sustentam\u00a0aparecem\u00a0abaixo.', tabela: 'causas', fields: [{ k: 'texto', label: 'Causa', req: true, full: true, type: 'preset', presets: 'causas' }], resumo: (r) => [r.texto], sugere: () => causasDaFrase() }],
+    [lista, { icone: 'alvo', largo: true, titulo: 'As causas que o plano ataca', nota: 'Marque o que o cliente relatou na reunião. As\u00a0frases\u00a0que\u00a0essas\u00a0causas\u00a0sustentam\u00a0aparecem\u00a0abaixo.', tabela: 'causas', fields: [{ k: 'texto', label: 'Causa', req: true, full: true, type: 'preset', presets: 'causas' }], resumo: (r) => [r.texto], sugere: async () => { const h = bfCausas(); return h.length ? h : causasDaFrase(); } }],
     [ficha, { icone: 'pulso', titulo: 'Diagnóstico', nota: 'O ponto de partida da marca, como\u00a0o\u00a0cliente\u00a0vê\u00a0em\u00a0Diagnóstico.', tabela: 'diagnosticos', antes: frasesSug, fields: [
       { k: 'data', label: 'Data do diagnóstico', type: 'date' }, { k: 'proximo', label: 'Próximo diagnóstico', type: 'date' },
       { k: 'resumo', label: 'Em uma frase', full: true, type: 'preset', presets: 'resumosDiagnostico' }] }],
@@ -472,16 +534,16 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       { k: 'notam', label: 'O que notavam', type: 'preset', presets: 'notam' }, { k: 'acreditam', label: 'O que acreditavam', type: 'preset', presets: 'acreditam' },
       { k: 'sentem', label: 'O que sentiam', type: 'preset', presets: 'sentem' }],
     resumo: (r) => [r.marca_nome, [r.notam, r.acreditam, r.sentem].filter(Boolean).join(' · ')] }],
-    [lista, { icone: 'olho', titulo: 'Concorrentes', nota: 'As mesmas perguntas para cada concorrente, para\u00a0comparar\u00a0com\u00a0a\u00a0marca\u00a0do\u00a0cliente.', tabela: 'impressoes', fixo: { eh_cliente: false },
+    [lista, { icone: 'olho', titulo: 'Concorrentes', nota: 'As mesmas perguntas para cada concorrente, para\u00a0comparar\u00a0com\u00a0a\u00a0marca\u00a0do\u00a0cliente.', tabela: 'impressoes', fixo: { eh_cliente: false }, sugere: bfConcorrentes,
       vazio: 'Nenhum concorrente ainda.', fields: [
       { k: 'marca_nome', label: 'Concorrente', req: true, placeholder: 'Nome do concorrente' },
       { k: 'notam', label: 'O que notavam', type: 'preset', presets: 'notam' }, { k: 'acreditam', label: 'O que acreditavam', type: 'preset', presets: 'acreditam' },
       { k: 'sentem', label: 'O que sentiam', type: 'preset', presets: 'sentem' }],
     resumo: (r) => [r.marca_nome, [r.notam, r.acreditam, r.sentem].filter(Boolean).join(' · ')] }],
-    [lista, { icone: 'check', titulo: 'O que todo cliente exige', nota: 'Motivadores: o mínimo da categoria.', tabela: 'fatores', fixo: { tipo: 'motivador' }, fields: [
+    [lista, { icone: 'check', titulo: 'O que todo cliente exige', nota: 'Motivadores: o mínimo da categoria.', tabela: 'fatores', fixo: { tipo: 'motivador' }, sugere: bfFatores('motivadores'), fields: [
       { k: 'texto', label: 'Item', req: true, type: 'preset', presets: 'motivadores' }, { k: 'posicao', label: 'A marca…', type: 'select', options: POS }],
     resumo: (r) => [r.texto, POS_T[r.posicao]] }],
-    [lista, { icone: 'estrela', tom: 'gang', titulo: 'O que faz escolher uma marca', nota: 'Discriminadores: o que diferencia.', tabela: 'fatores', fixo: { tipo: 'discriminador' }, fields: [
+    [lista, { icone: 'estrela', tom: 'gang', titulo: 'O que faz escolher uma marca', nota: 'Discriminadores: o que diferencia.', tabela: 'fatores', fixo: { tipo: 'discriminador' }, sugere: bfFatores('discriminadores'), fields: [
       { k: 'texto', label: 'Item', req: true, type: 'preset', presets: 'discriminadores' }, { k: 'posicao', label: 'A marca…', type: 'select', options: POS }],
     resumo: (r) => [r.texto, POS_T[r.posicao]] }],
   ]);
@@ -596,6 +658,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   };
 
   montar('pane-estrategia', [
+    [briefingNaEstrategia, {}],
     [ficha, { icone: 'mapa', depoisDeSalvar: (mount, row) => {
       if (!row || !row.como_vencer) return; const f = mount.querySelector('form'); if (!f) return;
       // o próximo passo, numa faixa própria embaixo do cartão: o que vem agora e um botão para ir até lá
@@ -612,17 +675,17 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       { k: 'posicionamento', label: 'Posicionamento', type: 'textarea', rows: 3, full: true, placeholder: 'Para [quem], [marca] é [o quê] que [benefício], porque [prova], ao contrário de [alternativa].',
         dica: 'Comece pela alternativa real: o que o cliente faria se a marca não existisse. Depois, o que só a marca tem, o valor disso e quem se importa muito com esse valor. Por último, escolha a categoria em que ela vira a escolha óbvia.' },
     ] }],
-    [lista, { icone: 'alvo', tom: 'gang', titulo: 'Objetivos', nota: 'Negócio (com o número em destaque), Marca\u00a0e\u00a0Comunicação\u00a0(notar,\u00a0acreditar,\u00a0sentir). As ações se ligam a eles.', tabela: 'objetivos', fields: [
+    [lista, { icone: 'alvo', tom: 'gang', titulo: 'Objetivos', nota: 'Negócio (com o número em destaque), Marca\u00a0e\u00a0Comunicação\u00a0(notar,\u00a0acreditar,\u00a0sentir). As ações se ligam a eles.', tabela: 'objetivos', sugere: bfObjetivo, fields: [
       { k: 'titulo', label: 'Objetivo', full: true, type: 'preset', presets: 'objetivos', fill: { nivel: 'nivel' }, dicaId: 'objetivo',
         dica: 'No objetivo de negócio, diga de onde para onde e até quando (ex.: faturamento de R$ 80 mil para R$ 110 mil por mês até dezembro de 2027). Uma meta sem linha de chegada não orienta a equipe.' },
       { k: 'nivel', label: 'Nível', type: 'select', options: NIV }, { k: 'destaque', label: 'Número em destaque (negócio)', type: 'preset', presets: 'destaques' },
       { k: 'notar', label: 'Notar (comunicação)', type: 'preset', presets: 'notar' }, { k: 'acreditar', label: 'Acreditar (comunicação)', type: 'preset', presets: 'acreditar' }, { k: 'sentir', label: 'Sentir (comunicação)', type: 'preset', presets: 'sentir' }],
     resumo: (r) => [NIV_T[r.nivel] + ': ' + (r.destaque ? r.destaque + ' ' : '') + (r.titulo || ''), r.nivel === 'comunicacao' ? ['Notar ' + (r.notar || '—'), 'acreditar ' + (r.acreditar || '—'), 'sentir ' + (r.sentir || '—')].join(' · ') : null] }],
-    [lista, { icone: 'pin', titulo: 'Situações de compra', nota: 'Os momentos em que alguém pensa na categoria. Entram na pesquisa e nas ações.', tabela: 'situacoes', fields: [
+    [lista, { icone: 'pin', titulo: 'Situações de compra', nota: 'Os momentos em que alguém pensa na categoria. Entram na pesquisa e nas ações.', tabela: 'situacoes', sugere: bfSituacoes, fields: [
       { k: 'texto', label: 'Situação', req: true, full: true, type: 'preset', presets: 'situacoes', dicaId: 'situacao',
         dica: 'Escreva um momento da vida de quem compra (quando, onde, por quê), não um motivo. Use de 5 a 10, sempre as mesmas: são elas que a pesquisa mede.' }], resumo: (r) => [r.texto] }],
     [lista, { icone: 'check', tom: 'ok', titulo: 'Onde atuamos: prioridade', tabela: 'escolhas', fixo: { tipo: 'prioridade' }, fields: [{ k: 'texto', label: 'Prioridade', req: true, full: true, type: 'preset', presets: 'prioridades' }], sugere: daEstrategia('prioridades', 3, 'Prioridades que combinam com a abordagem escolhida'), resumo: (r) => [r.texto] }],
-    [lista, { icone: 'menos', titulo: 'Onde atuamos: deixamos de lado', tabela: 'escolhas', fixo: { tipo: 'deixa_de_lado' }, fields: [{ k: 'texto', label: 'Deixamos de lado', req: true, full: true, type: 'preset', presets: 'deixados' }], sugere: renunciaSug, resumo: (r) => [r.texto] }],
+    [lista, { icone: 'menos', titulo: 'Onde atuamos: deixamos de lado', tabela: 'escolhas', fixo: { tipo: 'deixa_de_lado' }, fields: [{ k: 'texto', label: 'Deixamos de lado', req: true, full: true, type: 'preset', presets: 'deixados' }], sugere: juntaSug(renunciaSug, bfDeixados), resumo: (r) => [r.texto] }],
     [lista, { icone: 'radar', largo: true, titulo: 'O que acompanhamos', nota: 'Condições que precisam continuar verdadeiras. Quando uma vira “Não se confirma”, o cliente vê o aviso e\u00a0o\u00a0tema entra na pauta do próximo encontro.', tabela: 'condicoes', fields: [
       { k: 'texto', label: 'Condição', req: true, full: true, type: 'preset', presets: 'condicoes' }, { k: 'como_verificar', label: 'Como verificamos', type: 'preset', presets: 'verificacoes', destaca: verifDaEstrategia }, { k: 'status', label: 'Hoje', type: 'select', options: CON, def: 'sem_dados' },
       { k: 'checar_em', label: 'Próxima checagem', type: 'date' }],

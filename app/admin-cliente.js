@@ -105,7 +105,7 @@
         $('crumb').textContent = $('name').textContent + ' / ' + rotulo;
       }
     });
-    $('raiox').classList.toggle('is-off', ['diagnostico', 'estrategia', 'plataforma', 'identidade', 'acessos', 'plano', 'mensagens', 'foco'].includes(name));
+    $('raiox').classList.toggle('is-off', ['briefing', 'diagnostico', 'estrategia', 'plataforma', 'identidade', 'acessos', 'plano', 'mensagens', 'foco'].includes(name));
     side.classList.remove('is-open'); $('menu-btn').setAttribute('aria-expanded', 'false');
     if (focus) { window.scrollTo(0, 0); $('app').focus({ preventScroll: true }); }
   };
@@ -1033,6 +1033,10 @@
   // o consultor pode renomear uma ação da biblioteca para a linguagem do cliente; para o motor ela continua sendo a original
   // (já feita, pré-requisito cumprido, não volta a ser sugerida)
   // e uma ação da biblioteca que mudou de título (P.renomeadas) continua sendo a mesma para o motor
+  // o que o consultor decidiu para este cliente e o motor respeita: itens da lista pronta de "não fazer" e de "deixamos de lado"
+  // que contradizem ações, e a falta de espaço físico de atendimento (briefing). Carregado antes de cada montagem
+  let restricoesCliente = { descartadas: [], deixados: [], semEspaco: false };
+  const excluidasCliente = () => (P.excluidasDoCliente ? P.excluidasDoCliente(restricoesCliente.descartadas, restricoesCliente.deixados, restricoesCliente.semEspaco) : new Set());
   const acoesMotor = () => acoes.map((a) => { const t = a.titulo_base || a.titulo; const n = (P.renomeadas || {})[t] || t; return n !== a.titulo ? { ...a, titulo: n } : a; });
   const montaUma = (m, ab, opt) => {
     const acoes = acoesMotor();
@@ -1041,7 +1045,7 @@
     const chaveM = Object.keys(MOD).find((k) => MOD[k] === m);
     const BASE_M = { saude: 'servicos', educacao: 'servicos', beleza: 'servicos', alimentacao: 'varejo', loja_online: 'varejo', tecnologia: 'b2b' };
     const doSetor = (x) => !x.setores || x.setores.includes(chaveM) || x.setores.includes(BASE_M[chaveM] || chaveM);
-    const foraDaEstrategia = new Set(ab ? ab.fora || [] : []);
+    const foraDaEstrategia = new Set([...(ab ? ab.fora || [] : []), ...excluidasCliente()]);
     const dur = p.duracao_meses || 18; const ini = U.ref(p.inicio); const fim = U.addRef(ini, dur - 1);
     const de = ini > U.ref() ? ini : U.ref();
     const meses = []; for (let r = de; nRef(r) <= nRef(fim); r = U.addRef(r, 1)) meses.push(r);
@@ -1596,7 +1600,7 @@
     const MIN = { alcance: 2, ativos: 2, situacao: 1, prova: 1 };
     const tipoDe = (t, esf) => { const x = libDe(t); if (x.tipo) return x.tipo; if (MARCO.test(t)) return 'base'; return (x.esforco || esf) === 'marca' ? 'marca' : 'ativacao'; };
     const pts = (t, tam) => ({ P: 1, M: 2, G: 4 }[libDe(t).tam || tam] || 2);
-    const ABset = new Set(ab ? ab.acoes || [] : []); const fora = new Set(ab ? ab.fora || [] : []);
+    const ABset = new Set(ab ? ab.acoes || [] : []); const fora = new Set([...(ab ? ab.fora || [] : []), ...excluidasCliente()]);
     const estrNova = !!ab && kAbs(meses[0]) > 0 && !acoes.some((a) => a.executa === ab.curto);
     const essModelo = new Set(m.acoes.filter((a) => a[1] === 'essencial').map((a) => a[4]));
     // o que fica onde está: ações já existentes no prazo e os marcos que o motor pôs
@@ -1742,6 +1746,15 @@
     }
     return noInicio(melhor);
   };
+  const carregaRestricoes = async () => {
+    const [d, e, b] = await Promise.all([
+      sb.from('acoes_descartadas').select('texto').eq('empresa_id', id),
+      sb.from('escolhas').select('texto').eq('empresa_id', id).eq('tipo', 'deixa_de_lado'),
+      sb.from('briefings').select('dados').eq('empresa_id', id).maybeSingle(),
+    ]);
+    const rec = (b.data && b.data.dados && b.data.dados.recursos) || {};
+    restricoesCliente = { descartadas: (d.data || []).map((x) => x.texto), deixados: (e.data || []).map((x) => x.texto), semEspaco: rec.espaco === 'nao' };
+  };
   // o aviso de como a estratégia entrou no modelo
   const notaEstrategia = (E, plano) => {
     if (!E.texto) return el('li', 'lib__item mod__estr is-falta', el('p', 'row__text', 'Sem estratégia: o plano segue só o setor. Escolha o desafio e a abordagem em Estratégia para ele sair alinhado.'));
@@ -1757,6 +1770,7 @@
     if (!m) return $('mod-list').replaceChildren(el('li', 'lib__item', el('p', 'row__text', 'Defina o setor do cliente em Contrato para ver o plano modelo.')));
     if (!p.inicio) return $('mod-list').replaceChildren(el('li', 'lib__item', el('p', 'row__text', 'Cadastre o início do plano (em Plano) para ver o modelo distribuído nos meses.')));
     const E = await abordagemAtual();
+    await carregaRestricoes();
     const plano = await montaModeloOtimo(m, E.ab);
     // o plano já cobre todos os meses com este modelo: não há o que mostrar (e nada a montar)
     if (!plano.length) return $('mod-list').replaceChildren(el('li', 'lib__item', el('p', 'row__text', 'O plano já cobre todos os meses com este modelo. Para mudar um mês, use o Planejar o mês.')));
@@ -1787,6 +1801,7 @@
     if (!p.inicio) return say($('acoes-msg'), 'Cadastre o início do plano (em Plano) antes de montar as ações.', 'error');
     const m = MOD[$('mod-setor').value]; if (!m) return;
     const E = await abordagemAtual();
+    await carregaRestricoes();
     const novas = await montaModeloOtimo(m, E.ab);
     if (!novas.length) return say($('acoes-msg'), 'O plano já cobre todos os meses com este modelo.', 'ok');
     const nMeses = new Set(novas.map((x) => x.mes)).size;
@@ -1904,7 +1919,14 @@
       blocos.push(el('div', 'ed-sug', el('p', 'ed-sug__t', 'Sugeridos pela estratégia (' + (E.ab.curto || 'abordagem escolhida') + '). Desmarque o que não serve para este cliente.'), c.lista,
         el('button', { class: 'btn btn--light btn--sm ed-sug__todas', type: 'button', onclick: () => insereDescs(c.marcados()) }, 'Adicionar marcados')));
     } else blocos.push(el('p', 'small', E.texto && !E.ab ? 'A abordagem foi escrita à mão, então não há sugestões automáticas: escolha na lista abaixo.' : 'Escolha a abordagem em Estratégia para ver sugestões do que não fazer.'));
-    const resto = (P.naoFazer || []).map((x) => x.texto).filter((t) => !jaTem.includes(t) && !sug.includes(t));
+    // do briefing: o que já foi tentado e não funcionou, que o consultor marcou para não repetir
+    const doBf = ((window.GangBriefing && window.GangBriefing.dados().naoRepetir) || []).filter((t) => !jaTem.includes(t) && !sug.includes(t));
+    if (doBf.length) {
+      const cb = caixas(doBf, true);
+      blocos.push(el('div', 'ed-sug', el('p', 'ed-sug__t', 'Do briefing: o que já foi tentado e não funcionou'), cb.lista,
+        el('button', { class: 'btn btn--light btn--sm ed-sug__todas', type: 'button', onclick: () => insereDescs(cb.marcados()) }, 'Adicionar marcados')));
+    }
+    const resto = (P.naoFazer || []).map((x) => x.texto).filter((t) => !jaTem.includes(t) && !sug.includes(t) && !doBf.includes(t));
     const c2 = caixas(resto, false);
     blocos.push(el('details', 'desc__todos', el('summary', null, 'Escolher outros da lista (' + resto.length + ')'), c2.lista,
       el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => insereDescs(c2.marcados()) }, 'Adicionar marcados')));
@@ -1919,6 +1941,13 @@
       el('div', 'row__main', el('p', 'row__title', el('s', null, d.texto))),
       el('div', 'row__actions', rowBtn('Excluir', async () => { await sb.from('acoes_descartadas').delete().eq('id', d.id); loadDescs(); }, true)))) : [el('li', 'clients__empty', 'Nada descartado ainda.')]));
     const lb = $('limpar-descs'); if (lb) { lb.hidden = !(data || []).length; lb.textContent = 'Limpar'; delete lb.dataset.certeza; }
+    // ações já no plano que contradizem o que foi decidido não fazer: aviso (o consultor decide se tira; o plano novo já não as sugere)
+    const ex = P.excluidasDoCliente ? P.excluidasDoCliente((data || []).map((d) => d.texto), [], false) : new Set();
+    const doPlano = ex.size ? ((await sb.from('acoes').select('*').eq('empresa_id', id)).data || []) : [];
+    const contra = doPlano.filter((a) => a.status !== 'feita' && ex.has(a.titulo_base || a.titulo));
+    if (contra.length) $('descs').prepend(el('li', 'row row--aviso', el('div', 'row__main',
+      el('p', 'row__eyebrow', contra.length === 1 ? '1 ação do plano contradiz esta lista' : contra.length + ' ações do plano contradizem esta lista'),
+      el('p', 'row__text', contra.map((a) => a.titulo).join(' · ') + '. Os planos novos já não sugerem; estas, você decide se tira.'))));
     desenhaDescAdd((data || []).map((d) => d.texto));
   };
   // limpar só esta seção: dois cliques (o segundo confirma), não mexe nas ações do plano
@@ -1935,6 +1964,7 @@
   // a estratégia mudou em outra aba: as sugestões acompanham
   document.addEventListener('gang:marca-salva', (e) => { if (e.detail && e.detail.tabela === 'planos') loadDescs(); });
   document.addEventListener('gang:setor', () => loadDescs());
+  window.addEventListener('gang:briefing', () => loadDescs());
 
   const tabela = (cols, linhas) => [el('thead', null, el('tr', null, cols.map((c) => el('th', { scope: 'col' }, c)))),
     el('tbody', null, linhas.map((l) => el('tr', null, l.map((v, i) => (i === 0 ? el('th', { scope: 'row' }, v) : el('td', null, v))))))];
