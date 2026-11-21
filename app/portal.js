@@ -2893,6 +2893,17 @@
           el('button', { class: 'link', type: 'button', onclick: lida }, 'Marcar como lida'))));
   };
 
+  // CPF ou CNPJ de quem paga: a pontuação entra sozinha enquanto digita; passou de 11 números, vira CNPJ
+  const formataDoc = (v) => {
+    const d = String(v).replace(/\D/g, '').slice(0, 14);
+    if (d.length <= 11) return d.replace(/^(\d{3})(\d)/, '$1.$2').replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d{1,2})$/, '.$1-$2');
+    return d.replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+  };
+  const campoDoc = (attrs) => {
+    const i = el('input', { class: 'field', inputmode: 'numeric', autocomplete: 'off', maxlength: 18, placeholder: 'CPF ou CNPJ de quem paga', 'aria-label': 'CPF ou CNPJ de quem paga', ...attrs });
+    i.addEventListener('input', () => { i.value = formataDoc(i.value); });
+    return i;
+  };
   // escolher um plano: manda o pedido como mensagem para o consultor (o pagamento é combinado com a GANG)
   const CICLOS = [['mensal', 'Mensal', 'Renova todo mês'], ['semestral', 'Semestral', '6 meses de acesso'], ['anual', 'Anual', '12 meses de acesso']];
   // escolher o plano e pagar no Asaas: cartão vira assinatura (renova sozinho); Pix paga o ciclo inteiro de uma vez.
@@ -2907,7 +2918,7 @@
       btn.disabled = false;
       U.say(msg, error ? 'Não foi possível enviar. Tente de novo.' : 'Pedido enviado. A GANG responde ' + diasResposta() + ' com a forma de pagamento.', error ? 'error' : 'ok');
     };
-    const doc = el('input', { class: 'field', id: 'pag-doc', inputmode: 'numeric', autocomplete: 'off', placeholder: 'CPF ou CNPJ de quem paga', 'aria-label': 'CPF ou CNPJ de quem paga' });
+    const doc = campoDoc({ id: 'pag-doc' });
     const docBox = el('div', 'planos-ac__doc', doc, el('p', 'box__note', 'Pedido pelo Asaas, que processa o pagamento.', el('br'), 'Informado uma vez só.'));
     // já pagou antes pelo Asaas: o cadastro existe e o campo não aparece
     sb.from('empresas').select('*').maybeSingle().then(({ data }) => { docBox.hidden = !!(data && data.asaas_cliente); });
@@ -2971,7 +2982,7 @@
   // pagar a mensalidade da consultoria: cartão (renova todo mês) ou Pix (esta mensalidade); o valor é o do Contrato
   const pagarMensalidade = (emp, valor) => {
     const msg = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite' });
-    const doc = el('input', { class: 'field', inputmode: 'numeric', autocomplete: 'off', placeholder: 'CPF ou CNPJ de quem paga', 'aria-label': 'CPF ou CNPJ de quem paga' });
+    const doc = campoDoc({});
     const docBox = el('div', 'planos-ac__doc', doc, el('p', 'box__note', 'Pedido pelo Asaas, que processa o pagamento.', el('br'), 'Informado uma vez só.'));
     docBox.hidden = !!(emp && emp.asaas_cliente);
     const paga = async (metodo, btn) => {
@@ -2991,10 +3002,10 @@
     const box = el('div', 'planos-ac', el('p', 'box__text', 'Carregando…'));
     sb.from('config_pagamento').select('*').maybeSingle().then(({ data: cfg }) => {
       const bt = (t, cls, metodo) => { const b = el('button', { class: 'btn ' + cls + ' btn--sm', type: 'button' }, t); b.addEventListener('click', () => paga(metodo, b)); return b; };
-      box.replaceChildren(...[docBox,
-        el('div', 'planos-ac__c', el('p', 'planos-ac__t', 'Mensalidade'), el('p', 'planos-ac__p', reaisC(valor)),
-          el('p', 'planos-ac__s', 'No cartão, renova sozinha todo mês.'),
-          el('div', 'planos-ac__b', ...[cfg && cfg.cartao ? bt('Assinar no cartão', 'btn--light', 'cartao') : null, cfg && cfg.pix ? bt('Pagar com Pix', 'btn--ghost', 'pix') : null].filter(Boolean))),
+      box.replaceChildren(...[
+        el('div', 'ass-mens', el('p', 'planos-ac__p', reaisC(valor)), el('p', 'planos-ac__s', 'por mês · no cartão, renova sozinha')),
+        docBox,
+        el('div', 'planos-ac__b', ...[cfg && cfg.cartao ? bt('Assinar no cartão', 'btn--light', 'cartao') : null, cfg && cfg.pix ? bt('Pagar com Pix', 'btn--ghost', 'pix') : null].filter(Boolean)),
         cfg ? null : el('p', 'box__note', 'O pagamento pela plataforma ainda não está ligado.'), msg].filter(Boolean));
     });
     return box;
@@ -3035,7 +3046,7 @@
               const r = await fetch('/api/pagamento', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (session ? session.access_token : '') }, body: JSON.stringify({ acao: 'cancelar' }) });
               const out = await r.json().catch(() => ({}));
               if (!r.ok) throw new Error(out.error || 'Não foi possível cancelar. Tente de novo.');
-              U.say(msg, soAcesso ? 'Renovação cancelada. Seu acesso continua até ' + U.diaAno(vence) + '.' : 'Renovação cancelada. A próxima mensalidade pode ser paga aqui.', 'ok'); carregar();
+              U.say(msg, soAcesso ? 'Renovação cancelada. Seu acesso continua até ' + U.diaAno(vence) + '.' : 'Renovação cancelada. A próxima mensalidade pode ser paga aqui.', 'ok'); carregar().then(() => grade.classList.toggle('is-uma', !col.querySelector('section')));
             } catch (err) { s.disabled = false; U.say(msg, err.message, 'error'); }
           }); return s; })(),
           (() => { const n = el('button', { class: 'btn btn--ghost btn--sm', type: 'button' }, 'Não'); n.addEventListener('click', () => { conf.hidden = true; b.hidden = false; }); return n; })());
@@ -3043,7 +3054,7 @@
         renova.replaceChildren(el('section', { class: 'box', 'aria-labelledby': 'renova-t' },
           el('h2', { class: 'box__title', id: 'renova-t' }, 'Renovação automática'),
           soAcesso ? el('p', 'box__text', 'Seu plano ' + ciclo + ' renova sozinho no cartão em ' + (vence ? U.diaAno(vence) : '—') + '.', el('br'), 'Se cancelar, o acesso continua até essa data.')
-            : el('p', 'box__text', 'A mensalidade de ' + reaisC(P && P.mensalidade) + ' é cobrada no cartão todo mês.', el('br'), 'Se cancelar, as próximas são pagas aqui.'),
+            : el('p', 'box__text', 'A mensalidade de ' + reaisC(P && P.mensalidade), el('br'), 'é cobrada no cartão todo mês.', el('br'), 'Se cancelar, as próximas são pagas aqui.'),
           el('div', 'ass-acoes', b, conf), msg));
         planos.replaceChildren();
       } else {
@@ -3059,7 +3070,6 @@
       }
       hist.replaceChildren(historicoPagamentos(lista, abertas || []));
     });
-    carregar();
     const ini = P && P.inicio ? String(P.inicio).slice(0, 10) : null;
     const fim = ini ? (() => { const d = new Date(ini + 'T12:00:00'); d.setMonth(d.getMonth() + dur); d.setDate(d.getDate() - 1); return d.toLocaleDateString('sv-SE'); })() : null;
     const quadros = soAcesso ? [
@@ -3069,12 +3079,16 @@
       : [quadro(sit[0], P ? 'Consultoria · mês ' + mesN + ' de ' + dur : 'Consultoria', sit[1]),
         quadro(vence ? U.diaAno(vence) : '—', vence ? 'Próxima fatura · ' + prazo.toLowerCase() : 'Próxima fatura', dias != null && dias <= 5 ? (dias < 0 ? 'is-hot' : 'is-warn') : ''),
         pagamento];
+    // lado a lado: à esquerda o que fazer (renovação ou pagar), à direita o histórico; no Só acesso, os planos ficam acima, na largura toda
+    const historico = el('section', { class: 'box', 'aria-labelledby': 'hist-pag-t' }, el('h2', { class: 'box__title', id: 'hist-pag-t' }, 'Pagamentos'), hist,
+      soAcesso ? null : el('p', 'box__note', 'Contrato desde ' + (ini ? U.diaAno(ini) : '—') + ',', el('br'), 'com término previsto em ' + (fim ? U.diaAno(fim) : '—') + '.'),
+      el('p', 'box__note', 'O comprovante abre no Asaas.', el('br'), 'Dúvidas sobre cobrança? Fale com a GANG.'));
+    const col = el('div', 'ass-col', renova, soAcesso ? null : planos);
+    const grade = el('div', 'ass-grade', col, historico);
+    carregar().then(() => grade.classList.toggle('is-uma', !col.querySelector('section')));
     return [head('Conta', 'Meu plano', soAcesso ? 'Seu plano, até quando vale e os comprovantes de pagamento.' : 'Sua consultoria, a mensalidade e os comprovantes de pagamento.'),
       el('section', { class: 'pag-res', 'aria-label': 'Resumo do plano' }, ...quadros),
-      renova, planos,
-      el('section', { class: 'box', 'aria-labelledby': 'hist-pag-t' }, el('h2', { class: 'box__title', id: 'hist-pag-t' }, 'Pagamentos'), hist,
-        soAcesso ? null : el('p', 'box__note', 'Contrato desde ' + (ini ? U.diaAno(ini) : '—') + ', com término previsto em ' + (fim ? U.diaAno(fim) : '—') + '.'),
-        el('p', 'box__note', 'O comprovante abre no Asaas, que processa os pagamentos.', el('br'), 'Dúvidas sobre cobrança? Fale com a GANG pelo menu.'))];
+      soAcesso ? planos : null, grade];
   };
   // acesso vencido: a tela inicial explica o que continua aberto e como voltar a ter tudo
   const telaAcessoVencido = () => {
