@@ -10,7 +10,7 @@
   // conta principal: vê e faz tudo. Consultor: só os clientes direcionados a ele, sem cadastrar clientes nem ver o financeiro
   const principal = !!me.principal;
   if (!principal) { const li = $('side-new') && $('side-new').closest('li'); if (li) li.hidden = true; }
-  else $('side-cons-li').hidden = false;
+  else { $('side-cons-li').hidden = false; $('side-pag-li').hidden = false; }
   $('who').textContent = me.name || me.email;
   U.avatar($('me-dot'), me.name || me.email, me.foto_url);
 
@@ -298,8 +298,38 @@
     } catch (err) { say($('cons-msg'), err.message, 'error'); }
   });
 
+  // ===== pagamentos (só a conta principal): preços do acesso, códigos dos planos do Pagar.me e as últimas cobranças =====
+  const CIC = ['mensal', 'semestral', 'anual'];
+  const pagamentos = async () => {
+    if (!principal) return;
+    const [{ data: cfg, error }, { data: cobs }, { data: emps }] = await Promise.all([
+      sb.from('config_pagamento').select('*').maybeSingle(),
+      sb.from('cobrancas').select('*').order('criada_em', { ascending: false }).limit(15),
+      sb.from('empresas').select('id, nome'),
+    ]);
+    if (error || !cfg) return say($('pag-cfg-msg'), 'Rode o supabase/portal.sql (parte de pagamento) para ligar esta tela.', 'error');
+    CIC.forEach((k) => { U.moedaSet ? U.moedaSet($('pg-' + k), (cfg.precos || {})[k] / 100) : ($('pg-' + k).value = ((cfg.precos || {})[k] / 100) || ''); $('pm-' + k).value = (cfg.planos_pagarme || {})[k] || ''; });
+    $('pg-cartao').checked = !!cfg.cartao; $('pg-pix').checked = !!cfg.pix;
+    const nome = Object.fromEntries((emps || []).map((e) => [e.id, e.nome]));
+    const ST = { aberta: 'Aguardando', paga: 'Paga', falhou: 'Falhou', cancelada: 'Cancelada' };
+    $('cob-lista').replaceChildren(...((cobs || []).length ? cobs.map((c) => el('li', 'row', el('div', 'row__main',
+      el('p', 'row__eyebrow', U.dia(c.criada_em) + ' · ' + (c.metodo === 'pix' ? 'Pix' : 'Cartão')),
+      el('p', 'row__title', (nome[c.empresa_id] || 'Cliente') + ' · ' + U.cap(c.ciclo) + ' · ' + U.reais(c.valor / 100))),
+      el('div', 'row__actions', el('span', 'badge ' + (c.status === 'paga' ? 'is-ok' : c.status === 'aberta' ? 'is-mid' : 'is-off'), ST[c.status] || c.status)))) : [el('li', 'clients__empty', 'Nenhuma cobrança ainda.')]));
+  };
+  if ($('pag-form')) $('pag-form').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const reais = (k) => { const v = U.moedaValor ? U.moedaValor($('pg-' + k)) : Number(String($('pg-' + k).value).replace(/\./g, '').replace(',', '.')); return Math.round((Number(v) || 0) * 100); };
+    const precos = Object.fromEntries(CIC.map((k) => [k, reais(k)]));
+    if (CIC.some((k) => !(precos[k] > 0))) return say($('pag-cfg-msg'), 'Preencha os três preços.', 'error');
+    const planos = Object.fromEntries(CIC.map((k) => [k, $('pm-' + k).value.trim()]).filter(([, v]) => v));
+    if (Object.values(planos).some((v) => !/^plan_/.test(v))) return say($('pag-cfg-msg'), 'O código do plano do Pagar.me começa com plan_.', 'error');
+    const r = await sb.from('config_pagamento').update({ precos, planos_pagarme: planos, cartao: $('pg-cartao').checked, pix: $('pg-pix').checked, atualizado_em: new Date().toISOString() }).eq('id', 1);
+    say($('pag-cfg-msg'), r.error ? 'Não foi possível salvar.' : 'Salvo. O portal já mostra os preços novos.', r.error ? 'error' : 'ok');
+  });
+
   // ===== telas separadas pelo menu: visão geral, novo cliente, seu perfil =====
-  const ROTULO = principal ? { geral: 'Visão geral', novo: 'Novo cliente', consultores: 'Consultores', aprendizado: 'O que funciona', perfil: 'Seu perfil' }
+  const ROTULO = principal ? { geral: 'Visão geral', novo: 'Novo cliente', consultores: 'Consultores', pagamentos: 'Pagamentos', aprendizado: 'O que funciona', perfil: 'Seu perfil' }
     : { geral: 'Visão geral', aprendizado: 'O que funciona', perfil: 'Seu perfil' };
   const mostraTela = (foco) => {
     let v = location.hash.slice(1); if (!ROTULO[v]) v = 'geral';
@@ -312,6 +342,7 @@
     $('crumb').textContent = 'Painel / ' + ROTULO[v];
     if (v === 'aprendizado') aprendizado();
     if (v === 'consultores') consultores();
+    if (v === 'pagamentos') pagamentos();
     if (v === 'novo') {
       if ($('nc-setor').options.length < 2) U.setorOpcoes($('nc-setor'), 'Escolha o setor');
       if (!$('nc-pass').value) $('nc-pass').value = randomPass();

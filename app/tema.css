@@ -2130,6 +2130,8 @@ td.clients__empty { color: var(--ganggrey); font-size: var(--t-ui); }
 .planos-ac__c { display: grid; gap: 4px; align-content: start; justify-items: start; padding: 14px; border-radius: var(--r-sm); background: #161616; border: 1px solid var(--line); }
 .planos-ac__t { margin: 0; font-size: 15px; font-weight: 500; color: #f3f3f3; }
 .planos-ac__s { margin: 0 0 8px; font-size: 12px; color: var(--ganggrey); }
+.planos-ac__p { margin: 2px 0 0; font-size: 22px; font-weight: 600; letter-spacing: -.01em; color: #fff; font-variant-numeric: tabular-nums; }
+.planos-ac__b { display: flex; flex-wrap: wrap; gap: 6px; }
 @media (max-width: 640px) { .planos-ac__l { grid-template-columns: 1fr; } }
 
 /* plano: acesso à plataforma */
@@ -2310,3 +2312,9 @@ html.side-abrindo .side__plan .badge { display: none; }
 /* consultor de cada cliente, na lista da conta principal */
 .cons-de { display: inline-flex; align-items: center; gap: 6px; }
 .cons-de .field { padding: 5px 10px; font-size: 12px; width: auto; }
+
+/* painel: pagamentos */
+.pag-opcoes { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 12px; }
+.pag-ajuda summary { cursor: pointer; font-size: 14px; font-weight: 500; }
+.pag-ajuda ol { margin: 12px 0 0; padding-left: 18px; display: grid; gap: 10px; line-height: 1.55; }
+.pag-ajuda code { font-size: 12px; word-break: break-all; }
