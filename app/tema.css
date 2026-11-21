@@ -2333,4 +2333,18 @@ html.side-abrindo .side__plan .badge { display: none; }
 .ass-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
 .ass-acoes[hidden] { display: none; }
 .pag-res__t.is-off .pag-res__n { color: var(--ganggrey); }
-.planos-ac > .planos-ac__c { max-width: 360px; }
+/* Meu plano: pagar e histórico lado a lado, sem sobra nas laterais */
+.ass-grade { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 16px; align-items: start; }
+.ass-grade.is-uma { grid-template-columns: minmax(0, 1fr); }
+.ass-grade.is-uma > .ass-col { display: none; }
+.ass-col { display: grid; gap: 16px; min-width: 0; }
+.ass-col > div:empty { display: none; }
+.ass-col .box, .ass-grade > .box { margin: 0; }
+.ass-mens { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.ass-mens .planos-ac__s { margin: 0; }
+.ass-col .planos-ac__doc { max-width: none; margin-bottom: 0; }
+.ass-grade .rows .row { padding-block: 12px; }
+@media (max-width: 900px) { .ass-grade { grid-template-columns: minmax(0, 1fr); } }
+.ass-grade .msg:empty { display: none; }
+.ass-col .ass-acoes { margin-top: 14px; }
+.planos-ac .msg:empty { display: none; }
