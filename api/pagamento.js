@@ -71,14 +71,19 @@ const criar = async (req, res, body) => {
   // com a renovação automática ativa, o cartão já cobra sozinho: trocar de plano pede cancelar antes (evita cobrar duas vezes)
   const atual = await um(await sb('/rest/v1/empresas?select=asaas_assinatura&id=eq.' + empresaId));
   if (atual && atual.asaas_assinatura) return fail(res, 400, 'Sua assinatura no cartão já renova sozinha. Para trocar de plano, cancele a renovação em Meu plano.');
-  // assinaturas no cartão começadas e nunca pagas: removidas no Asaas, para ele não seguir gerando cobranças
-  if (metodo === 'cartao') {
-    const velhas = await (await sb('/rest/v1/cobrancas?select=id,link_id&empresa_id=eq.' + empresaId + '&metodo=eq.cartao&status=eq.aberta')).json().catch(() => []);
-    for (const v of Array.isArray(velhas) ? velhas : []) {
-      if (v.link_id && /^sub_/.test(v.link_id)) await as('/subscriptions/' + v.link_id, { method: 'DELETE' });
-      await sb('/rest/v1/cobrancas?id=eq.' + v.id, { method: 'PATCH', body: JSON.stringify({ status: 'cancelada' }) });
-    }
+  // uma cobrança em aberto por vez: clicar de novo na mesma forma reabre a mesma página; trocar de forma (ou de plano)
+  // cancela a anterior no Asaas (assinatura no cartão ou cobrança do Pix), para o cliente não acumular pendências
+  const abertas = await (await sb('/rest/v1/cobrancas?select=id,metodo,ciclo,valor,link_id,link_url,criada_em&empresa_id=eq.' + empresaId + '&status=eq.aberta&order=criada_em.desc')).json().catch(() => []);
+  const lista = Array.isArray(abertas) ? abertas : [];
+  const igual = lista.find((v) => v.metodo === metodo && v.ciclo === ciclo && Number(v.valor) === centavos && v.link_url
+    && Date.now() - new Date(v.criada_em).getTime() < 2 * 864e5);
+  for (const v of lista) {
+    if (igual && v.id === igual.id) continue;
+    if (v.link_id && /^sub_/.test(v.link_id)) await as('/subscriptions/' + v.link_id, { method: 'DELETE' });
+    else if (v.link_id && /^pay_/.test(v.link_id)) await as('/payments/' + v.link_id, { method: 'DELETE' });
+    await sb('/rest/v1/cobrancas?id=eq.' + v.id, { method: 'PATCH', body: JSON.stringify({ status: 'cancelada' }) });
   }
+  if (igual) return res.status(200).json({ url: igual.link_url, reaberta: true });
   const cli = await clienteAsaas(empresaId, quem.perfil, quem.user.email, body.documento);
   if (cli.error) return res.status(cli.pedeDocumento ? 400 : 502).json({ error: cli.error, pedeDocumento: !!cli.pedeDocumento });
 
