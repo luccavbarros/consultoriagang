@@ -2348,3 +2348,6 @@ html.side-abrindo .side__plan .badge { display: none; }
 .ass-grade .msg:empty { display: none; }
 .ass-col .ass-acoes { margin-top: 14px; }
 .planos-ac .msg:empty { display: none; }
+.screen--assinatura .rows .row { align-items: flex-start; }
+.pag-res__t.is-ok .pag-res__n { color: var(--ok); }
+.screen--assinatura .pag-res__t.is-warn .pag-res__n { color: var(--warn); }

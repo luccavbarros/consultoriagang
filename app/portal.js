@@ -3017,8 +3017,9 @@
     const vence = soAcesso ? U.acessoVence(P) : P && P.proxima_fatura ? String(P.proxima_fatura).slice(0, 10) : null;
     const dias = soAcesso ? U.acessoDiasRestantes(P) : vence ? U.diasAte(vence) : null;
     const pago = !!(P && P.acesso_ciclo && P.acesso_ate);
-    const sit = soAcesso ? (vencido ? ['Vencida', 'is-hot'] : pago ? ['Ativa', ''] : ['Período grátis', dias != null && dias <= 10 ? 'is-warn' : ''])
-      : [selo ? selo[1] : '—', selo ? selo[0].trim() : ''];
+    // a cor da situação: verde ativo, amarelo pausado ou pendente, vermelho vencido, cinza encerrado
+    const sit = soAcesso ? (vencido ? ['Vencida', 'is-hot'] : pago ? ['Ativa', 'is-ok'] : ['Período grátis', dias != null && dias <= 10 ? 'is-warn' : 'is-ok'])
+      : [selo ? selo[1] : '—', !selo ? '' : selo[1] === 'Ativo' ? 'is-ok' : selo[0].trim()];
     const prazo = dias == null ? '' : dias < 0 ? (soAcesso ? 'Venceu há ' : 'Em aberto há ') + -dias + (dias === -1 ? ' dia' : ' dias') : dias === 0 ? 'Vence hoje' : 'Faltam ' + dias + (dias === 1 ? ' dia' : ' dias');
     const pagamento = quadro('—', 'Forma de pagamento');
     const renova = el('div', null); const planos = el('div', null); const hist = el('div', null, el('p', 'box__text', 'Carregando…'));
