@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="app/app.css?v=25" />
   <link rel="stylesheet" href="app/portal.css?v=65" />
-  <link rel="stylesheet" href="app/tema.css?v=170" />
+  <link rel="stylesheet" href="app/tema.css?v=172" />
   <script src="app/entrada.js?v=2"></script>
 </head>
 <body class="portal-body">
@@ -31,6 +31,7 @@
           <li><a class="side__link" href="#geral" data-view-link="geral" aria-current="page"><span>Visão geral</span><span class="side__ind is-hot" id="side-pend" hidden></span></a></li>
           <li><a class="side__link" href="#novo" id="side-new" data-view-link="novo"><span>Novo cliente</span></a></li>
           <li id="side-cons-li" hidden><a class="side__link" href="#consultores" data-view-link="consultores"><span>Consultores</span></a></li>
+          <li id="side-pag-li" hidden><a class="side__link" href="#pagamentos" data-view-link="pagamentos"><span>Pagamentos</span></a></li>
           <li><a class="side__link" href="#aprendizado" data-view-link="aprendizado"><span>O que funciona</span></a></li>
           <li><a class="side__link" href="#perfil" data-view-link="perfil"><span>Seu perfil</span></a></li>
         </ul>
@@ -153,6 +154,34 @@ Com menos de 5 casos é sorte, não evidência.</p>
       <ul class="rows" id="cons-lista"></ul>
     </section>
 
+    <section class="app-section" aria-labelledby="t-pag" id="pagamentos" data-view="pagamentos" hidden>
+      <h1 class="title-xl" id="t-pag">Pagamentos</h1>
+      <p class="small">O preço do acesso à plataforma, pago pelo cliente no portal.<br />Cartão vira assinatura; Pix paga o ciclo inteiro de uma vez.</p>
+      <form class="card" id="pag-form" novalidate>
+        <div class="new-client new-client--3">
+          <div><label class="label" for="pg-mensal">Mensal (R$)</label><input class="field" id="pg-mensal" data-moeda inputmode="numeric" autocomplete="off" /></div>
+          <div><label class="label" for="pg-semestral">Semestral (R$)</label><input class="field" id="pg-semestral" data-moeda inputmode="numeric" autocomplete="off" /></div>
+          <div><label class="label" for="pg-anual">Anual (R$)</label><input class="field" id="pg-anual" data-moeda inputmode="numeric" autocomplete="off" /></div>
+          <div><label class="label" for="pm-mensal">Plano mensal no Pagar.me</label><input class="field" id="pm-mensal" placeholder="plan_..." /></div>
+          <div><label class="label" for="pm-semestral">Plano semestral no Pagar.me</label><input class="field" id="pm-semestral" placeholder="plan_..." /></div>
+          <div><label class="label" for="pm-anual">Plano anual no Pagar.me</label><input class="field" id="pm-anual" placeholder="plan_..." /></div>
+        </div>
+        <div class="pag-opcoes"><label class="chk"><input type="checkbox" id="pg-cartao" /> Aceitar cartão (assinatura)</label><label class="chk"><input type="checkbox" id="pg-pix" /> Aceitar Pix</label></div>
+        <div class="new-client__foot"><button class="btn btn--light btn--sm" type="submit">Salvar</button><p class="msg" id="pag-cfg-msg" role="status" aria-live="polite"></p></div>
+      </form>
+      <details class="card pag-ajuda">
+        <summary>Como ligar ao Pagar.me</summary>
+        <ol class="small">
+          <li>No painel do Pagar.me, crie 3 planos com estes valores: mensal (a cada 1 mês), semestral (a cada 6) e anual (a cada 12).<br />Copie o código de cada um (começa com plan_) para os campos acima.</li>
+          <li>No Vercel, em Environment Variables, crie PAGARME_SECRET_KEY com a chave secreta.<br />Comece pela de teste (sk_test_). Crie também PAGARME_WEBHOOK_TOKEN com uma senha longa qualquer.</li>
+          <li>No Pagar.me, em Webhooks, cadastre o endereço<br /><code>https://www.gangconsultoria.com.br/api/pagamento?t=</code> + a mesma senha, com os eventos de cobrança paga.</li>
+          <li>Faça um Pix de teste de R$ 1 a R$ 500 e uma assinatura com o cartão de teste.<br />O pagamento deve aparecer abaixo como pago, e o acesso do cliente estendido.</li>
+        </ol>
+      </details>
+      <h2 class="title-sm">Últimas cobranças</h2>
+      <ul class="rows" id="cob-lista"></ul>
+    </section>
+
     <section class="app-section" aria-labelledby="t-me" id="perfil" data-view="perfil" hidden>
       <h1 class="title-xl" id="t-me">Seu perfil</h1>
       <form class="card" id="me-card" novalidate>
@@ -184,6 +213,6 @@ Com menos de 5 casos é sorte, não evidência.</p>
   <script src="app/ui.js?v=45"></script>
   <script src="app/cerebro.js?v=1"></script>
   <script src="app/saude.js?v=19"></script>
-  <script src="app/admin.js?v=26"></script>
+  <script src="app/admin.js?v=27"></script>
 </body>
 </html>
