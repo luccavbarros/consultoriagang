@@ -1,4 +1,5 @@
-/* Client accounts, admin only (Vercel serverless function)
+/* Client and consultant accounts (Vercel serverless function). The main account manages everything; a consultant only
+   manages the logins of the clients assigned to them, and only the main account creates consultants.
    Creating, disabling or deleting a login needs Supabase's service_role key, which must never reach the browser,
    so the admin panel calls this function and it checks the caller is an active admin first.
    Environment variables on Vercel: SUPABASE_SERVICE_ROLE_KEY (required), SUPABASE_URL (optional) */
@@ -22,13 +23,21 @@ const caller = async (req) => {
   const u = await fetch(SUPABASE_URL + '/auth/v1/user', { headers: { apikey: KEY, Authorization: 'Bearer ' + token } });
   if (!u.ok) return { error: 'A chave SUPABASE_SERVICE_ROLE_KEY no Vercel não é deste projeto do Supabase (ou a sessão expirou: saia e entre de novo).' };
   const user = await u.json();
-  const p = await sb('/rest/v1/profiles?select=role,active&id=eq.' + user.id);
+  const p = await sb('/rest/v1/profiles?select=role,active,principal&id=eq.' + user.id);
   if (!p.ok) return { error: 'A chave SUPABASE_SERVICE_ROLE_KEY no Vercel não foi aceita. Use a Secret key do projeto.' };
   const [profile] = await p.json();
   if (!profile) return { error: 'A chave no Vercel não é a Secret key: ela não enxerga os perfis. Troque pela Secret key e faça Redeploy.' };
   if (profile.role !== 'admin') return { error: 'Sem permissão: esta conta não é de consultor.' };
   if (!profile.active) return { error: 'Sem permissão: esta conta está desativada.' };
-  return { user };
+  return { user, principal: !!profile.principal };
+};
+
+// o consultor só mexe nos acessos dos clientes dele; a conta principal, em todos
+const ehDele = async (consultorId, empresaId) => {
+  if (!isUuid(empresaId)) return false;
+  const r = await sb('/rest/v1/empresas?select=consultor_id&id=eq.' + empresaId);
+  const [e] = r.ok ? await r.json() : [];
+  return !!e && e.consultor_id === consultorId;
 };
 
 module.exports = async (req, res) => {
@@ -41,6 +50,17 @@ module.exports = async (req, res) => {
   const quem = await caller(req);
   if (quem.error) return fail(res, 403, quem.error);
   const admin = quem.user;
+  // contas de consultor: só a principal cria, ativa, troca senha ou exclui
+  // acessos de cliente: a principal, ou o consultor responsável por aquele cliente
+  if (action !== 'create' || body.role === 'consultor' || !quem.principal) {
+    if (body.role === 'consultor' && !quem.principal) return fail(res, 403, 'Só a conta principal cadastra consultores.');
+    if (action === 'create' && !quem.principal && !(await ehDele(admin.id, body.empresa_id))) return fail(res, 403, 'Este cliente não está com você.');
+    if (action !== 'create' && !quem.principal) {
+      const t = await sb('/rest/v1/profiles?select=role,empresa_id&id=eq.' + body.id);
+      const [alvo] = t.ok ? await t.json() : [];
+      if (!alvo || alvo.role !== 'client' || !(await ehDele(admin.id, alvo.empresa_id))) return fail(res, 403, 'Este acesso não é de um cliente seu.');
+    }
+  }
 
   const { action } = body;
   if (action !== 'create' && (!isUuid(body.id) || body.id === admin.id)) return fail(res, 400, 'Conta inválida.');
@@ -60,6 +80,14 @@ module.exports = async (req, res) => {
     if (!r.ok) {
       const t = await r.text();
       return fail(res, 400, /already|exists|registered/i.test(t) ? 'Já existe um acesso com este e-mail.' : 'Não foi possível criar o acesso.');
+    }
+    // consultor novo: a conta vira de consultor (não principal)
+    if (body.role === 'consultor') {
+      const user = await r.json().catch(() => ({}));
+      const id = user.id || (user.user && user.user.id);
+      const p = id ? await sb('/rest/v1/profiles?id=eq.' + id, { method: 'PATCH', body: JSON.stringify({ role: 'admin', principal: false, name: String(body.name || '').slice(0, 120) || null }) }) : null;
+      if (!p || !p.ok) return fail(res, 502, 'A conta foi criada, mas não virou de consultor. Rode o supabase/portal.sql e tente de novo.');
+      return res.status(200).json({ ok: true });
     }
     // the new login belongs to the company the panel just created (the caller was checked as admin above)
     if (isUuid(body.empresa_id)) {
