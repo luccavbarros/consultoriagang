@@ -31,7 +31,16 @@
     return profile;
   };
 
-  const signOut = async () => { await sb.auth.signOut(); location.replace('login.html'); };
+  // sair sempre funciona: tenta encerrar a sessão no servidor (no máximo 3 s), mas apaga a sessão deste navegador de qualquer jeito.
+  // Antes, se o pedido ao servidor falhava, a sessão ficava salva e o login devolvia a pessoa ao painel.
+  let saindo = false;
+  const signOut = async () => {
+    if (saindo) return; saindo = true;
+    try { await Promise.race([sb.auth.signOut(), new Promise((ok) => setTimeout(ok, 3000))]); } catch (e) { /* segue para a limpeza local */ }
+    try { await sb.auth.signOut({ scope: 'local' }); } catch (e) { /* já estava limpa */ }
+    try { Object.keys(localStorage).filter((k) => /^sb-.*-auth-token/.test(k)).forEach((k) => localStorage.removeItem(k)); } catch (e) { /* sem acesso ao armazenamento */ }
+    location.replace('login.html');
+  };
 
   // pages show this instead of a blank screen while the anon key is still missing
   const notConfigured = (el) => {
