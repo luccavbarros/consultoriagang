@@ -381,7 +381,7 @@
     const METODO = { cartao: 'Cartão', pix: 'Pix' };
     const ult = (data || [])[0];
     const renova = em && em.asaas_assinatura ? 'Renovação automática no cartão ativa' + (vence ? ': cobra de novo em ' + U.diaAno(vence) : '') + '.'
-      : ult && ult.metodo ? 'Sem renovação automática. O cliente renova pelo portal, em Assinatura.' : null;
+      : ult && ult.metodo ? 'Sem renovação automática. O cliente renova pelo portal, em Meu plano.' : null;
     $('acesso-sit').replaceChildren(...[linhaSit || null, renova ? el('p', 'acesso-sit__t', renova) : null,
       ...(abertas || []).map((c) => el('p', 'acesso-sit__t is-warn', 'Pagamento iniciado em ' + U.dia(String(c.criada_em).slice(0, 10)) + ' pelo ' + METODO[c.metodo] + ' · plano ' + CICLO_T[c.ciclo] + ', aguardando.'))].filter(Boolean));
     $('pag-hist').replaceChildren(...(data || []).map((g) => el('li', null, U.diaAno(g.pago_em) + ' · ' + U.cap(CICLO_T[g.ciclo]) + (g.valor != null ? ' · ' + U.reais(g.valor) : '')
@@ -389,6 +389,42 @@
       g.comprovante_url ? [' · ', el('a', { href: g.comprovante_url, target: '_blank', rel: 'noopener' }, 'Comprovante')] : null)));
     if (me.principal && !$('pag-ver-todos')) $('pag-hist').after(el('a', { class: 'link', id: 'pag-ver-todos', href: 'admin.html#pagamentos' }, 'Ver todos os clientes em Pagamentos'));
   };
+  // consultoria: a mensalidade paga em Meu plano (ou registrada aqui) entra no histórico e avança a próxima fatura
+  const desenhaMensalidade = async () => {
+    const eCons = $('p-tipo').value !== 'acesso';
+    $('con-pag').hidden = !eCons; if (!eCons) return;
+    $('con-registrar').hidden = !me.principal;
+    const [{ data }, { data: em }, { data: abertas }] = await Promise.all([
+      sb.from('pagamentos').select('*').eq('empresa_id', id).order('pago_em', { ascending: false }).limit(12),
+      sb.from('empresas').select('*').eq('id', id).maybeSingle(),
+      sb.from('cobrancas').select('*').eq('empresa_id', id).eq('status', 'aberta').gte('criada_em', new Date(Date.now() - 3 * 864e5).toISOString()),
+    ]);
+    const METODO = { cartao: 'Cartão', pix: 'Pix' };
+    const ult = (data || [])[0];
+    const fat = p.proxima_fatura ? String(p.proxima_fatura).slice(0, 10) : null; const dias = fat ? U.diasAte(fat) : null;
+    $('con-sit').replaceChildren(...[
+      fat ? el('p', 'acesso-sit__t' + (dias < 0 ? ' is-off' : dias <= 5 ? ' is-warn' : ''), dias < 0 ? 'Fatura de ' + U.diaAno(fat) + ' em aberto.' : 'Próxima fatura em ' + U.diaAno(fat) + '.')
+        : el('p', 'acesso-sit__t', 'Sem próxima fatura definida.'),
+      em && em.asaas_assinatura ? el('p', 'acesso-sit__t', 'Renovação automática no cartão ativa: cobra todo mês.')
+        : ult && ult.metodo ? el('p', 'acesso-sit__t', 'Sem renovação automática. O cliente paga pelo portal, em Meu plano.') : null,
+      ...(abertas || []).map((c) => el('p', 'acesso-sit__t is-warn', 'Pagamento iniciado em ' + U.dia(String(c.criada_em).slice(0, 10)) + ' pelo ' + METODO[c.metodo] + ', aguardando.'))].filter(Boolean));
+    $('con-hist').replaceChildren(...(data || []).map((g) => el('li', null, U.diaAno(g.pago_em) + ' · Mensalidade' + (g.valor != null ? ' · ' + U.reais(g.valor) : '')
+      + ' · ' + (g.metodo ? METODO[g.metodo] : g.ref_pagarme ? 'Online' : 'Registro manual'),
+      g.comprovante_url ? [' · ', el('a', { href: g.comprovante_url, target: '_blank', rel: 'noopener' }, 'Comprovante')] : null)));
+    if (me.principal && !$('con-ver-todos')) $('con-hist').after(el('a', { class: 'link', id: 'con-ver-todos', href: 'admin.html#pagamentos' }, 'Ver todos os clientes em Pagamentos'));
+  };
+  $('con-registrar').addEventListener('click', async () => {
+    if (!p.inicio) return say($('con-msg'), 'Salve o contrato antes de registrar um pagamento.', 'error');
+    const b = $('con-registrar'); b.disabled = true;
+    const { data: prox, error } = await sb.rpc('liberar_mensalidade', { p_empresa: id, p_valor: U.moedaValor($('p-mensal')) });
+    b.disabled = false;
+    if (error) return say($('con-msg'), /liberar_mensalidade/.test(error.message || '') ? 'Rode o supabase/mensalidade.sql no Supabase.' : error.message || 'Não foi possível registrar.', 'error');
+    p.proxima_fatura = prox; $('p-fatura').value = prox;
+    say($('con-msg'), 'Mensalidade registrada. Próxima fatura em ' + U.diaAno(prox) + '.', 'ok');
+    desenhaMensalidade();
+  });
+  $('p-tipo').addEventListener('change', desenhaMensalidade);
+  desenhaMensalidade();
   ['p-tipo', 'p-gratis', 'p-acesso-ate', 'p-inicio'].forEach((f) => $(f).addEventListener('change', desenhaAcesso));
   document.querySelectorAll('#fset-acesso [data-ciclo]').forEach((b) => b.addEventListener('click', async () => {
     const ciclo = b.dataset.ciclo;

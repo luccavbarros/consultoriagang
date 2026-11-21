@@ -176,8 +176,6 @@
     const g1 = document.getElementById('g1'); if (g1) g1.hidden = true;
     const ini = document.querySelector('[data-route="inicio"] span'); if (ini) ini.textContent = 'Início';
   } else {
-    // na consultoria, o pagamento é combinado com a GANG: a aba da conta mostra o contrato
-    const ass = document.querySelector('[data-route="assinatura"] span'); if (ass) ass.textContent = 'Contrato';
     // na consultoria, o Plano já é a visão geral: a tela "Visão geral" sai do menu
     const li = document.querySelector('[data-route="inicio"]'); if (li) li.closest('li').hidden = true;
   }
@@ -2958,44 +2956,59 @@
     const linhas = [];
     (abertas || []).forEach((c) => linhas.push(el('li', 'row',
       el('div', 'row__main', el('p', 'row__eyebrow', U.diaAno(String(c.criada_em).slice(0, 10)) + ' · ' + METODO_NOME[c.metodo]),
-        el('p', 'row__title', 'Plano ' + CICLO_NOME[c.ciclo].toLowerCase() + ' · ' + reaisC(c.valor / 100)),
+        el('p', 'row__title', (soAcesso ? 'Plano ' + CICLO_NOME[c.ciclo].toLowerCase() : 'Mensalidade') + ' · ' + reaisC(c.valor / 100)),
         el('p', 'row__text', 'Aguardando o pagamento.')),
       el('div', 'row__actions', chip('todo', 'Pendente'),
         c.link_url ? el('a', { class: 'btn btn--ghost btn--sm', href: c.link_url, target: '_blank', rel: 'noopener' }, 'Pagar') : null))));
     lista.forEach((p) => linhas.push(el('li', 'row',
       el('div', 'row__main', el('p', 'row__eyebrow', U.diaAno(p.pago_em) + (p.metodo ? ' · ' + METODO_NOME[p.metodo] : p.ref_pagarme ? '' : ' · Registrado pela GANG')),
-        el('p', 'row__title', 'Plano ' + (CICLO_NOME[p.ciclo] || p.ciclo).toLowerCase() + (p.valor != null ? ' · ' + reaisC(p.valor) : '')),
-        el('p', 'row__text', 'Acesso liberado até ' + U.diaAno(p.liberado_ate) + '.')),
+        el('p', 'row__title', (soAcesso ? 'Plano ' + (CICLO_NOME[p.ciclo] || p.ciclo).toLowerCase() : 'Mensalidade') + (p.valor != null ? ' · ' + reaisC(p.valor) : '')),
+        el('p', 'row__text', soAcesso ? 'Acesso liberado até ' + U.diaAno(p.liberado_ate) + '.' : 'Referente ao mês até ' + U.diaAno(p.liberado_ate) + '.')),
       el('div', 'row__actions', chip('done', 'Pago'),
         p.comprovante_url ? el('a', { class: 'btn btn--ghost btn--sm', href: p.comprovante_url, target: '_blank', rel: 'noopener' }, 'Comprovante') : null))));
     return linhas.length ? el('ul', 'rows', ...linhas) : el('p', 'box__text', 'Nenhum pagamento ainda.');
   };
+  // pagar a mensalidade da consultoria: cartão (renova todo mês) ou Pix (esta mensalidade); o valor é o do Contrato
+  const pagarMensalidade = (emp, valor) => {
+    const msg = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite' });
+    const doc = el('input', { class: 'field', inputmode: 'numeric', autocomplete: 'off', placeholder: 'CPF ou CNPJ de quem paga', 'aria-label': 'CPF ou CNPJ de quem paga' });
+    const docBox = el('div', 'planos-ac__doc', doc, el('p', 'box__note', 'Pedido pelo Asaas, que processa o pagamento.', el('br'), 'Informado uma vez só.'));
+    docBox.hidden = !!(emp && emp.asaas_cliente);
+    const paga = async (metodo, btn) => {
+      const d = doc.value.replace(/\D/g, '');
+      if (!docBox.hidden && d.length !== 11 && d.length !== 14) { U.say(msg, 'Informe o CPF ou o CNPJ de quem paga.', 'error'); doc.focus(); return; }
+      btn.disabled = true; U.say(msg, 'Abrindo a página de pagamento…');
+      try {
+        const { data: { session } } = await sb.auth.getSession();
+        const r = await fetch('/api/pagamento', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (session ? session.access_token : '') },
+          body: JSON.stringify({ acao: 'criar', ciclo: 'mensal', metodo, documento: d }) });
+        const out = await r.json().catch(() => ({}));
+        if (out.pedeDocumento) { docBox.hidden = false; doc.focus(); }
+        if (!r.ok || !out.url) throw new Error(out.error || 'Não foi possível abrir o pagamento.');
+        location.href = out.url;
+      } catch (err) { btn.disabled = false; U.say(msg, err.message, 'error'); }
+    };
+    const box = el('div', 'planos-ac', el('p', 'box__text', 'Carregando…'));
+    sb.from('config_pagamento').select('*').maybeSingle().then(({ data: cfg }) => {
+      const bt = (t, cls, metodo) => { const b = el('button', { class: 'btn ' + cls + ' btn--sm', type: 'button' }, t); b.addEventListener('click', () => paga(metodo, b)); return b; };
+      box.replaceChildren(...[docBox,
+        el('div', 'planos-ac__c', el('p', 'planos-ac__t', 'Mensalidade'), el('p', 'planos-ac__p', reaisC(valor)),
+          el('p', 'planos-ac__s', 'No cartão, renova sozinha todo mês.'),
+          el('div', 'planos-ac__b', ...[cfg && cfg.cartao ? bt('Assinar no cartão', 'btn--light', 'cartao') : null, cfg && cfg.pix ? bt('Pagar com Pix', 'btn--ghost', 'pix') : null].filter(Boolean))),
+        cfg ? null : el('p', 'box__note', 'O pagamento pela plataforma ainda não está ligado.'), msg].filter(Boolean));
+    });
+    return box;
+  };
   const telaAssinatura = () => {
     const P = D.plano;
-    if (!soAcesso) {
-      // consultoria: o contrato, sem cobrança pela plataforma
-      const ini = P ? String(P.inicio).slice(0, 10) : null;
-      const fim = ini ? (() => { const d = new Date(ini + 'T12:00:00'); d.setMonth(d.getMonth() + dur); d.setDate(d.getDate() - 1); return d.toLocaleDateString('sv-SE'); })() : null;
-      const hist = el('div', null);
-      sb.from('pagamentos').select('*').order('pago_em', { ascending: false }).then(({ data }) => {
-        hist.replaceChildren(...((data || []).length ? [el('h2', 'box__title', 'Pagamentos'), historicoPagamentos(data, [])] : []));
-      });
-      return [head('Conta', 'Seu contrato', 'O plano de marca que você contratou com a GANG.'),
-        el('section', { class: 'pag-res', 'aria-label': 'Resumo do contrato' },
-          quadro(selo ? selo[1] : '—', 'Situação', selo && selo[0].trim()),
-          quadro(P ? 'Mês ' + mesN + ' de ' + dur : '—', 'Andamento do plano'),
-          quadro(ini ? U.diaAno(ini) : '—', 'Início'),
-          quadro(fim ? U.diaAno(fim) : '—', 'Término previsto'),
-          P && P.mensalidade ? quadro(reaisC(P.mensalidade), 'Mensalidade') : null,
-          P && P.proxima_fatura ? quadro(U.diaAno(P.proxima_fatura), 'Próxima fatura') : null),
-        el('section', 'box', hist,
-          el('p', 'box__note', 'Pagamentos e notas fiscais são combinados direto com a GANG.', el('br'), 'Alguma dúvida? Mande uma mensagem ao seu consultor.'))];
-    }
-    // Só acesso: a situação vem do banco (acesso_ate); a renovação automática, da assinatura do cartão guardada na empresa
-    const vence = U.acessoVence(P); const dias = U.acessoDiasRestantes(P);
+    // a situação vem do banco: Só acesso pelo acesso_ate; consultoria pela próxima fatura do Contrato.
+    // A renovação automática vem da assinatura do cartão guardada na empresa (a mesma que o painel mostra)
+    const vence = soAcesso ? U.acessoVence(P) : P && P.proxima_fatura ? String(P.proxima_fatura).slice(0, 10) : null;
+    const dias = soAcesso ? U.acessoDiasRestantes(P) : vence ? U.diasAte(vence) : null;
     const pago = !!(P && P.acesso_ciclo && P.acesso_ate);
-    const sit = vencido ? ['Vencida', 'is-hot'] : pago ? ['Ativa', ''] : ['Período grátis', dias != null && dias <= 10 ? 'is-warn' : ''];
-    const prazo = dias == null ? '' : dias < 0 ? 'Venceu há ' + -dias + (dias === -1 ? ' dia' : ' dias') : dias === 0 ? 'Vence hoje' : 'Faltam ' + dias + (dias === 1 ? ' dia' : ' dias');
+    const sit = soAcesso ? (vencido ? ['Vencida', 'is-hot'] : pago ? ['Ativa', ''] : ['Período grátis', dias != null && dias <= 10 ? 'is-warn' : ''])
+      : [selo ? selo[1] : '—', selo ? selo[0].trim() : ''];
+    const prazo = dias == null ? '' : dias < 0 ? (soAcesso ? 'Venceu há ' : 'Em aberto há ') + -dias + (dias === -1 ? ' dia' : ' dias') : dias === 0 ? 'Vence hoje' : 'Faltam ' + dias + (dias === 1 ? ' dia' : ' dias');
     const pagamento = quadro('—', 'Forma de pagamento');
     const renova = el('div', null); const planos = el('div', null); const hist = el('div', null, el('p', 'box__text', 'Carregando…'));
     const msg = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite' });
@@ -3009,9 +3022,9 @@
       const ultimo = lista[0];
       pagamento.replaceChildren(el('p', 'pag-res__n', assinatura ? 'Cartão' : ultimo && ultimo.metodo ? METODO_NOME[ultimo.metodo] : '—'),
         el('p', 'pag-res__l', assinatura ? 'Renova sozinho' : ultimo && ultimo.metodo ? 'Sem renovação automática' : 'Forma de pagamento'));
-      // a renovação automática: quando cobra de novo e o botão de cancelar (o acesso pago continua até o fim)
+      // a renovação automática: quando cobra de novo e o botão de cancelar (o que já foi pago continua valendo)
       if (assinatura) {
-        const ciclo = CICLO_NOME[emp.assinatura_ciclo || (P && P.acesso_ciclo)] || '';
+        const ciclo = soAcesso ? (CICLO_NOME[emp.assinatura_ciclo || (P && P.acesso_ciclo)] || '').toLowerCase() : null;
         const b = el('button', { class: 'btn btn--ghost btn--sm', type: 'button' }, 'Cancelar renovação');
         const conf = el('div', { class: 'ass-acoes', hidden: true },
           el('span', 'box__note', 'Cancelar mesmo?'),
@@ -3022,33 +3035,45 @@
               const r = await fetch('/api/pagamento', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (session ? session.access_token : '') }, body: JSON.stringify({ acao: 'cancelar' }) });
               const out = await r.json().catch(() => ({}));
               if (!r.ok) throw new Error(out.error || 'Não foi possível cancelar. Tente de novo.');
-              U.say(msg, 'Renovação cancelada. Seu acesso continua até ' + U.diaAno(vence) + '.', 'ok'); carregar();
+              U.say(msg, soAcesso ? 'Renovação cancelada. Seu acesso continua até ' + U.diaAno(vence) + '.' : 'Renovação cancelada. A próxima mensalidade pode ser paga aqui.', 'ok'); carregar();
             } catch (err) { s.disabled = false; U.say(msg, err.message, 'error'); }
           }); return s; })(),
           (() => { const n = el('button', { class: 'btn btn--ghost btn--sm', type: 'button' }, 'Não'); n.addEventListener('click', () => { conf.hidden = true; b.hidden = false; }); return n; })());
         b.addEventListener('click', () => { b.hidden = true; conf.hidden = false; });
         renova.replaceChildren(el('section', { class: 'box', 'aria-labelledby': 'renova-t' },
           el('h2', { class: 'box__title', id: 'renova-t' }, 'Renovação automática'),
-          el('p', 'box__text', 'Seu plano ' + ciclo.toLowerCase() + ' renova sozinho no cartão em ' + (vence ? U.diaAno(vence) : '—') + '.', el('br'), 'Se cancelar, o acesso continua até essa data.'),
+          soAcesso ? el('p', 'box__text', 'Seu plano ' + ciclo + ' renova sozinho no cartão em ' + (vence ? U.diaAno(vence) : '—') + '.', el('br'), 'Se cancelar, o acesso continua até essa data.')
+            : el('p', 'box__text', 'A mensalidade de ' + reaisC(P && P.mensalidade) + ' é cobrada no cartão todo mês.', el('br'), 'Se cancelar, as próximas são pagas aqui.'),
           el('div', 'ass-acoes', b, conf), msg));
         planos.replaceChildren();
       } else {
         renova.replaceChildren(msg.textContent ? el('section', 'box', msg) : '');
-        planos.replaceChildren(el('section', { class: 'box', 'aria-labelledby': 'planos-as-t' },
+        if (soAcesso) planos.replaceChildren(el('section', { class: 'box', 'aria-labelledby': 'planos-as-t' },
           el('h2', { class: 'box__title', id: 'planos-as-t' }, pago || vencido ? 'Renovar ou trocar de plano' : 'Escolha um plano'),
           pago && !vencido ? el('p', 'box__note', 'Pagando agora, o novo período começa quando o atual termina.') : null,
           escolherPlano()));
+        else planos.replaceChildren(el('section', { class: 'box', 'aria-labelledby': 'planos-as-t' },
+          el('h2', { class: 'box__title', id: 'planos-as-t' }, 'Pagar a mensalidade'),
+          P && Number(P.mensalidade) > 0 ? pagarMensalidade(emp, P.mensalidade)
+            : el('p', 'box__text', 'A mensalidade ainda não foi definida.', el('br'), 'Fale com o seu consultor.')));
       }
       hist.replaceChildren(historicoPagamentos(lista, abertas || []));
     });
     carregar();
-    return [head('Conta', 'Assinatura', 'Seu plano, até quando vale e os comprovantes de pagamento.'),
-      el('section', { class: 'pag-res', 'aria-label': 'Resumo da assinatura' },
-        quadro(sit[0], pago && P.acesso_ciclo ? 'Plano ' + CICLO_NOME[P.acesso_ciclo].toLowerCase() : 'Situação', sit[1]),
-        quadro(vence ? U.diaAno(vence) : '—', prazo || 'Válido até', dias != null && dias <= 10 ? (dias < 0 ? 'is-hot' : 'is-warn') : ''),
-        pagamento),
+    const ini = P && P.inicio ? String(P.inicio).slice(0, 10) : null;
+    const fim = ini ? (() => { const d = new Date(ini + 'T12:00:00'); d.setMonth(d.getMonth() + dur); d.setDate(d.getDate() - 1); return d.toLocaleDateString('sv-SE'); })() : null;
+    const quadros = soAcesso ? [
+      quadro(sit[0], pago && P.acesso_ciclo ? 'Plano ' + CICLO_NOME[P.acesso_ciclo].toLowerCase() : 'Situação', sit[1]),
+      quadro(vence ? U.diaAno(vence) : '—', prazo || 'Válido até', dias != null && dias <= 10 ? (dias < 0 ? 'is-hot' : 'is-warn') : ''),
+      pagamento]
+      : [quadro(sit[0], P ? 'Consultoria · mês ' + mesN + ' de ' + dur : 'Consultoria', sit[1]),
+        quadro(vence ? U.diaAno(vence) : '—', vence ? 'Próxima fatura · ' + prazo.toLowerCase() : 'Próxima fatura', dias != null && dias <= 5 ? (dias < 0 ? 'is-hot' : 'is-warn') : ''),
+        pagamento];
+    return [head('Conta', 'Meu plano', soAcesso ? 'Seu plano, até quando vale e os comprovantes de pagamento.' : 'Sua consultoria, a mensalidade e os comprovantes de pagamento.'),
+      el('section', { class: 'pag-res', 'aria-label': 'Resumo do plano' }, ...quadros),
       renova, planos,
       el('section', { class: 'box', 'aria-labelledby': 'hist-pag-t' }, el('h2', { class: 'box__title', id: 'hist-pag-t' }, 'Pagamentos'), hist,
+        soAcesso ? null : el('p', 'box__note', 'Contrato desde ' + (ini ? U.diaAno(ini) : '—') + ', com término previsto em ' + (fim ? U.diaAno(fim) : '—') + '.'),
         el('p', 'box__note', 'O comprovante abre no Asaas, que processa os pagamentos.', el('br'), 'Dúvidas sobre cobrança? Fale com a GANG pelo menu.'))];
   };
   // acesso vencido: a tela inicial explica o que continua aberto e como voltar a ter tudo
@@ -3432,7 +3457,7 @@
     identidade: { crumb: 'Sua marca / Identidade visual', render: telaIdentidade },
     estrategia: { crumb: 'Sua marca / Estratégia', render: telaEstrategia },
     diagnostico: { crumb: 'Sua marca / Diagnóstico', render: telaDiagnostico },
-    assinatura: { crumb: soAcesso ? 'Conta / Assinatura' : 'Conta / Contrato', render: telaAssinatura },
+    assinatura: { crumb: 'Conta / Meu plano', render: telaAssinatura },
   };
 
   const side = document.querySelector('.side');

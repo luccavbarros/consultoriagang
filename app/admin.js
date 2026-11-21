@@ -343,7 +343,7 @@
           : dias < 0 ? ['Fatura de ' + U.diaAno(p.proxima_fatura) + ' em aberto', 'is-hot', 0]
           : dias <= 15 ? ['Fatura em ' + dias + (dias === 1 ? ' dia' : ' dias'), 'is-warn', 1] : ['Ativo', 'is-ok', 2]);
         return { e, nome: nome[e.id] || e.nome || 'Cliente', plano: 'Consultoria' + (p.mensalidade ? ' · ' + U.reais(p.mensalidade) + '/mês' : ''),
-          forma: ult ? (ult.metodo ? (ult.metodo === 'pix' ? 'Pix' : 'Cartão') : 'Registro manual') : 'Combinado com a GANG',
+          forma: renovaAuto.has(e.id) ? 'Cartão · renova sozinho' : ult ? (ult.metodo ? (ult.metodo === 'pix' ? 'Pix' : 'Cartão · sem renovação') : 'Registro manual') : '—',
           sit, data: p.proxima_fatura ? 'Fatura ' + U.diaAno(p.proxima_fatura) : '—', dias, ult };
       }
       const dias = U.acessoDiasRestantes(p); const vence = U.acessoVence(p);
