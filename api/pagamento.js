@@ -1,5 +1,6 @@
 /* Pagamento do acesso à plataforma pelo Asaas (função do Vercel).
-   - POST { acao: 'criar', ciclo, metodo, documento }   o cliente logado escolhe o plano. Pix: uma cobrança do ciclo inteiro.
+   - POST { acao: 'criar', ciclo, metodo, documento }   o cliente logado paga. Só acesso: o plano escolhido; consultoria: a mensalidade
+       do Contrato (o ciclo é sempre mensal). Pix: uma cobrança do ciclo inteiro.
        Cartão: uma assinatura (o Asaas cobra sozinho a cada ciclo). Nos dois casos devolve a página de pagamento do Asaas
        (invoiceUrl): o cartão é digitado lá, nunca passa por aqui.
    - POST { acao: 'cancelar' }                          o cliente cancela a renovação automática do cartão (o acesso pago continua até o fim).
@@ -55,17 +56,21 @@ const clienteAsaas = async (empresaId, perfil, emailUser, documento) => {
 
 const criar = async (req, res, body) => {
   const quem = await cliente(req); if (quem.error) return fail(res, 403, quem.error);
-  const ciclo = String(body.ciclo || ''); const metodo = String(body.metodo || '');
-  if (!CICLOS[ciclo] || !['cartao', 'pix'].includes(metodo)) return fail(res, 400, 'Escolha o plano e a forma de pagamento.');
+  const empresaId = quem.perfil.empresa_id;
+  const metodo = String(body.metodo || '');
   const cfg = await um(await sb('/rest/v1/config_pagamento?select=*&id=eq.1'));
   if (!cfg) return fail(res, 500, 'Pagamento ainda não configurado. Fale com a GANG.');
   if ((metodo === 'pix' && !cfg.pix) || (metodo === 'cartao' && !cfg.cartao)) return fail(res, 400, 'Esta forma de pagamento não está disponível.');
-  const centavos = Number((cfg.precos || {})[ciclo]);
-  if (!(centavos > 0)) return fail(res, 500, 'Preço do plano não configurado. Fale com a GANG.');
-  const empresaId = quem.perfil.empresa_id;
+  // consultoria: a mensalidade do Contrato, todo mês; Só acesso: o preço do ciclo escolhido em Pagamentos
+  const plano = await um(await sb('/rest/v1/planos?select=tipo,mensalidade&empresa_id=eq.' + empresaId));
+  const consultoria = !plano || plano.tipo !== 'acesso';
+  const ciclo = consultoria ? 'mensal' : String(body.ciclo || '');
+  if (!CICLOS[ciclo] || !['cartao', 'pix'].includes(metodo)) return fail(res, 400, 'Escolha o plano e a forma de pagamento.');
+  const centavos = consultoria ? Math.round((Number(plano && plano.mensalidade) || 0) * 100) : Number((cfg.precos || {})[ciclo]);
+  if (!(centavos > 0)) return fail(res, 500, consultoria ? 'A mensalidade ainda não foi definida. Fale com a GANG.' : 'Preço do plano não configurado. Fale com a GANG.');
   // com a renovação automática ativa, o cartão já cobra sozinho: trocar de plano pede cancelar antes (evita cobrar duas vezes)
   const atual = await um(await sb('/rest/v1/empresas?select=asaas_assinatura&id=eq.' + empresaId));
-  if (atual && atual.asaas_assinatura) return fail(res, 400, 'Sua assinatura no cartão já renova sozinha. Para trocar de plano, cancele a renovação em Assinatura.');
+  if (atual && atual.asaas_assinatura) return fail(res, 400, 'Sua assinatura no cartão já renova sozinha. Para trocar de plano, cancele a renovação em Meu plano.');
   // assinaturas no cartão começadas e nunca pagas: removidas no Asaas, para ele não seguir gerando cobranças
   if (metodo === 'cartao') {
     const velhas = await (await sb('/rest/v1/cobrancas?select=id,link_id&empresa_id=eq.' + empresaId + '&metodo=eq.cartao&status=eq.aberta')).json().catch(() => []);
@@ -80,8 +85,8 @@ const criar = async (req, res, body) => {
   const c = await sb('/rest/v1/cobrancas', { method: 'POST', headers: { Prefer: 'return=representation' },
     body: JSON.stringify({ empresa_id: empresaId, ciclo, metodo, valor: centavos }) });
   const cob = await um(c); if (!cob || !cob.id) return fail(res, 500, 'Não foi possível iniciar o pagamento. Tente de novo.');
-  const descricao = 'Acesso à plataforma GANG · ' + CICLOS[ciclo][0];
-  const callback = { successUrl: SITE + '/cliente#inicio', autoRedirect: true };
+  const descricao = consultoria ? 'Consultoria de marca GANG · mensalidade' : 'Acesso à plataforma GANG · ' + CICLOS[ciclo][0];
+  const callback = { successUrl: SITE + '/cliente#assinatura', autoRedirect: true };
   let url = null; let ref = null; let erro = null;
   if (metodo === 'pix') {
     // Pix: uma cobrança do ciclo inteiro, vencendo amanhã
@@ -137,9 +142,12 @@ const aviso = async (req, res, body) => {
     if (m) { empresa = m[1]; ciclo = m[2]; }
   }
   if (!empresa || !CICLOS[ciclo]) return res.status(200).json({ ok: true, semEmpresa: true });
-  const lib = await sb('/rest/v1/rpc/liberar_pagamento_pagarme', { method: 'POST',
-    body: JSON.stringify({ p_empresa: empresa, p_ciclo: ciclo, p_valor: Number(pay.value) || 0, p_ref: pay.id }) });
-  if (!lib.ok) return fail(res, 500, 'Não foi possível liberar o acesso.'); // o Asaas tenta de novo
+  // consultoria: a mensalidade paga avança a próxima fatura; Só acesso: o pagamento estende o acesso
+  const pl = await um(await sb('/rest/v1/planos?select=tipo&empresa_id=eq.' + empresa));
+  const lib = pl && pl.tipo === 'acesso'
+    ? await sb('/rest/v1/rpc/liberar_pagamento_pagarme', { method: 'POST', body: JSON.stringify({ p_empresa: empresa, p_ciclo: ciclo, p_valor: Number(pay.value) || 0, p_ref: pay.id }) })
+    : await sb('/rest/v1/rpc/liberar_mensalidade', { method: 'POST', body: JSON.stringify({ p_empresa: empresa, p_valor: Number(pay.value) || 0, p_ref: pay.id }) });
+  if (!lib.ok) return fail(res, 500, 'Não foi possível registrar o pagamento.'); // o Asaas tenta de novo
   // o que o cliente vê na aba Assinatura: a forma de pagamento e o comprovante do Asaas
   await sb('/rest/v1/pagamentos?ref_pagarme=eq.' + encodeURIComponent(pay.id), { method: 'PATCH',
     body: JSON.stringify({ metodo: pay.billingType === 'PIX' ? 'pix' : pay.billingType === 'CREDIT_CARD' ? 'cartao' : null,
