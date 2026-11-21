@@ -298,7 +298,7 @@
     } catch (err) { say($('cons-msg'), err.message, 'error'); }
   });
 
-  // ===== pagamentos (só a conta principal): preços do acesso, códigos dos planos do Pagar.me e as últimas cobranças =====
+  // ===== pagamentos (só a conta principal): preços do acesso (cobrados pelo Asaas), quem está pagando e as últimas cobranças =====
   const CIC = ['mensal', 'semestral', 'anual'];
   const pagamentos = async () => {
     if (!principal) return;
@@ -308,23 +308,56 @@
       sb.from('empresas').select('id, nome'),
     ]);
     if (error || !cfg) return say($('pag-cfg-msg'), 'Rode o supabase/portal.sql (parte de pagamento) para ligar esta tela.', 'error');
-    CIC.forEach((k) => { U.moedaSet ? U.moedaSet($('pg-' + k), (cfg.precos || {})[k] / 100) : ($('pg-' + k).value = ((cfg.precos || {})[k] / 100) || ''); $('pm-' + k).value = (cfg.planos_pagarme || {})[k] || ''; });
+    CIC.forEach((k) => { U.moedaSet($('pg-' + k), (cfg.precos || {})[k] / 100); });
     $('pg-cartao').checked = !!cfg.cartao; $('pg-pix').checked = !!cfg.pix;
     const nome = Object.fromEntries((emps || []).map((e) => [e.id, e.nome]));
     const ST = { aberta: 'Aguardando', paga: 'Paga', falhou: 'Falhou', cancelada: 'Cancelada' };
+    quemPaga(cobs, nome);
     $('cob-lista').replaceChildren(...((cobs || []).length ? cobs.map((c) => el('li', 'row', el('div', 'row__main',
       el('p', 'row__eyebrow', U.dia(c.criada_em) + ' · ' + (c.metodo === 'pix' ? 'Pix' : 'Cartão')),
       el('p', 'row__title', (nome[c.empresa_id] || 'Cliente') + ' · ' + U.cap(c.ciclo) + ' · ' + U.reais(c.valor / 100))),
       el('div', 'row__actions', el('span', 'badge ' + (c.status === 'paga' ? 'is-ok' : c.status === 'aberta' ? 'is-mid' : 'is-off'), ST[c.status] || c.status)))) : [el('li', 'clients__empty', 'Nenhuma cobrança ainda.')]));
+  };
+  // quem está pagando: todos os clientes com acesso à plataforma, a situação de cada um e o que vence logo
+  const quemPaga = async (cobs, nome) => {
+    const [{ data: pls }, { data: pags }] = await Promise.all([
+      sb.from('planos').select('*').eq('tipo', 'acesso'),
+      sb.from('pagamentos').select('*').order('pago_em', { ascending: false }),
+    ]);
+    const CIC_T = { mensal: 'Mensal', semestral: 'Semestral', anual: 'Anual' };
+    const linhas = (pls || []).map((p) => {
+      const ult = (pags || []).find((g) => g.empresa_id === p.empresa_id);
+      const cob = (cobs || []).find((c) => c.empresa_id === p.empresa_id && c.status === 'paga');
+      const dias = U.acessoDiasRestantes(p); const vence = U.acessoVence(p);
+      const gratis = !ult; // nunca pagou: ainda no período grátis (ou vencido sem pagar)
+      const sit = p.status === 'encerrado' ? ['Encerrado', 'is-off', 9] : p.status === 'pausado' ? ['Pausado', 'is-mid', 8]
+        : dias == null ? ['Sem data', 'is-mid', 7] : dias < 0 ? ['Vencido há ' + -dias + (dias === -1 ? ' dia' : ' dias'), 'is-hot', 0]
+        : dias <= 15 ? ['Vence em ' + dias + (dias === 1 ? ' dia' : ' dias'), 'is-warn', 1] : [gratis ? 'Período grátis' : 'Em dia', 'is-ok', 2];
+      const forma = cob ? (cob.metodo === 'pix' ? 'Pix' : 'Cartão (assinatura)') : ult ? (ult.ref_pagarme ? 'Pagamento online' : 'Registro manual') : '—'; // ref_pagarme guarda o código do Asaas
+      return { p, nome: nome[p.empresa_id] || 'Cliente', plano: CIC_T[p.acesso_ciclo] || (gratis ? 'Grátis' : '—'), forma, sit, vence, dias };
+    }).sort((a, b) => a.sit[2] - b.sit[2] || (a.dias ?? 999) - (b.dias ?? 999));
+    const mes = new Date().toISOString().slice(0, 7);
+    const receita = (pags || []).filter((g) => String(g.pago_em).slice(0, 7) === mes).reduce((t, g) => t + (Number(g.valor) || 0), 0);
+    const conta = (f) => linhas.filter(f).length;
+    const tile = (n, t, cls) => el('div', 'pag-res__t' + (cls ? ' ' + cls : ''), el('p', 'pag-res__n', n), el('p', 'pag-res__l', t));
+    $('pag-res').replaceChildren(
+      tile(String(conta((x) => x.sit[2] === 2)), 'em dia'),
+      tile(String(conta((x) => x.sit[2] === 1)), 'vencem em até 15 dias', conta((x) => x.sit[2] === 1) ? 'is-warn' : ''),
+      tile(String(conta((x) => x.sit[2] === 0)), 'vencidos', conta((x) => x.sit[2] === 0) ? 'is-hot' : ''),
+      tile(U.reais(receita), 'recebido em ' + U.nomeMes(mes)));
+    const cab = el('thead', null, el('tr', null, ['Cliente', 'Plano', 'Forma', 'Situação', 'Acesso até'].map((h) => el('th', { scope: 'col' }, h))));
+    const corpo = el('tbody', null, linhas.length ? linhas.map((x) => el('tr', null,
+      el('th', { scope: 'row' }, el('a', { href: 'admin-cliente.html?id=' + x.p.empresa_id + '#plano' }, x.nome)),
+      el('td', null, x.plano), el('td', null, x.forma), el('td', null, el('span', 'badge ' + x.sit[1], x.sit[0])),
+      el('td', null, x.vence ? U.diaAno(x.vence) : '—'))) : [el('tr', null, el('td', { colspan: 5 }, 'Nenhum cliente com acesso à plataforma ainda.'))]);
+    $('pag-tab').replaceChildren(cab, corpo);
   };
   if ($('pag-form')) $('pag-form').addEventListener('submit', async (ev) => {
     ev.preventDefault();
     const reais = (k) => { const v = U.moedaValor ? U.moedaValor($('pg-' + k)) : Number(String($('pg-' + k).value).replace(/\./g, '').replace(',', '.')); return Math.round((Number(v) || 0) * 100); };
     const precos = Object.fromEntries(CIC.map((k) => [k, reais(k)]));
     if (CIC.some((k) => !(precos[k] > 0))) return say($('pag-cfg-msg'), 'Preencha os três preços.', 'error');
-    const planos = Object.fromEntries(CIC.map((k) => [k, $('pm-' + k).value.trim()]).filter(([, v]) => v));
-    if (Object.values(planos).some((v) => !/^plan_/.test(v))) return say($('pag-cfg-msg'), 'O código do plano do Pagar.me começa com plan_.', 'error');
-    const r = await sb.from('config_pagamento').update({ precos, planos_pagarme: planos, cartao: $('pg-cartao').checked, pix: $('pg-pix').checked, atualizado_em: new Date().toISOString() }).eq('id', 1);
+    const r = await sb.from('config_pagamento').update({ precos, cartao: $('pg-cartao').checked, pix: $('pg-pix').checked, atualizado_em: new Date().toISOString() }).eq('id', 1);
     say($('pag-cfg-msg'), r.error ? 'Não foi possível salvar.' : 'Salvo. O portal já mostra os preços novos.', r.error ? 'error' : 'ok');
   });
 

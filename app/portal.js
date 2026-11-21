@@ -2895,8 +2895,9 @@
 
   // escolher um plano: manda o pedido como mensagem para o consultor (o pagamento é combinado com a GANG)
   const CICLOS = [['mensal', 'Mensal', 'Renova todo mês'], ['semestral', 'Semestral', '6 meses de acesso'], ['anual', 'Anual', '12 meses de acesso']];
-  // escolher o plano e pagar no Pagar.me: cartão vira assinatura (renova sozinho); Pix paga o ciclo inteiro de uma vez.
-  // A página de pagamento é do Pagar.me; quando o pagamento entra, o acesso é liberado sozinho. Sem a configuração, o pedido vai à GANG
+  // escolher o plano e pagar no Asaas: cartão vira assinatura (renova sozinho); Pix paga o ciclo inteiro de uma vez.
+  // A página de pagamento é do Asaas; quando o pagamento entra, o acesso é liberado sozinho. Sem a configuração, o pedido vai à GANG.
+  // O Asaas pede o CPF ou CNPJ de quem paga: o campo aparece só na primeira vez
   const escolherPlano = () => {
     const msg = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite' });
     const box = el('div', 'planos-ac');
@@ -2906,13 +2907,20 @@
       btn.disabled = false;
       U.say(msg, error ? 'Não foi possível enviar. Tente de novo.' : 'Pedido enviado. A GANG responde ' + diasResposta() + ' com a forma de pagamento.', error ? 'error' : 'ok');
     };
+    const doc = el('input', { class: 'field', id: 'pag-doc', inputmode: 'numeric', autocomplete: 'off', placeholder: 'CPF ou CNPJ de quem paga', 'aria-label': 'CPF ou CNPJ de quem paga' });
+    const docBox = el('div', 'planos-ac__doc', doc, el('p', 'box__note', 'Pedido pelo Asaas, que processa o pagamento.', el('br'), 'Informado uma vez só.'));
+    // já pagou antes pelo Asaas: o cadastro existe e o campo não aparece
+    sb.from('empresas').select('*').maybeSingle().then(({ data }) => { docBox.hidden = !!(data && data.asaas_cliente); });
     const paga = async (ciclo, metodo, btn) => {
+      const d = doc.value.replace(/\D/g, '');
+      if (!docBox.hidden && d.length !== 11 && d.length !== 14) { U.say(msg, 'Informe o CPF ou o CNPJ de quem paga.', 'error'); doc.focus(); return; }
       btn.disabled = true; U.say(msg, 'Abrindo a página de pagamento…');
       try {
         const { data: { session } } = await sb.auth.getSession();
         const r = await fetch('/api/pagamento', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (session ? session.access_token : '') },
-          body: JSON.stringify({ acao: 'criar', ciclo, metodo }) });
+          body: JSON.stringify({ acao: 'criar', ciclo, metodo, documento: d }) });
         const out = await r.json().catch(() => ({}));
+        if (out.pedeDocumento) { docBox.hidden = false; doc.focus(); }
         if (!r.ok || !out.url) throw new Error(out.error || 'Não foi possível abrir o pagamento.');
         location.href = out.url;
       } catch (err) { btn.disabled = false; U.say(msg, err.message, 'error'); }
@@ -2926,15 +2934,15 @@
           const v = Number(precos[k]) || 0; const meses = k === 'mensal' ? 1 : k === 'semestral' ? 6 : 12;
           const eco = mensal && meses > 1 ? mensal * meses - v : 0;
           const botoes = !cfg || !v ? [(() => { const b = el('button', { class: 'btn btn--light btn--sm', type: 'button' }, 'Quero este'); b.addEventListener('click', () => pedeGang(nome, b)); return b; })()]
-            : [cfg.cartao && (cfg.planos_pagarme || {})[k] ? (() => { const b = el('button', { class: 'btn btn--light btn--sm', type: 'button' }, 'Assinar no cartão'); b.addEventListener('click', () => paga(k, 'cartao', b)); return b; })() : null,
+            : [cfg.cartao ? (() => { const b = el('button', { class: 'btn btn--light btn--sm', type: 'button' }, 'Assinar no cartão'); b.addEventListener('click', () => paga(k, 'cartao', b)); return b; })() : null,
                cfg.pix ? (() => { const b = el('button', { class: 'btn btn--ghost btn--sm', type: 'button' }, 'Pagar com Pix'); b.addEventListener('click', () => paga(k, 'pix', b)); return b; })() : null].filter(Boolean);
           return el('div', 'planos-ac__c', el('p', 'planos-ac__t', nome),
             v ? el('p', 'planos-ac__p', U.reais(v / 100)) : null,
             el('p', 'planos-ac__s', v && meses > 1 ? U.reais(v / 100 / meses) + ' por mês' + (eco > 0 ? ' · economia de ' + U.reais(eco / 100) : '') : sub),
             el('div', 'planos-ac__b', ...botoes));
         });
-        box.replaceChildren(el('div', 'planos-ac__l', ...cards),
-          (abertas || []).length ? el('p', 'box__note', 'Já pagou? Assim que o Pagar.me confirmar, o acesso é liberado sozinho (no Pix, em segundos). Recarregue a página em instantes.') : null,
+        box.replaceChildren(cfg && Object.values(precos).some(Boolean) ? docBox : null, el('div', 'planos-ac__l', ...cards),
+          (abertas || []).length ? el('p', 'box__note', 'Já pagou? Assim que o Asaas confirmar, o acesso é liberado sozinho. Recarregue a página em instantes.') : null,
           cfg && Object.values(precos).some(Boolean) ? el('p', 'box__note', 'No cartão, a assinatura renova sozinha a cada ciclo. No Pix, você paga o ciclo inteiro de uma vez.') : null, msg);
       });
     return box;

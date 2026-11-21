@@ -2318,3 +2318,10 @@ html.side-abrindo .side__plan .badge { display: none; }
 .pag-ajuda summary { cursor: pointer; font-size: 14px; font-weight: 500; }
 .pag-ajuda ol { margin: 12px 0 0; padding-left: 18px; display: grid; gap: 10px; line-height: 1.55; }
 .pag-ajuda code { font-size: 12px; word-break: break-all; }
+.pag-res { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.pag-res__t { background: var(--lightblack); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 14px 16px; }
+.pag-res__n { margin: 0; font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.pag-res__l { margin: 2px 0 0; font-size: 12px; color: var(--ganggrey); }
+.pag-res__t.is-warn .pag-res__n { color: var(--warn); }
+.pag-res__t.is-hot .pag-res__n { color: var(--bad); }
+.planos-ac__doc { display: grid; gap: 6px; max-width: 360px; margin-bottom: 12px; }
