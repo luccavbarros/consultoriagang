@@ -428,9 +428,11 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   const bfObjetivo = () => {
     const B = BF(); const n = B.numeros || {}; const a = B.ambicao || {};
     const fat = Number(n.faturamento) || 0; const pct = Number(a.pct) || 0; const meses = Number(a.meses) || 12;
-    if (!fat || !pct) return [];
-    const alvo = Math.round(fat * (1 + pct / 100) / 1000) * 1000; const ate = new Date(); ate.setMonth(ate.getMonth() + meses);
-    const t = 'Faturamento de ' + U.reais(fat) + ' para ' + U.reais(alvo) + ' por mês até ' + U.nomeMes(ate.toISOString().slice(0, 7)) + ' de ' + ate.getFullYear();
+    if (!pct) return [];
+    const ate = new Date(); ate.setMonth(ate.getMonth() + meses); const quando = U.nomeMes(ate.toISOString().slice(0, 7)) + ' de ' + ate.getFullYear();
+    // sem o faturamento (o cliente não informou ou só deu a faixa), o objetivo fica em percentual
+    const t = fat ? 'Faturamento de ' + U.reais(fat) + ' para ' + U.reais(Math.round(fat * (1 + pct / 100) / 1000) * 1000) + ' por mês até ' + quando
+      : 'Faturamento ' + pct + '% maior até ' + quando + ', medido pelos números do mês';
     return comTitulo([{ t, row: { titulo: t, nivel: 'negocio', destaque: '+' + pct + '%' } }], 'Da ambição e dos números do briefing');
   };
   // o diagnóstico com o briefing ao lado: cada hipótese do consultor, confirmada ou ainda a confirmar
@@ -456,7 +458,8 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     const B = BF(); const r = B.recursos || {}; const a = B.ambicao || {}; const n = B.numeros || {};
     const itens = [
       a.pct ? ['Ambição', '+' + a.pct + '% em ' + (a.meses || 12) + ' meses' + (a.nota ? ' · ' + a.nota : '')] : null,
-      n.faturamento ? ['Hoje', U.reais(Number(n.faturamento)) + ' por mês' + (n.clientes ? ' · ' + n.clientes + ' clientes' : '')] : null,
+      n.faturamento || n.faixa || n.clientes ? ['Hoje', [n.faturamento ? U.reais(Number(n.faturamento)) + ' por mês' : n.faixa ? ({ ate20: 'até R$ 20 mil', '20a50': 'R$ 20 a 50 mil', '50a100': 'R$ 50 a 100 mil', '100a300': 'R$ 100 a 300 mil', '300mais': 'acima de R$ 300 mil' })[n.faixa] + ' por mês' : null,
+        n.clientes ? n.clientes + ' clientes por mês' : null, n.ticket ? 'ticket ' + U.reais(Number(n.ticket)) : null].filter(Boolean).join(' · ')] : null,
       (B.cliente || '').trim() ? ['Cliente que importa', B.cliente] : null,
       (B.nao_cliente || '').trim() ? ['Quem não é cliente', B.nao_cliente] : null,
       r.verba || r.horas ? ['Recursos', [r.verba ? 'verba de mídia ' + U.reais(Number(r.verba)) + '/mês' : null, r.horas ? r.horas + ' h por semana' : null, r.executa || null].filter(Boolean).join(' · ')] : null,
