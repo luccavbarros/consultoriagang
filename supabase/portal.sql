@@ -859,7 +859,12 @@ begin
   if p_i < 0 or p_i >= jsonb_array_length(a.passos) then raise exception 'Passo inválido.'; end if;
   update public.acoes
      set passos = jsonb_set(passos, array[p_i::text, 'ok'], to_jsonb(coalesce(p_ok, false))),
-         status = case when status = 'a_fazer' and p_ok then 'em_andamento' else status end,
+         -- marcou um passo: começou; desmarcou o último passo feito: volta para a fazer (sem passo feito não está em andamento)
+         status = case when status = 'a_fazer' and p_ok then 'em_andamento'
+                       when status = 'em_andamento' and not coalesce(p_ok, false)
+                            and not exists (select 1 from jsonb_array_elements(jsonb_set(a.passos, array[p_i::text, 'ok'], 'false'::jsonb)) e
+                                            where coalesce((e->>'ok')::boolean, false)) then 'a_fazer'
+                       else status end,
          atualizada_por = auth.uid(), atualizada_em = now()
    where id = p_acao;
 end;
@@ -1424,3 +1429,343 @@ end;
 $$;
 revoke all on function public.registrar_pagamento(uuid, text, numeric) from public, anon;
 grant execute on function public.registrar_pagamento(uuid, text, numeric) to authenticated;
+
+-- ===================== Título personalizado da ação =====================
+-- o consultor pode renomear uma ação da biblioteca para a linguagem do cliente (ex.: "tratamento" → o nome que o cliente usa);
+-- o título original fica aqui, para o motor continuar reconhecendo a ação
+alter table public.acoes add column if not exists titulo_base text;
+
+-- ===================== Briefing (encontro de início) =====================
+-- A leitura do consultor no encontro de início, depois do pagamento. Orienta o Diagnóstico, que orienta a Estratégia e o plano.
+-- Só o consultor lê e escreve: o cliente não vê o briefing.
+create table if not exists public.briefings (
+  empresa_id uuid primary key references public.empresas (id) on delete cascade,
+  dados jsonb not null default '{}'::jsonb,
+  atualizado_em timestamptz not null default now()
+);
+alter table public.briefings enable row level security;
+drop policy if exists "so o consultor" on public.briefings;
+create policy "so o consultor" on public.briefings for all using (public.is_admin()) with check (public.is_admin());
+
+-- ===================== Consultores: a conta principal e os consultores que ela cadastra =====================
+-- A conta principal vê e faz tudo. Um consultor só vê e mexe nos clientes que a principal direcionou para ele;
+-- não cadastra clientes nem vê o financeiro (contrato, valores e pagamentos). Cada cliente tem um consultor responsável.
+-- Seguro para rodar de novo: na primeira vez, as contas de consultor que já existem viram principais (hoje elas veem tudo).
+alter table public.profiles add column if not exists principal boolean not null default false;
+do $$ begin
+  if not exists (select 1 from public.profiles where principal) then
+    update public.profiles set principal = true where role = 'admin';
+  end if;
+end $$;
+alter table public.empresas add column if not exists consultor_id uuid references public.profiles (id) on delete set null;
+update public.empresas e set consultor_id = pl.consultor_id from public.planos pl
+ where pl.empresa_id = e.id and e.consultor_id is null and pl.consultor_id is not null;
+
+create or replace function public.is_principal()
+returns boolean language sql stable security definer set search_path = public
+as $$ select exists (select 1 from public.profiles where id = auth.uid() and role = 'admin' and active and principal); $$;
+
+-- quem pode trabalhar num cliente: a principal, ou o consultor ativo a quem ele foi direcionado
+create or replace function public.pode_gerir(e uuid)
+returns boolean language sql stable security definer set search_path = public
+as $$ select public.is_principal() or (e is not null and public.is_admin() and exists (select 1 from public.empresas where id = e and consultor_id = auth.uid())); $$;
+
+create or replace function public.pode_ver(e uuid)
+returns boolean language sql stable security definer set search_path = public
+as $$ select public.pode_gerir(e) or (e is not null and e = public.minha_empresa() and public.acesso_liberado(e)); $$;
+
+create or replace function public.e_minha(e uuid)
+returns boolean language sql stable security definer set search_path = public
+as $$ select public.pode_gerir(e) or (e is not null and e = public.minha_empresa()); $$;
+
+-- todas as regras de escrita "só o consultor" passam a valer só para os clientes de cada consultor;
+-- as de pagamentos, só para a principal; a de empresas (criar cliente) também só a principal passa, porque o cliente novo ainda não é de ninguém
+do $$
+declare r record; col text; novo_q text; novo_c text; alvo text;
+begin
+  for r in select * from pg_policies where schemaname = 'public' and tablename not in ('profiles')
+            and (coalesce(qual, '') like '%is_admin()%' or coalesce(with_check, '') like '%is_admin()%') loop
+    if r.tablename = 'empresas' then col := 'id';
+    elsif exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = r.tablename and column_name = 'empresa_id') then col := 'empresa_id';
+    else continue; end if;
+    alvo := case when r.tablename = 'pagamentos' then 'is_principal()' else 'pode_gerir(' || col || ')' end;
+    novo_q := replace(r.qual, 'is_admin()', alvo); novo_c := replace(r.with_check, 'is_admin()', alvo);
+    execute format('drop policy %I on public.%I', r.policyname, r.tablename);
+    execute format('create policy %I on public.%I as %s for %s to %s%s%s', r.policyname, r.tablename, r.permissive, r.cmd,
+      array_to_string(r.roles, ', '), case when novo_q is not null then ' using (' || novo_q || ')' else '' end,
+      case when novo_c is not null then ' with check (' || novo_c || ')' else '' end);
+  end loop;
+end $$;
+
+-- arquivos dos clientes: cada consultor só nas pastas dos clientes dele
+drop policy if exists "portal: admin escreve" on storage.objects;
+create policy "portal: admin escreve" on storage.objects for all
+  using (bucket_id = 'portal' and public.pode_gerir(public.pasta_empresa(name)))
+  with check (bucket_id = 'portal' and public.pode_gerir(public.pasta_empresa(name)));
+
+-- perfis: a principal vê todos; o consultor vê o próprio e os acessos dos clientes dele
+drop policy if exists "admin reads all" on public.profiles;
+create policy "admin reads all" on public.profiles for select
+  using (public.is_principal() or (empresa_id is not null and public.pode_gerir(empresa_id)));
+drop policy if exists "admin updates all" on public.profiles;
+create policy "admin updates all" on public.profiles for update
+  using (public.is_principal() or id = auth.uid() or (empresa_id is not null and public.pode_gerir(empresa_id)))
+  with check (public.is_principal() or id = auth.uid() or (empresa_id is not null and public.pode_gerir(empresa_id)));
+-- papel, principal, situação e empresa de um acesso: só a principal (ou o servidor) muda
+create or replace function public.protege_perfil()
+returns trigger language plpgsql security definer set search_path = public
+as $$
+begin
+  if coalesce(auth.role(), '') = 'service_role' or public.is_principal() then return new; end if;
+  if new.role is distinct from old.role or new.principal is distinct from old.principal
+     or new.active is distinct from old.active or new.empresa_id is distinct from old.empresa_id then
+    raise exception 'Só a conta principal muda o papel, a situação ou a empresa de um acesso.';
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists protege_perfil on public.profiles;
+create trigger protege_perfil before update on public.profiles for each row execute function public.protege_perfil();
+
+-- pagamentos: só a principal registra
+create or replace function public.registrar_pagamento(p_empresa uuid, p_ciclo text, p_valor numeric default null)
+returns date
+language plpgsql security definer set search_path = public
+as $$
+declare hoje date := (now() at time zone 'America/Sao_Paulo')::date; base date; novo date;
+  meses int := case p_ciclo when 'mensal' then 1 when 'semestral' then 6 when 'anual' then 12 end;
+begin
+  if not public.is_principal() then raise exception 'Só a conta principal registra pagamentos.'; end if;
+  if meses is null then raise exception 'Escolha mensal, semestral ou anual.'; end if;
+  base := greatest(coalesce(public.acesso_vence_em(p_empresa), hoje - 1), hoje - 1);
+  novo := (base + make_interval(months => meses))::date;
+  update public.planos set acesso_ate = novo, acesso_ciclo = p_ciclo, status = case when status = 'encerrado' then status else 'ativo' end
+   where empresa_id = p_empresa;
+  insert into public.pagamentos (empresa_id, ciclo, valor, liberado_ate, registrado_por) values (p_empresa, p_ciclo, p_valor, novo, auth.uid());
+  return novo;
+end;
+$$;
+revoke all on function public.registrar_pagamento(uuid, text, numeric) from public, anon;
+grant execute on function public.registrar_pagamento(uuid, text, numeric) to authenticated;
+
+-- ===================== Pagamento pela plataforma (Pagar.me) =====================
+-- O cliente com "Só acesso" escolhe o plano no portal e paga na página do Pagar.me (o cartão nunca passa pela GANG).
+-- Cartão: assinatura (o Pagar.me cobra sozinho a cada ciclo). Pix: o ciclo inteiro de uma vez.
+-- Quando o Pagar.me avisa que o pagamento entrou, o servidor confere direto com o Pagar.me e libera o acesso aqui.
+-- Os preços e os códigos dos planos do Pagar.me ficam numa configuração que só a conta principal edita (painel > Pagamentos).
+create table if not exists public.config_pagamento (
+  id int primary key default 1 check (id = 1),
+  precos jsonb not null default '{"mensal": 12000, "semestral": 60000, "anual": 108000}'::jsonb, -- em centavos
+  planos_pagarme jsonb not null default '{}'::jsonb, -- {"mensal": "plan_...", "semestral": "plan_...", "anual": "plan_..."}
+  pix boolean not null default true,
+  cartao boolean not null default true,
+  atualizado_em timestamptz not null default now()
+);
+insert into public.config_pagamento (id) values (1) on conflict (id) do nothing;
+alter table public.config_pagamento enable row level security;
+drop policy if exists "todos leem" on public.config_pagamento;
+create policy "todos leem" on public.config_pagamento for select using (auth.uid() is not null); -- o portal mostra os preços
+drop policy if exists "principal edita" on public.config_pagamento;
+create policy "principal edita" on public.config_pagamento for update using (public.is_principal()) with check (public.is_principal());
+
+-- cada tentativa de pagamento (o link do Pagar.me) e o que aconteceu com ela
+create table if not exists public.cobrancas (
+  id uuid primary key default gen_random_uuid(),
+  empresa_id uuid not null references public.empresas (id) on delete cascade,
+  ciclo text not null check (ciclo in ('mensal', 'semestral', 'anual')),
+  metodo text not null check (metodo in ('cartao', 'pix')),
+  valor integer not null, -- centavos
+  link_id text, link_url text,
+  status text not null default 'aberta' check (status in ('aberta', 'paga', 'falhou', 'cancelada')),
+  criada_em timestamptz not null default now(),
+  paga_em timestamptz
+);
+alter table public.cobrancas enable row level security;
+drop policy if exists "ler da propria empresa" on public.cobrancas;
+create policy "ler da propria empresa" on public.cobrancas for select using (public.e_minha(empresa_id));
+drop policy if exists "principal escreve" on public.cobrancas;
+create policy "principal escreve" on public.cobrancas for all using (public.is_principal()) with check (public.is_principal());
+
+-- o pagamento confirmado pelo Pagar.me: cada cobrança do Pagar.me (charge) só libera uma vez
+alter table public.pagamentos add column if not exists ref_pagarme text;
+create unique index if not exists pagamentos_ref_pagarme on public.pagamentos (ref_pagarme) where ref_pagarme is not null;
+create or replace function public.liberar_pagamento_pagarme(p_empresa uuid, p_ciclo text, p_valor numeric, p_ref text)
+returns date
+language plpgsql security definer set search_path = public
+as $$
+declare hoje date := (now() at time zone 'America/Sao_Paulo')::date; base date; novo date;
+  meses int := case p_ciclo when 'mensal' then 1 when 'semestral' then 6 when 'anual' then 12 end;
+begin
+  if coalesce(auth.role(), '') <> 'service_role' then raise exception 'Só o servidor libera pagamentos.'; end if;
+  if meses is null or p_ref is null then raise exception 'Pagamento inválido.'; end if;
+  if exists (select 1 from public.pagamentos where ref_pagarme = p_ref) then return public.acesso_vence_em(p_empresa); end if; -- aviso repetido
+  base := greatest(coalesce(public.acesso_vence_em(p_empresa), hoje - 1), hoje - 1);
+  novo := (base + make_interval(months => meses))::date;
+  update public.planos set acesso_ate = novo, acesso_ciclo = p_ciclo, status = case when status = 'encerrado' then status else 'ativo' end
+   where empresa_id = p_empresa;
+  insert into public.pagamentos (empresa_id, ciclo, valor, liberado_ate, ref_pagarme) values (p_empresa, p_ciclo, p_valor, novo, p_ref);
+  return novo;
+end;
+$$;
+revoke all on function public.liberar_pagamento_pagarme(uuid, text, numeric, text) from public, anon, authenticated;
+grant execute on function public.liberar_pagamento_pagarme(uuid, text, numeric, text) to service_role;
+
+-- ===================== Pagamento pelo Asaas (troca do gateway) =====================
+-- O gateway passou a ser o Asaas (aceita conta no CPF). As tabelas acima continuam: config_pagamento (preços),
+-- cobrancas (cada tentativa) e pagamentos.ref_pagarme guarda o código da cobrança do Asaas (pay_...).
+-- O Asaas pede o CPF ou CNPJ de quem paga: o cliente do Asaas de cada empresa fica guardado para não duplicar.
+alter table public.empresas add column if not exists asaas_cliente text;
+
+-- ===================== Aba "Meu plano" do cliente =====================
+-- O cliente vê o plano, até quando vale, a forma de pagamento, o histórico com os comprovantes e pode cancelar a renovação
+-- automática do cartão. O aviso do Asaas guarda a forma de pagamento e o link do comprovante em cada pagamento,
+-- e a assinatura do cartão ativa fica na empresa (só o servidor escreve; o cliente só lê).
+alter table public.pagamentos add column if not exists metodo text check (metodo in ('cartao', 'pix'));
+alter table public.pagamentos add column if not exists comprovante_url text;
+alter table public.empresas add column if not exists asaas_assinatura text;
+alter table public.empresas add column if not exists assinatura_ciclo text check (assinatura_ciclo in ('mensal', 'semestral', 'anual'));
+
+-- ===================== Mensalidade da consultoria pela plataforma =====================
+-- O cliente de consultoria paga a mensalidade do Contrato em "Meu plano" (cartão com renovação todo mês, ou Pix).
+-- Cada mensalidade paga entra no histórico de pagamentos e avança a "Próxima fatura" do Contrato em um mês.
+-- Quem chama: o servidor, quando o Asaas avisa do pagamento, ou a conta principal, ao registrar uma mensalidade à mão.
+create or replace function public.liberar_mensalidade(p_empresa uuid, p_valor numeric, p_ref text default null)
+returns date
+language plpgsql security definer set search_path = public
+as $$
+declare hoje date := (now() at time zone 'America/Sao_Paulo')::date; base date; novo date;
+begin
+  if coalesce(auth.role(), '') <> 'service_role' and not public.is_principal() then raise exception 'Só a conta principal registra pagamentos.'; end if;
+  if p_ref is not null and exists (select 1 from public.pagamentos where ref_pagarme = p_ref) then
+    return (select proxima_fatura from public.planos where empresa_id = p_empresa); -- aviso repetido
+  end if;
+  select coalesce(proxima_fatura, hoje) into base from public.planos where empresa_id = p_empresa;
+  if base is null then raise exception 'Cliente sem contrato.'; end if;
+  novo := (base + interval '1 month')::date;
+  update public.planos set proxima_fatura = novo where empresa_id = p_empresa;
+  insert into public.pagamentos (empresa_id, ciclo, valor, liberado_ate, ref_pagarme, registrado_por)
+  values (p_empresa, 'mensal', p_valor, novo - 1, p_ref, auth.uid());
+  return novo;
+end;
+$$;
+revoke all on function public.liberar_mensalidade(uuid, numeric, text) from public, anon;
+grant execute on function public.liberar_mensalidade(uuid, numeric, text) to authenticated, service_role;
+
+-- ===================== Bloqueio da consultoria por falta de pagamento =====================
+-- A mensalidade vence na "Próxima fatura" do Contrato. Há 7 dias de tolerância: a partir do 8º dia de atraso, o cliente
+-- de consultoria fica como o "Só acesso" vencido (vê a Identidade visual, a Narrativa, as mensagens e o Meu plano para pagar).
+-- Pagou (pelo Asaas ou registrado no Contrato): a próxima fatura avança e tudo volta na hora.
+-- "Não bloquear este cliente" (no Contrato) desliga o bloqueio de quem tem um acordo combinado.
+-- ANTES de rodar, veja quem seria bloqueado na hora (fatura vencida há mais de 7 dias):
+--   select e.nome, p.proxima_fatura from public.planos p join public.empresas e on e.id = p.empresa_id
+--    where p.tipo <> 'acesso' and p.proxima_fatura < (now() at time zone 'America/Sao_Paulo')::date - 7;
+alter table public.planos add column if not exists sem_bloqueio boolean not null default false;
+
+create or replace function public.acesso_liberado(e uuid)
+returns boolean
+language sql stable security definer set search_path = public
+as $$
+  select coalesce((
+    select case when p.tipo = 'acesso' then public.acesso_vence_em(e) >= (now() at time zone 'America/Sao_Paulo')::date
+                when p.sem_bloqueio or p.proxima_fatura is null or p.status = 'encerrado' then true
+                else p.proxima_fatura + 7 >= (now() at time zone 'America/Sao_Paulo')::date end
+      from public.planos p where p.empresa_id = e), true);
+$$;
+
+-- ===================== Cada mensalidade abre as ações do seu mês =====================
+-- Pagamento adiantado: o cliente de consultoria só recebe as ações dos meses pagos (o 1º mês é grátis: a primeira mensalidade
+-- vence no início do 2º mês). O mês seguinte só abre quando a mensalidade dele é paga, e nunca abre mais de um mês à frente
+-- (os meses depois do próximo continuam trancados, mesmo pagos). Sem "Próxima fatura" ou com "Não bloquear", vale a regra
+-- anterior: o mês atual e o seguinte.
+create or replace function public.mes_liberado(e uuid)
+returns text
+language sql stable security definer set search_path = public
+as $$
+  select least(to_char((now() at time zone 'America/Sao_Paulo') + interval '1 month', 'YYYY-MM'),
+               coalesce((select case when p.tipo <> 'acesso' and not p.sem_bloqueio and p.proxima_fatura is not null
+                                     then to_char(p.proxima_fatura - 1, 'YYYY-MM') end
+                           from public.planos p where p.empresa_id = e),
+                        to_char((now() at time zone 'America/Sao_Paulo') + interval '1 month', 'YYYY-MM')));
+$$;
+drop policy if exists "ler da propria empresa" on public.acoes;
+create policy "ler da propria empresa" on public.acoes for select using (
+  public.pode_ver(empresa_id)
+  and (public.pode_gerir(empresa_id) or mes_previsto <= public.mes_liberado(empresa_id))
+);
+
+-- adiantar uma ação do próximo mês: só se o próximo mês já estiver pago
+create or replace function public.portal_adiantar_acao(p_acao uuid)
+returns void
+language plpgsql security definer set search_path = public
+as $$
+declare e uuid := public.minha_empresa(); a public.acoes; agora text := to_char(current_date, 'YYYY-MM');
+        prox text := to_char(current_date + interval '1 month', 'YYYY-MM'); fim date := (date_trunc('month', current_date) + interval '1 month - 1 day')::date; n int;
+begin
+  if e is null then raise exception 'Sem permissão.'; end if;
+  select * into a from public.acoes where id = p_acao and empresa_id = e;
+  if a.id is null then raise exception 'Ação não encontrada.'; end if;
+  if a.responsavel = 'gang' or a.status <> 'a_fazer' or a.mes_previsto <> prox then raise exception 'Só dá para adiantar uma ação do próximo mês que ainda não começou.'; end if;
+  if prox > public.mes_liberado(e) then raise exception 'O próximo mês abre quando a mensalidade dele for paga.'; end if;
+  -- só quem já terminou as ações do mês (as suas) pode adiantar
+  select count(*) into n from public.acoes where empresa_id = e and responsavel <> 'gang' and status <> 'feita' and mes_previsto <= agora;
+  if n > 0 then raise exception 'Termine as ações deste mês antes de adiantar.'; end if;
+  update public.acoes
+     set mes_previsto = agora, adiantada_de = prox, reposta = false,
+         prazo = greatest(current_date + 1, least(fim, current_date + case a.tamanho when 'G' then 14 when 'M' then 7 else 3 end)),
+         atualizada_por = auth.uid(), atualizada_em = now()
+   where id = a.id;
+end;
+$$;
+grant execute on function public.portal_adiantar_acao(uuid) to authenticated;
+
+-- ===================== O cliente não passa os números: "Como foi o mês?" =====================
+-- O portal não pede mais faturamento, leads nem propostas. No lugar, o cliente diz em um clique se o mês
+-- foi melhor, igual ou pior que o mesmo mês do ano passado. Os números continuam podendo ser lançados pelo consultor.
+-- pode rodar de novo: refaz a regra das respostas e a função do zero
+alter table public.numeros_mensais add column if not exists como_foi text;
+alter table public.numeros_mensais drop constraint if exists numeros_mensais_como_foi_check;
+alter table public.numeros_mensais add constraint numeros_mensais_como_foi_check check (como_foi in ('melhor', 'igual', 'pior'));
+
+-- o painel também para de avisar que os números não chegaram (quem quiser cobrar desmarca no Contrato)
+alter table public.planos alter column sem_numeros set default true;
+update public.planos set sem_numeros = true where not sem_numeros;
+
+drop function if exists public.portal_como_foi(text, text);
+create or replace function public.portal_como_foi(p_mes text, p_valor text)
+returns void
+language plpgsql security definer set search_path = public
+as $$
+declare e uuid := public.minha_empresa(); ini date;
+begin
+  if e is null then raise exception 'Sem permissão.'; end if;
+  if p_valor is null or p_valor not in ('melhor', 'igual', 'pior') then raise exception 'Resposta inválida.'; end if;
+  if p_mes !~ '^\d{4}-(0[1-9]|1[0-2])$' then raise exception 'Mês inválido.'; end if;
+  if to_date(p_mes || '-01', 'YYYY-MM-DD') >= date_trunc('month', current_date) then raise exception 'Este mês ainda não terminou.'; end if;
+  select inicio into ini from public.planos where empresa_id = e;
+  if ini is not null and to_date(p_mes || '-01', 'YYYY-MM-DD') < date_trunc('month', ini) then raise exception 'Mês anterior ao início do plano.'; end if;
+  insert into public.numeros_mensais (empresa_id, mes_ref, como_foi, enviado_por)
+  values (e, p_mes, p_valor, auth.uid())
+  on conflict (empresa_id, mes_ref) do update set como_foi = excluded.como_foi;
+end;
+$$;
+revoke all on function public.portal_como_foi(text, text) from public, anon;
+grant execute on function public.portal_como_foi(text, text) to authenticated;
+
+-- ===================== Diagnóstico: o que a marca mostra hoje =====================
+-- A leitura do consultor nos pontos de contato (site, Instagram, apresentação, fachada...): para cada um, se está
+-- coerente com a marca, irregular ou fora dela, e uma observação. Completa o diagnóstico: o que o dono diz (briefing),
+-- o que a marca mostra (aqui) e o que as pessoas percebem (pesquisa).
+create table if not exists public.pontos_contato (
+  id uuid primary key default gen_random_uuid(),
+  empresa_id uuid not null references public.empresas (id) on delete cascade,
+  canal text not null,
+  status text not null default 'irregular' check (status in ('coerente', 'irregular', 'fora')),
+  nota text,
+  ordem int not null default 0
+);
+create index if not exists pontos_contato_empresa on public.pontos_contato (empresa_id);
+alter table public.pontos_contato enable row level security;
+drop policy if exists "ler da propria empresa" on public.pontos_contato;
+create policy "ler da propria empresa" on public.pontos_contato for select using (public.pode_ver(empresa_id));
+drop policy if exists "admin escreve" on public.pontos_contato;
+create policy "admin escreve" on public.pontos_contato for all using (public.pode_gerir(empresa_id)) with check (public.pode_gerir(empresa_id));
