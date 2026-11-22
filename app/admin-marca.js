@@ -424,15 +424,14 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   const juntaSug = (...fs) => async () => { const ls = await Promise.all(fs.map((f) => f())); const xs = [].concat(...ls.map((l) => l || []));
     xs.titulo = ls.filter((l) => l && l.length).map((l) => l.titulo).filter(Boolean).join(' · '); return xs; };
   const bfDeixados = () => { const n = (BF().nao_cliente || '').trim(); return comTitulo(n ? [n] : [], 'Quem não é cliente, segundo o briefing'); };
+  // o objetivo de negócio sai da ambição nas palavras do dono, com prazo e sem número de faturamento
   const bfObjetivo = () => {
-    const B = BF(); const n = B.numeros || {}; const a = B.ambicao || {};
-    const fat = Number(n.faturamento) || 0; const pct = Number(a.pct) || 0; const meses = Number(a.meses) || 12;
-    if (!pct) return [];
+    const a = BF().ambicao || {};
+    const nota = (a.nota || '').trim().replace(/\.$/, ''); const meses = Number(a.meses) || 12;
+    if (!nota) return [];
     const ate = new Date(); ate.setMonth(ate.getMonth() + meses); const quando = U.nomeMes(ate.toISOString().slice(0, 7)) + ' de ' + ate.getFullYear();
-    // sem o faturamento (o cliente não informou ou só deu a faixa), o objetivo fica em percentual
-    const t = fat ? 'Faturamento de ' + U.reais(fat) + ' para ' + U.reais(Math.round(fat * (1 + pct / 100) / 1000) * 1000) + ' por mês até ' + quando
-      : 'Faturamento ' + pct + '% maior até ' + quando + ', medido pelos números do mês';
-    return comTitulo([{ t, row: { titulo: t, nivel: 'negocio', destaque: '+' + pct + '%' } }], 'Da ambição e dos números do briefing');
+    const t = nota.charAt(0).toUpperCase() + nota.slice(1) + ' até ' + quando;
+    return comTitulo([{ t, row: { titulo: t, nivel: 'negocio' } }], 'Da ambição do dono, no briefing');
   };
   // ===== As causas que o plano ataca: as hipóteses do briefing são confirmadas ou descartadas aqui, com um clique =====
   // A causa confirmada vai para a mesma tabela de sempre (o portal, a Estratégia e o motor leem dela). O que confirmou e o que foi
@@ -506,9 +505,8 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     mount.classList.add('is-largo');
     const B = BF(); const r = B.recursos || {}; const a = B.ambicao || {}; const n = B.numeros || {};
     const itens = [
-      a.pct ? ['Ambição', '+' + a.pct + '% em ' + (a.meses || 12) + ' meses' + (a.nota ? ' · ' + a.nota : '')] : null,
-      n.faturamento || n.faixa || n.clientes ? ['Hoje', [n.faturamento ? U.reais(Number(n.faturamento)) + ' por mês' : n.faixa ? ({ ate20: 'até R$ 20 mil', '20a50': 'R$ 20 a 50 mil', '50a100': 'R$ 50 a 100 mil', '100a300': 'R$ 100 a 300 mil', '300mais': 'acima de R$ 300 mil' })[n.faixa] + ' por mês' : null,
-        n.clientes ? n.clientes + ' clientes por mês' : null, n.ticket ? 'ticket ' + U.reais(Number(n.ticket)) : null].filter(Boolean).join(' · ')] : null,
+      a.nota ? ['Ambição', a.nota + ' · em ' + (a.meses || 12) + ' meses'] : null,
+      n.faixa && n.faixa !== 'nao' ? ['Tamanho', 'faturamento ' + ({ ate20: 'até R$ 20 mil', '20a50': 'R$ 20 a 50 mil', '50a100': 'R$ 50 a 100 mil', '100a300': 'R$ 100 a 300 mil', '300mais': 'acima de R$ 300 mil' })[n.faixa] + ' por mês'] : null,
       (B.cliente || '').trim() ? ['Cliente que importa', B.cliente] : null,
       (B.nao_cliente || '').trim() ? ['Quem não é cliente', B.nao_cliente] : null,
       r.verba || r.horas ? ['Recursos', [r.verba ? 'verba de mídia ' + U.reais(Number(r.verba)) + '/mês' : null, r.horas ? r.horas + ' h por semana' : null, r.executa || null].filter(Boolean).join(' · ')] : null,
@@ -725,10 +723,10 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       { k: 'posicionamento', label: 'Posicionamento', type: 'textarea', rows: 3, full: true, placeholder: 'Para [quem], [marca] é [o quê] que [benefício], porque [prova], ao contrário de [alternativa].',
         dica: 'Comece pela alternativa real: o que o cliente faria se a marca não existisse. Depois, o que só a marca tem, o valor disso e quem se importa muito com esse valor. Por último, escolha a categoria em que ela vira a escolha óbvia.' },
     ] }],
-    [lista, { icone: 'alvo', tom: 'gang', titulo: 'Objetivos', nota: 'Negócio (com o número em destaque), Marca\u00a0e\u00a0Comunicação\u00a0(notar,\u00a0acreditar,\u00a0sentir). As ações se ligam a eles.', tabela: 'objetivos', sugere: bfObjetivo, fields: [
+    [lista, { icone: 'alvo', tom: 'gang', titulo: 'Objetivos', nota: 'Negócio, Marca e Comunicação\u00a0(notar,\u00a0acreditar,\u00a0sentir). As ações se ligam a eles.', tabela: 'objetivos', sugere: bfObjetivo, fields: [
       { k: 'titulo', label: 'Objetivo', full: true, type: 'preset', presets: 'objetivos', fill: { nivel: 'nivel' }, dicaId: 'objetivo',
-        dica: 'No objetivo de negócio, diga de onde para onde e até quando (ex.: faturamento de R$ 80 mil para R$ 110 mil por mês até dezembro de 2027). Uma meta sem linha de chegada não orienta a equipe.' },
-      { k: 'nivel', label: 'Nível', type: 'select', options: NIV }, { k: 'destaque', label: 'Número em destaque (negócio)', type: 'preset', presets: 'destaques' },
+        dica: 'No objetivo de negócio, diga aonde a empresa quer chegar e até quando, sem número de faturamento (ex.: ser a clínica que os pacientes mais indicam no bairro até dezembro de 2027). Uma meta sem linha de chegada não orienta a equipe.' },
+      { k: 'nivel', label: 'Nível', type: 'select', options: NIV },
       { k: 'notar', label: 'Notar (comunicação)', type: 'preset', presets: 'notar' }, { k: 'acreditar', label: 'Acreditar (comunicação)', type: 'preset', presets: 'acreditar' }, { k: 'sentir', label: 'Sentir (comunicação)', type: 'preset', presets: 'sentir' }],
     resumo: (r) => [NIV_T[r.nivel] + ': ' + (r.destaque ? r.destaque + ' ' : '') + (r.titulo || ''), r.nivel === 'comunicacao' ? ['Notar ' + (r.notar || '—'), 'acreditar ' + (r.acreditar || '—'), 'sentir ' + (r.sentir || '—')].join(' · ') : null] }],
     [lista, { icone: 'pin', titulo: 'Situações de compra', nota: 'Os momentos em que alguém pensa na categoria. Entram na pesquisa e nas ações.', tabela: 'situacoes', sugere: bfSituacoes, fields: [

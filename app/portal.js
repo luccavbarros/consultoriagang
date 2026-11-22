@@ -214,7 +214,6 @@
   const semNumeros = true;
   // "como foi o mês": a resposta de um clique (melhor, igual, pior) que o cliente dá no lugar dos números
   const comoFoi = (r) => { const n = D.numeros.find((x) => x.mes_ref === r); return n ? n.como_foi || null : null; };
-  const faltaNumeros = () => !semNumeros && !!inicioRef && mesPassado >= inicioRef && !D.numeros.some((n) => n.mes_ref === mesPassado);
 
   // ===== indicadores =====
   const ind = (k, text, hot) => { const n = document.querySelector('[data-ind="' + k + '"]'); if (!n) return; n.textContent = text || ''; n.classList.toggle('is-hot', !!hot); };
@@ -226,10 +225,9 @@
     ind('consultoria', semana ? String(semana) : '', semana > 0);
     const n = pendentesDoMes().length;
     ind('acoes', n ? String(n) : '', n > 0);
-    const falta = faltaNumeros();
+    // Resultados avisa quando falta contar como foi o mês passado
+    const falta = !!inicioRef && mesPassado >= inicioRef && !comoFoi(mesPassado);
     ind('resultados', falta ? '1' : '', falta);
-    const encSemana = D.proximo && new Date(D.proximo.inicio) < h7 ? 1 : 0;
-    ind('consultoria', encSemana ? '1' : '', encSemana > 0);
   };
   indicadores();
 
@@ -310,184 +308,8 @@
     render();
   };
   const proximoPasso = (a) => (a.passos || []).find((x) => !x.ok);
-  const compromissoSemana = () => {
-    if (!D.plano) return null;
-    const cs = D.compromissos || [];
-    const atual = cs.find((c) => c.semana === semAtual);
-    const aResponder = cs.find((c) => c.semana < semAtual && c.semana >= U.addDias(semAtual, -14) && c.cumprido == null);
-    const responde = async (c, v) => {
-      const { error } = await sb.rpc('portal_compromisso_cumprido', { p_id: c.id, p_cumprido: v });
-      if (error) return anuncia('Não foi possível salvar. Tente de novo.');
-      anuncia(v ? 'Anotado: cumprido.' : 'Anotado. Leve para o encontro o que travou.');
-      recarregaComp();
-    };
-    const sim = (c, rot) => el('button', { class: 'btn btn--light btn--sm', type: 'button', onclick: () => responde(c, true) }, rot || 'Cumpri');
-    const nao = (c) => el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => responde(c, false) }, 'Não deu');
 
-    // placar: as 8 semanas anteriores (e a atual, se já foi cumprida)
-    const semanas = Array.from({ length: 8 }, (_, i) => U.addDias(semAtual, -7 * (8 - i)));
-    if (atual && atual.cumprido === true) semanas.push(semAtual);
-    const estado = (sem) => { const c = cs.find((x) => x.semana === sem); return !c ? 'vazio' : c.cumprido === true ? 'ok' : c.cumprido === false ? 'nao' : 'sem'; };
-    const comComp = semanas.filter((x) => estado(x) !== 'vazio');
-    const cumpridas = semanas.filter((x) => estado(x) === 'ok').length;
-    const ROT = { ok: 'cumprido', nao: 'não cumprido', sem: 'sem resposta', vazio: 'sem compromisso' };
-    const placar = comComp.length ? el('div', 'comp__placar',
-      el('ol', { class: 'comp__sem', 'aria-label': 'Últimas semanas' }, semanas.map((x) => el('li', { class: 'comp__d comp__d--' + estado(x), title: 'Semana de ' + U.dia(x) + ': ' + ROT[estado(x)] }, el('span', 'sr-only', 'Semana de ' + U.dia(x) + ': ' + ROT[estado(x)])))),
-      el('p', 'comp__n', cumpridas + ' de ' + comComp.length + (comComp.length === 1 ? ' semana cumprida' : ' semanas cumpridas'))) : null;
-
-    const corpo = [];
-    if (aResponder) {
-      corpo.push(el('div', 'comp__conta',
-        el('p', 'eyebrow', 'Semana de ' + U.dia(aResponder.semana)),
-        el('p', 'comp__txt', aResponder.texto),
-        el('p', 'box__note', 'Você cumpriu o que assumiu?'),
-        el('div', 'comp__btns', sim(aResponder), nao(aResponder))));
-    }
-    if (atual && !compTroca) {
-      const acao = atual.acao_id && D.acoes.find((a) => a.id === atual.acao_id);
-      corpo.push(el('div', 'comp__agora',
-        el('p', 'eyebrow', 'Esta semana'),
-        el('p', 'comp__txt', atual.texto),
-        acao && acao.titulo !== atual.texto ? el('p', 'box__note', 'Da ação: ' + acao.titulo) : null,
-        atual.cumprido === true
-          ? el('div', 'comp__btns', chip('done', 'Cumprido'))
-          : el('div', 'comp__btns', sim(atual, 'Já cumpri'),
-            el('button', { class: 'link', type: 'button', onclick: () => { compTroca = true; compAcao = atual.acao_id; render(); } }, 'Trocar'))));
-    } else {
-      const opcoes = pendentesDoMes().slice(0, 4);
-      const txt = el('input', { class: 'field', type: 'text', maxlength: 300, placeholder: 'O que você termina até sexta?', 'aria-label': 'Compromisso desta semana', value: atual && compTroca && !atual.acao_id ? atual.texto : '' });
-      const assumir = async () => {
-        const a = compAcao && D.acoes.find((x) => x.id === compAcao);
-        const livre = txt.value.trim();
-        const texto = livre || (a ? ((proximoPasso(a) || {}).t || a.titulo) : '');
-        if (!texto) { txt.focus(); return anuncia('Escolha uma ação ou escreva o compromisso.'); }
-        const { error } = await sb.rpc('portal_compromisso', { p_texto: texto, p_acao: livre && !a ? null : (a ? a.id : null) });
-        if (error) return anuncia(error.message || 'Não foi possível salvar.');
-        compTroca = false; compAcao = null; anuncia('Compromisso da semana assumido.');
-        recarregaComp();
-      };
-      corpo.push(el('div', 'comp__novo',
-        el('p', 'eyebrow', 'Esta semana'),
-        el('p', 'box__note', 'Uma coisa só, que dá para terminar até sexta e faz o plano andar.'),
-        opcoes.length ? el('div', { class: 'comp__ops', role: 'group', 'aria-label': 'Ações deste mês' }, opcoes.map((a) => {
-          const pp = proximoPasso(a);
-          return el('button', { class: 'comp__op' + (compAcao === a.id ? ' is-on' : ''), type: 'button', 'aria-pressed': String(compAcao === a.id),
-            onclick: () => { compAcao = compAcao === a.id ? null : a.id; txt.value = ''; render(); } },
-            el('span', 'comp__op-t', pp ? pp.t : a.titulo), pp ? el('span', 'comp__op-s', a.titulo) : null);
-        })) : null,
-        el('div', 'comp__linha', txt,
-          el('button', { class: 'btn btn--light btn--sm', type: 'button', onclick: assumir }, 'Assumir'),
-          compTroca ? el('button', { class: 'link', type: 'button', onclick: () => { compTroca = false; compAcao = null; render(); } }, 'Cancelar') : null)));
-    }
-    return el('section', { class: 'box comp', 'aria-labelledby': 'comp-t' },
-      el('div', 'box__head', el('h2', { class: 'box__title', id: 'comp-t' }, 'Compromisso da semana'), placar),
-      el('div', 'comp__corpo', corpo));
-  };
-
-  const telaInicio = () => {
-    if (soAcesso) return telaInicioAcesso();
-    const primeiro = (me.name || '').split(' ')[0];
-    const out = [head(D.plano ? 'Mês ' + mesN + ' de ' + dur + ' · plano em execução' : '', 'Olá' + (primeiro ? ', ' + primeiro : '') + '.',
-      'A estratégia e a nova identidade estão prontas. Agora o trabalho é colocar a marca em prática, um mês de cada vez.')];
-
-    // a faixa de indicadores: o essencial do mês em quatro números
-    const comVoceN = pendentesDoMes().length;
-    const pBase = baseFat(); const meta0 = D.plano && D.plano.meta_faturamento_pct != null ? Number(D.plano.meta_faturamento_pct) : null;
-    const ult = [...D.numeros].reverse().find((n) => n.faturamento != null && (!inicioRef || n.mes_ref > inicioRef));
-    const realK = pBase && ult ? Math.round((Number(ult.faturamento) / pBase - 1) * 1000) / 10 : null;
-    const kpi = (rot, valor, sub, extra, href) => el(href ? 'a' : 'div', { class: 'kpi', href },
-      el('p', 'eyebrow', rot), el('p', 'kpi__value', valor), extra || null, sub ? el('p', 'kpi__sub', sub) : null);
-    out.push(el('section', { class: 'kpis', 'aria-label': 'Resumo do mês' },
-      kpi('Plano', mesN + '/' + dur, 'meses de execução', el('span', { class: 'kpi__bar', role: 'img', 'aria-label': 'Mês ' + mesN + ' de ' + dur }, el('span', { style: 'width:' + Math.round((mesN / dur) * 100) + '%' }))),
-      kpi('Com você', String(comVoceN), comVoceN === 1 ? 'ação pendente' : 'ações pendentes', null, '#acoes'),
-      kpi('Faturamento', realK == null ? '—' : U.pct(realK, 1), meta0 != null ? 'meta ' + U.pct(meta0, 0) + ' em ' + dur + ' meses' : 'desde o início', null, '#resultados'),
-      kpi('Próximo encontro', D.proximo ? U.dia(D.proximo.inicio) : '—', D.proximo ? U.cap(U.fmt(D.proximo.inicio, { weekday: 'long' })) + ' · ' + U.hora(D.proximo.inicio) : 'a marcar', null, '#consultoria')));
-
-    // foco do mês (some se o consultor ainda não escreveu)
-    if (D.foco) {
-      const f = D.foco;
-      out.push(el('section', { class: 'focus', 'aria-labelledby': 'focus-t' },
-        el('div', 'focus__text',
-          el('p', 'eyebrow', 'Foco de ' + U.nomeMes(hoje)),
-          el('h2', { class: 'focus__title', id: 'focus-t' }, f.titulo),
-          f.texto ? el('p', 'focus__body', f.texto) : null),
-        D.consultor ? el('div', 'focus__by', avatar(D.consultor), el('div', null,
-          el('p', 'consultant__name', D.consultor.nome || 'Seu consultor'),
-          el('p', 'consultant__role', 'Orientação escrita em ' + U.dia(f.publicada_em)))) : null,
-      ));
-    }
-
-    // para fazer este mês
-    const itens = [];
-    pendentesDoMes().forEach((a) => {
-      const p = prazo(a);
-      const quemTxt = a.responsavel_nome ? 'Com você e ' + a.responsavel_nome : 'Com você';
-      itens.push({ href: '#acoes', title: a.titulo, sub: quemTxt + ' · ' + p.text[0].toLowerCase() + p.text.slice(1), hot: p.hot, chip: chipStatus(a.status) });
-    });
-    if (faltaNumeros()) itens.push({ href: '#resultados', title: 'Informar os números de ' + U.nomeMes(mesPassado), sub: 'Faturamento, leads e clientes novos · 2 min', hot: true, chip: chipStatus('a_fazer') });
-    ajustarNaoVistos().forEach((p) => itens.push({ href: '#acoes', title: 'Ajustar: ' + (p.titulo || p.tipo_peca), sub: p.resposta || 'O consultor pediu um ajuste', hot: false, chip: chip('warn', 'Ajustar') }));
-
-    const todo = el('section', { class: 'box', 'aria-labelledby': 'todo-t' },
-      el('div', 'box__head', el('h2', { class: 'box__title', id: 'todo-t' }, 'Para fazer este mês'), el('a', { class: 'link', href: '#acoes' }, 'Todas as ações')),
-      itens.length
-        ? el('ul', 'todo', itens.map((i) => el('li', null, el('a', { class: 'todo__item', href: i.href },
-          el('span', 'todo__text', el('span', 'todo__title', i.title), el('span', 'todo__sub' + (i.hot ? ' is-hot' : ''), i.sub)), i.chip))))
-        : el('p', 'box__empty', 'Nada pendente com você este mês.'));
-
-    out.push(el('div', 'grid grid--todo', todo, rumo()));
-
-    // próximo encontro + atalhos
-    const e = D.proximo;
-    const encontro = el('section', { class: 'box box--line', 'aria-labelledby': 'meet-t' },
-      el('p', { class: 'eyebrow', id: 'meet-t' }, 'Próximo encontro'),
-      e ? [
-        el('p', 'meet__when', U.quando(e.inicio)),
-        el('p', 'box__text', (TIPO_ENCONTRO[e.tipo] || 'Encontro') + ' · ' + e.duracao_min + ' min.' + ((e.pauta || []).length ? ' Pauta: ' + e.pauta.slice(0, 3).join('; ').replace(/\?;/g, '?') + '.' : '')),
-        e.status === 'remarcar_solicitado' ? el('p', 'box__note', 'Você pediu para remarcar. O consultor confirma a nova data.') : null,
-      ] : el('p', 'box__text', 'Nenhum encontro marcado ainda.'),
-      el('div', 'box__links box__foot', el('a', { class: 'link', href: '#consultoria' }, 'Ver no calendário')));
-    const atalho = (href, t, s, onclick) => el('a', { class: 'shortcut', href, onclick: onclick || null }, el('span', 'shortcut__title', t), el('span', 'shortcut__sub', s));
-    const atalhos = el('section', { class: 'box', 'aria-labelledby': 'hand-t' },
-      el('h2', { class: 'box__title', id: 'hand-t' }, 'Sua marca à mão'),
-      el('div', 'shortcuts',
-        atalho('#plataforma', 'Mensagem e tom', 'O que dizer e como dizer'),
-        atalho('#identidade', 'Logo e modelos', 'Baixar arquivos da identidade'),
-        atalho('#acoes', 'Revisar uma peça', 'Mande antes de publicar', () => { revAberta = true; })));
-    out.push(el('div', 'grid grid--meet', encontro, atalhos));
-    if (condicaoQuebrada().length) out.splice(1, 0, alertaEstrategia(condicaoQuebrada()));
-    return out;
-  };
-
-  // rumo ao objetivo: variação acumulada do faturamento contra a meta
-  const rumo = () => {
-    const box = el('section', { class: 'box', 'aria-labelledby': 'goal-t' }, el('h2', { class: 'box__title', id: 'goal-t' }, 'Rumo ao objetivo'));
-    const p = D.plano;
-    const meta = p && p.meta_faturamento_pct != null ? Number(p.meta_faturamento_pct) : null;
-    const base = p && p.faturamento_base != null ? Number(p.faturamento_base) : (D.numeros[0] ? Number(D.numeros[0].faturamento) : null);
-    const ultimo = [...D.numeros].reverse().find((n) => n.faturamento != null && (!inicioRef || n.mes_ref > inicioRef));
-    if (!meta || !base || !ultimo) {
-      box.append(el('p', 'goal__wait', 'Aguardando os primeiros números'),
-        el('p', 'box__text', meta ? 'Meta: ' + U.pct(meta, 0) + ' de faturamento em ' + dur + ' meses.' : 'A meta aparece aqui quando o consultor cadastrar o plano.'),
-        el('a', { class: 'link box__foot', href: '#resultados' }, 'Ver resultados'));
-      return box;
-    }
-    const real = (Number(ultimo.faturamento) / base - 1) * 100;
-    const k = U.mesesEntre(U.refDate(inicioRef), U.refDate(ultimo.mes_ref)); // meses desde o início
-    const esperado = (meta * k) / dur;
-    const noRumo = real >= esperado;
-    const frac = (v) => Math.max(0, Math.min(1, v / meta)) * 100;
-    box.append(
-      el('p', 'goal__num', U.pct(Math.round(real * 10) / 10, 1)),
-      el('p', 'box__text', 'de faturamento desde o início · meta: ' + U.pct(meta, 0) + ' em ' + dur + ' meses'),
-      el('div', { class: 'goal__bar', role: 'img', 'aria-label': 'Realizado ' + U.pct(Math.round(real * 10) / 10) + '; esperado até ' + U.nomeMes(ultimo.mes_ref) + ': ' + U.pct(Math.round(esperado * 10) / 10) },
-        el('span', { class: 'goal__fill', style: 'width:' + frac(real) + '%' }),
-        el('span', { class: 'goal__mark', style: 'left:' + frac(esperado) + '%' })),
-      el('p', 'box__note', 'A barra mostra o realizado até ' + U.nomeMes(ultimo.mes_ref) + '; a marca, onde deveríamos estar.'),
-      chip(noRumo ? 'done' : 'warn', noRumo ? 'No rumo' : 'Abaixo do ritmo'),
-      el('a', { class: 'link box__foot', href: '#resultados' }, 'Ver resultados'),
-    );
-    return box;
-  };
+  const telaInicio = () => telaInicioAcesso(); // o Início é a tela do Só acesso; a consultoria abre na Visão geral
 
   // ===== acesso ao consultor: o encontro é o lugar dele =====
   const diasResposta = () => U.diasComArtigo((D.plano && D.plano.dias_resposta) || 'terças e quintas'); // já vem com "às"/"aos"
@@ -1097,16 +919,6 @@
     });
     return svg;
   });
-  // How Brands Grow: a marca cresce ganhando compradores, não espremendo os mesmos
-  const penetracao = (novos, totais) => {
-    const meses = totais.map((t, i) => [t, novos[i]]).filter(([t, nv]) => t != null && nv != null && t > 0);
-    if (!meses.length) return null;
-    const [t, nv] = meses[meses.length - 1];
-    const pctN = Math.round((nv / t) * 100);
-    const subindo = meses.length > 1 ? meses[meses.length - 1][0] - meses[0][0] : 0;
-    return el('p', 'box__text', pctN + '% dos clientes do último mês eram novos. '
-      + (subindo > 0 ? 'A base de clientes atendidos está crescendo, que é como as marcas crescem: com mais compradores.' : 'Para crescer, a marca precisa chegar a mais compradores, não só vender mais para os mesmos.'));
-  };
 
   // ===== Calendário: ações com prazo e encontros, mês a mês =====
   let calMes = hoje;
@@ -1172,180 +984,13 @@
     return out;
   };
 
-  // ===== Resultados =====
-  const baseFat = () => {
-    const p = D.plano;
-    if (p && p.faturamento_base != null) return Number(p.faturamento_base);
-    const n = D.numeros.find((x) => x.faturamento != null);
-    return n ? Number(n.faturamento) : null;
-  };
-  // pode corrigir os números até o encontro seguinte ao envio começar (mesma regra do banco)
-  const podeCorrigir = (n) => !D.encontros.some((e) => new Date(e.inicio) > new Date(n.enviado_em) && new Date(e.inicio).getTime() <= agoraMs);
-  let corrigindo = false;
-
-  // cartões de número (último mês informado): valor, variação contra o mês anterior e um minigráfico dos últimos meses
-  const cartoesNumeros = () => {
-    const ns = [...D.numeros].filter((n) => n.faturamento != null || n.leads != null || n.clientes_novos != null).sort((a, b) => a.mes_ref.localeCompare(b.mes_ref));
-    if (!ns.length) return null;
-    const ult = ns[ns.length - 1]; const ant = ns[ns.length - 2];
-    const tk = (n) => (n && n.faturamento != null && n.clientes_atendidos ? Number(n.faturamento) / n.clientes_atendidos : null);
-    const fx = (n) => (n && n.propostas ? (n.fechadas || 0) / n.propostas * 100 : null);
-    const defs = [
-      ['Faturamento', (n) => (n && n.faturamento != null ? Number(n.faturamento) : null), (v) => U.reais(v)],
-      ['Ticket médio', tk, (v) => U.reais(Math.round(v))],
-      ['Clientes novos', (n) => (n ? n.clientes_novos : null), (v) => String(v)],
-      ['Taxa de fechamento', fx, (v) => Math.round(v) + '%'],
-    ];
-    const spark = (vals) => {
-      const xs = vals.filter((v) => v != null); if (xs.length < 2) return null;
-      const mn = Math.min(...xs); const mx = Math.max(...xs); const W = 96; const H = 30;
-      const pts = vals.map((v, i) => (v == null ? null : [(i / (vals.length - 1)) * W, H - 3 - ((v - mn) / ((mx - mn) || 1)) * (H - 6)])).filter(Boolean);
-      const NS = 'http://www.w3.org/2000/svg'; const sv = document.createElementNS(NS, 'svg');
-      sv.setAttribute('viewBox', '0 0 ' + W + ' ' + H); sv.setAttribute('class', 'kc__spark'); sv.setAttribute('aria-hidden', 'true');
-      const pa = document.createElementNS(NS, 'path'); pa.setAttribute('d', pts.map((q, i) => (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1)).join(' ')); sv.append(pa);
-      return sv;
-    };
-    const cards = defs.map(([rot, f, fmt]) => {
-      const v = f(ult);
-      // sem o número, o cartão fica no lugar (sem buraco na linha) e diz o que falta para ele aparecer
-      if (v == null) {
-        const falta = { 'Ticket médio': 'Precisa do faturamento e dos clientes atendidos.', 'Clientes novos': 'Informe os clientes novos do mês.', 'Taxa de fechamento': 'Precisa das propostas enviadas e fechadas.', Faturamento: 'Informe o faturamento do mês.' }[rot];
-        return el('div', 'kc is-vazio', el('p', 'kc__rot', rot), el('div', 'kc__linha', el('p', 'kc__val', '—')), el('div', 'kc__pe', el('p', 'kc__nota', falta)));
-      }
-      const a = f(ant);
-      const d = a ? (v / a - 1) * 100 : null;
-      const ult6 = ns.slice(-6).map(f);
-      return el('div', 'kc',
-        el('p', 'kc__rot', rot),
-        el('div', 'kc__linha', el('p', 'kc__val', fmt(v)), d != null && isFinite(d) ? el('span', 'kc__d ' + (d >= 0 ? 'is-up' : 'is-down'), (d >= 0 ? '+' : '−') + Math.abs(Math.round(d * 10) / 10).toString().replace('.', ',') + '%') : null),
-        el('div', 'kc__pe', el('p', 'kc__nota', ant ? 'vs. ' + U.nomeMes(ant.mes_ref) : U.cap(U.nomeMes(ult.mes_ref))), spark(ult6)));
-    });
-    if (cards.every((c) => c.classList.contains('is-vazio'))) return null;
-    return cards.length ? el('section', { class: 'kcs', style: '--n:' + cards.length, 'aria-label': 'Números de ' + U.nomeMes(ult.mes_ref) }, cards) : null;
-  };
-  // do contato à venda no último mês: barras na mesma caixa, com a passagem de uma etapa para a outra
-  const funil = () => {
-    const n = [...D.numeros].filter((x) => x.leads != null || x.propostas != null).sort((a, b) => a.mes_ref.localeCompare(b.mes_ref)).pop();
-    if (!n) return null;
-    const et = [['Contatos (leads)', n.leads], ['Propostas enviadas', n.propostas], ['Fechadas', n.fechadas], ['Fechadas sem desconto', n.sem_desconto]].filter(([, v]) => v != null);
-    if (et.length < 2) return null;
-    const mx = Math.max(...et.map(([, v]) => v), 1);
-    return secN('fun-t', 'Do contato à venda', U.cap(U.nomeMes(n.mes_ref)), 'Onde mais gente se perde é onde vale agir primeiro.',
-      el('ul', 'gl funil', et.map(([t, v], i) => {
-        const prev = i ? et[i - 1][1] : null;
-        const pas = prev ? Math.round((v / prev) * 100) : null;
-        return el('li', 'gl__i funil__i',
-          el('div', 'funil__m', el('p', 'gl__t', t), el('div', 'funil__barra', el('span', { style: 'width:' + Math.max(2, (v / mx) * 100) + '%' }))),
-          el('p', 'funil__v', String(v)),
-          el('p', 'funil__p', pas != null ? pas + '% da etapa anterior' : ''));
-      })));
-  };
   const telaResultados = () => {
-    const ultimo = [...D.numeros].reverse().find((n) => n.faturamento != null);
-    const out = [head(ultimo ? 'Último mês informado: ' + U.nomeMes(ultimo.mes_ref) : 'Estamos chegando lá?', 'Resultados',
+    const out = [head('Estamos chegando lá?', 'Resultados',
       ['A empresa muda em semanas, a marca em meses.', el('br'), 'Por isso acompanhamos os dois, em ritmos diferentes.'],
       el('a', { class: 'btn btn--ghost', href: '#relatorio' }, 'Relatório do mês')),
-    cartoesNumeros(), veredito(), funil(), parte('Negócio', 'Como os meses estão indo para a empresa.'), pontoPartida('resultados'), metaHero(), lado(planoPagou(), simulador())].filter(Boolean);
-
-    // formulário do mês passado (ou a confirmação depois de enviar); fica ao lado do gráfico
-    let numBox = blocoComoFoi();
-    if (!semNumeros && inicioRef && mesPassado >= inicioRef) {
-      const enviado = D.numeros.find((n) => n.mes_ref === mesPassado);
-      if (!enviado || corrigindo) numBox = formNumeros(enviado);
-      else {
-        const corrige = podeCorrigir(enviado);
-        numBox = (el('section', { class: 'box box--line sent', 'aria-labelledby': 'sent-t' },
-          el('div', 'box__head', el('h2', { class: 'box__title', id: 'sent-t' }, 'Números de ' + U.nomeMes(mesPassado) + ' enviados'), chip('done', 'Enviado')),
-          el('p', 'box__text', 'Faturamento ' + U.reais(enviado.faturamento) + ' · ' + (enviado.leads ?? '—') + ' leads · ' + (enviado.clientes_novos ?? '—') + ' clientes novos. Enviado em ' + U.dia(enviado.enviado_em) + '.'),
-          corrige ? el('button', { class: 'link box__foot', type: 'button', onclick: () => { corrigindo = true; render(); $('n-fat').focus(); } }, 'Corrigir') : null));
-      }
-    }
-
-    // faturamento mês a mês
+    // no topo, antes das abas: o que o consultor diz do mês e como foi o mês para a empresa (sem números)
+    veredito(), blocoComoFoi()].filter(Boolean);
     const p = D.plano;
-    const meta = p && p.meta_faturamento_pct != null ? Number(p.meta_faturamento_pct) : null;
-    const base = baseFat();
-    if (inicioRef) {
-      const linhas = [];
-      for (let r = inicioRef, k = 0; r <= hoje && k < dur; r = U.addRef(r, 1), k += 1) {
-        const n = D.numeros.find((x) => x.mes_ref === r);
-        const rot = U.cap(U.nomeMesCurto(r)) + (r.slice(0, 4) !== hoje.slice(0, 4) ? ' ' + r.slice(0, 4) : '');
-        if (k === 0) { linhas.push([rot + ' · início', 'Base', base != null ? U.reais(base) : '—', el('span', 'muted', '—')]); continue; }
-        const esp = meta != null ? (meta * k) / dur : null;
-        let real = null;
-        if (n && n.faturamento != null && base) real = (Number(n.faturamento) / base - 1) * 100;
-        const situacao = real == null ? el('span', 'muted', '—') : (esp == null ? el('span', 'muted', '—') : chip(real >= esp ? 'done' : 'warn', real >= esp ? 'No rumo' : 'Abaixo do ritmo'));
-        const realTxt = real != null ? U.pct(Math.round(real * 10) / 10) : (r === mesPassado && !semNumeros ? el('span', 'is-hot', 'A informar') : (r === hoje ? el('span', 'muted', 'Mês em curso') : el('span', 'muted', 'Não informado')));
-        linhas.push([rot, esp != null ? U.pct(Math.round(esp * 10) / 10) : '—', realTxt, situacao]);
-      }
-      // o gráfico mostra o plano inteiro: o esperado até a meta e o realizado até hoje
-      const rots = []; const espS = []; const realS = [];
-      for (let k = 0, r = inicioRef; k <= dur; k += 1, r = U.addRef(r, 1)) {
-        rots.push(U.cap(U.nomeMesCurto(r)) + (k === 0 || r.slice(5) === '01' ? ' ' + r.slice(2, 4) : ''));
-        espS.push(meta != null ? Math.round(((meta * k) / dur) * 10) / 10 : null);
-        const n = D.numeros.find((x) => x.mes_ref === r);
-        realS.push(k === 0 ? (base ? 0 : null) : (n && n.faturamento != null && base ? Math.round((Number(n.faturamento) / base - 1) * 1000) / 10 : null));
-      }
-      const temReal = realS.slice(1).some((v) => v != null);
-      const pctFmt = (v) => U.pct(v, 1);
-      const evol = {};
-      if (temReal) evol.fat = () => el('section', { class: 'box', 'aria-labelledby': 'fat-t' },
-        el('div', 'box__head', el('h2', { class: 'box__title', id: 'fat-t' }, 'Faturamento mês a mês'), meta != null ? el('p', 'box__note', 'Meta: ' + U.pct(meta, 0) + ' em ' + dur + ' meses') : null),
-        meta != null || temReal ? [
-          el('div', 'chart__legend',
-            el('span', null, el('span', { class: 'chart__line', style: 'background:' + C.acc }), 'Realizado'),
-            meta != null ? el('span', null, el('span', 'chart__line chart__line--dash'), 'Esperado') : null),
-          graficoLinhas({ rotulos: rots, fmt: pctFmt, label: 'Variação do faturamento desde o início, realizado e esperado, mês a mês. Os valores estão na tabela abaixo.',
-            series: [
-              meta != null ? { nome: 'Esperado', valores: espS, cor: C.ref, tracejado: true } : null,
-              { nome: 'Realizado', valores: realS, cor: C.acc, pontos: true, rotuloFim: true },
-            ].filter(Boolean) }),
-        ] : null,
-        tabela(['Mês', 'Esperado', 'Realizado', 'Situação'], linhas));
-
-      // leads e clientes novos: duas medidas, dois gráficos (nunca dois eixos no mesmo)
-      const comNum = D.numeros.filter((x) => x.mes_ref >= inicioRef);
-      if (comNum.some((x) => x.leads != null || x.clientes_novos != null)) {
-        const rm = []; const ld = []; const cn = []; const tt = [];
-        for (let r = inicioRef; r <= mesPassado; r = U.addRef(r, 1)) {
-          const n = D.numeros.find((x) => x.mes_ref === r);
-          rm.push(U.cap(U.nomeMesCurto(r))); ld.push(n ? n.leads : null); cn.push(n ? n.clientes_novos : null); tt.push(n ? n.clientes_atendidos : null);
-        }
-        const int = (v) => Math.round(v).toLocaleString('pt-BR');
-        const varia = (xs) => { const v = xs.filter((x) => x != null); if (v.length < 2 || !v[v.length - 2]) return null; const d = Math.round((v[v.length - 1] / v[v.length - 2] - 1) * 1000) / 10; return el('span', { class: 'delta ' + (d >= 0 ? 'is-up' : 'is-down'), title: 'Último mês contra o anterior' }, (d >= 0 ? '↑ ' : '↓ ') + String(Math.abs(d)).replace('.', ',') + '%'); };
-        const ultimoV = (xs) => { const v = xs.filter((x) => x != null); return v.length ? v[v.length - 1] : null; };
-        if (ld.some((v) => v != null)) evol.leads = () => el('section', { class: 'box', 'aria-labelledby': 'leads-t' }, el('div', 'box__head', el('h2', { class: 'box__title', id: 'leads-t' }, 'Leads por mês')),
-          el('div', 'kbig', el('span', 'kbig__v', int(ultimoV(ld))), varia(ld), el('span', 'kbig__lbl', 'no último mês')),
-          graficoBarras({ rotulos: rm, valores: ld, fmt: int, label: 'Leads recebidos por mês: ' + rm.map((m, i) => m + ' ' + (ld[i] ?? 'sem dado')).join(', ') }));
-        evol.cli = () => (tt.some((v) => v != null)
-            ? el('section', { class: 'box', 'aria-labelledby': 'cli-t' }, el('div', 'box__head', el('h2', { class: 'box__title', id: 'cli-t' }, 'Clientes atendidos por mês')),
-              el('div', 'kbig', el('span', 'kbig__v', int(ultimoV(tt))), varia(tt), el('span', 'kbig__lbl', 'atendidos no último mês')),
-              el('div', 'chart__legend', el('span', null, el('span', { class: 'chart__sq', style: 'background:' + C.bar }), 'Novos'), el('span', null, el('span', { class: 'chart__sq', style: 'background:' + C.ref2 }), 'Voltaram')),
-              graficoPilhas({ rotulos: rm, a: cn, total: tt, fmt: int, label: 'Clientes atendidos por mês, novos e que voltaram: ' + rm.map((m, i) => m + ' ' + (tt[i] ?? 'sem dado') + ' (' + (cn[i] ?? '?') + ' novos)').join(', ') }),
-              penetracao(cn, tt))
-            : el('section', { class: 'box', 'aria-labelledby': 'cli-t' }, el('h2', { class: 'box__title', id: 'cli-t' }, 'Clientes novos por mês'),
-              graficoBarras({ rotulos: rm, valores: cn, fmt: int, label: 'Clientes novos por mês: ' + rm.map((m, i) => m + ' ' + (cn[i] ?? 'sem dado')).join(', ') })));
-      }
-      // um gráfico por vez, escolhido nas abas (em vez de três blocos seguidos)
-      const NOMES = { fat: 'Faturamento', leads: 'Leads', cli: 'Clientes' };
-      const ks = Object.keys(evol); if (!ks.includes(abaEvol)) abaEvol = ks[0];
-      if (!ks.length) { if (numBox) out.push(numBox); numBox = null; } else {
-      const tabsE = el('div', { class: 'tabs', role: 'tablist', 'aria-label': 'Evolução mês a mês' }, ks.map((k) =>
-        el('button', { class: 'tabs__btn', role: 'tab', type: 'button', 'aria-selected': String(k === abaEvol), onclick: () => { abaEvol = k; render(); } }, NOMES[k])));
-      tabsE.classList.add('tabs--mini');
-      const secE = evol[abaEvol](); secE.classList.add('evol');
-      if (ks.length > 1) {
-        let head = secE.querySelector(':scope > .box__head');
-        if (!head) { const t = secE.querySelector(':scope > .box__title'); head = el('div', 'box__head'); t.replaceWith(head); head.append(t); }
-        head.append(tabsE);
-      }
-      out.push(lado([secE], [numBox]));
-      numBox = null;
-      }
-    }
-    if (numBox) out.push(numBox);
-
-    out.push(...marcaTrazVenda());
 
     // parte "Marca": onde vai o esforço e como a marca é vista
     out.push(parte('Marca', 'A marca muda em meses, não em semanas. Medimos em pesquisas e nas buscas.'));
@@ -1377,7 +1022,7 @@
     return emAbas(out.filter(Boolean));
   };
   // Resultados em abas: o resumo (números, veredito) fica em cima; Negócio, Marca e Aprendizados ficam cada um na sua aba
-  let abaRes = 'Negócio';
+  let abaRes = 'Marca';
   let alvoRes = null; // id de um elemento que precisa aparecer (ex.: o convite da pesquisa): abre a aba onde ele está
   const emAbas = (out) => {
     const idx = out.map((n, i) => (n && n.classList && n.classList.contains('res-part') ? i : -1)).filter((i) => i >= 0);
@@ -1406,22 +1051,6 @@
 
   // dois blocos lado a lado (no celular, um embaixo do outro); se só um existir, ele ocupa a linha
   const lado = (...grupos) => { const xs = grupos.flat().filter(Boolean); return xs.length > 1 ? el('div', 'pair', xs) : xs[0] || null; };
-  // começo do plano, ainda sem números: o que vai aparecer aqui e quando (em vez de várias caixas vazias)
-  const quando = () => {
-    if (!inicioRef || D.numeros.some((x) => x.mes_ref > inicioRef)) return null;
-    const prox = U.addRef(inicioRef, 1);
-    // linha do tempo do começo: o que aparece, quando, e o que já chegou (como os passos do "Get started" do designer)
-    const temResp = D.respostas.length > 0;
-    const itens = [
-      [quad('grafico'), 'Faturamento, clientes e ticket', 'Com os números de ' + U.nomeMes(prox) + ', enviados no começo de ' + U.nomeMes(U.addRef(prox, 1)) + '.', U.cap(U.nomeMesCurto(U.addRef(prox, 1))), false],
-      [quad('ok'), 'O plano pagou?', 'Precisa de 3 meses de números para comparar com o ponto de partida.', U.cap(U.nomeMesCurto(U.addRef(inicioRef, 3))), false],
-      [quad('alvo'), 'Como a marca é vista', temResp ? 'As primeiras respostas da pesquisa já estão na aba Marca.' : 'Assim que a pesquisa de partida receber respostas.', temResp ? 'Já disponível' : 'Com as respostas', temResp],
-    ];
-    return secN('when-t', 'O que vai aparecer aqui', itens.length, 'Os resultados chegam aos poucos. Assim fica fácil saber o que esperar.',
-      el('ul', 'gl quando', itens.map(([q, t, d, quando, ok]) => el('li', 'gl__i',
-        q, el('div', 'gl__m', el('p', 'gl__t', t), el('p', 'gl__s', d)),
-        el('span', 'quando__chip' + (ok ? ' is-ok' : ''), quando)))));
-  };
   // o veredito do mês: uma frase do consultor respondendo "estamos mais perto da meta?"
   const veredito = () => {
     if (!D.foco || !D.foco.veredito) return null;
@@ -1435,18 +1064,6 @@
   };
   // título de cada parte da tela de Resultados
   const parte = (t, d) => el('div', 'res-part', el('h2', 'res-part__t', t), d ? el('p', 'res-part__d', d) : null);
-  let abaEvol = 'fat';
-
-  // "a marca está trazendo venda?": propostas que fecham (e sem desconto) + clientes novos depois das ações de marca
-  const marcaTrazVenda = () => {
-    const a = escolhemEPagam(); const b = brandingVende();
-    if (!a.length && !b.length) return [];
-    const corpo = (x) => (x.length ? [...x[0].childNodes].slice(1) : []); // sem o título de cada bloco antigo
-    return [sec('venda-t', 'A marca está trazendo venda?',
-      el('div', a.length && b.length ? 'pair-in' : 'pair-in pair-in--one',
-        a.length ? el('div', 'pair-in__col', el('p', 'eyebrow', 'Escolhem a sua marca e pagam mais'), ...corpo(a)) : null,
-        b.length ? el('div', 'pair-in__col', el('p', 'eyebrow', 'Clientes novos depois das ações de marca'), ...corpo(b)) : null))];
-  };
 
   // o esforço na prática: ações feitas ou em andamento, marcadas como marca ou venda
   // uma linha da divisão marca × vendas: barra fina em dois pedaços, com os números à direita
@@ -1469,133 +1086,8 @@
       alcance];
   };
 
-  // ===== a promessa do site, medida: "Venda mais. Para mais pessoas. Com mais valor." =====
-  const promessa = () => {
-    const nums = D.numeros.filter((n) => n.faturamento != null);
-    const primeiro = nums[0]; const ultimo = nums[nums.length - 1];
-    const varPct = (a, b) => (a != null && b ? Math.round((a / b - 1) * 1000) / 10 : null);
-    const base = baseFat();
-    const vendas = ultimo && base && (!inicioRef || ultimo.mes_ref > inicioRef) ? varPct(Number(ultimo.faturamento), base) : null;
-    const comCli = nums.filter((n) => n.clientes_atendidos);
-    const pessoas = comCli.length > 1 ? varPct(comCli[comCli.length - 1].clientes_atendidos, comCli[0].clientes_atendidos) : null;
-    const ticket = (n) => (n && n.clientes_atendidos ? Number(n.faturamento) / n.clientes_atendidos : null);
-    const valor = comCli.length > 1 ? varPct(ticket(comCli[comCli.length - 1]), ticket(comCli[0])) : null;
-    return [
-      ['Venda mais', vendas, 'faturamento desde o início' + (vendas != null && nums.filter((n) => !inicioRef || n.mes_ref > inicioRef).length < MESES_VEREDITO ? ' · leitura inicial' : '')],
-      ['Para mais pessoas', pessoas, 'clientes atendidos por mês'],
-      ['Com mais valor', valor, comCli.length ? 'ticket médio: ' + U.reais(ticket(comCli[comCli.length - 1])) : 'ticket médio'],
-    ];
-  };
-  const placarPromessa = (acoesPor) => el('section', { class: 'promise', 'aria-label': 'Venda mais, para mais pessoas, com mais valor' },
-    promessa().map(([t, v, sub], i) => {
-      const k = ['vendas', 'pessoas', 'valor'][i]; const n = acoesPor ? acoesPor[k] || 0 : null;
-      return el('div', 'promise__item',
-        el('p', 'eyebrow', t),
-        el('p', 'promise__v' + (v == null ? ' is-empty' : v < 0 ? ' is-down' : ''), v == null ? 'Aguardando números' : U.pct(v, 1)),
-        el('p', 'promise__sub', sub),
-        v != null && v < 0 ? el('p', 'promise__why', el('span', null, 'Por quê: '), (D.foco && D.foco['nota_' + k]) || 'O consultor explica este número no próximo encontro.') : null,
-        acoesPor ? el('p', 'promise__acts' + (n ? '' : ' is-zero'), n ? n + (n === 1 ? ' ação sua move isto agora' : ' ações suas movem isto agora') : 'Nenhuma ação sua sobre isto agora') : null);
-    }));
 
-  // ===== uma resposta só para "estou mais perto da meta?": quanto falta por mês e quanto do caminho já foi feito =====
-  // ===== ponto de partida: quando o consultor não preencheu, o cliente informa no começo do plano =====
-  // a média mensal dos 12 meses antes do plano vira a base da meta; os meses do ano passado alimentam a sazonalidade
-  const precisaPartida = () => !!D.plano && !soAcesso && !semNumeros && D.plano.faturamento_base == null;
-  let partidaEdita = false;
-  const MESES_ABR = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
-  const pontoPartida = (onde) => {
-    const p = D.plano; if (!p || soAcesso || semNumeros) return null;
-    const doCliente = p.faturamento_base != null && p.partida_cliente;
-    if (p.faturamento_base != null && !(doCliente && partidaEdita)) {
-      // já informado: só uma linha, com "Corrigir" enquanto o valor for do cliente
-      if (onde !== 'resultados') return null;
-      return el('div', 'partida__linha',
-        el('span', { class: 'partida__ico', 'aria-hidden': 'true' }),
-        el('div', 'partida__info', el('p', 'partida__lbl', 'Ponto de partida · ' + (doCliente ? 'informado por você' : 'definido pelo consultor')),
-          Number(p.faturamento_base) === 0 ? el('p', 'partida__v', 'Empresa nova', el('span', null, ' · começando do zero'))
-            : el('p', 'partida__v', U.reais(Number(p.faturamento_base)), el('span', null, ' por mês'))),
-        doCliente ? el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => { partidaEdita = true; render(); } }, 'Corrigir') : null);
-    }
-    const ano = p.fat_ano_anterior || {};
-    // empresa nova: começa do zero (o campo de valor e os meses do ano anterior não se aplicam)
-    const nova = el('input', { type: 'checkbox', id: 'pp-nova', checked: Number(p.faturamento_base) === 0 });
-    const base = el('input', { class: 'field', id: 'pp-base', 'data-moeda': '', inputmode: 'numeric', autocomplete: 'off', placeholder: 'R$ 0,00', value: p.faturamento_base != null ? U.moedaFmt(p.faturamento_base) : null });
-    const campos = MESES_ABR.map((m, i) => {
-      const k = String(i + 1).padStart(2, '0');
-      return el('label', 'partida__mes', el('span', null, U.cap(m)),
-        el('input', { class: 'field', 'data-moeda': '', 'data-k': k, inputmode: 'numeric', autocomplete: 'off', placeholder: 'R$ 0,00', 'aria-label': 'Faturamento de ' + U.nomeMes('2000-' + k) + ' no ano antes do plano', value: ano[k] != null ? U.moedaFmt(ano[k]) : null }));
-    });
-    const temAno = Object.keys(ano).length > 0;
-    const msg = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite' });
-    const f = el('form', { class: 'box partida', id: 'ponto-partida', novalidate: true, 'aria-labelledby': 'pp-t' },
-      el('div', 'box__head', el('h2', { class: 'box__title', id: 'pp-t' }, 'Seu ponto de partida'), el('p', 'box__note', 'Leva 1 minuto')),
-      el('p', 'box__text', 'A meta do plano é medida a partir daqui. Sem este número, o primeiro mês do plano vira a comparação, e ele já tem o efeito das ações.'),
-      el('div', 'partida__base', el('label', { class: 'label', for: 'pp-base' }, 'Quanto a empresa faturou, em média, por mês nos 12 meses antes do plano?'), base,
-        el('p', 'box__note', 'Some o faturamento dos últimos 12 meses e divida por 12. Um valor aproximado já serve.'),
-        el('label', 'chk partida__nova', nova, ' A empresa é nova e ainda não fatura')),
-      el('details', { class: 'partida__ano', open: temAno }, el('summary', null, 'Sei o faturamento de cada mês dos 12 meses antes do plano (opcional)'),
-        el('p', 'box__note', 'Com os meses do ano passado, comparamos dezembro com dezembro, e não com novembro. É o jeito justo de medir quem tem época forte e fraca.'),
-        el('div', 'partida__meses', campos)),
-      el('div', 'partida__acoes', el('button', { class: 'btn btn--light', type: 'submit' }, 'Salvar ponto de partida'),
-        doCliente ? el('button', { class: 'btn btn--ghost', type: 'button', onclick: () => { partidaEdita = false; render(); } }, 'Cancelar') : null, msg));
-    const ajustaNova = () => { base.disabled = nova.checked; f.querySelector('.partida__ano').hidden = nova.checked; if (nova.checked) base.value = ''; };
-    nova.addEventListener('change', ajustaNova); ajustaNova();
-    f.addEventListener('submit', async (ev) => {
-      ev.preventDefault();
-      const v = nova.checked ? 0 : U.moedaValor(base);
-      if (!nova.checked && !v) { U.say(msg, 'Informe a média mensal de faturamento ou marque que a empresa é nova.', 'error'); base.focus(); return; }
-      // o campo enche pela direita (centavos): "85" vira R$ 0,85. Abaixo de R$ 100 quase sempre é engano de digitação
-      if (!nova.checked && v < 100) { U.say(msg, 'Confira o valor: ' + U.moedaFmt(v) + ' por mês? Digite o número inteiro, com os centavos (ex.: 8500000 = R$ 85.000,00).', 'error'); base.focus(); return; }
-      const meses = {}; if (!nova.checked) campos.forEach((c) => { const inp = c.querySelector('input'); const x = U.moedaValor(inp); if (x != null) meses[inp.dataset.k] = x; });
-      const btn = f.querySelector('[type=submit]'); btn.disabled = true; U.say(msg, 'Salvando…');
-      const { error } = await sb.rpc('portal_ponto_partida', { p_base: v, p_ano: meses });
-      btn.disabled = false;
-      if (error) return U.say(msg, /consultor/.test(error.message || '') ? 'O consultor já definiu o ponto de partida. Fale com ele para ajustar.' : 'Não foi possível salvar. Tente de novo.', 'error');
-      Object.assign(D.plano, { faturamento_base: v, fat_ano_anterior: meses, partida_cliente: true });
-      partidaEdita = false; render(); indicadores(); anuncia('Ponto de partida salvo.');
-    });
-    return f;
-  };
-  const irPartida = () => setTimeout(() => { const f = document.getElementById('pp-base'); if (f) { f.scrollIntoView({ block: 'center', behavior: 'smooth' }); f.focus({ preventScroll: true }); } }, 450);
-
-  const quantoFalta = () => {
-    const base = baseFat();
-    const meta = D.plano && D.plano.meta_faturamento_pct != null ? Number(D.plano.meta_faturamento_pct) : null;
-    const ult = [...D.numeros].reverse().find((n) => n.faturamento != null && (!inicioRef || n.mes_ref > inicioRef));
-    if (!base || !meta) return null;
-    const alvo = base * (1 + meta / 100);
-    if (!ult) return { alvo, base, sem: true };
-    const atual = Number(ult.faturamento);
-    const pct = Math.max(0, Math.min(100, Math.round(((atual - base) / (alvo - base)) * 100)));
-    return { alvo, base, atual, falta: Math.max(0, alvo - atual), pct, mes: ult.mes_ref };
-  };
-  const metaHero = () => {
-    const q = quantoFalta();
-    if (!q) return null;
-    if (q.sem) return null; // o cliente não passa os números: sem faturamento, o bloco não aparece
-    return el('div', 'meta-q',
-      el('p', 'meta-q__lbl', 'Quanto falta para a meta'),
-      el('p', 'meta-q__v', q.falta ? U.reais(q.falta) + ' por mês' : 'Meta alcançada'),
-      el('div', { class: 'meta-q__bar', role: 'img', 'aria-label': q.pct + '% do caminho até a meta' }, el('span', { style: 'width:' + Math.max(2, q.pct) + '%' })),
-      el('p', 'meta-q__sub', q.pct + '% do caminho · hoje ' + U.reais(q.atual) + ' por mês (' + U.nomeMes(q.mes) + '), meta ' + U.reais(q.alvo)));
-  };
-  // o mês num lugar só: como foi (veredito) e o que vem agora (foco)
-  const seuMes = () => {
-    const f = D.foco;
-    if (!f) return null;
-    return el('section', { class: 'mes-card', 'aria-labelledby': 'mes-t' },
-      el('div', 'mes-card__head', D.consultor ? avatar(D.consultor) : null,
-        el('div', null, el('h2', { class: 'mes-card__t', id: 'mes-t' }, 'Seu mês · ' + U.cap(U.nomeMes(f.mes_ref))),
-          el('p', 'mes-card__by', D.consultor && D.consultor.nome ? 'Escrito por ' + D.consultor.nome.split(' ')[0] : 'Escrito pelo consultor'))),
-      el('div', 'mes-card__cols',
-        f.veredito ? el('div', 'mes-card__col', el('p', 'mes-card__lbl', 'Como foi'), el('p', 'mes-card__txt', f.veredito)) : null,
-        el('div', 'mes-card__col', el('p', 'mes-card__lbl', 'O que vem agora'), el('p', 'mes-card__txt mes-card__foco', f.titulo),
-          f.texto ? el('p', 'mes-card__sub', f.texto) : null,
-          el('a', { class: 'link', href: '#acoes' }, 'Ver as ações do mês'))),
-      D.vereditos.filter((v) => v.mes_ref !== f.mes_ref).length ? el('details', 'verdict__hist', el('summary', null, 'Meses anteriores'),
-        el('ul', null, D.vereditos.filter((v) => v.mes_ref !== f.mes_ref).map((v) => el('li', null, el('span', null, U.cap(U.nomeMes(v.mes_ref)) + ' ' + v.mes_ref.slice(0, 4)), v.veredito)))) : null);
-  };
-  // cada estrela leva para onde o cliente resolve aquilo
+  // ===== missões do mês: o que o cliente faz agora, em cartões simples (ações, números e encontro) =====
   const foca = (id) => { alvoRes = id; return setTimeout(() => { const f = document.getElementById(id); if (f) { f.scrollIntoView({ block: 'center', behavior: 'smooth' }); f.focus({ preventScroll: true }); } }, 450); };
   const irParaEstrela = (t, e) => {
     if (/^Essenciais/.test(t)) {
@@ -1647,168 +1139,6 @@
           el('span', 'missoes__bar', el('span', { style: 'width:' + Math.round(feitas / itens.length * 100) + '%' }))) : null),
       itens.length ? el('div', 'missoes__grid', itens.map(card)) : el('p', 'missoes__vazio', 'Nenhuma missão neste mês. O consultor monta as próximas com você.'),
       feitas === itens.length && itens.length ? el('p', 'missoes__ok', 'Mês completo. Missão cumprida!') : null);
-  };
-
-  // a rotina do cliente: o que fazer toda semana, todo mês e a cada 6 meses (e o que já está feito)
-  const suaRotina = () => {
-    const seteDias = Date.now() - 7 * 864e5;
-    const mexeu = D.acoes.some((a) => a.atualizada_em && new Date(a.atualizada_em).getTime() > seteDias && a.atualizada_por === me.id);
-    const numOk = semNumeros || !faltaNumeros();
-    const leu = !!D.foco;
-    const seisMeses = new Date(); seisMeses.setMonth(seisMeses.getMonth() - 6);
-    const pesqOk = (D.respostas || []).some((r) => new Date(r.criada_em || 0) > seisMeses);
-    const item = (ok, t, href) => el('li', ok ? 'is-ok' : null, el('span', { class: 'rot__ico', 'aria-hidden': 'true' }), el('a', { href }, t));
-    return el('section', { class: 'rot', 'aria-labelledby': 'rot-t' },
-      el('h2', { class: 'rot__t', id: 'rot-t' }, 'Sua rotina'),
-      el('div', 'rot__cols',
-        el('div', 'rot__col', el('p', 'rot__lbl', 'Toda semana'), el('ul', null, item(mexeu, 'Atualizar as ações e os passos', '#acoes'))),
-        el('div', 'rot__col', el('p', 'rot__lbl', 'Começo do mês'), el('ul', null,
-          semNumeros ? null : item(numOk, 'Enviar os números (2 minutos)', '#resultados'),
-          item(leu, 'Ler o seu mês: como foi e o que vem', '#plano'))),
-        el('div', 'rot__col', el('p', 'rot__lbl', 'No encontro'), el('ul', null, item(D.encontros.some((x) => x.inicio.slice(0, 7) === hoje && x.status === 'realizado'), 'Ver os resultados com o consultor', '#resultados'))),
-        el('div', 'rot__col', el('p', 'rot__lbl', 'A cada 6 meses'), el('ul', null, item(pesqOk, 'Mandar a pesquisa para os seus clientes', '#resultados')))));
-  };
-
-  // ===== O plano pagou? o faturamento real contra o que seria se nada mudasse (o ponto de partida) =====
-  const contaPlano = () => {
-    const base = baseFat();
-    const ns = D.numeros.filter((n) => n.faturamento != null && (!inicioRef || n.mes_ref > inicioRef));
-    if (!base || !ns.length) return null;
-    const real = ns.reduce((a, n) => a + Number(n.faturamento), 0);
-    const ant = (D.plano && D.plano.fat_ano_anterior) || {};
-    const sazonal = ns.every((n) => ant[n.mes_ref.slice(5)] != null);
-    // com o faturamento do ano anterior, cada mês é comparado com o mesmo mês (dezembro com dezembro); sem ele, com a média
-    const semPlano = sazonal ? ns.reduce((a, n) => a + Number(ant[n.mes_ref.slice(5)]), 0) : base * ns.length;
-    const extra = real - semPlano;
-    const mens = D.plano && D.plano.mensalidade ? Number(D.plano.mensalidade) : null;
-    const investido = mens ? mens * mesN : null;
-    return { real, semPlano, extra, meses: ns.length, investido, volta: investido ? extra / investido : null, sazonal };
-  };
-  const MESES_VEREDITO = 3; // com menos que isso, a variação normal de um mês pesa mais que o efeito do plano
-  const planoPagou = () => {
-    const c = contaPlano();
-    if (!c) return [];
-    if (c.meses < MESES_VEREDITO) {
-      return [sec('pagou-t', 'O plano pagou?',
-        el('div', 'forming',
-          el('div', 'forming__top', chip('doing', 'Em formação'), el('span', 'forming__count', c.meses + ' de ' + MESES_VEREDITO + ' meses de números')),
-          el('div', { class: 'forming__steps', 'aria-hidden': 'true' }, Array.from({ length: MESES_VEREDITO }, (_, i) => el('span', i < c.meses ? 'is-on' : null))),
-          el('div', 'forming__stat', el('span', 'forming__lbl', 'Parcial até agora'),
-            el('strong', 'forming__v' + (c.extra >= 0 ? ' is-up' : ' is-down'), (c.extra >= 0 ? '+' : '−') + U.reais(Math.abs(c.extra))),
-            el('span', 'forming__lbl', c.sazonal ? 'contra os mesmos meses do ano anterior' : 'contra a média de antes do plano'))),
-        el('p', 'box__text', 'O veredito sai com ' + MESES_VEREDITO + ' meses: com menos, ainda não dá para separar o efeito do plano da variação normal do faturamento.'),
-        el('p', 'paid__foot', c.sazonal ? 'Cada mês é comparado com o mesmo mês do ano anterior, para a época do ano não enganar.' : 'A comparação é com a média mensal de antes do plano. Com o faturamento mês a mês do ano anterior, o consultor deixa a conta mais justa.'))];
-    }
-    const max = Math.max(c.semPlano, c.real);
-    const barra = (rot, v, cls) => el('div', 'paid__row',
-      el('p', 'paid__lab', rot),
-      el('div', 'paid__track', el('span', { class: cls || '', style: 'width:' + Math.round(v / max * 100) + '%' })),
-      el('p', 'paid__num', U.reais(v)));
-    const out = [
-      // 1. a resposta
-      el('div', 'paid__hero',
-        el('p', 'paid__big' + (c.extra < 0 ? ' is-minus' : ''), (c.extra >= 0 ? '+' : '−') + U.reais(Math.abs(c.extra))),
-        el('p', 'paid__cap', (c.extra >= 0 ? 'a mais' : 'a menos') + ' em faturamento desde o início do plano')),
-      // 2. de onde vem o número
-      el('div', 'paid__bars', barra(c.sazonal ? 'Mesmos meses, ano anterior' : 'Se nada mudasse', c.semPlano, 'is-base'), barra('Com o plano', c.real, 'is-plan')),
-    ];
-    // 3. o investimento voltou?
-    if (c.investido) {
-      const pct = Math.max(0, Math.min(100, Math.round(c.extra / c.investido * 100)));
-      out.push(el('div', 'paid__roi',
-        el('div', 'paid__roi-head', el('p', 'eyebrow', 'Retorno do investimento na consultoria'),
-          el('p', 'paid__roi-v', c.volta >= 1 ? 'Pagou ' + c.volta.toFixed(1).replace('.', ',') + ' vezes' : pct + '% já voltou')),
-        el('div', 'paid__track paid__track--roi', el('span', { style: 'width:' + pct + '%' })),
-        el('p', 'box__note', c.volta >= 1 ? 'Cada R$ 1 investido voltou R$ ' + c.volta.toFixed(1).replace('.', ',') + ' em faturamento.'
-          : U.reais(Math.max(0, c.extra)) + ' de ' + U.reais(c.investido) + ' investidos. Marca leva meses para render.')));
-    }
-    out.push(el('p', 'paid__foot', (c.meses === 1 ? '1 mês informado' : c.meses + ' meses informados') + (c.sazonal ? ', cada um comparado com o mesmo mês do ano anterior (a época do ano não engana). Não separa o efeito do plano do mercado.' : ', comparado ao faturamento de partida. Não separa o efeito do plano de sazonalidade ou do mercado.')));
-    return [sec('pagou-t', 'O plano pagou?', out)];
-  };
-
-  // ===== Quanto custa a meta? as alavancas do site: mais pessoas (clientes) ou mais valor (ticket) =====
-  const simulador = () => {
-    const base = baseFat();
-    const meta = D.plano && D.plano.meta_faturamento_pct != null ? Number(D.plano.meta_faturamento_pct) : null;
-    const ult = [...D.numeros].reverse().find((n) => n.clientes_atendidos && n.faturamento != null);
-    if (!base || !meta || !ult) return [];
-    const alvo = base * (1 + meta / 100);
-    const c0 = ult.clientes_atendidos; const t0 = Number(ult.faturamento) / c0;
-    const cNec = Math.ceil(alvo / t0); const tNec = alvo / c0;
-    const caminho = (t, v, d) => el('div', 'sim__path', el('p', 'eyebrow', t), el('p', 'sim__v', v), el('p', 'box__note', d));
-    const cIn = el('input', { type: 'range', id: 'sim-c', min: Math.max(1, Math.floor(c0 * 0.5)), max: Math.ceil(Math.max(cNec, c0) * 1.6), step: 1, value: c0 });
-    const tIn = el('input', { type: 'range', id: 'sim-t', min: Math.round(t0 * 0.5), max: Math.round(Math.max(tNec, t0) * 1.5), step: 50, value: Math.round(t0) });
-    const cOut = el('output', { for: 'sim-c' }); const tOut = el('output', { for: 'sim-t' });
-    const bar = el('span'); const res = el('p', { class: 'sim__res', role: 'status', 'aria-live': 'polite' });
-    const atualiza = () => {
-      const c = Number(cIn.value); const t = Number(tIn.value); const proj = c * t;
-      cOut.textContent = c + ' clientes'; tOut.textContent = U.reais(t);
-      bar.style.width = Math.min(100, Math.round(proj / alvo * 100)) + '%';
-      res.textContent = proj >= alvo ? 'Chega na meta: ' + U.reais(proj) + ' por mês.' : 'Faltam ' + U.reais(alvo - proj) + ' por mês para a meta (' + U.reais(proj) + ' de ' + U.reais(alvo) + ').';
-      res.className = 'sim__res' + (proj >= alvo ? ' is-ok' : '');
-    };
-    cIn.addEventListener('input', atualiza); tIn.addEventListener('input', atualiza); atualiza();
-    return [sec('sim-t', 'Como chegar à meta',
-      el('p', 'box__text', 'A meta é faturar ' + U.reais(alvo) + ' por mês (' + U.pct(meta, 0) + '). Hoje são ' + c0 + ' clientes por mês com ticket médio de ' + U.reais(t0) + '. Há dois caminhos, e dá para combinar:'),
-      el('div', 'sim__paths',
-        caminho('Para mais pessoas', cNec + ' clientes/mês', 'mantendo o ticket de hoje (+' + (cNec - c0) + ' clientes)'),
-        caminho('Com mais valor', U.reais(tNec), 'de ticket médio, com os mesmos ' + c0 + ' clientes')),
-      el('div', 'sim__ctl',
-        el('div', null, el('label', { class: 'label', for: 'sim-c' }, 'Clientes por mês'), cIn, cOut),
-        el('div', null, el('label', { class: 'label', for: 'sim-t' }, 'Ticket médio'), tIn, tOut)),
-      el('div', 'sim__bar', bar), res,
-      el('p', 'box__note', 'Marca forte trabalha nas duas alavancas: é lembrada por mais pessoas e faz o cliente aceitar pagar mais.'))];
-  };
-
-  // ===== Branding vende mesmo? os meses com ação de marca contra os clientes novos que vieram depois =====
-  const brandingVende = () => {
-    if (!inicioRef) return [];
-    const rot = []; const cn = []; const marcaM = [];
-    for (let r = inicioRef; r <= mesPassado; r = U.addRef(r, 1)) {
-      const n = D.numeros.find((x) => x.mes_ref === r);
-      rot.push(U.cap(U.nomeMesCurto(r))); cn.push(n ? n.clientes_novos : null);
-      marcaM.push(D.acoes.some((a) => a.esforco === 'marca' && a.mes_previsto === r && a.status !== 'a_fazer'));
-    }
-    if (cn.filter((v) => v != null).length < 2) return [];
-    const ch = grafico('chart--bars', 'Clientes novos por mês; meses com ação de marca marcados: ' + rot.map((m, i) => m + ' ' + (cn[i] ?? 'sem dado') + (marcaM[i] ? ' (ação de marca)' : '')).join(', '), (W, tip, box) => {
-      const H = 200; const L = 36; const R = 8; const T = 20; const B = 44;
-      const max = Math.max(1, ...cn.filter((v) => v != null)); const tk = ticks(0, max, 3); const top = tk[tk.length - 1];
-      const y = (v) => T + (H - T - B) * (1 - v / top);
-      const n = cn.length; const banda = (W - L - R) / n; const bw = Math.min(40, banda * 0.5);
-      const svg = sv('svg', { width: W, height: H, viewBox: `0 0 ${W} ${H}`, 'aria-hidden': 'true' });
-      tk.forEach((t) => svg.append(sv('line', { x1: L, x2: W - R, y1: y(t), y2: y(t), stroke: C.grid, 'stroke-width': 1, 'stroke-dasharray': t === tk[0] ? null : '3 4' }), sv('text', { x: L - 8, y: y(t) + 4, 'text-anchor': 'end', class: 'chart__axis' }, t)));
-      cn.forEach((v, i) => {
-        const cx = L + banda * i + banda / 2;
-        svg.append(sv('text', { x: cx, y: H - 24, 'text-anchor': 'middle', class: 'chart__axis' }, rot[i]));
-        if (marcaM[i]) svg.append(sv('rect', { x: cx - 5, y: H - 14, width: 10, height: 10, rx: 2, fill: C.acc }));
-        if (v == null || v <= 0) return;
-        const x0 = cx - bw / 2; const y0 = y(v); const yb = y(0); const r = Math.min(7, (yb - y0) / 2, bw / 2);
-        svg.append(sv('path', { d: `M${x0} ${yb}V${y0 + r}Q${x0} ${y0} ${x0 + r} ${y0}H${x0 + bw - r}Q${x0 + bw} ${y0} ${x0 + bw} ${y0 + r}V${yb}Z`, fill: '#dadada' }),
-          sv('text', { x: cx, y: y0 - 6, 'text-anchor': 'middle', class: 'chart__end' }, v));
-      });
-      return svg;
-    });
-    return [sec('halo-t', 'Branding vende mesmo?',
-      el('p', 'box__text', 'Marca não vende na hora. O efeito costuma aparecer de 2 a 3 meses depois: mais gente lembra, procura e vira cliente. Compare os meses com ação de marca com os clientes novos que vieram depois.'),
-      el('div', 'chart__legend', el('span', null, el('span', { class: 'chart__sq', style: 'background:#dadada' }), 'Clientes novos'), el('span', null, el('span', { class: 'chart__sq', style: 'background:' + C.acc }), 'Mês com ação de marca')),
-      ch,
-      el('p', 'box__note', 'Leitura de tendência, não de causa: outros fatores também mexem nos clientes novos. Por isso não vale cortar marca no primeiro mês sem resultado.'))];
-  };
-
-  // "escolhem sua marca e pagam mais, sem hesitar": fechamento de propostas e fechamentos sem desconto
-  const escolhemEPagam = () => {
-    const ns = D.numeros.filter((n) => n.propostas);
-    if (!ns.length) return [];
-    const u = ns[ns.length - 1]; const p0 = ns[0];
-    const tx = (n) => (n.propostas ? Math.round((n.fechadas || 0) / n.propostas * 100) : null);
-    const sd = (n) => (n.fechadas ? Math.round((n.sem_desconto || 0) / n.fechadas * 100) : null);
-    const d = (a, b) => (ns.length > 1 && a != null && b != null ? (a - b > 0 ? '+' : '') + (a - b) + ' pontos desde o início' : null);
-    return [sec('esc-t', 'Escolhem a sua marca e pagam mais',
-      el('p', 'box__text', 'De cada 10 propostas, quantas fecham, e quantas fecham sem o cliente pedir desconto. É o sinal mais direto de que reconhecem o valor do que você oferece.'),
-      el('div', 'stats',
-        el('div', 'stat', el('p', 'stat__label', 'Propostas que fecham'), el('p', 'stat__value', tx(u) + '%'), d(tx(u), tx(p0)) ? el('p', 'stat__delta', d(tx(u), tx(p0))) : null),
-        el('div', 'stat', el('p', 'stat__label', 'Fecham sem pedir desconto'), el('p', 'stat__value', (sd(u) ?? '—') + (sd(u) != null ? '%' : '')), d(sd(u), sd(p0)) ? el('p', 'stat__delta', d(sd(u), sd(p0))) : null)),
-      el('p', 'box__note', 'Último mês informado: ' + U.nomeMes(u.mes_ref) + ' · ' + u.propostas + ' propostas, ' + (u.fechadas || 0) + ' fechadas, ' + (u.sem_desconto || 0) + ' sem desconto.'))];
   };
 
   // o funil da clareza (o mesmo do site): o que você enxerga, o que comunica, o que as pessoas ouvem, o que entendem
@@ -2073,57 +1403,6 @@
         el('ol', { class: 'comofoi__meses', 'aria-label': 'Como foi cada mês' }, ult.map((r) => { const v = comoFoi(r);
           return el('li', 'comofoi__m' + (v ? ' is-' + v : ''), el('span', 'comofoi__mi', v ? COMO[v][1] : '·'), el('span', 'comofoi__ml', U.nomeMesCurto(r)),
             el('span', 'sr-only', v ? COMO[v][0] : 'sem resposta')); }))) : null);
-  };
-
-  const formNumeros = (atual) => {
-    const prox = D.proximo;
-    const f = el('form', { class: 'box numbers', novalidate: true, 'aria-labelledby': 'num-t' },
-      el('div', 'box__head', el('h2', { class: 'box__title', id: 'num-t' }, 'Números de ' + U.nomeMes(mesPassado)),
-        el('p', 'box__note', 'Leva 2 minutos' + (prox ? ' · usamos no encontro de ' + U.dia(prox.inicio) : ''))),
-      el('div', 'numbers__grid',
-        el('div', null, el('label', { class: 'label', for: 'n-fat' }, 'Faturamento do mês (R$)'),
-          el('input', { class: 'field', id: 'n-fat', 'data-moeda': '', inputmode: 'numeric', autocomplete: 'off', placeholder: 'R$ 0,00', value: atual && atual.faturamento != null ? U.moedaFmt(atual.faturamento) : null })),
-        el('div', null, el('label', { class: 'label', for: 'n-leads' }, 'Leads recebidos'),
-          el('input', { class: 'field', id: 'n-leads', type: 'number', min: 0, step: 1, inputmode: 'numeric', value: atual ? atual.leads : null })),
-        el('div', null, el('label', { class: 'label', for: 'n-tot' }, 'Clientes atendidos no mês (total)'),
-          el('input', { class: 'field', id: 'n-tot', type: 'number', min: 0, step: 1, inputmode: 'numeric', value: atual ? atual.clientes_atendidos : null })),
-        el('div', null, el('label', { class: 'label', for: 'n-cli' }, 'Desses, quantos eram novos'),
-          el('input', { class: 'field', id: 'n-cli', type: 'number', min: 0, step: 1, inputmode: 'numeric', value: atual ? atual.clientes_novos : null })),
-        el('div', null, el('label', { class: 'label', for: 'n-prop' }, 'Propostas enviadas'),
-          el('input', { class: 'field', id: 'n-prop', type: 'number', min: 0, step: 1, inputmode: 'numeric', value: atual ? atual.propostas : null })),
-        el('div', null, el('label', { class: 'label', for: 'n-fech' }, 'Propostas fechadas'),
-          el('input', { class: 'field', id: 'n-fech', type: 'number', min: 0, step: 1, inputmode: 'numeric', value: atual ? atual.fechadas : null })),
-        el('div', null, el('label', { class: 'label', for: 'n-sd' }, 'Fechadas sem pedir desconto'),
-          el('input', { class: 'field', id: 'n-sd', type: 'number', min: 0, step: 1, inputmode: 'numeric', value: atual ? atual.sem_desconto : null }))),
-      el('div', 'numbers__foot',
-        el('button', { class: 'btn btn--light', type: 'submit' }, atual ? 'Salvar correção' : 'Enviar números'),
-        atual ? el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => { corrigindo = false; render(); } }, 'Cancelar') : null,
-        el('p', { class: 'msg', id: 'n-msg', role: 'status', 'aria-live': 'polite' })));
-    f.addEventListener('submit', async (ev) => {
-      ev.preventDefault();
-      // aceita "102.000,50", "102000", "102 000"
-      const fat = Number($('n-fat').value.replace(/[^\d,.-]/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.'));
-      const leads = $('n-leads').value === '' ? null : parseInt($('n-leads').value, 10);
-      const cli = $('n-cli').value === '' ? null : parseInt($('n-cli').value, 10);
-      const tot = $('n-tot').value === '' ? null : parseInt($('n-tot').value, 10);
-      const int = (id) => ($(id).value === '' ? null : parseInt($(id).value, 10));
-      const prop = int('n-prop'); const fech = int('n-fech'); const sd = int('n-sd');
-      if (prop != null && fech != null && fech > prop) return U.say($('n-msg'), 'As fechadas não podem passar das propostas enviadas.', 'error');
-      if (fech != null && sd != null && sd > fech) return U.say($('n-msg'), 'As fechadas sem desconto não podem passar das fechadas.', 'error');
-      if (tot != null && cli != null && cli > tot) return U.say($('n-msg'), 'Os clientes novos não podem passar do total atendido.', 'error');
-      if (!$('n-fat').value.trim() || !Number.isFinite(fat) || fat < 0) return U.say($('n-msg'), 'Informe o faturamento do mês.', 'error');
-      if ((leads != null && leads < 0) || (cli != null && cli < 0)) return U.say($('n-msg'), 'Use números positivos.', 'error');
-      const btn = f.querySelector('[type=submit]'); btn.disabled = true; U.say($('n-msg'), 'Enviando…');
-      const { error } = await sb.rpc('portal_enviar_numeros', { p_mes: mesPassado, p_faturamento: fat, p_leads: leads, p_clientes: cli, p_atendidos: tot, p_propostas: prop, p_fechadas: fech, p_sem_desconto: sd });
-      btn.disabled = false;
-      if (error) return U.say($('n-msg'), error.message || 'Não foi possível enviar.', 'error');
-      const row = { mes_ref: mesPassado, faturamento: fat, leads, clientes_novos: cli, clientes_atendidos: tot, propostas: prop, fechadas: fech, sem_desconto: sd, enviado_em: new Date().toISOString() };
-      const i = D.numeros.findIndex((n) => n.mes_ref === mesPassado);
-      if (i >= 0) D.numeros[i] = { ...D.numeros[i], ...row }; else { D.numeros.push(row); D.numeros.sort((a, b) => (a.mes_ref < b.mes_ref ? -1 : 1)); }
-      corrigindo = false; render(); indicadores();
-      anuncia('Números de ' + U.nomeMes(mesPassado) + ' enviados. Obrigado!');
-    });
-    return f;
   };
 
   // ===== Consultoria =====
@@ -2886,7 +2165,6 @@
     return out;
   };
 
-
   // ===== Falar com o consultor: a conversa fica no portal e chega ao painel da GANG =====
   const naoLidas = () => D.mensagens.filter((m) => m.de === 'consultor' && !m.lida).length;
   // marca as do consultor como lidas no banco (o rpc do Supabase só é enviado quando o resultado é esperado: por isso o await)
@@ -3218,7 +2496,7 @@
     const objNeg = D.objetivos.find((o) => o.nivel === 'negocio');
     const objMarca = D.objetivos.find((o) => o.nivel === 'marca');
     const objMeta = objNeg || objMarca; // a meta é o objetivo que o consultor escreve; sem números, costuma ser o de marca
-    const destino = objMeta ? ((objMeta.destaque ? objMeta.destaque + ' de ' : '') + (objMeta.titulo || '')) : (D.plano && D.plano.meta_faturamento_pct ? U.pct(Number(D.plano.meta_faturamento_pct), 0) + ' de faturamento em ' + dur + ' meses' : 'O objetivo do plano');
+    const destino = objMeta ? ((objMeta.destaque ? objMeta.destaque + ' de ' : '') + (objMeta.titulo || '')) : 'O objetivo do plano';
     // a meta em duas partes: o número em destaque e a frase ao lado (sem quebrar a linha de qualquer jeito)
     let numero = objMeta && objMeta.destaque ? objMeta.destaque : null;
     let frase = numero ? (objMeta.titulo || '') : destino;
@@ -3254,18 +2532,11 @@
         D.pedidos.length ? ['Peças revisadas', D.pedidos.filter((x) => x.status === 'aprovado').length + ' de ' + D.pedidos.length, 'aprovadas'] : null,
         ['Próximo encontro', D.proximo ? U.dia(D.proximo.inicio) : 'A marcar', D.proximo ? U.cap(U.fmt(D.proximo.inicio, { weekday: 'long' })) + ' · ' + U.hora(D.proximo.inicio) : 'ver no calendário', '#consultoria']]));
     }
-    if (precisaPartida()) out.push(pontoPartida('plano'));
     const bm = bannerMensagem(); if (bm) out.push(bm);
     if (!inicioRef) return out.concat(vazio('A trilha aparece assim que o consultor cadastrar o plano.'));
 
     // as missões do mês (os números entram como uma missão, sem aviso à parte)
     out.push(missoes());
-    // o compromisso da semana saiu da tela: repetia o que as ações do mês já mostram (compromissoSemana() continua no código, sem uso)
-    if (false) {
-      out.push(el('div', 'nudge',
-        el('p', 'nudge__t', el('strong', null, 'Faltam os números de ' + U.nomeMes(mesPassado) + '.'), ' Leva 2 minutos e é o que mostra se o plano está funcionando.'),
-        el('a', { class: 'btn btn--light btn--sm', href: '#resultados', onclick: () => { setTimeout(() => { const f = document.getElementById('n-fat'); if (f) { f.scrollIntoView({ block: 'center' }); f.focus({ preventScroll: true }); } }, 400); } }, 'Enviar agora')));
-    }
 
     // os primeiros meses: o que acontece agora e quando os resultados começam a aparecer
     if (mesN <= 2) {
@@ -3275,7 +2546,6 @@
         el('div', 'step-sec__head', el('h2', { class: 'step-sec__t', id: 'start-t' }, 'Como funciona o começo'),
           el('p', 'step-sec__d', 'Mês ' + mesN + ' de ' + dur)),
         el('ol', 'start__list',
-          precisaPartida() || (D.plano && D.plano.partida_cliente) ? passo(!precisaPartida(), 'Informe seu ponto de partida', 'O faturamento médio antes do plano. É a partir dele que a meta é medida.', precisaPartida() ? '#plano' : '#resultados', precisaPartida() ? 'Informar agora' : 'Ver', irPartida) : null,
           passo(true, 'Conheça a sua marca', 'A estratégia, a narrativa e a identidade já estão no menu, em “Sua marca”. Consulte antes de criar qualquer peça.', '#estrategia', 'Ver a estratégia'),
           passo(D.acoes.some((a) => a.status === 'feita' && a.responsavel !== 'gang'), 'Faça a primeira ação', 'Em Ações, a mais importante do mês aparece primeiro.', '#acoes', 'Ver ações'),
           (() => {
@@ -3326,15 +2596,7 @@
 
     // as ações do cliente pendentes no mês (o "o que fazer agora" fica na tela Ações)
     const pend = D.acoes.filter((a) => a.status !== 'feita' && a.responsavel !== 'gang' && a.mes_previsto && a.mes_previsto <= hoje);
-    const iAgora = out.length;
-    if (false && D.proximo) out.push(el('p', 'now__meet plan-meet',
-      el('span', 'now__lbl', 'Próximo encontro'),
-      el('span', null, el('strong', null, U.quando(D.proximo.inicio)), ' · ' + (TIPO_ENCONTRO[D.proximo.tipo] || 'Encontro') + ' · ' + D.proximo.duracao_min + ' min'),
-      el('a', { class: 'link', href: '#consultoria' }, (D.proximo.pauta || []).length ? 'Ver pauta' : 'Ver encontro')));
 
-    // 2. Como está a promessa: venda mais, para mais pessoas, com mais valor — e quantas ações movem cada uma
-    const acoesPor = {}; pend.forEach((a) => { const k = U.promessaDe(a); acoesPor[k] = (acoesPor[k] || 0) + 1; });
-    void acoesPor;
 
     // a trilha: rolagem horizontal, um checkpoint por mês, marcos nas revisões e a bandeira na chegada
     const MARCOS = { 6: 'Revisão semestral', 12: 'Revisão anual', 18: 'Chegada' };
@@ -3405,7 +2667,6 @@
     });
     wrap.addEventListener('scroll', () => { trilhaX = wrap.scrollLeft; }, { passive: true });
     const nav = (d) => { wrap.scrollBy({ left: d * wrap.clientWidth * 0.7, behavior: 'smooth' }); };
-    const iTrilha = out.length;
     out.push(el('div', 'step-sec__head', el('h2', { class: 'step-sec__t' }, 'O caminho até a meta'),
       el('p', 'step-sec__d', 'Mês ' + mesN + ' de ' + dur + (cincoEstrelas ? ' · ' + cincoEstrelas + ' ★' : ''))));
     out.push(el('section', { class: 'trail-box', 'aria-label': 'Trilha' },
@@ -3450,14 +2711,21 @@
       }
     }));
 
-    void iAgora; void iTrilha;
-
 
     return out;
   };
 
   // ===== Relatório do mês: uma página para mostrar aos sócios (imprimir ou salvar em PDF) =====
   let relModo = 'completo';
+  // relatório: como o cliente disse que foram os últimos meses (sem números)
+  const comoForamRel = () => {
+    if (!inicioRef || mesPassado < inicioRef) return null;
+    const ms = []; for (let r = inicioRef; r <= mesPassado; r = U.addRef(r, 1)) ms.push(r);
+    const resp = ms.slice(-6).filter((r) => comoFoi(r));
+    if (!resp.length) return null;
+    return el('section', 'rel__sec', el('h2', 'rel__h', 'Como foram os meses'),
+      el('p', 'rel__p', resp.map((r) => U.cap(U.nomeMes(r)) + ': ' + COMO[comoFoi(r)][0].toLowerCase()).join(' · ') + '.'));
+  };
   const telaRelatorio = () => {
     const nome = D.empresa ? D.empresa.nome : 'Sua empresa';
     const r0 = mesPassado; const r1 = hoje;
@@ -3465,7 +2733,6 @@
     const feitas = D.acoes.filter((a) => a.status === 'feita' && (a.mes_previsto >= desde || (a.concluida_em && a.concluida_em.slice(0, 7) >= desde)));
     const andamento = D.acoes.filter((a) => a.status !== 'feita' && a.mes_previsto <= r1);
     const RES_TXT = { sim: 'funcionou', parcial: 'funcionou em parte', nao: 'não funcionou' };
-    const c = contaPlano();
     // a leitura de marca mais recente (para o funil)
     const q = [...D.pesquisas].reverse().find((x) => D.respostas.some((r) => r.pesquisa_id === x.id));
     let funil = null;
@@ -3488,14 +2755,12 @@
     if (relModo === 'socios') {
       // uma página: aonde vamos, onde estamos, o que o consultor diz e os próximos passos
       const objNeg = D.objetivos.find((o) => o.nivel === 'negocio');
-      const ns = [...D.numeros].filter((n) => n.faturamento != null).sort((a, b) => a.mes_ref.localeCompare(b.mes_ref));
-      const ult = ns[ns.length - 1]; const ant = ns[ns.length - 2];
-      const var_ = (a, b) => (a != null && b ? U.pct(Math.round(((a / b) - 1) * 1000) / 10, 1) : null);
+      const cf = comoFoi(mesPassado);
       const kpis = [
-        ['Faturamento', ult ? U.reais(ult.faturamento) : '—', ult && ant ? var_(Number(ult.faturamento), Number(ant.faturamento)) + ' vs. ' + U.nomeMes(ant.mes_ref) : ult ? U.cap(U.nomeMes(ult.mes_ref)) : ''],
-        ['Clientes novos', ult && ult.clientes_novos != null ? String(ult.clientes_novos) : '—', ult ? U.cap(U.nomeMes(ult.mes_ref)) : ''],
+        ['Como foi ' + U.nomeMes(mesPassado), cf ? COMO[cf][1] + ' ' + COMO[cf][0] : '—', cf ? 'comparado com o mês anterior' : 'sem resposta'],
         ['Ações concluídas', D.acoes.filter((a) => a.status === 'feita').length + ' de ' + D.acoes.filter((a) => a.mes_previsto <= r1).length, 'até ' + U.nomeMes(r1)],
         ['Mês do plano', mesN + ' de ' + dur, objNeg && objNeg.destaque ? 'meta ' + objNeg.destaque : ''],
+        ['Próximo encontro', D.proximo ? U.dia(D.proximo.inicio) : 'a marcar', D.proximo ? U.hora(D.proximo.inicio) : ''],
       ];
       return [el('article', 'rel rel--socios', barra,
         el('header', 'rel__head',
@@ -3512,15 +2777,11 @@
       el('header', 'rel__head',
         el('div', null, el('p', 'rel__eyebrow', 'Relatório de ' + U.nomeMes(r1) + ' de ' + r1.slice(0, 4) + ' · mês ' + mesN + ' de ' + dur),
           el('h1', 'rel__title', nome),
-          el('p', 'rel__sub', 'Venda mais. Para mais pessoas. Com mais valor.')),
+          el('p', 'rel__sub', 'Consultoria de marca GANG')),
         el('p', 'rel__by', 'Consultoria GANG')),
       D.foco && D.foco.veredito ? bloco('Veredito do mês', el('p', 'rel__p', D.foco.veredito),
         D.vereditos.filter((v) => v.mes_ref !== D.foco.mes_ref).length ? el('ul', 'rel__list', D.vereditos.filter((v) => v.mes_ref !== D.foco.mes_ref).slice(0, 5).map((v) => el('li', null, el('strong', null, U.cap(U.nomeMes(v.mes_ref)) + ': '), v.veredito))) : null) : null,
-      bloco('Resultado do plano', el('div', 'rel__grid', promessa().map(([t, v, sub], i) => el('div', 'rel__kpi', el('p', 'rel__k', t), el('p', 'rel__v', v == null ? '—' : U.pct(v, 1)), el('p', 'rel__muted', sub),
-        v != null && v < 0 && D.foco && D.foco['nota_' + ['vendas', 'pessoas', 'valor'][i]] ? el('p', 'rel__muted', 'Por quê: ' + D.foco['nota_' + ['vendas', 'pessoas', 'valor'][i]]) : null)))),
-      c && c.meses < MESES_VEREDITO ? bloco('O plano pagou?', el('p', 'rel__p', 'Em formação: o veredito sai com ' + MESES_VEREDITO + ' meses de números (' + c.meses + ' de ' + MESES_VEREDITO + ' até agora).')) : null,
-      c && c.meses >= MESES_VEREDITO ? bloco('O plano pagou?', el('p', 'rel__p', 'Com o plano: ' + U.reais(c.real) + ' em ' + c.meses + (c.meses === 1 ? ' mês' : ' meses') + ', contra ' + U.reais(c.semPlano) + ' se nada mudasse: ' + (c.extra >= 0 ? U.reais(c.extra) + ' a mais.' : U.reais(-c.extra) + ' a menos.')
-        + (c.volta != null ? (c.volta >= 1 ? ' Cada R$ 1 investido na consultoria voltou R$ ' + c.volta.toFixed(1).replace('.', ',') + '.' : '') : ''))) : null,
+      comoForamRel(),
       bloco('O que foi feito nos últimos 3 meses', lista(feitas, (a) => el('li', null, el('strong', null, a.titulo), (a.resultado ? ' · ' + RES_TXT[a.resultado] : ''), a.aprendizado ? el('span', 'rel__muted', ' “' + a.aprendizado + '”') : null))),
       bloco('Em andamento', lista(andamento, (a) => el('li', null, el('strong', null, a.titulo), ' · ' + STATUS[a.status] + (a.peso === 'essencial' ? ' · essencial' : '')))),
       funil ? bloco('Como a marca é vista', funil) : null,

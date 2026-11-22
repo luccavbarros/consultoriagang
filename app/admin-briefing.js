@@ -85,8 +85,8 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id } }) => {
     !!dados.momento, !!(dados.cliente || '').trim(), (dados.situacoes || []).length > 0, (dados.concorrentes || []).some((c) => c.nome),
     (dados.motivadores || []).length > 0, (dados.discriminadores || []).length > 0,
     [...(dados.motivadores || []), ...(dados.discriminadores || [])].some((f) => f.posicao), (dados.obstaculos || []).length > 0,
-    !!(dados.tentado || '').trim() || (dados.naoRepetir || []).length > 0, ['modo', 'clientes', 'ticket'].some((x) => (dados.numeros || {})[x]),
-    ['verba', 'horas', 'espaco'].some((x) => (dados.recursos || {})[x] !== undefined && (dados.recursos || {})[x] !== ''), !!(dados.ambicao || {}).pct,
+    !!(dados.tentado || '').trim() || (dados.naoRepetir || []).length > 0, ['faixa', 'modo', 'sazonal'].some((x) => (dados.numeros || {})[x]),
+    ['verba', 'horas', 'espaco'].some((x) => (dados.recursos || {})[x] !== undefined && (dados.recursos || {})[x] !== ''), !!((dados.ambicao || {}).nota || '').trim() || !!(dados.ambicao || {}).pct,
   ].filter(Boolean).length;
   const barra = el('span', 'bf-prog__b'); const contagem = el('span', 'bf-prog__n');
   const atualizaTopo = () => { const n = respondidas(); contagem.textContent = n + ' de 12'; barra.style.width = Math.round(n / 12 * 100) + '%'; };
@@ -125,22 +125,18 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id } }) => {
           texto('tentado', 'Ex.: promoção no Instagram encheu a agenda um mês, com clientes que não voltaram', 2),
           rotulo('Não repetir', etiquetas('naoRepetir', 'naoFazer')))),
       bloco('5 · Números, recursos e ambição',
-        pergunta(10, 'Os números de hoje', 'Fato, não opinião. Muita empresa não abre o faturamento no primeiro encontro: aí vale a faixa, ou só clientes e ticket. O que faltar chega depois, nos números do mês em Resultados.', 'Resultados: ponto de partida · Estratégia: objetivo',
-          rotulo('O faturamento', escolhe([['valor', 'Informou o valor'], ['faixa', 'Informou só a faixa'], ['nao', 'Não quis informar']], (dados.numeros || {}).modo, (v) => { setIn('numeros', 'modo', v); setTimeout(desenha, 0); })),
-          (dados.numeros || {}).modo === 'valor' ? rotulo('Faturamento médio por mês (R$)', numero('numeros', 'faturamento', 'Ex.: 60000')) : null,
-          (dados.numeros || {}).modo === 'faixa' ? rotulo('Faixa de faturamento por mês', escolhe([['ate20', 'Até R$ 20 mil'], ['20a50', 'De R$ 20 mil a R$ 50 mil'], ['50a100', 'De R$ 50 mil a R$ 100 mil'], ['100a300', 'De R$ 100 mil a R$ 300 mil'], ['300mais', 'Acima de R$ 300 mil']], (dados.numeros || {}).faixa, (v) => setIn('numeros', 'faixa', v))) : null,
-          (dados.numeros || {}).modo === 'nao' ? el('p', 'bf-q__d', 'Sem problema: o objetivo fica em percentual ("crescer 30% em 12 meses") e o crescimento passa a ser medido pelos números do mês, a partir do primeiro que o cliente enviar. Combine com ele um número de referência, como clientes por mês.') : null,
-          el('div', 'bf-grid', rotulo('Clientes atendidos por mês', numero('numeros', 'clientes', 'Ex.: 150')), rotulo('Ticket médio (R$)', numero('numeros', 'ticket', 'Se souber')),
-            (() => { const n = dados.numeros || {}; return n.modo === 'valor' && n.faturamento && n.clientes ? rotulo('Ticket calculado', el('p', 'bf-res', U.reais(n.faturamento / n.clientes))) : null; })()),
+        pergunta(10, 'O tamanho da empresa hoje', 'Só a faixa, para o plano caber no tamanho da empresa. A plataforma não pede números depois: o cliente conta como foi cada mês em um clique.', 'Plano: o tamanho das ações',
+          rotulo('Faixa de faturamento por mês', escolhe([['ate20', 'Até R$ 20 mil'], ['20a50', 'De R$ 20 mil a R$ 50 mil'], ['50a100', 'De R$ 50 mil a R$ 100 mil'], ['100a300', 'De R$ 100 mil a R$ 300 mil'], ['300mais', 'Acima de R$ 300 mil'], ['nao', 'Não quis informar']],
+            (dados.numeros || {}).faixa || ((dados.numeros || {}).modo === 'nao' ? 'nao' : null), (v) => { setIn('numeros', 'faixa', v); setIn('numeros', 'modo', v === 'nao' ? 'nao' : 'faixa'); })),
           rotulo('Meses fortes e fracos', textoIn('numeros', 'sazonal', 'Ex.: forte em novembro e dezembro; fraco em fevereiro'))),
         pergunta(11, 'Os recursos para executar', 'O plano precisa caber na vida do cliente. Sem espaço físico de atendimento, as ações de loja ficam fora do plano.', 'Plano: o que entra e o peso dos meses · Estratégia: o que acompanhamos',
           el('div', 'bf-grid', rotulo('Verba de mídia por mês (R$)', numero('recursos', 'verba', 'Ex.: 2000')), rotulo('Horas por semana para a marca', numero('recursos', 'horas', 'Ex.: 4')),
             rotulo('Tem espaço físico de atendimento?', escolhe([['sim', 'Sim (loja, clínica, escritório, salão)'], ['nao', 'Não: atende só online ou na casa do cliente']], (dados.recursos || {}).espaco, (v) => setIn('recursos', 'espaco', v))),
             rotulo('Vende online?', escolhe([['sim', 'Sim'], ['nao', 'Não']], (dados.recursos || {}).online, (v) => setIn('recursos', 'online', v)))),
           rotulo('Quem executa', textoIn('recursos', 'executa', 'Ex.: a recepcionista cuida das redes; a dona aprova tudo'))),
-        pergunta(12, 'Aonde quer chegar, e em quanto tempo?', 'Fato: a ambição do dono. Vira o rascunho do objetivo de negócio ("de X para Y até quando").', 'Estratégia: objetivos',
-          el('div', 'bf-grid', rotulo('Crescimento do faturamento (%)', numero('ambicao', 'pct', 'Ex.: 30')), rotulo('Em quantos meses', numero('ambicao', 'meses', 'Ex.: 12'))),
-          rotulo('Em palavras', textoIn('ambicao', 'nota', 'Ex.: abrir a segunda unidade em 2028')))),
+        pergunta(12, 'Aonde quer chegar, e em quanto tempo?', 'Fato: a ambição do dono, nas palavras dele. Vira o rascunho do objetivo de negócio, sem número de faturamento.', 'Estratégia: objetivos',
+          rotulo('Aonde quer chegar', textoIn('ambicao', 'nota', 'Ex.: ser a clínica que os pacientes indicam sem pensar duas vezes')),
+          el('div', 'bf-grid', rotulo('Em quantos meses', numero('ambicao', 'meses', 'Ex.: 12'))))),
     ];
     // o que o briefing já passou adiante: a cascata à vista
     const B = dados; const nFat = (B.motivadores || []).length + (B.discriminadores || []).length;

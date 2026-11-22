@@ -173,11 +173,11 @@
       if (acs.error || emps.error) { corpo.replaceChildren(el('p', 'msg is-error', 'Não foi possível carregar.')); return; }
       const setorDe = Object.fromEntries((emps.data || []).map((e) => [e.id, U.setorBase(e.setor)])); // o filtro compara pelo setor-base
       aprDados = (acs.data || []).map((a) => ({ ...a, setor: setorDe[a.empresa_id] || null }));
-      // resultado de cada cliente (para ver se a estratégia move os números): plano, números e a promessa medida como no portal
+      // resultado de cada cliente, sem números: o que ele respondeu em "Como foi o mês?" (melhor, igual ou pior)
       aprClientes = {};
       try {
         const todos = window.GangSaude ? await window.GangSaude.carregar(sb) : null;
-        Object.entries(todos || {}).forEach(([eid, b]) => { if (b.plano) aprClientes[eid] = { setor: setorDe[eid] || null, como_vencer: b.plano.como_vencer || null, meses: (b.numeros || []).filter((n) => n.faturamento != null).length, pr: window.GangSaude.promessa(b) }; });
+        Object.entries(todos || {}).forEach(([eid, b]) => { if (b.plano) aprClientes[eid] = { setor: setorDe[eid] || null, como_vencer: b.plano.como_vencer || null, comoFoi: (b.numeros || []).filter((n) => n.como_foi).map((n) => n.como_foi) }; });
       } catch (e) { aprClientes = {}; }
       $('apr-setor').addEventListener('change', desenhaApr);
     }
@@ -232,30 +232,31 @@
     const semEvid = todos.filter((h) => !h.marca && h.aval > 0 && h.aval < 5).length;
     const usadas = new Set(todos.map((h) => h.t).filter((t) => lib.has(t))); // só as da biblioteca (marcos do plano ficam de fora)
     const nunca = [...lib].filter((t) => !usadas.has(t)).length;
-    // por estratégia: a abordagem escolhida move os números? só conta quem já tem 3 meses de números; com menos de 3 clientes não é evidência
+    // por estratégia: a abordagem escolhida está fazendo os meses dos clientes melhorarem? conta quem já respondeu 3 meses ou mais;
+    // com menos de 3 clientes assim não é evidência. As ações avaliadas da estratégia entram junto
     const curtoDe = (t) => { const ab = (P.abordagens || []).find((a) => a.texto === t); return ab ? ab.curto || t : t; };
     const porEstr = {};
     Object.entries(aprClientes).filter(([, c]) => c.como_vencer && (!setor || c.setor === setor)).forEach(([eid, c]) => {
       const k = curtoDe(c.como_vencer);
-      const g = porEstr[k] || (porEstr[k] = { t: k, clientes: 0, comNum: 0, vendas: [], acAval: 0, acPts: 0 });
+      const g = porEstr[k] || (porEstr[k] = { t: k, clientes: 0, comNum: 0, melhores: [], acAval: 0, acPts: 0 });
       g.clientes += 1;
-      if (c.meses >= 3 && c.pr && c.pr.vendas != null) { g.comNum += 1; g.vendas.push(c.pr.vendas); }
+      const cf = c.comoFoi || [];
+      if (cf.length >= 3) { g.comNum += 1; g.melhores.push(cf.filter((x) => x === 'melhor').length / cf.length * 100); }
       lista.filter((a) => a.empresa_id === eid && a.executa && a.resultado && a.esforco !== 'marca').forEach((a) => { g.acAval += 1; g.acPts += a.resultado === 'sim' ? 1 : a.resultado === 'parcial' ? 0.5 : 0; });
     });
-    const sinal = (v) => (v > 0 ? '+' : '') + fmt(v) + '%';
     const estrategias = Object.values(porEstr).sort((a, b) => b.comNum - a.comNum || b.clientes - a.clientes).map((g) => {
-      const med = g.vendas.length ? g.vendas.reduce((x, y) => x + y, 0) / g.vendas.length : null;
+      const med = g.melhores.length ? g.melhores.reduce((x, y) => x + y, 0) / g.melhores.length : null;
       const partes = [g.clientes + (g.clientes === 1 ? ' cliente' : ' clientes')];
-      if (med != null) partes.push('vendas ' + sinal(med) + ' em média, em ' + g.comNum + (g.comNum === 1 ? ' cliente' : ' clientes') + ' com 3 meses de números');
-      else partes.push('ainda sem 3 meses de números');
+      if (med != null) partes.push(Math.round(med) + '% dos meses foram melhores que o anterior, em ' + g.comNum + (g.comNum === 1 ? ' cliente' : ' clientes') + ' com 3 meses respondidos');
+      else partes.push('ainda sem 3 meses respondidos');
       if (g.acAval) partes.push('ações da estratégia funcionaram em ' + fmt(g.acPts) + ' de ' + g.acAval);
-      const tag = g.comNum >= 3 && med != null ? el('span', 'badge ' + (med > 0 ? 'is-ok' : 'is-warn'), sinal(med)) : el('span', 'badge', 'Sem evidência');
+      const tag = g.comNum >= 3 && med != null ? el('span', 'badge ' + (med >= 50 ? 'is-ok' : 'is-warn'), Math.round(med) + '% melhores') : el('span', 'badge', 'Sem evidência');
       return linha(g, partes.join(' · ') + '.', tag);
     });
     $('apr-corpo').replaceChildren(
       bloco('Funcionam', 'Ações de venda com pelo menos 5 avaliações e acerto alto. Elas sobem nas sugestões do Planejar o mês.', funcionam, 'Ainda não há ações com 5 avaliações ou mais. As avaliações vêm da pergunta "deu certo?" que o cliente responde depois de cada ação.'),
       bloco('Revisar', 'Ações que funcionam pouco, travam muito ou ficam sem fazer quando chega o mês delas.', revisar, 'Nenhuma ação para revisar por enquanto.'),
-      bloco('Por estratégia', 'Se a abordagem escolhida em Estratégia está movendo as vendas dos clientes. Com menos de 3 clientes com 3 meses de números, ainda não é evidência.', estrategias, 'Nenhum cliente com estratégia escolhida ainda.'),
+      bloco('Por estratégia', 'Se a abordagem escolhida em Estratégia está fazendo os meses dos clientes melhorarem, pelo "Como foi o mês?". Com menos de 3 clientes com 3 meses respondidos, ainda não é evidência.', estrategias, 'Nenhum cliente com estratégia escolhida ainda.'),
       bloco('Os clientes puxam', 'As mais adiantadas por quem terminou o mês. Costumam ser rápidas e desejadas.', puxam, 'Nenhuma ação adiantada duas vezes ou mais ainda.'),
       el('section', 'app-section apr__bloco', el('h2', 'title-sm', 'A biblioteca'),
         el('p', 'small', (P.acoes || []).length + ' ações na biblioteca · ' + usadas.size + ' já usadas em planos · ' + nunca + ' nunca usadas · ' + semEvid + ' com menos de 5 avaliações (ainda sem evidência).')));

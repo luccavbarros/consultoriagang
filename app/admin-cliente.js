@@ -2072,17 +2072,12 @@
   const loadNums = async () => {
     const { data } = await sb.from('numeros_mensais').select('*').eq('empresa_id', id).order('mes_ref', { ascending: false });
     const rows = data || [];
-    desenhaGraficosNums(rows);
+    // sem financeiro: a tabela mostra só como o cliente disse que foi cada mês
     const t = $('nums');
-    if (!rows.length) return t.replaceChildren(el('tbody', null, el('tr', null, el('td', 'clients__empty', 'Nenhuma resposta nem número ainda.'))));
-    t.replaceChildren(...tabela(['Mês', 'Como foi', 'Faturamento', 'Leads', 'Atendidos', 'Novos', 'Propostas', 'Enviado', ''], rows.map((n) => [
-      MESES(n.mes_ref), { melhor: '↑ Melhor', igual: '= Igual', pior: '↓ Pior' }[n.como_foi] || '—', n.faturamento != null ? U.reais(n.faturamento) : '—', n.leads ?? '—', n.clientes_atendidos ?? '—', n.clientes_novos ?? '—',
-      n.propostas != null ? n.propostas + ' · ' + (n.fechadas ?? 0) + ' fech. · ' + (n.sem_desconto ?? 0) + ' s/ desc.' : '—',
-      U.dia(n.enviado_em) + (n.enviado_por === me.id ? ' · por você' : ''),
-      rowBtn('Editar', () => {
-        $('n-mes').value = n.mes_ref; U.moedaSet($('n-fat'), n.faturamento); $('n-leads').value = n.leads ?? ''; $('n-cli').value = n.clientes_novos ?? ''; $('n-tot').value = n.clientes_atendidos ?? ''; $('n-prop').value = n.propostas ?? ''; $('n-fech').value = n.fechadas ?? ''; $('n-sd').value = n.sem_desconto ?? '';
-        $('n-fat').focus();
-      }),
+    const resp = rows.filter((n) => n.como_foi);
+    if (!resp.length) return t.replaceChildren(el('tbody', null, el('tr', null, el('td', 'clients__empty', 'O cliente ainda não respondeu como foi nenhum mês.'))));
+    t.replaceChildren(...tabela(['Mês', 'Como foi', 'Respondido em'], resp.map((n) => [
+      MESES(n.mes_ref), { melhor: '↑ Melhor', igual: '= Igual', pior: '↓ Pior' }[n.como_foi], U.dia(n.enviado_em),
     ])));
   };
   $('n-mes').value = U.addRef(U.ref(), -1);

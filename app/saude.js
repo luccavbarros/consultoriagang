@@ -154,9 +154,7 @@
     const semResultado = b.acoes.filter((a) => a.status === 'feita' && !a.resultado && a.concluida_em && U.addDias(a.concluida_em, a.esforco === 'marca' ? 7 : a.ler_em_dias || 30) <= hojeD);
     const ini = inicioRef(b);
     return [
-      b.plano && b.plano.sem_numeros
-        ? { ok: true, chave: 'numeros', desfazer: true, titulo: 'Números do mês', detalhe: 'Combinado: este cliente não envia os números. Os avisos estão desligados.', aba: 'plano' }
-        : { ok: !ini || mp < ini || b.numeros.some((x) => x.mes_ref === mp), chave: 'numeros', titulo: 'Números de ' + U.nomeMes(mp) + ' recebidos', detalhe: 'Faturamento, clientes e propostas do mês que passou.', aba: 'resultados', acao: 'Lançar ou cobrar os números' },
+      { ok: !ini || mp < ini || b.numeros.some((x) => x.mes_ref === mp && x.como_foi), chave: 'comofoi', titulo: 'Cliente contou como foi ' + U.nomeMes(mp), detalhe: 'A resposta de um clique, melhor, igual ou pior, em Resultados.', aba: 'resultados' },
       { ok: !!ori.veredito && !semNota.length, titulo: 'Veredito do mês e porquês escritos', detalhe: !ori.veredito ? 'Uma frase: estamos mais perto da meta?' : semNota.length ? 'Falta explicar: ' + semNota.map((k) => PROM[k]).join(', ') + '.' : 'Veredito publicado' + (caindo.length ? ' e números em queda explicados.' : '.'), aba: 'foco', acao: 'Planejar o mês' },
       { ok: doProx.length > 0 && doProx.some((a) => a.peso === 'essencial'), titulo: 'Ações de ' + U.nomeMes(px) + ' planejadas', detalhe: doProx.length ? doProx.length + (doProx.length === 1 ? ' ação' : ' ações') + (doProx.some((a) => a.peso === 'essencial') ? ', com essencial.' : ', mas nenhuma essencial.') : 'Nenhuma ação no próximo mês.', aba: 'foco', acao: 'Planejar o mês' },
       { ok: !!encontro && (encontro.pauta || []).length > 0, titulo: 'Próximo encontro marcado e com pauta', detalhe: encontro ? U.quando(encontro.inicio) + ((encontro.pauta || []).length ? ' · pauta com ' + encontro.pauta.length + ' itens.' : ' · sem pauta.') : 'Nenhum encontro marcado.', aba: 'encontros', acao: encontro ? 'Montar a pauta' : 'Marcar' },
@@ -209,6 +207,8 @@
     const pr = promessa(b);
     Object.entries(PROM).forEach(([k, t]) => { if (pr[k] != null && pr[k] < 0) itens.push(t + ' caiu (' + String(pr[k]).replace('.', ',') + '%): o que mudou e o que fazer'); });
     if (!b.plano.sem_numeros && !b.numeros.some((x) => x.mes_ref === mesPassado()) && inicioRef(b) && mesPassado() >= inicioRef(b)) itens.push('Números de ' + U.nomeMes(mesPassado()) + ': enviar até o encontro');
+    const cf = b.numeros.find((x) => x.mes_ref === mesPassado());
+    if (cf && cf.como_foi === 'pior') itens.push('O cliente disse que ' + U.nomeMes(mesPassado()) + ' foi pior: entender o que houve');
     const pend = b.pedidos.filter((p) => p.status === 'em_analise');
     if (pend.length) itens.push('Peças em revisão: ' + pend.slice(0, 3).map((p) => p.titulo || 'peça').join('; '));
     const desde = U.addRef(hoje(), -3);
