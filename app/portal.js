@@ -2516,7 +2516,10 @@
     out.push(missoes());
 
     // os primeiros meses: o que acontece agora e quando os resultados começam a aparecer
-    if (mesN <= 2) {
+    // some no 3º mês ou antes, assim que os passos estiverem cumpridos (o 1º, conhecer a marca, já vem cumprido)
+    const fezPrimeira = D.acoes.some((a) => a.status === 'feita' && a.responsavel !== 'gang');
+    const comecoFeito = fezPrimeira && D.respostas.length > 0;
+    if (mesN <= 2 && !comecoFeito) {
       const passo = (ok, t, d, href, lk, ir) => el('li', ok ? 'is-on' : null, el('span', { class: 'start__ico', 'aria-hidden': 'true' }, ok ? '✓' : ''),
         el('div', 'start__body', el('p', 'start__t', t), el('p', 'start__d', d)), href ? el('a', { class: 'start__lk', href, onclick: ir || null }, lk) : null);
       out.push(el('section', { class: 'start', 'aria-labelledby': 'start-t' },
@@ -2524,7 +2527,7 @@
           el('p', 'step-sec__d', 'Mês ' + mesN + ' de ' + dur)),
         el('ol', 'start__list',
           passo(true, 'Conheça a sua marca', 'A estratégia, a narrativa e a identidade já estão no menu, em “Sua marca”. Consulte antes de criar qualquer peça.', '#estrategia', 'Ver a estratégia'),
-          passo(D.acoes.some((a) => a.status === 'feita' && a.responsavel !== 'gang'), 'Faça a primeira ação', 'Em Ações, a mais importante do mês aparece primeiro.', '#acoes', 'Ver ações'),
+          passo(fezPrimeira, 'Faça a primeira ação', 'Em Ações, a mais importante do mês aparece primeiro.', '#acoes', 'Ver ações'),
           (() => {
             // o convite só existe quando o consultor abre a pesquisa; até lá, o passo avisa e não leva a lugar nenhum
             const abertaP = D.pesquisas.some((x) => x.aberta);
