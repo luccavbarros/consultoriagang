@@ -1201,7 +1201,11 @@ details.month:not([open]) > summary { padding-bottom: 0; }
 .tasks__mes-n { font-size: 12px; color: var(--ganggrey); padding: 2px 8px; border-radius: 6px; background: #242424; }
 .tasks--mes { padding: 0 0 6px; border-top: 1px solid var(--line); }
 /* "Mensagem ao consultor": mesma largura da busca e dos itens do menu */
-.consultant > .consultant__talk { width: calc(100% + 24px); margin-left: -12px; margin-right: -12px; box-sizing: border-box; }
+.consultant > .consultant__talk { width: 100%; margin-left: 0; margin-right: 0; box-sizing: border-box; }
+/* o botão do consultor alinha com o campo de busca do topo: a área de baixo do menu tem a largura da busca,
+   e só os textos (nome, dias de resposta, a pessoa logada) ficam recuados como os itens do menu */
+html:not(.side-mini) .side__foot { padding-left: 0; padding-right: 0; }
+html:not(.side-mini) .side__foot .consultant__who, html:not(.side-mini) .side__foot .consultant__dias, html:not(.side-mini) .side__foot .side__me { padding-left: 12px; padding-right: 12px; }
 /* Meta do plano como card de indicador (rótulo com ícone, número médio, frase e o tempo em segmentos) */
 .goal--kpi { display: grid; gap: 14px; padding: 18px 20px 16px; }
 .goal__head { display: flex; align-items: center; gap: 10px; }
