@@ -2752,7 +2752,13 @@
     for (let j = 0; j < k; j += 1) { const tam = Math.floor(arr.length / k) + (j < arr.length % k ? 1 : 0); out.push(arr.slice(i, i + tam)); i += tam; }
     return out;
   };
-  const slide = (rot, ...corpo) => el('section', 'sl', el('div', 'sl__in', rot ? el('p', 'sl__rot', '/ ' + rot) : null, el('div', 'sl__corpo', corpo.flat().filter(Boolean))));
+  // com título no slide, o rótulo pequeno mostra só a parte do documento ("/ narrativa"), sem repetir o título
+  const slide = (rot, ...corpo) => {
+    const kids = corpo.flat().filter(Boolean);
+    const temTitulo = kids.some((k) => k.classList && k.classList.contains('sl__h'));
+    const r = rot && temTitulo && rot.includes(' · ') ? rot.split(' · ')[0] + (/ · continuação$/.test(rot) ? ' · continuação' : '') : rot;
+    return el('section', 'sl', el('div', 'sl__in', r ? el('p', 'sl__rot', '/ ' + r) : null, el('div', 'sl__corpo', kids)));
+  };
   // o título do slide sai do rótulo ("diagnóstico · como cada marca era vista" → "Como cada marca era vista")
   const tituloDe = (rot) => { const t = String(rot).replace(/ · continuação$/, '').split(' · ').pop(); return t.charAt(0).toUpperCase() + t.slice(1); };
   const cab = (rot) => el('h2', 'sl__h', tituloDe(rot));
@@ -2818,10 +2824,10 @@
     return [el('article', 'deck', barra,
       capa('Relatório de ' + U.nomeMes(r1), 'Mês ' + mesN + ' de ' + dur + ' do plano de marca de ' + nome + '.'),
       D.foco && D.foco.veredito ? sFrase('veredito do mês', D.foco.veredito, D.consultor ? el('p', { class: 'sl__s', style: 'margin-top:1.4cqw' }, '— ' + D.consultor.nome) : null) : null,
-      sNums('o mês em números', nums),
-      ...sCols('como foram os meses', resp.map((r) => [U.cap(U.nomeMes(r)), COMO[comoFoi(r)][1] + ' ' + COMO[comoFoi(r)][0], 'comparado com ' + U.nomeMes(r) + ' do ano passado']), 6),
-      ...sLinhas('o que foi feito nos últimos 3 meses', feitas.map((a) => [a.titulo, txt(a.aprendizado) ? '“' + txt(a.aprendizado) + '”' : '', a.resultado ? RES_TXT[a.resultado][0] : 'feita', a.resultado ? RES_TXT[a.resultado][1] : null]), 6),
-      ...sLinhas('em andamento', andamento.map((a) => [a.titulo, a.peso === 'essencial' ? 'essencial' : '', STATUS[a.status] || '', a.status === 'em_andamento' ? 'meio' : null]), 6),
+      sNums('relatório · o mês em números', nums),
+      ...sCols('relatório · como foram os meses', resp.map((r) => [U.cap(U.nomeMes(r)), COMO[comoFoi(r)][1] + ' ' + COMO[comoFoi(r)][0], 'comparado com ' + U.nomeMes(r) + ' do ano passado']), 6),
+      ...sLinhas('relatório · o que foi feito nos últimos 3 meses', feitas.map((a) => [a.titulo, txt(a.aprendizado) ? '“' + txt(a.aprendizado) + '”' : '', a.resultado ? RES_TXT[a.resultado][0] : 'feita', a.resultado ? RES_TXT[a.resultado][1] : null]), 6),
+      ...sLinhas('relatório · em andamento', andamento.map((a) => [a.titulo, a.peso === 'essencial' ? 'essencial' : '', STATUS[a.status] || '', a.status === 'em_andamento' ? 'meio' : null]), 6),
       marcaVistaRel,
       slide('próximos passos', D.foco ? el('p', 'sl__t sl__t--m', D.foco.titulo) : null,
         el('div', 'sl__duas', proximos.length ? el('div', null, el('p', 'sl__l', 'Essenciais'), el('ul', 'sl__lista', proximos.map((t) => el('li', null, t)))) : el('div'),
