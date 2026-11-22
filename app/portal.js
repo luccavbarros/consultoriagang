@@ -1364,7 +1364,7 @@
     });
     return el('section', { class: 'box', 'aria-labelledby': 'voz-t' },
       el('h2', { class: 'box__title', id: 'voz-t' }, 'O que seus clientes disseram'),
-      el('p', 'box__text', 'Frases reais de clientes sobre a marca: elogios, dúvidas, comparações. Mostram, mês a mês, se a percepção está mudando.'),
+      el('p', 'box__text', ['Frases reais de clientes sobre a marca:', el('br'), 'elogios, dúvidas e comparações, que mostram', el('br'), 'mês a mês se a percepção está mudando.']),
       f,
       D.vozes.length ? el('ul', 'voices', D.vozes.slice(0, 12).map((v) => el('li', null, el('p', 'voices__text', v.texto), el('p', 'box__note', U.cap(U.nomeMes(v.mes_ref)) + ' ' + v.mes_ref.slice(0, 4))))) : null);
   };
