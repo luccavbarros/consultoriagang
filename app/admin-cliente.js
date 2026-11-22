@@ -2460,24 +2460,39 @@
         });
         return b;
       };
+      // nova senha e exclusão abrem um campo na própria linha (sem janelas do navegador, que alguns navegadores bloqueiam)
+      const extra = el('div', { class: 'client__extra', hidden: true });
+      const abreExtra = (...kids) => { extra.replaceChildren(...kids); extra.hidden = false; };
+      const fechaExtra = () => { extra.hidden = true; extra.replaceChildren(); };
+      const novaSenha = () => {
+        const campo = el('input', { class: 'field', type: 'text', value: randomPass(), 'aria-label': 'Nova senha para ' + c.email, autocomplete: 'off', minlength: 8 });
+        abreExtra(el('label', { class: 'label' }, 'Nova senha para ' + c.email + ' (mínimo 8 caracteres)'),
+          el('div', 'client__extra-l', campo,
+            el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => { campo.value = randomPass(); } }, 'Gerar'),
+            btn('Salvar senha', async () => {
+              const password = campo.value.trim();
+              if (password.length < 8) return say($('acc-msg'), 'A senha precisa ter pelo menos 8 caracteres.', 'error');
+              await adminApi({ action: 'set_password', id: c.id, password });
+              fechaExtra();
+              say($('acc-msg'), 'Senha de ' + c.email + ' alterada. Envie a nova senha para o cliente.', 'ok');
+            }),
+            el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: fechaExtra }, 'Cancelar')));
+        campo.focus(); campo.select();
+      };
+      const excluir = () => abreExtra(el('p', 'small', 'Excluir o acesso de ' + c.email + '? Isso não pode ser desfeito.'),
+        el('div', 'client__extra-l',
+          btn('Excluir de vez', async () => { await adminApi({ action: 'delete', id: c.id }); await loadAcc(); }, true),
+          el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: fechaExtra }, 'Cancelar')));
       list.append(el('li', 'client',
         el('div', null, el('div', 'client__name', c.name || '(sem nome)'), el('div', 'client__mail', c.email)),
         el('div'),
         el('span', 'badge' + (c.active ? '' : ' is-off'), c.active ? 'Ativo' : 'Desativado'),
         el('div', 'client__actions',
-          btn('Nova senha', async () => {
-            const password = prompt('Nova senha para ' + c.email + ' (mínimo 8 caracteres):', randomPass());
-            if (!password) return;
-            await adminApi({ action: 'set_password', id: c.id, password });
-            say($('acc-msg'), 'Senha de ' + c.email + ' alterada. Envie a nova senha para o cliente.', 'ok');
-          }),
+          el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: novaSenha }, 'Nova senha'),
           btn(c.active ? 'Desativar' : 'Ativar', async () => { await adminApi({ action: 'set_active', id: c.id, active: !c.active }); await loadAcc(); }),
-          btn('Excluir', async () => {
-            if (!confirm('Excluir o acesso de ' + c.email + '? Isso não pode ser desfeito.')) return;
-            await adminApi({ action: 'delete', id: c.id });
-            await loadAcc();
-          }, true),
+          el('button', { class: 'btn btn--ghost btn--sm btn--danger', type: 'button', onclick: excluir }, 'Excluir'),
         ),
+        extra,
       ));
     });
 

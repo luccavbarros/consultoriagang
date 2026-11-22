@@ -2476,3 +2476,9 @@ html.side-abrindo .side__plan .badge { display: none; }
   .pm__sec { break-inside: avoid; margin-top: 18px; }
   .pm__tab tr { break-inside: avoid; }
 }
+
+/* acessos do cliente: nova senha e exclusão num campo na própria linha */
+.client__extra { grid-column: 1 / -1; display: grid; gap: 8px; padding: 12px 0 4px; border-top: 1px solid var(--line); margin-top: 8px; }
+.client__extra-l { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.client__extra-l .field { flex: 1 1 220px; max-width: 320px; }
+.client__extra[hidden] { display: none; }
