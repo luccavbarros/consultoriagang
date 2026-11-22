@@ -527,7 +527,7 @@
       el('button', { class: 'btn btn--ghost', type: 'button', onclick: () => { revAberta = !revAberta; render(); } }, revAberta ? 'Fechar envio de peça' : 'Enviar peça para revisão'),
       el('button', { class: 'btn btn--ghost', type: 'button', onclick: abrirSugestao }, 'Tenho uma ideia'));
     const out = [head('Plano de execução · ' + dur + ' meses', 'Ações',
-      'O que colocar em prática, mês a mês. Atualize o andamento do que está com você; o consultor ajusta o plano com você nos encontros.', sugerir)];
+      ['O que colocar em prática, mês a mês.', el('br'), 'Marque o andamento do que está com você.'], sugerir)];
 
     const andN = D.acoes.filter((a) => a.status === 'em_andamento').length;
     const feitasNoPrazo = D.acoes.filter((a) => a.status === 'feita' && (!a.prazo || (a.concluida_em && a.concluida_em <= a.prazo))).length;
@@ -537,17 +537,6 @@
       ['Em andamento', String(andN)],
       ['No prazo', feitas ? Math.round((feitasNoPrazo / feitas) * 100) + '%' : '—', feitas ? feitasNoPrazo + ' de ' + feitas + ' concluídas' : 'aparece com a primeira'],
       ['Adiantadas', String(adiantadas), adiantadas ? 'antes do mês previsto' : 'termine o mês e adiante uma']]));
-    // barra segmentada: feitas · em andamento · a fazer (no lugar de uma pizza)
-    if (total) {
-      const and = D.acoes.filter((a) => a.status === 'em_andamento').length;
-      const faz = total - feitas - and;
-      const partes = [['done', 'Feitas', feitas], ['doing', 'Em andamento', and], ['todo', 'A fazer', faz]];
-      out.push(el('div', 'seg-bar',
-        el('div', { class: 'seg-bar__track', role: 'img', 'aria-label': partes.map(([, t, n]) => t + ': ' + n).join(', ') },
-          partes.filter(([, , n]) => n > 0).map(([k, t, n]) => el('span', { class: 'seg-bar__part seg-bar__part--' + k, style: 'flex-grow:' + n, title: t + ': ' + n }))),
-        el('div', 'seg-bar__legend', partes.map(([k, t, n]) => el('span', null, el('span', 'seg-bar__key seg-bar__part--' + k), t + ' ' + n)))));
-    }
-
     const grupos = {
       // o que fazer agora: as suas primeiro, da mais importante (essencial) para a menos, e pelo prazo
       mes: D.acoes.filter((a) => a.status !== 'feita' && a.mes_previsto <= hoje).sort((a, b) => (a.responsavel === 'gang') - (b.responsavel === 'gang')
@@ -1251,7 +1240,7 @@
   const telaResultados = () => {
     const ultimo = [...D.numeros].reverse()[0];
     const out = [head(ultimo ? 'Último mês informado: ' + U.nomeMes(ultimo.mes_ref) : 'Estamos chegando lá?', 'Resultados',
-      'Vendas mudam em semanas; a percepção da marca, em meses. Por isso medimos os dois, em ritmos diferentes.',
+      ['Vendas mudam em semanas, a marca em meses.', el('br'), 'Por isso medimos os dois, em ritmos diferentes.'],
       el('a', { class: 'btn btn--ghost', href: '#relatorio' }, 'Relatório do mês')),
     cartoesNumeros(), veredito(), funil(), parte('Negócio', 'O que o plano já devolveu e o que falta para a meta.'), pontoPartida('resultados'), metaHero(), lado(planoPagou(), simulador())].filter(Boolean);
 
@@ -2170,18 +2159,16 @@
     if (perfilC) out.push(el('div', 'grid perfil-grid', perfilC, meet), calGrade, calLista);
     else out.push(el('div', 'grid grid--half cal-topo', meet, calLista), calGrade);
 
-    // histórico: encontros, prazos e revisões numa linha do tempo, com filtro
+    // histórico: encontros e prazos numa linha do tempo, com filtro (as revisões de peças ficam em Ações)
     const passados = D.encontros.filter((x) => x.status === 'realizado' || new Date(x.inicio).getTime() <= agoraMs);
     const hojeD = new Date().toLocaleDateString('sv-SE');
     const itensH = [
       ...passados.map((x) => ({ k: 'encontros', d: x.inicio.slice(0, 10), t: (TIPO_ENCONTRO[x.tipo] || 'Encontro') + ' de ' + U.nomeMes(U.ref(x.inicio)), o: 'Encontro · ' + x.duracao_min + ' min', x })),
       ...D.acoes.filter((a) => comCliente(a) && a.prazo && a.prazo <= hojeD).map((a) => ({ k: 'prazos', d: a.prazo, t: a.titulo,
         o: a.status === 'feita' ? (a.concluida_em && a.concluida_em > a.prazo ? 'Prazo · feita com atraso' : 'Prazo · feita a tempo') : 'Prazo · ainda aberta', st: a.status === 'feita' ? (a.concluida_em && a.concluida_em > a.prazo ? 'warn' : 'ok') : 'bad' })),
-      ...D.pedidos.map((x) => ({ k: 'revisoes', d: String(x.respondido_em || x.enviado_em).slice(0, 10), t: x.titulo || x.tipo_peca,
-        o: 'Revisão · ' + ({ em_analise: 'em análise', ajustar: 'pediu ajuste', aprovado: 'aprovada' }[x.status] || x.status), st: x.status === 'aprovado' ? 'ok' : x.status === 'ajustar' ? 'warn' : null })),
     ].sort((a, b) => b.d.localeCompare(a.d));
     if (itensH.length) {
-      const FIL = [['todos', 'Todos'], ['encontros', 'Encontros'], ['prazos', 'Prazos'], ['revisoes', 'Revisões']];
+      const FIL = [['todos', 'Todos'], ['encontros', 'Encontros'], ['prazos', 'Prazos']];
       const corpo = el('ol', 'hist');
       const desenha = () => {
         const xs = itensH.filter((x) => filtroHist === 'todos' || x.k === filtroHist).slice(0, 30);
@@ -2204,7 +2191,7 @@
       }));
       desenha();
       out.push(el('section', { class: 'box', 'aria-labelledby': 'hist-t' },
-        el('div', 'gh', el('h2', { class: 'box__title', id: 'hist-t' }, 'Histórico'), el('p', 'gh__nota', ['Encontros, prazos e revisões de peças,', el('br'), 'do mais recente para o mais antigo.'])),
+        el('div', 'gh', el('h2', { class: 'box__title', id: 'hist-t' }, 'Histórico'), el('p', 'gh__nota', ['Encontros e prazos, do mais recente', el('br'), 'para o mais antigo.'])),
         chips, corpo));
     }
 
@@ -2353,7 +2340,7 @@
   const quad = (conteudo, tom) => el('span', 'gq' + (tom ? ' gq--' + tom : ''), typeof conteudo === 'string' && ICP[conteudo] ? icp(conteudo) : conteudo);
   // faixa de números no topo da tela: rótulo pequeno, valor, nota
   const faixa = (itens) => { const xs = itens.filter(Boolean); return xs.length ? el('div', { class: 'faixa', style: '--n:' + xs.length },
-    xs.map(([rot, val, nota]) => el('div', 'faixa__c', el('p', 'faixa__rot', rot), el('p', 'faixa__val', val), nota ? el('p', 'faixa__nota', nota) : null))) : null; };
+    xs.map(([rot, val, nota, href]) => el(href ? 'a' : 'div', href ? { class: 'faixa__c faixa__c--link', href } : 'faixa__c', el('p', 'faixa__rot', rot), el('p', 'faixa__val', val), nota ? el('p', 'faixa__nota', nota) : null))) : null; };
   // lista agrupada: [quadrinho, título, linha de apoio, à direita]
   const grupo = (linhas, cls) => el('ul', 'gl' + (cls ? ' ' + cls : ''), linhas.map(([q, t, sub, dir]) => el('li', 'gl__i',
     q, el('div', 'gl__m', el('p', 'gl__t', t), sub ? (typeof sub === 'string' ? el('p', 'gl__s', sub) : sub) : null), dir || null)));
@@ -3228,7 +3215,7 @@
         ['Ações do plano até agora', ate.filter((a) => a.status === 'feita').length + ' de ' + ate.length, 'concluídas'],
         feitasP.length ? ['Feitas no prazo', Math.round((noPrazo / feitasP.length) * 100) + '%', noPrazo + ' de ' + feitasP.length] : ['Feitas no prazo', '—', 'aparece com a primeira ação'],
         D.pedidos.length ? ['Peças revisadas', D.pedidos.filter((x) => x.status === 'aprovado').length + ' de ' + D.pedidos.length, 'aprovadas'] : null,
-        ['Próximo encontro', D.proximo ? U.dia(D.proximo.inicio) : 'A marcar', D.proximo ? U.cap(U.fmt(D.proximo.inicio, { weekday: 'long' })) + ' · ' + U.hora(D.proximo.inicio) : null]]));
+        ['Próximo encontro', D.proximo ? U.dia(D.proximo.inicio) : 'A marcar', D.proximo ? U.cap(U.fmt(D.proximo.inicio, { weekday: 'long' })) + ' · ' + U.hora(D.proximo.inicio) : 'ver no calendário', '#consultoria']]));
     }
     if (precisaPartida()) out.push(pontoPartida('plano'));
     const bm = bannerMensagem(); if (bm) out.push(bm);
