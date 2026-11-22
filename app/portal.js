@@ -220,7 +220,7 @@
     ind('plano', ''); ind('inicio', ''); ind('diagnostico', '');
     const h0 = new Date(); h0.setHours(0, 0, 0, 0); const h7 = new Date(h0); h7.setDate(h0.getDate() + 7);
     const semana = eventos().filter((e) => !e.feita && U.day(e.dia) >= h0 && U.day(e.dia) < h7).length;
-    ind('calendario', semana ? String(semana) : '', semana > 0);
+    ind('consultoria', semana ? String(semana) : '', semana > 0);
     const n = pendentesDoMes().length;
     ind('acoes', n ? String(n) : '', n > 0);
     const falta = faltaNumeros();
@@ -442,14 +442,14 @@
         el('p', 'box__text', (TIPO_ENCONTRO[e.tipo] || 'Encontro') + ' · ' + e.duracao_min + ' min.' + ((e.pauta || []).length ? ' Pauta: ' + e.pauta.slice(0, 3).join('; ').replace(/\?;/g, '?') + '.' : '')),
         e.status === 'remarcar_solicitado' ? el('p', 'box__note', 'Você pediu para remarcar. O consultor confirma a nova data.') : null,
       ] : el('p', 'box__text', 'Nenhum encontro marcado ainda.'),
-      el('div', 'box__links box__foot', el('a', { class: 'link', href: '#consultoria' }, 'Ver pauta e encontros anteriores'), el('a', { class: 'link', href: '#calendario' }, 'Ver calendário')));
-    const atalho = (href, t, s) => el('a', { class: 'shortcut', href }, el('span', 'shortcut__title', t), el('span', 'shortcut__sub', s));
+      el('div', 'box__links box__foot', el('a', { class: 'link', href: '#consultoria' }, 'Ver no calendário')));
+    const atalho = (href, t, s, onclick) => el('a', { class: 'shortcut', href, onclick: onclick || null }, el('span', 'shortcut__title', t), el('span', 'shortcut__sub', s));
     const atalhos = el('section', { class: 'box', 'aria-labelledby': 'hand-t' },
       el('h2', { class: 'box__title', id: 'hand-t' }, 'Sua marca à mão'),
       el('div', 'shortcuts',
         atalho('#plataforma', 'Mensagem e tom', 'O que dizer e como dizer'),
         atalho('#identidade', 'Logo e modelos', 'Baixar arquivos da identidade'),
-        atalho('#consultoria', 'Revisar uma peça', 'Mande antes de publicar')));
+        atalho('#acoes', 'Revisar uma peça', 'Mande antes de publicar', () => { revAberta = true; })));
     out.push(el('div', 'grid grid--meet', encontro, atalhos));
     if (condicaoQuebrada().length) out.splice(1, 0, alertaEstrategia(condicaoQuebrada()));
     return out;
@@ -1123,11 +1123,19 @@
     D.acoes.forEach((a) => { if (a.prazo) ev.push({ dia: a.prazo, tipo: a.responsavel === 'gang' ? 'gang' : 'acao', feita: a.status === 'feita', titulo: a.titulo, sub: STATUS[a.status], href: '#acoes', acao: a.id }); });
     D.encontros.forEach((e) => {
       const d = new Date(e.inicio);
-      ev.push({ dia: d.toLocaleDateString('sv-SE'), tipo: 'encontro', feita: e.status === 'realizado', hora: U.hora(e.inicio), titulo: TIPO_ENCONTRO[e.tipo] || 'Encontro', sub: e.duracao_min + ' min' + (e.status === 'remarcar_solicitado' ? ' · remarcação pedida' : ''), href: '#consultoria' });
+      ev.push({ dia: d.toLocaleDateString('sv-SE'), tipo: 'encontro', feita: e.status === 'realizado', hora: U.hora(e.inicio), titulo: TIPO_ENCONTRO[e.tipo] || 'Encontro', sub: e.duracao_min + ' min' + (e.status === 'remarcar_solicitado' ? ' · remarcação pedida' : ''), href: '#consultoria', enc: e.id });
     });
     return ev.sort((a, b) => (a.dia + (a.hora || '')).localeCompare(b.dia + (b.hora || '')));
   }
   const TIPO_EV = { encontro: 'Encontro', acao: 'Ação com você', gang: 'Ação da GANG' };
+  // tocar num encontro do calendário: abre a pauta e as decisões dele (ou o próximo encontro, no topo)
+  let abreEnc = null;
+  const cliqueEv = (e) => (ev) => {
+    if (e.acao) { abreAcao = e.acao; return; }
+    if (!e.enc) return;
+    abreEnc = e.enc; filtroHist = 'todos';
+    if (location.hash === '#consultoria') { ev.preventDefault(); render(); }
+  };
   const telaCalendario = () => {
     const todos = eventos();
     const doMes = todos.filter((e) => e.dia.slice(0, 7) === calMes);
@@ -1152,7 +1160,7 @@
       const evs = todos.filter((e) => e.dia === iso);
       dias.push(el('div', { class: 'cal__day' + (d.getMonth() !== ini.getMonth() ? ' is-out' : '') + (iso === hojeISO ? ' is-today' : '') },
         el('span', 'cal__num', d.getDate()),
-        evs.slice(0, 3).map((e) => el('a', { class: 'cal__ev cal__ev--' + e.tipo + (e.feita ? ' is-done' : ''), href: e.href, onclick: e.acao ? () => { abreAcao = e.acao; } : null, tabindex: -1, title: TIPO_EV[e.tipo] + ': ' + e.titulo },
+        evs.slice(0, 3).map((e) => el('a', { class: 'cal__ev cal__ev--' + e.tipo + (e.feita ? ' is-done' : ''), href: e.href, onclick: cliqueEv(e), tabindex: -1, title: TIPO_EV[e.tipo] + ': ' + e.titulo },
           e.hora ? el('span', 'cal__time', e.hora) : null, el('span', 'cal__evt', e.titulo))),
         evs.length > 3 ? el('span', 'cal__more', '+' + (evs.length - 3)) : null));
     }
@@ -1162,7 +1170,7 @@
     // a lista do mês: a mesma informação em texto (é o que aparece no celular)
     const lista = el('section', { class: 'box', 'aria-labelledby': 'cal-l' },
       el('h2', { class: 'box__title', id: 'cal-l' }, 'Neste mês'),
-      doMes.length ? el('ul', 'todo', doMes.map((e) => el('li', null, el('a', { class: 'todo__item', href: e.href, onclick: e.acao ? () => { abreAcao = e.acao; } : null },
+      doMes.length ? el('ul', 'todo', doMes.map((e) => el('li', null, el('a', { class: 'todo__item', href: e.href, onclick: cliqueEv(e) },
         el('span', 'cal__date', el('strong', null, U.day(e.dia).getDate()), el('span', null, U.cap(U.fmt(e.dia, { weekday: 'short' })))),
         el('span', 'todo__text', el('span', 'todo__title' + (e.feita ? ' is-struck' : ''), e.titulo), el('span', 'todo__sub', (e.hora ? e.hora + ' · ' : '') + e.sub)),
         el('span', 'chip ' + (e.tipo === 'encontro' ? 'chip--done' : e.tipo === 'acao' ? 'chip--doing' : 'chip--todo'), TIPO_EV[e.tipo])))))
@@ -1602,7 +1610,7 @@
       return { href: '#acoes', dica: 'abrir em Ações', onclick: () => { if (alvo) abreAcao = alvo.id; } };
     }
     if (/^Números/.test(t)) return { href: '#resultados', dica: 'enviar em Resultados', onclick: () => foca('n-fat') };
-    if (/^Presença/.test(t)) return { href: '#consultoria', dica: 'ver em Encontros e prazos', onclick: null };
+    if (/^Presença/.test(t)) return { href: '#consultoria', dica: 'ver no Calendário', onclick: null };
     if (/^Ações avaliadas/.test(t)) {
       const alvo = e.acs.find((a) => a.status === 'feita' && !a.resultado && comCliente(a));
       return { href: '#acoes', dica: 'responder em Ações', onclick: () => { abaAcoes = 'feitas'; if (alvo) abreAcao = alvo.id; } };
@@ -2122,7 +2130,7 @@
   const telaConsultoria = () => {
     const p = D.plano;
     const ativo = !p || p.status === 'ativo';
-    const out = [head(null, 'Encontros e prazos', 'O próximo encontro, os prazos do mês e\u00a0o\u00a0que\u00a0já\u00a0conversamos.',
+    const out = [head(null, 'Calendário', ['O próximo encontro, os prazos do mês', el('br'), 'e o que já conversamos em cada encontro.'],
       el('div', 'status-line', chip(ativo ? 'done' : 'todo', 'Consultoria mensal · ' + (p ? { ativo: 'ativa', pausado: 'pausada', encerrado: 'encerrada' }[p.status] : 'ativa')),
         p ? el('p', 'box__note', 'Desde ' + U.mesAno(p.inicio) + ' com a GANG') : null))];
 
@@ -2157,7 +2165,10 @@
       el('div', 'meet__btns',
         el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => abrirConversa() }, 'Mandar mensagem'),
         c.whatsapp ? el('a', { class: 'btn btn--ghost btn--sm', href: 'https://wa.me/' + String(c.whatsapp).replace(/\D/g, ''), target: '_blank', rel: 'noopener' }, 'WhatsApp') : null)) : null;
-    out.push(perfilC ? el('div', 'grid perfil-grid', perfilC, meet) : meet);
+    // o mês em grade logo abaixo do próximo encontro; sem consultor, a lista do mês vai ao lado do encontro
+    const [calGrade, calLista] = telaCalendario().slice(1);
+    if (perfilC) out.push(el('div', 'grid perfil-grid', perfilC, meet), calGrade, calLista);
+    else out.push(el('div', 'grid grid--half cal-topo', meet, calLista), calGrade);
 
     // histórico: encontros, prazos e revisões numa linha do tempo, com filtro
     const passados = D.encontros.filter((x) => x.status === 'realizado' || new Date(x.inicio).getTime() <= agoraMs);
@@ -2180,7 +2191,7 @@
             (x.x.decisoes || []).length ? el('div', 'hist__bloco', el('p', 'hist__rot', 'Decidimos'), el('ul', 'hist__lista', x.x.decisoes.map((t) => el('li', null, t)))) : null].filter(Boolean) : [];
           const linha = [el('span', 'hist__d', U.dia(x.d)), el('span', 'hist__p' + (x.st ? ' hist__p--' + x.st : x.k === 'encontros' ? ' hist__p--enc' : '')),
             el('div', 'hist__m', el('p', 'hist__t', x.t), el('p', 'hist__o', x.o))];
-          return det.length ? el('li', 'hist__i', el('details', { class: 'hist__det', open: x === itensH.find((y) => y.k === 'encontros') },
+          return det.length ? el('li', 'hist__i', el('details', { class: 'hist__det', id: x.x ? 'enc-' + x.x.id : null, open: abreEnc ? (x.x && x.x.id === abreEnc) : x === itensH.find((y) => y.k === 'encontros') },
             el('summary', 'hist__linha', linha), el('div', 'hist__mais', det)))
             : el('li', 'hist__i', el('div', 'hist__linha', linha));
         }) : [el('li', 'hist__vazio', 'Nada por aqui ainda.')]));
@@ -2193,11 +2204,15 @@
       }));
       desenha();
       out.push(el('section', { class: 'box', 'aria-labelledby': 'hist-t' },
-        el('div', 'gh', el('h2', { class: 'box__title', id: 'hist-t' }, 'Histórico'), el('p', 'gh__nota', 'Encontros, prazos e revisões de peças, do mais recente para o mais antigo.')),
+        el('div', 'gh', el('h2', { class: 'box__title', id: 'hist-t' }, 'Histórico'), el('p', 'gh__nota', ['Encontros, prazos e revisões de peças,', el('br'), 'do mais recente para o mais antigo.'])),
         chips, corpo));
     }
 
-    out.push(...telaCalendario().slice(1));
+    // veio de um toque no calendário: rola até o encontro (o passado, aberto; ou o próximo, no topo)
+    if (abreEnc) {
+      const id = abreEnc; abreEnc = null;
+      setTimeout(() => { const alvo = document.getElementById('enc-' + id) || document.getElementById('next-t'); if (alvo) alvo.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 450);
+    }
 
     // rodapé: o plano de consultoria
     if (p) {
@@ -3496,11 +3511,10 @@
   const SCREENS = {
     plano: { crumb: 'Visão geral · ' + U.nomeMes(hoje) + ' de ' + hoje.slice(0, 4), render: telaCaminho },
     inicio: { crumb: 'Início · ' + U.nomeMes(hoje) + ' de ' + hoje.slice(0, 4), render: telaInicio },
-    calendario: { crumb: 'Acompanhamento / Encontros e prazos', render: telaConsultoria },
     acoes: { crumb: 'Acompanhamento / Ações', render: telaAcoes },
     resultados: { crumb: 'Acompanhamento / Resultados', render: telaResultados },
     relatorio: { crumb: 'Acompanhamento / Relatório do mês', render: telaRelatorio },
-    consultoria: { crumb: 'Acompanhamento / Encontros e prazos', render: telaConsultoria },
+    consultoria: { crumb: 'Acompanhamento / Calendário', render: telaConsultoria },
     plataforma: { crumb: 'Sua marca / Narrativa', render: telaPlataforma },
     identidade: { crumb: 'Sua marca / Identidade visual', render: telaIdentidade },
     estrategia: { crumb: 'Sua marca / Estratégia', render: telaEstrategia },
@@ -3509,7 +3523,7 @@
   };
 
   const side = document.querySelector('.side');
-  const rota = () => { const r = location.hash.slice(1); const padrao = soAcesso ? 'inicio' : consBloq ? 'assinatura' : 'plano'; return SCREENS[r] && !(soAcesso && SO_CONSULTORIA.includes(r)) && !(!soAcesso && r === 'inicio') && !(vencido && !ABERTAS_VENCIDO.includes(r)) ? r : padrao; };
+  const rota = () => { const r0 = location.hash.slice(1); const r = r0 === 'calendario' ? 'consultoria' : r0; const padrao = soAcesso ? 'inicio' : consBloq ? 'assinatura' : 'plano'; return SCREENS[r] && !(soAcesso && SO_CONSULTORIA.includes(r)) && !(!soAcesso && r === 'inicio') && !(vencido && !ABERTAS_VENCIDO.includes(r)) ? r : padrao; };
   // a animação de entrada só roda ao trocar de tela; atualizar algo na mesma tela (ex.: status de uma ação) não pisca
   let telaAtual = null;
   // uso: cada tela aberta e quanto tempo a pessoa ficou nela (só telas e tempo; o consultor vê isso para decidir o que simplificar)

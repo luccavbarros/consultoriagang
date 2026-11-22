@@ -1032,7 +1032,7 @@ span.task__status { cursor: default; }
 .mais--res > .pair, .mais--res > .box { margin: 0 12px 12px; }
 .head-btns { display: flex; gap: 8px; flex-wrap: wrap; }
 .pmain .plan-meet, .pmain .now__meet { max-width: none; }
-/* Encontros e prazos: lista do mês alinhada à esquerda e calendário no tom dos cartões */
+/* Calendário: lista do mês alinhada à esquerda e calendário no tom dos cartões */
 .todo__item .cal__date { flex: none; width: 44px; }
 .todo__item .todo__text { flex: 1; text-align: left; }
 .cal__day { background: #171717; border: 1px solid var(--line); border-radius: 8px; }
@@ -1546,7 +1546,7 @@ input[type=date].field::-webkit-date-and-time-value { text-align: left; }
 .funil__p { margin: 0; font-size: var(--t-leg); color: var(--ganggrey); }
 @media (max-width: 900px) { .kcs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .funil__i { grid-template-columns: minmax(0, 1fr) 48px; } .funil__p { grid-column: 1 / -1; } }
-/* Encontros e prazos: consultor como perfil e histórico com filtros */
+/* Calendário: consultor como perfil e histórico com filtros */
 .perfil__logo--pessoa { border-radius: 50%; }
 .perfil-grid > .box { min-width: 0; }
 .fchips { display: flex; flex-wrap: wrap; gap: 6px; }

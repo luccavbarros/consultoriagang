@@ -2425,7 +2425,7 @@
   loadPeds();
 
   // ===== uso do portal (últimos 30 dias): o que o cliente abre de fato =====
-  const TELAS_PORTAL = [['plano', 'Plano (tela inicial)'], ['acoes', 'Ações'], ['resultados', 'Resultados'], ['consultoria', 'Encontros e prazos'],
+  const TELAS_PORTAL = [['plano', 'Plano (tela inicial)'], ['acoes', 'Ações'], ['resultados', 'Resultados'], ['consultoria', 'Calendário'],
     ['relatorio', 'Relatório do mês'], ['diagnostico', 'Diagnóstico'], ['estrategia', 'Estratégia'], ['plataforma', 'Narrativa'], ['identidade', 'Identidade visual'], ['inicio', 'Início (só acesso)']];
   const tempo = (s) => (s < 60 ? s + ' s' : s < 3600 ? Math.round(s / 60) + ' min' : (s / 3600).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' h');
   const loadUso = async () => {
