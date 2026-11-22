@@ -1410,24 +1410,14 @@
         autoAlpha: 1, filter: 'blur(0px)', ease: 'none',
         scrollTrigger: { trigger: '.s4', start: 'top 35%', end: 'top top', scrub: true },
       });
-      // on the way to section 05 the block closes to the left, after the drawing and the text fade out
-      // the framed block is cut by an edge sweeping right to left across the screen
+      // on the way to section 05 the block (drawing and platform window) leaves like the text: blur and fade out together
       const media = document.querySelector('.s4__media');
-      const sweep = { x: 1 }; // where the edge is, as a share of the screen width (1 = right edge, nothing cut)
-      const cut = () => {
-        const W = window.innerWidth;
-        const edge = sweep.x * W;
-        const m = media.getBoundingClientRect();
-        const off = Math.min(m.width, Math.max(0, m.right - edge));
-        media.style.clipPath = off <= 0 ? '' : `inset(-1px ${off}px -1px -1px)`;
-      };
       gsap.timeline({ scrollTrigger: {
         trigger: '.s5', start: 'top bottom', end: 'top 30%', scrub: true,
         // the top blur would smear the straight black and white edges as they pass under the header
         onToggle: (self) => setPinned('s4-out', self.isActive),
       } })
-        .fromTo(['.s4__art', '.s4__content'], { autoAlpha: 1, filter: 'blur(0px)' }, { autoAlpha: 0, filter: 'blur(10px)', ease: 'none', duration: 0.45, immediateRender: false }, 0)
-        .fromTo(sweep, { x: 1 }, { x: 0, ease: 'power2.inOut', duration: 1, immediateRender: false, onUpdate: cut }, 0);
+        .fromTo([media, '.s4__content'], { autoAlpha: 1, filter: 'blur(0px)' }, { autoAlpha: 0, filter: 'blur(10px)', ease: 'none', duration: 0.45, immediateRender: false }, 0);
       return () => { setPinned('s4', false); setPinned('s4-out', false); };
     });
   })();
