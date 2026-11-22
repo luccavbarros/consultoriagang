@@ -165,10 +165,36 @@
   const SO_CONSULTORIA = ['plano', 'calendario', 'acoes', 'resultados', 'consultoria', 'relatorio'];
   // a linha do plano no menu: mês do plano e o selo da situação (o mesmo do painel do consultor)
   const selo = U.situacaoPlano(D.plano); // Ativo, Pausado, Encerrado ou Pagamento pendente
-  // "Só acesso" com o período vencido: ficam a Identidade visual e a Narrativa (o banco também só entrega essas duas)
-  const vencido = soAcesso && U.acessoVencido(D.plano);
+  // "Só acesso" com o período vencido, ou consultoria com a mensalidade atrasada há mais de 7 dias: ficam a Identidade visual,
+  // a Narrativa e o Meu plano para pagar (o banco também só entrega essas partes)
+  const consBloq = !soAcesso && U.consultoriaBloqueada(D.plano);
+  const vencido = (soAcesso && U.acessoVencido(D.plano)) || consBloq;
   const ABERTAS_VENCIDO = ['inicio', 'identidade', 'plataforma', 'assinatura'];
   if (vencido) ['diagnostico', 'estrategia'].forEach((r) => { const li = document.querySelector('[data-route="' + r + '"]'); if (li) li.closest('li').hidden = true; });
+  if (consBloq) {
+    SO_CONSULTORIA.forEach((r) => { const li = document.querySelector('[data-route="' + r + '"]'); if (li) li.closest('li').hidden = true; });
+    const g1 = document.getElementById('g1'); if (g1) g1.hidden = true;
+  }
+  // pagamento adiantado: o cliente de consultoria só recebe as ações dos meses pagos (o banco aplica a mesma regra: mes_liberado).
+  // Nunca mais de um mês à frente; sem próxima fatura ou com "Não bloquear", o mês atual e o seguinte
+  const mesLib = (() => {
+    const teto = U.addRef(hoje, 1); const p = D.plano;
+    if (soAcesso || !p || p.sem_bloqueio || !p.proxima_fatura) return teto;
+    const m = U.addDias(p.proxima_fatura, -1).slice(0, 7); return m < teto ? m : teto;
+  })();
+  const mesNaoPago = (m) => m > mesLib && m <= U.addRef(hoje, 1);
+  // consultoria com a mensalidade vencendo hoje ou atrasada (ainda na tolerância): aviso no alto de todas as telas
+  const atraso = soAcesso ? null : U.faturaAtraso(D.plano);
+  const avisoFatura = () => {
+    if (atraso == null || atraso < 0 || (D.plano && D.plano.sem_bloqueio)) return null;
+    const ate = U.addDias(U.bloqueioEm(D.plano), -1); const venc = String(D.plano.proxima_fatura).slice(0, 10);
+    const [t, txt] = consBloq ? ['Acesso pausado por falta de pagamento', ['A mensalidade de ' + U.diaAno(venc) + ' está em aberto.', el('br'), 'Pague para liberar tudo na hora.']]
+      : atraso === 0 ? ['Sua mensalidade vence hoje', ['Pague até ' + U.diaAno(ate) + ' para não pausar o acesso.']]
+      : ['Mensalidade em aberto há ' + atraso + (atraso === 1 ? ' dia' : ' dias'), ['Pague até ' + U.diaAno(ate), el('br'), 'para não pausar o acesso ao plano.']];
+    return el('section', { class: 'box aviso-fatura' + (consBloq || atraso > 0 ? ' is-hot' : ''), role: 'status' },
+      el('div', null, el('h2', 'box__title', t), el('p', 'box__text', ...txt)),
+      location.hash === '#assinatura' ? null : el('a', { class: 'btn btn--light btn--sm', href: '#assinatura' }, 'Pagar agora'));
+  };
   $('plan-line').replaceChildren(el('span', 'side__plan-t', soAcesso ? 'Só acesso' : D.plano ? 'Mês ' + mesN + ' de ' + dur : 'Plano de marca'),
     selo ? el('span', 'badge selo-plano' + selo[0], selo[1]) : null);
   if (soAcesso) {
@@ -554,7 +580,8 @@
     });
 
     const doGrupo = grupos[abaAcoes];
-    if (!doGrupo.length && abaAcoes !== 'proximos') lista.append(el('li', 'tasks__empty', { mes: 'Nenhuma ação pendente neste mês.', proximos: 'Nenhuma ação prevista para os próximos meses.', feitas: 'Nenhuma ação concluída ainda.' }[abaAcoes]));
+    if (abaAcoes === 'mes' && mesNaoPago(hoje)) lista.append(el('li', 'tasks__empty', 'As ações de ' + U.nomeMes(hoje) + ' abrem quando a mensalidade for paga. ', el('a', { href: '#assinatura' }, 'Pagar em Meu plano')));
+    else if (!doGrupo.length && abaAcoes !== 'proximos') lista.append(el('li', 'tasks__empty', { mes: 'Nenhuma ação pendente neste mês.', proximos: 'Nenhuma ação prevista para os próximos meses.', feitas: 'Nenhuma ação concluída ainda.' }[abaAcoes]));
     const primeira = abaAcoes === 'mes' ? doGrupo.find((a) => a.responsavel !== 'gang') : null;
     if (abaAcoes === 'proximos') {
       // próximos meses: um bloco por mês, fechado; o próximo mês já vem aberto (sem lista gigante)
@@ -584,11 +611,13 @@
       // e não só os já programados, para a lista não revelar o que o consultor já planejou
       if (inicioRef) {
         const fimRef = U.addRef(inicioRef, dur - 1);
-        for (let m = U.addRef(hoje, 2); m <= fimRef; m = U.addRef(m, 1)) {
-          if (porMes[m]) continue;
+        // o próximo mês ainda não pago também aparece trancado, com o caminho para pagar
+        for (let m = U.addRef(hoje, 1); m <= fimRef; m = U.addRef(m, 1)) {
+          if (porMes[m] || (m === U.addRef(hoje, 1) && !mesNaoPago(m))) continue;
           lista.append(el('li', 'tasks__mesli', el('div', 'tasks__mes tasks__mes--fechado',
             el('div', 'tasks__fech', el('span', 'tasks__mes-t', U.cap(U.nomeMes(m)) + ' ' + m.slice(0, 4)),
-              el('span', 'tasks__cad', 'Abre em ' + U.nomeMes(U.addRef(m, -1)))))));
+              mesNaoPago(m) ? el('a', { class: 'tasks__cad', href: '#assinatura' }, 'Abre quando a mensalidade for paga')
+                : el('span', 'tasks__cad', 'Abre em ' + U.nomeMes(U.addRef(m, -1)))))));
         }
       }
     } else doGrupo.forEach((a) => {
@@ -3021,7 +3050,7 @@
     const pago = !!(P && P.acesso_ciclo && P.acesso_ate);
     // a cor da situação: verde ativo, amarelo pausado ou pendente, vermelho vencido, cinza encerrado
     const sit = soAcesso ? (vencido ? ['Vencida', 'is-hot'] : pago ? ['Ativa', 'is-ok'] : ['Período grátis', dias != null && dias <= 10 ? 'is-warn' : 'is-ok'])
-      : [selo ? selo[1] : '—', !selo ? '' : selo[1] === 'Ativo' ? 'is-ok' : selo[0].trim()];
+      : consBloq ? ['Pausado', 'is-hot'] : [selo ? selo[1] : '—', !selo ? '' : selo[1] === 'Ativo' ? 'is-ok' : selo[0].trim()];
     const prazo = dias == null ? '' : dias < 0 ? (soAcesso ? 'Venceu há ' : 'Em aberto há ') + -dias + (dias === -1 ? ' dia' : ' dias') : dias === 0 ? 'Vence hoje' : 'Faltam ' + dias + (dias === 1 ? ' dia' : ' dias');
     const pagamento = quadro('—', 'Forma de pagamento');
     const renova = el('div', null); const planos = el('div', null); const hist = el('div', null, el('p', 'box__text', 'Carregando…'));
@@ -3057,6 +3086,7 @@
         renova.replaceChildren(el('section', { class: 'box', 'aria-labelledby': 'renova-t' },
           el('h2', { class: 'box__title', id: 'renova-t' }, 'Renovação automática'),
           soAcesso ? el('p', 'box__text', 'Seu plano ' + ciclo + ' renova sozinho no cartão em ' + (vence ? U.diaAno(vence) : '—') + '.', el('br'), 'Se cancelar, o acesso continua até essa data.')
+            : atraso > 0 ? el('p', 'box__text', 'A cobrança deste mês não passou no cartão.', el('br'), 'Cancele a renovação e pague aqui,', el('br'), 'com Pix ou com outro cartão.')
             : el('p', 'box__text', 'A mensalidade de ' + reaisC(P && P.mensalidade), el('br'), 'é cobrada no cartão todo mês.', el('br'), 'Se cancelar, as próximas são pagas aqui.'),
           el('div', 'ass-acoes', b, conf), msg));
         planos.replaceChildren();
@@ -3479,7 +3509,7 @@
   };
 
   const side = document.querySelector('.side');
-  const rota = () => { const r = location.hash.slice(1); const padrao = soAcesso ? 'inicio' : 'plano'; return SCREENS[r] && !(soAcesso && SO_CONSULTORIA.includes(r)) && !(!soAcesso && r === 'inicio') && !(vencido && !ABERTAS_VENCIDO.includes(r)) ? r : padrao; };
+  const rota = () => { const r = location.hash.slice(1); const padrao = soAcesso ? 'inicio' : consBloq ? 'assinatura' : 'plano'; return SCREENS[r] && !(soAcesso && SO_CONSULTORIA.includes(r)) && !(!soAcesso && r === 'inicio') && !(vencido && !ABERTAS_VENCIDO.includes(r)) ? r : padrao; };
   // a animação de entrada só roda ao trocar de tela; atualizar algo na mesma tela (ex.: status de uma ação) não pisca
   let telaAtual = null;
   // uso: cada tela aberta e quanto tempo a pessoa ficou nela (só telas e tempo; o consultor vê isso para decidir o que simplificar)
@@ -3498,7 +3528,7 @@
     if (trocou) { registraUso(); comecaUso(r); }
     const y = window.scrollY;
     $('crumb').textContent = SCREENS[r].crumb;
-    $('screen').replaceChildren(el('div', 'screen screen--' + r + (trocou ? ' screen--entra' : ''), SCREENS[r].render()));
+    $('screen').replaceChildren(el('div', 'screen screen--' + r + (trocou ? ' screen--entra' : ''), avisoFatura(), SCREENS[r].render()));
     if (!trocou) window.scrollTo(0, y);
     document.querySelectorAll('[data-route]').forEach((a) => {
       if (a.dataset.route === r) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');

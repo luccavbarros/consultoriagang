@@ -339,8 +339,9 @@
       if (p.tipo !== 'acesso') {
         // consultoria: o pagamento é combinado com a GANG; vale a mensalidade e a próxima fatura do Contrato
         const dias = p.proxima_fatura ? diasAte(p.proxima_fatura) : null;
-        const sit = parado || (!p.inicio ? ['Sem contrato', 'is-mid', 7] : dias == null ? ['Ativo', 'is-ok', 2]
-          : dias < 0 ? ['Fatura de ' + U.diaAno(p.proxima_fatura) + ' em aberto', 'is-hot', 0]
+        const sit = parado || (!p.inicio ? ['Sem contrato', 'is-mid', 7] : dias == null ? ['Sem mensalidade definida', 'is-warn', 1]
+          : U.consultoriaBloqueada(p) ? ['Bloqueado · fatura de ' + U.diaAno(p.proxima_fatura), 'is-hot', 0]
+          : dias < 0 ? ['Fatura em aberto · ' + (p.sem_bloqueio ? 'sem bloqueio' : 'bloqueia em ' + U.diaAno(U.bloqueioEm(p))), 'is-hot', 0]
           : dias <= 15 ? ['Fatura em ' + dias + (dias === 1 ? ' dia' : ' dias'), 'is-warn', 1] : ['Ativo', 'is-ok', 2]);
         return { e, nome: nome[e.id] || e.nome || 'Cliente', plano: 'Consultoria' + (p.mensalidade ? ' · ' + U.reais(p.mensalidade) + '/mês' : ''),
           forma: renovaAuto.has(e.id) ? 'Cartão · renova sozinho' : ult ? (ult.metodo ? (ult.metodo === 'pix' ? 'Pix' : 'Cartão · sem renovação') : 'Registro manual') : '—',
@@ -429,6 +430,8 @@
       const p = await sb.from('planos').insert({
         empresa_id: empresaId, consultor_id: me.id, inicio: $('nc-start').value,
         duracao_meses: num('nc-months') || 18, meta_faturamento_pct: num('nc-goal'), faturamento_base: num('nc-base'), tipo: $('nc-tipo').value,
+        // consultoria: o 1º mês é grátis; a primeira mensalidade vence no início do 2º mês (e abre as ações dele)
+        ...($('nc-tipo').value === 'acesso' ? {} : { proxima_fatura: (() => { const d = new Date($('nc-start').value + 'T12:00:00'); d.setMonth(d.getMonth() + 1); return d.toLocaleDateString('sv-SE'); })() }),
       });
       if (p.error) throw new Error('Não foi possível criar o plano.');
       await adminApi({ ...conta, empresa_id: empresaId });

@@ -317,6 +317,7 @@
   };
   $('p-nome').value = emp.nome;
   $('p-semnum').checked = !!p.sem_numeros;
+  $('p-semblq').checked = !!p.sem_bloqueio;
   // sazonalidade e participação de mercado
   for (let k = 1; k <= 12; k += 1) { const mm = String(k).padStart(2, '0'); U.moedaSet($('p-fa-' + mm), (p.fat_ano_anterior || {})[mm] ?? null); }
   $('p-partmerc').value = p.participacao_mercado ?? '';
@@ -402,9 +403,11 @@
     const METODO = { cartao: 'Cartão', pix: 'Pix' };
     const ult = (data || [])[0];
     const fat = p.proxima_fatura ? String(p.proxima_fatura).slice(0, 10) : null; const dias = fat ? U.diasAte(fat) : null;
+    const bloq = U.consultoriaBloqueada({ ...p, tipo: 'consultoria', sem_bloqueio: $('p-semblq').checked });
     $('con-sit').replaceChildren(...[
-      fat ? el('p', 'acesso-sit__t' + (dias < 0 ? ' is-off' : dias <= 5 ? ' is-warn' : ''), dias < 0 ? 'Fatura de ' + U.diaAno(fat) + ' em aberto.' : 'Próxima fatura em ' + U.diaAno(fat) + '.')
-        : el('p', 'acesso-sit__t', 'Sem próxima fatura definida.'),
+      fat ? el('p', 'acesso-sit__t' + (dias < 0 ? ' is-off' : dias <= 5 ? ' is-warn' : ''), bloq ? 'Fatura de ' + U.diaAno(fat) + ' em aberto. O portal está bloqueado desde ' + U.diaAno(U.bloqueioEm(p)) + ': o cliente vê só a Identidade visual, a Narrativa e o Meu plano.'
+        : dias < 0 ? 'Fatura de ' + U.diaAno(fat) + ' em aberto.' + ($('p-semblq').checked ? ' Este cliente não é bloqueado.' : ' O portal bloqueia em ' + U.diaAno(U.bloqueioEm(p)) + '.') : 'Próxima mensalidade em ' + U.diaAno(fat) + '. As ações de ' + U.nomeMes(fat.slice(0, 7)) + ' abrem para o cliente quando ela for paga.')
+        : el('p', 'acesso-sit__t is-warn', 'Sem próxima mensalidade definida: o cliente vê o mês atual e o seguinte sem pagar.'),
       em && em.asaas_assinatura ? el('p', 'acesso-sit__t', 'Renovação automática no cartão ativa: cobra todo mês.')
         : ult && ult.metodo ? el('p', 'acesso-sit__t', 'Sem renovação automática. O cliente paga pelo portal, em Meu plano.') : null,
       ...(abertas || []).map((c) => el('p', 'acesso-sit__t is-warn', 'Pagamento iniciado em ' + U.dia(String(c.criada_em).slice(0, 10)) + ' pelo ' + METODO[c.metodo] + ', aguardando.'))].filter(Boolean));
@@ -420,10 +423,11 @@
     b.disabled = false;
     if (error) return say($('con-msg'), /liberar_mensalidade/.test(error.message || '') ? 'Rode o supabase/mensalidade.sql no Supabase.' : error.message || 'Não foi possível registrar.', 'error');
     p.proxima_fatura = prox; $('p-fatura').value = prox;
-    say($('con-msg'), 'Mensalidade registrada. Próxima fatura em ' + U.diaAno(prox) + '.', 'ok');
+    say($('con-msg'), 'Mensalidade registrada. Próxima em ' + U.diaAno(prox) + '.', 'ok');
     desenhaMensalidade();
   });
   $('p-tipo').addEventListener('change', desenhaMensalidade);
+  $('p-semblq').addEventListener('change', desenhaMensalidade);
   desenhaMensalidade();
   ['p-tipo', 'p-gratis', 'p-acesso-ate', 'p-inicio'].forEach((f) => $(f).addEventListener('change', desenhaAcesso));
   document.querySelectorAll('#fset-acesso [data-ciclo]').forEach((b) => b.addEventListener('click', async () => {
@@ -458,6 +462,7 @@
     row.prazo_revisao_dias = row.prazo_revisao_dias || 2;
     row.revisoes_mes = row.revisoes_mes ?? 2; row.dias_resposta = row.dias_resposta || 'terças e quintas';
     row.sem_numeros = $('p-semnum').checked;
+    if (Object.prototype.hasOwnProperty.call(p, 'sem_bloqueio') || $('p-semblq').checked) row.sem_bloqueio = $('p-semblq').checked; // a coluna só existe depois do SQL
     row.fat_ano_anterior = {};
     for (let k = 1; k <= 12; k += 1) { const mm = String(k).padStart(2, '0'); const v = U.moedaValor($('p-fa-' + mm)); if (v != null) row.fat_ano_anterior[mm] = v; }
     row.participacao_mercado = $('p-partmerc').value === '' ? null : Number($('p-partmerc').value);

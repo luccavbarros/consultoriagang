@@ -2358,3 +2358,8 @@ html.side-abrindo .side__plan .badge { display: none; }
 /* a cobrança pendente: contorno em volta da linha, ligando a etiqueta e o botão à mensalidade */
 .screen--assinatura .rows .row--pendente { border: 1px solid var(--line-2); border-radius: var(--r-sm); padding: 12px 14px; margin-bottom: 8px; }
 .screen--assinatura .rows .row--pendente + .row { border-top: 0; }
+/* aviso da mensalidade vencendo ou atrasada, no alto das telas do cliente de consultoria */
+.aviso-fatura { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; border-color: var(--warn); background: var(--warn-bg); margin-bottom: 20px; }
+.aviso-fatura.is-hot { border-color: var(--bad); background: var(--bad-bg); }
+.aviso-fatura .box__title { margin-bottom: 4px; }
+.aviso-fatura .box__text { margin: 0; }

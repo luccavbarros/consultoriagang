@@ -773,7 +773,16 @@
   const acessoVencido = (p) => { const v = acessoVence(p); return !!v && v < hojeLocal(); };
   const acessoDiasRestantes = (p) => { const v = acessoVence(p); return v ? Math.round((new Date(v + 'T12:00:00') - new Date(hojeLocal() + 'T12:00:00')) / 864e5) : null; };
   // a situação que aparece no selo: Ativo, Pausado, Encerrado ou Pagamento pendente (acesso vencido)
+  // consultoria: a mensalidade vence na próxima fatura; 7 dias de tolerância e, a partir do 8º dia de atraso, o portal bloqueia
+  // como no "Só acesso" vencido (a regra que vale é a do banco: acesso_liberado). "Não bloquear" desliga para o cliente
+  const TOLERANCIA_DIAS = 7;
+  const faturaAtraso = (p) => {
+    if (!p || p.tipo === 'acesso' || !p.proxima_fatura || p.status === 'encerrado') return null;
+    return Math.round((new Date(hojeLocal() + 'T12:00:00') - new Date(String(p.proxima_fatura).slice(0, 10) + 'T12:00:00')) / 864e5); // > 0: dias de atraso
+  };
+  const bloqueioEm = (p) => { if (!p || !p.proxima_fatura) return null; const d = new Date(String(p.proxima_fatura).slice(0, 10) + 'T12:00:00'); d.setDate(d.getDate() + TOLERANCIA_DIAS + 1); return d.toLocaleDateString('sv-SE'); };
+  const consultoriaBloqueada = (p) => { const a = faturaAtraso(p); return a != null && !p.sem_bloqueio && a > TOLERANCIA_DIAS; };
   const situacaoPlano = (p) => (!p ? null : p.status === 'encerrado' ? [' is-off', 'Encerrado'] : p.status === 'pausado' ? [' is-warn', 'Pausado']
-    : acessoVencido(p) ? [' is-warn', 'Pagamento pendente'] : ['', 'Ativo']);
-  window.GangUI = { buscaFonte, acessoVence, acessoVencido, acessoDiasRestantes, situacaoPlano, graficos, esforcoPadrao, ESFORCO_SETOR, setorBase, setorNome, setorOpcoes, metaMarcaMes, mesesDeHistorico, metaMarcaPlano, esforcoReferencia, addDias, moedaFmt, moedaValor, moedaSet, PROMESSAS, promessaDe, tipoEsforco, pesoTamanho, combo, comboValue, comboSet, diasSemana, diasComArtigo, multi, multiValue, avatar, iniciais, $, el, say, day, fmt, cap, dia, diaAno, mesAno, hora, quando, ref, refDate, addRef, nomeMes, nomeMesCurto, mesesEntre, mesDoPlano, diasAte, reais, pct };
+    : acessoVencido(p) || consultoriaBloqueada(p) ? [' is-warn', 'Pagamento pendente'] : ['', 'Ativo']);
+  window.GangUI = { buscaFonte, acessoVence, acessoVencido, acessoDiasRestantes, situacaoPlano, TOLERANCIA_DIAS, faturaAtraso, bloqueioEm, consultoriaBloqueada, graficos, esforcoPadrao, ESFORCO_SETOR, setorBase, setorNome, setorOpcoes, metaMarcaMes, mesesDeHistorico, metaMarcaPlano, esforcoReferencia, addDias, moedaFmt, moedaValor, moedaSet, PROMESSAS, promessaDe, tipoEsforco, pesoTamanho, combo, comboValue, comboSet, diasSemana, diasComArtigo, multi, multiValue, avatar, iniciais, $, el, say, day, fmt, cap, dia, diaAno, mesAno, hora, quando, ref, refDate, addRef, nomeMes, nomeMesCurto, mesesEntre, mesDoPlano, diasAte, reais, pct };
 })();
