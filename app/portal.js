@@ -2161,7 +2161,7 @@
       grupo(fs.map((f) => { const P = POS[f.posicao] || POS.nao_entrega; return [quad(P[2], P[3]), f.texto, null, chip(P[0], P[1])]; })));
     const esq = [
       G.resumo ? el('section', { class: 'focus focus--single', 'aria-labelledby': 'res-t' },
-        el('div', 'focus__text', el('p', { class: 'eyebrow', id: 'res-t' }, 'Em uma frase'), el('p', 'focus__title focus__title--long', G.resumo))) : null,
+        el('div', 'focus__text', el('p', { class: 'eyebrow', id: 'res-t' }, 'Posicionamento atual, em uma frase'), el('p', 'focus__title focus__title--long', G.resumo))) : null,
       D.causas.length ? secN('cau-t', 'As causas que o plano ataca', D.causas.length, 'Cada ação do plano ataca pelo menos uma delas.',
         grupo(D.causas.map((c, i) => [quad(String(i + 1), 'num'), c.texto]))) : null].filter(Boolean);
     const dir = [mot.length ? fatores('mot-t', 'O que todo cliente exige', mot) : null,
