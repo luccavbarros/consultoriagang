@@ -2568,3 +2568,9 @@ html.side-abrindo .side__plan .badge { display: none; }
 /* menos vazio: abaixo do título, o conteúdo fica no meio do espaço que sobra (as frases de destaque continuam embaixo) */
 .sl__nums, .sl__cols, .sl__duas, .sl__grade, .sl__linhas, .sl__cores { margin-top: auto; margin-bottom: auto; padding-top: 2cqw; }
 .sl__corpo > .sl__t--m + .sl__nums, .sl__corpo > .sl__t--m + .sl__duas { margin-top: auto; }
+/* nome longo (de quem entrou ou do consultor) não alarga o rodapé do menu: a largura é a da barra e o nome termina em "…" */
+.side__foot { grid-template-columns: minmax(0, 1fr); }
+.side__foot > *, .consultant > *, .side__me > * { min-width: 0; }
+.side__me .side__who { min-width: 0; overflow: hidden; }
+#me-name, .consultant__name, .consultant__role { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+.consultant__who > div { min-width: 0; }
