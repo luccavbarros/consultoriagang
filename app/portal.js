@@ -2747,14 +2747,17 @@
   const txt = (v) => (v == null ? '' : String(v)).trim();
   const partes = (arr, n) => { const out = []; for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n)); return out; };
   const slide = (rot, ...corpo) => el('section', 'sl', el('div', 'sl__in', rot ? el('p', 'sl__rot', '/ ' + rot) : null, el('div', 'sl__corpo', corpo.flat().filter(Boolean))));
+  // o título do slide sai do rótulo ("diagnóstico · como cada marca era vista" → "Como cada marca era vista")
+  const tituloDe = (rot) => { const t = String(rot).replace(/ · continuação$/, '').split(' · ').pop(); return t.charAt(0).toUpperCase() + t.slice(1); };
+  const cab = (rot) => el('h2', 'sl__h', tituloDe(rot));
   const sFrase = (rot, frase, extra, tam) => (txt(frase) ? slide(rot, el('div', 'sl__fim', el('p', 'sl__t' + (tam ? ' sl__t--' + tam : ''), txt(frase)), extra || null)) : null);
-  const sCols = (rot, itens, n) => (itens.length ? partes(itens, n || 4).map((g, i) => slide(rot + (i ? ' · continuação' : ''),
+  const sCols = (rot, itens, n) => (itens.length ? partes(itens, n || 4).map((g, i) => slide(rot + (i ? ' · continuação' : ''), cab(rot),
     el('div', { class: 'sl__cols', style: '--n:' + Math.max(g.length, 2) }, g.map(([l, t, s]) => el('div', 'sl__col', l ? el('p', 'sl__l', l) : null, t ? el('p', 'sl__n', t) : null, s ? (typeof s === 'string' ? el('p', 'sl__s', s) : s) : null))))) : []);
-  const sGrade = (rot, itens, n) => (itens.length ? partes(itens, n || 4).map((g, i) => slide(rot + (i ? ' · continuação' : ''),
+  const sGrade = (rot, itens, n) => (itens.length ? partes(itens, n || 4).map((g, i) => slide(rot + (i ? ' · continuação' : ''), cab(rot),
     el('div', { class: 'sl__grade', style: '--n:' + (g.length > 2 ? 2 : g.length) }, g.map(([t, s], k) => el('div', 'sl__gi', el('p', 'sl__l', '/' + (i * (n || 4) + k + 1)), el('p', 'sl__n', t), s ? el('p', 'sl__s', s) : null))))) : []);
-  const sLinhas = (rot, itens, n, intro) => (itens.length ? partes(itens, n || 6).map((g, i) => slide(rot + (i ? ' · continuação' : ''), !i && intro ? el('p', 'sl__t sl__t--m', intro) : null,
+  const sLinhas = (rot, itens, n, intro) => (itens.length ? partes(itens, n || 6).map((g, i) => slide(rot + (i ? ' · continuação' : ''), !i && intro ? el('p', 'sl__t sl__t--m', intro) : cab(rot),
     el('div', 'sl__linhas', g.map(([a, b, c, tom]) => el('div', 'sl__li' + (b == null ? ' sl__li--2' : ''), el('p', 'sl__s', el('span', { style: 'color:#3b3835' }, a)), b != null ? el('p', 'sl__s', b) : null, c ? el('span', 'sl__tag' + (tom ? ' is-' + tom : ''), c) : el('span')))))) : []);
-  const sNums = (rot, itens, frase) => (itens.length ? slide(rot, frase ? el('p', 'sl__t sl__t--m', frase) : null,
+  const sNums = (rot, itens, frase) => (itens.length ? slide(rot, frase ? el('p', 'sl__t sl__t--m', frase) : cab(rot),
     el('div', { class: 'sl__nums', style: '--n:' + itens.length }, itens.map(([v, s, m]) => el('div', null, el('p', 'sl__big' + (String(v).length > 7 ? ' sl__big--m' : ''), v), el('p', 'sl__s', s), m ? el('p', 'sl__l', m) : null)))) : null);
   const capa = (titulo, sub, direita) => {
     const nome = D.empresa ? D.empresa.nome : 'Sua marca';
@@ -2857,7 +2860,7 @@
       sFrase('estratégia · posicionamento', P.posicionamento, null, 'm'),
       ...sCols('estratégia · objetivos', (D.objetivos || []).map((o) => [NIVO[o.nivel] || 'Objetivo', (o.destaque ? o.destaque + ' ' : '') + txt(o.titulo),
         o.nivel === 'comunicacao' && (o.notar || o.acreditar || o.sentir) ? ['Notar ' + (o.notar || '—'), 'acreditar ' + (o.acreditar || '—'), 'sentir ' + (o.sentir || '—')].join(' · ') : null]), 4),
-      esc('prioridade').length || deixa.length ? slide('estratégia · onde jogamos', el('div', 'sl__duas',
+      esc('prioridade').length || deixa.length ? slide('estratégia · onde jogamos', cab('onde jogamos'), el('div', 'sl__duas',
         el('div', null, el('p', 'sl__l', 'Prioridade'), el('ul', 'sl__lista', esc('prioridade').map((t) => el('li', null, t)))),
         el('div', null, el('p', 'sl__l', 'Deixamos de lado'), el('ul', 'sl__lista', deixa.map((t) => el('li', null, t)))))) : null,
       ...sLinhas('estratégia · o que acompanhamos', (D.condicoes || []).map((c) => [c.texto, txt(c.como_verificar), (STC[c.status] || STC.sem_dados)[0], (STC[c.status] || STC.sem_dados)[1]]), 5),
@@ -2866,12 +2869,12 @@
       ...sGrade('narrativa · o que nunca muda', (D.identidade_central || []).map((x) => [x.texto, txt(x.explicacao)]), 4),
       ...sGrade('narrativa · mensagens de apoio', (D.mensagens_apoio || []).map((m) => [m.texto, null]), 4),
       ...sCols('narrativa · tom de voz', (D.tom_atributos || []).map((a) => [null, a.nome, txt(a.descricao)]), 4),
-      diz.length || nunca.length ? slide('narrativa · como a marca fala', el('div', 'sl__duas',
+      diz.length || nunca.length ? slide('narrativa · como a marca fala', cab('como a marca fala'), el('div', 'sl__duas',
         el('div', null, el('p', 'sl__l', 'Diz'), el('ul', 'sl__lista', diz.map((t) => el('li', null, t)))),
         el('div', null, el('p', 'sl__l', 'Nunca diz'), el('ul', 'sl__lista', nunca.map((t) => el('li', null, t)))))) : null,
       ...sCols('narrativa · quem a marca é', facs.map(([k, t]) => [t, null, D.facetas[k]]), 3),
       // identidade visual
-      (D.cores || []).length ? partes(D.cores, 5).map((g, i) => slide('identidade visual · cores' + (i ? ' · continuação' : ''), el('div', { class: 'sl__cores', style: '--n:' + Math.max(g.length, 3) },
+      (D.cores || []).length ? partes(D.cores, 5).map((g, i) => slide('identidade visual · cores' + (i ? ' · continuação' : ''), cab('cores'), el('div', { class: 'sl__cores', style: '--n:' + Math.max(g.length, 3) },
         g.map((c) => el('div', 'sl__cor', el('span', { class: 'sl__amostra', style: 'background:' + (c.hex || '#ccc') }), el('p', 'sl__n', c.nome || ''),
           el('p', 'sl__l', [c.hex, c.cmyk ? 'CMYK ' + c.cmyk : null, c.pantone ? 'Pantone ' + c.pantone : null].filter(Boolean).join(' · '))))))) : [],
       ...sCols('identidade visual · tipografia', (D.tipografias || []).map((t) => [txt(t.uso) || 'Fonte', null,
