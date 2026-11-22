@@ -2741,170 +2741,145 @@
     return out;
   };
 
-  // ===== Relatório do mês: uma página para mostrar aos sócios (imprimir ou salvar em PDF) =====
-  let relModo = 'completo';
   // relatório: como o cliente disse que foram os últimos meses (sem números)
-  const comoForamRel = () => {
-    if (!inicioRef || mesPassado < inicioRef) return null;
-    const ms = []; for (let r = inicioRef; r <= mesPassado; r = U.addRef(r, 1)) ms.push(r);
-    const resp = ms.slice(-6).filter((r) => comoFoi(r));
-    if (!resp.length) return null;
-    return el('section', 'rel__sec', el('h2', 'rel__h', 'Como foram os meses'),
-      el('p', 'rel__p', resp.map((r) => U.cap(U.nomeMes(r)) + ': ' + COMO[comoFoi(r)][0].toLowerCase()).join(' · ') + '.'));
+  // ===== documentos em slides: plano de marca e relatório do mês =====
+  // cada página é um slide A4 deitado, de tamanho fixo (nada quebra no meio); lista grande continua no slide seguinte
+  const txt = (v) => (v == null ? '' : String(v)).trim();
+  const partes = (arr, n) => { const out = []; for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n)); return out; };
+  const slide = (rot, ...corpo) => el('section', 'sl', el('div', 'sl__in', rot ? el('p', 'sl__rot', '/ ' + rot) : null, el('div', 'sl__corpo', corpo.flat().filter(Boolean))));
+  const sFrase = (rot, frase, extra, tam) => (txt(frase) ? slide(rot, el('div', 'sl__fim', el('p', 'sl__t' + (tam ? ' sl__t--' + tam : ''), txt(frase)), extra || null)) : null);
+  const sCols = (rot, itens, n) => (itens.length ? partes(itens, n || 4).map((g, i) => slide(rot + (i ? ' · continuação' : ''),
+    el('div', { class: 'sl__cols', style: '--n:' + Math.max(g.length, 2) }, g.map(([l, t, s]) => el('div', 'sl__col', l ? el('p', 'sl__l', l) : null, t ? el('p', 'sl__n', t) : null, s ? (typeof s === 'string' ? el('p', 'sl__s', s) : s) : null))))) : []);
+  const sGrade = (rot, itens, n) => (itens.length ? partes(itens, n || 4).map((g, i) => slide(rot + (i ? ' · continuação' : ''),
+    el('div', { class: 'sl__grade', style: '--n:' + (g.length > 2 ? 2 : g.length) }, g.map(([t, s], k) => el('div', 'sl__gi', el('p', 'sl__l', '/' + (i * (n || 4) + k + 1)), el('p', 'sl__n', t), s ? el('p', 'sl__s', s) : null))))) : []);
+  const sLinhas = (rot, itens, n, intro) => (itens.length ? partes(itens, n || 6).map((g, i) => slide(rot + (i ? ' · continuação' : ''), !i && intro ? el('p', 'sl__t sl__t--m', intro) : null,
+    el('div', 'sl__linhas', g.map(([a, b, c, tom]) => el('div', 'sl__li' + (b == null ? ' sl__li--2' : ''), el('p', 'sl__s', el('span', { style: 'color:#3b3835' }, a)), b != null ? el('p', 'sl__s', b) : null, c ? el('span', 'sl__tag' + (tom ? ' is-' + tom : ''), c) : el('span')))))) : []);
+  const sNums = (rot, itens, frase) => (itens.length ? slide(rot, frase ? el('p', 'sl__t sl__t--m', frase) : null,
+    el('div', { class: 'sl__nums', style: '--n:' + itens.length }, itens.map(([v, s, m]) => el('div', null, el('p', 'sl__big' + (String(v).length > 7 ? ' sl__big--m' : ''), v), el('p', 'sl__s', s), m ? el('p', 'sl__l', m) : null)))) : null);
+  const capa = (titulo, sub, direita) => {
+    const nome = D.empresa ? D.empresa.nome : 'Sua marca';
+    const cores = (D.cores || []).map((c) => c.hex).filter(Boolean).slice(0, 4);
+    const img = D.empresa && D.empresa.logo_url ? el('div', 'sl__capa-img', el('img', { src: D.empresa.logo_url, alt: 'Logo ' + nome }))
+      : cores.length ? el('div', 'sl__capa-img', el('div', { class: 'sl__mosaico', style: '--c:' + Math.min(cores.length, 2) }, cores.map((h) => el('span', { style: 'background:' + h }))))
+        : el('div', 'sl__capa-img', el('span', 'sl__capa-ini', U.iniciais ? U.iniciais(nome) : nome.slice(0, 2)));
+    return el('section', 'sl sl--capa', el('div', 'sl__in',
+      el('div', 'sl__meta', el('span', null, nome), el('span', null, '×'), el('span', null, 'GANG'), el('span', null, U.cap(U.nomeMes(hoje)) + ' ' + hoje.slice(0, 4))),
+      el('div', 'sl__capa', el('div', null, el('h1', 'sl__capa-t', titulo), sub ? el('p', 'sl__capa-s', sub) : null), direita || img)));
   };
+  const deckBarra = (voltar, ...extras) => el('div', 'deck__bar no-print', el('a', { class: 'link', href: voltar }, '← Voltar'), ...extras,
+    el('button', { class: 'btn btn--light btn--sm', type: 'button', onclick: () => window.print() }, 'Imprimir ou salvar em PDF'));
+
+  // ===== Relatório do mês: o que aconteceu, o que vem e como a marca está, para mostrar aos sócios =====
+  let relModo = 'completo';
   const telaRelatorio = () => {
     const nome = D.empresa ? D.empresa.nome : 'Sua empresa';
-    const r0 = mesPassado; const r1 = hoje;
-    const desde = U.addRef(r1, -3); // os últimos 3 meses
+    const r1 = hoje; const desde = U.addRef(r1, -3);
     const feitas = D.acoes.filter((a) => a.status === 'feita' && (a.mes_previsto >= desde || (a.concluida_em && a.concluida_em.slice(0, 7) >= desde)));
     const andamento = D.acoes.filter((a) => a.status !== 'feita' && a.mes_previsto <= r1);
-    const RES_TXT = { sim: 'funcionou', parcial: 'funcionou em parte', nao: 'não funcionou' };
-    // a leitura de marca mais recente (para o funil)
-    const q = [...D.pesquisas].reverse().find((x) => D.respostas.some((r) => r.pesquisa_id === x.id));
-    let funil = null;
-    if (q) {
-      const rs = D.respostas.filter((r) => r.pesquisa_id === q.id);
-      const nomeM = nome; const sits = q.situacoes || [];
-      const ment = sits.length ? Math.round(rs.filter((r) => sits.some((st) => ((r.ceps || {})[st.id] || []).includes(nomeM))).length / rs.length * 100) : null;
-      const chave = semAcento(nomeM).split(/\s+/).filter((w) => w.length > 2).pop() || semAcento(nomeM);
-      const lemb = Math.round(rs.filter((r) => semAcento(r.lembranca).includes(chave)).length / rs.length * 100);
-      funil = funilClareza({ q, ment, lemb });
-    }
-    const bloco = (t, ...k) => el('section', 'rel__sec', el('h2', 'rel__h', t), k);
-    const lista = (arr, f) => (arr.length ? el('ul', 'rel__list', arr.map(f)) : el('p', 'rel__muted', 'Nada neste período.'));
     const essenciais = D.acoes.filter((a) => a.status !== 'feita' && a.peso === 'essencial' && a.mes_previsto <= U.addRef(r1, 1));
+    const RES_TXT = { sim: ['funcionou', 'ok'], parcial: ['funcionou em parte', 'meio'], nao: ['não funcionou', 'bad'] };
+    const cf = comoFoi(mesPassado);
+    const concl = D.acoes.filter((a) => a.status === 'feita').length; const ate = D.acoes.filter((a) => a.mes_previsto <= r1).length;
+    const nums = [[cf ? COMO[cf][1] + ' ' + COMO[cf][0] : '—', 'Como foi ' + U.nomeMes(mesPassado), cf ? 'comparado com o ano passado' : 'sem resposta ainda'],
+      [concl + '/' + ate, 'Ações concluídas', 'até ' + U.nomeMes(r1)], [mesN + '/' + dur, 'Mês do plano', null]];
+    // a pesquisa mais recente com respostas: quanto lembram da marca
+    const q = [...D.pesquisas].reverse().find((x) => D.respostas.some((r) => r.pesquisa_id === x.id));
+    let marcaVistaRel = null;
+    if (q) {
+      const rs = D.respostas.filter((r) => r.pesquisa_id === q.id); const sits = q.situacoes || [];
+      const ment = sits.length ? Math.round(rs.filter((r) => sits.some((st) => ((r.ceps || {})[st.id] || []).includes(nome))).length / rs.length * 100) : null;
+      const chave = semAcento(nome).split(/\s+/).filter((w) => w.length > 2).pop() || semAcento(nome);
+      const lemb = Math.round(rs.filter((r) => semAcento(r.lembranca).includes(chave)).length / rs.length * 100);
+      marcaVistaRel = sNums('como a marca é vista', [[lemb + '%', 'Lembram da marca sem ajuda', rs.length + ' respostas'], ment != null ? [ment + '%', 'Ligam a marca às situações de compra', null] : null].filter(Boolean),
+        'A pesquisa “' + (q.titulo || 'de marca') + '”.');
+    }
     const troca = el('div', { class: 'rel__modo', role: 'group', 'aria-label': 'Formato do relatório' },
       [['completo', 'Completo'], ['socios', '1 página para sócios']].map(([k, t]) => el('button', { class: 'fchip', type: 'button', 'aria-pressed': String(relModo === k), onclick: () => { relModo = k; render(); } }, t)));
-    const barra = el('div', 'rel__bar no-print',
-      el('a', { class: 'link', href: '#resultados' }, '← Voltar'), troca,
-      el('button', { class: 'btn btn--light btn--sm', type: 'button', onclick: () => window.print() }, 'Imprimir ou salvar em PDF'));
+    const barra = deckBarra('#resultados', troca);
+    const proximos = essenciais.slice(0, 5).map((a) => a.titulo);
     if (relModo === 'socios') {
-      // uma página: aonde vamos, onde estamos, o que o consultor diz e os próximos passos
-      const objNeg = D.objetivos.find((o) => o.nivel === 'negocio');
-      const cf = comoFoi(mesPassado);
-      const kpis = [
-        ['Como foi ' + U.nomeMes(mesPassado), cf ? COMO[cf][1] + ' ' + COMO[cf][0] : '—', cf ? 'comparado com o ano passado' : 'sem resposta'],
-        ['Ações concluídas', D.acoes.filter((a) => a.status === 'feita').length + ' de ' + D.acoes.filter((a) => a.mes_previsto <= r1).length, 'até ' + U.nomeMes(r1)],
-        ['Mês do plano', mesN + ' de ' + dur, objNeg && objNeg.destaque ? 'meta ' + objNeg.destaque : ''],
-        ['Próximo encontro', D.proximo ? U.dia(D.proximo.inicio) : 'a marcar', D.proximo ? U.hora(D.proximo.inicio) : ''],
-      ];
-      return [el('article', 'rel rel--socios', barra,
-        el('header', 'rel__head',
-          el('div', null, el('p', 'rel__eyebrow', 'Resumo de ' + U.nomeMes(r1) + ' de ' + r1.slice(0, 4)),
-            el('h1', 'rel__title', nome),
-            el('p', 'rel__sub', objNeg ? 'Meta: ' + ((objNeg.destaque ? objNeg.destaque + ' ' : '') + (objNeg.titulo || '')) : 'Consultoria de marca GANG')),
-          el('p', 'rel__by', 'Consultoria GANG')),
-        el('div', 'rel__grid rel__grid--4', kpis.map(([k, v, sub]) => el('div', 'rel__kpi', el('p', 'rel__k', k), el('p', 'rel__v', v), sub ? el('p', 'rel__muted', sub) : null))),
-        D.foco && D.foco.veredito ? bloco('O que o consultor diz', el('p', 'rel__p', D.foco.veredito)) : null,
-        bloco('Próximos passos', lista(essenciais.slice(0, 4), (a) => el('li', null, el('strong', null, a.titulo), ' · ' + U.cap(U.nomeMes(a.mes_previsto))))),
-        D.proximo ? el('p', 'rel__muted', 'Próximo encontro: ' + U.quando(D.proximo.inicio)) : null)];
+      return [el('article', 'deck', barra, slide('resumo de ' + U.nomeMes(r1),
+        el('p', 'sl__t sl__t--m', D.foco && D.foco.veredito ? D.foco.veredito : nome + ', mês ' + mesN + ' de ' + dur + ' do plano.'),
+        el('div', { class: 'sl__nums', style: '--n:' + nums.length }, nums.map(([v, s, m]) => el('div', null, el('p', 'sl__big sl__big--m', v), el('p', 'sl__s', s), m ? el('p', 'sl__l', m) : null))),
+        proximos.length || D.proximo ? el('div', 'sl__duas', proximos.length ? el('div', null, el('p', 'sl__l', 'Próximos passos'), el('ul', 'sl__lista', proximos.slice(0, 3).map((t) => el('li', null, t)))) : el('div'),
+          D.proximo ? el('div', null, el('p', 'sl__l', 'Próximo encontro'), el('p', 'sl__n', U.quando(D.proximo.inicio))) : el('div')) : null))];
     }
-    return [el('article', 'rel', barra,
-      el('header', 'rel__head',
-        el('div', null, el('p', 'rel__eyebrow', 'Relatório de ' + U.nomeMes(r1) + ' de ' + r1.slice(0, 4) + ' · mês ' + mesN + ' de ' + dur),
-          el('h1', 'rel__title', nome),
-          el('p', 'rel__sub', 'Consultoria de marca GANG')),
-        el('p', 'rel__by', 'Consultoria GANG')),
-      D.foco && D.foco.veredito ? bloco('Veredito do mês', el('p', 'rel__p', D.foco.veredito),
-        D.vereditos.filter((v) => v.mes_ref !== D.foco.mes_ref).length ? el('ul', 'rel__list', D.vereditos.filter((v) => v.mes_ref !== D.foco.mes_ref).slice(0, 5).map((v) => el('li', null, el('strong', null, U.cap(U.nomeMes(v.mes_ref)) + ': '), v.veredito))) : null) : null,
-      comoForamRel(),
-      bloco('O que foi feito nos últimos 3 meses', lista(feitas, (a) => el('li', null, el('strong', null, a.titulo), (a.resultado ? ' · ' + RES_TXT[a.resultado] : ''), a.aprendizado ? el('span', 'rel__muted', ' “' + a.aprendizado + '”') : null))),
-      bloco('Em andamento', lista(andamento, (a) => el('li', null, el('strong', null, a.titulo), ' · ' + STATUS[a.status] + (a.peso === 'essencial' ? ' · essencial' : '')))),
-      funil ? bloco('Como a marca é vista', funil) : null,
-      bloco('Próximos passos',
-        D.foco ? el('p', 'rel__p', el('strong', null, 'Foco do mês: '), D.foco.titulo) : null,
-        D.proximo ? el('p', 'rel__p', el('strong', null, 'Próximo encontro: '), U.quando(D.proximo.inicio)) : null,
-        essenciais.length ? el('p', 'rel__p', el('strong', null, 'Essenciais: '), essenciais.map((a) => a.titulo).join(' · ')) : null),
-      el('footer', 'rel__foot', 'Gerado pelo portal da marca em ' + U.diaAno(new Date()) + '.'))];
+    const meses = []; if (inicioRef) for (let r = inicioRef; r <= mesPassado; r = U.addRef(r, 1)) meses.push(r);
+    const resp = meses.slice(-6).filter((r) => comoFoi(r));
+    return [el('article', 'deck', barra,
+      capa('Relatório de ' + U.nomeMes(r1), 'Mês ' + mesN + ' de ' + dur + ' do plano de marca de ' + nome + '.'),
+      D.foco && D.foco.veredito ? sFrase('veredito do mês', D.foco.veredito, D.consultor ? el('p', { class: 'sl__s', style: 'margin-top:1.4cqw' }, '— ' + D.consultor.nome) : null) : null,
+      sNums('o mês em números', nums),
+      ...sCols('como foram os meses', resp.map((r) => [U.cap(U.nomeMes(r)), COMO[comoFoi(r)][1] + ' ' + COMO[comoFoi(r)][0], 'comparado com ' + U.nomeMes(r) + ' do ano passado']), 6),
+      ...sLinhas('o que foi feito nos últimos 3 meses', feitas.map((a) => [a.titulo, txt(a.aprendizado) ? '“' + txt(a.aprendizado) + '”' : '', a.resultado ? RES_TXT[a.resultado][0] : 'feita', a.resultado ? RES_TXT[a.resultado][1] : null]), 6),
+      ...sLinhas('em andamento', andamento.map((a) => [a.titulo, a.peso === 'essencial' ? 'essencial' : '', STATUS[a.status] || '', a.status === 'em_andamento' ? 'meio' : null]), 6),
+      marcaVistaRel,
+      slide('próximos passos', D.foco ? el('p', 'sl__t sl__t--m', D.foco.titulo) : null,
+        el('div', 'sl__duas', proximos.length ? el('div', null, el('p', 'sl__l', 'Essenciais'), el('ul', 'sl__lista', proximos.map((t) => el('li', null, t)))) : el('div'),
+          D.proximo ? el('div', null, el('p', 'sl__l', 'Próximo encontro'), el('p', 'sl__n', U.quando(D.proximo.inicio)), el('p', 'sl__s', (TIPO_ENCONTRO[D.proximo.tipo] || 'Encontro') + ' · ' + D.proximo.duracao_min + ' min')) : el('div'))))];
   };
 
-  // ===== Plano de marca: Diagnóstico, Estratégia, Narrativa e Identidade Visual num documento (sem as ações) =====
-  // gerado na hora com o que está preenchido; cada parte começa numa página nova; seção vazia não entra
+  // ===== Plano de marca: Diagnóstico, Estratégia, Narrativa e Identidade Visual, em slides (sem as ações) =====
+  // gerado na hora com o que está preenchido; seção vazia não entra
   const telaPlanoMarca = () => {
     const nome = D.empresa ? D.empresa.nome : 'Sua marca';
-    const txt = (v) => (v == null ? '' : String(v)).trim();
-    const sec = (t, ...k) => { const kids = k.flat().filter(Boolean); return kids.length ? el('section', 'rel__sec pm__sec', el('h3', 'rel__h', t), kids) : null; };
-    const par = (v) => (txt(v) ? el('p', 'rel__p', txt(v)) : null);
-    const lista = (arr, f) => (arr.length ? el('ul', 'rel__list', arr.map((x) => el('li', null, f(x)))) : null);
-    const destaque = (v) => (txt(v) ? el('p', 'pm__frase', txt(v)) : null);
-    const parte = (n, t, ...k) => { const kids = k.flat().filter(Boolean); return kids.length ? el('section', 'pm__parte', el('p', 'pm__num', n), el('h2', 'pm__t', t), kids) : null; };
-
-    // 1. diagnóstico
-    const G = D.diagnostico || {};
-    const POSD = { entrega: 'entregava', entrega_mal: 'entregava mal', nao_entrega: 'não entregava' };
-    const fat = (tipo) => (D.fatores || []).filter((f) => f.tipo === tipo);
-    const cli = (D.impressoes || []).find((x) => x.eh_cliente);
-    const conc = (D.impressoes || []).filter((x) => !x.eh_cliente);
-    const STPC = { coerente: 'coerente', irregular: 'irregular', fora: 'fora da marca' };
-    const tabelaMarcas = (cli || conc.length) ? el('table', 'pm__tab',
-      el('thead', null, el('tr', null, ['Marca', 'Notavam', 'Acreditavam', 'Sentiam'].map((h) => el('th', null, h)))),
-      el('tbody', null, [cli, ...conc].filter(Boolean).map((i) => el('tr', i.eh_cliente ? 'is-sua' : null,
-        el('td', null, txt(i.marca_nome) || 'Marca'), el('td', null, txt(i.notam) || '—'), el('td', null, txt(i.acreditam) || '—'), el('td', null, txt(i.sentem) || '—'))))) : null;
-    const diag = parte('01', 'Diagnóstico',
-      G.data ? el('p', 'rel__muted', 'Ponto de partida · ' + U.mesAno(G.data)) : null,
-      G.resumo ? sec('O diagnóstico em uma frase', destaque(G.resumo)) : null,
-      tabelaMarcas ? sec('Como cada marca era vista', tabelaMarcas) : null,
-      sec('O que todo cliente exige', lista(fat('motivador'), (f) => [el('strong', null, f.texto), ' · a marca ' + (POSD[f.posicao] || 'não entregava')])),
-      sec('O que faz escolher uma marca', lista(fat('discriminador'), (f) => [el('strong', null, f.texto), ' · a marca ' + (POSD[f.posicao] || 'não entregava')])),
-      sec('O que a marca mostra hoje', lista(D.pontos_contato || [], (x) => [el('strong', null, x.canal), ' · ' + (STPC[x.status] || 'irregular') + (txt(x.nota) ? '. ' + txt(x.nota) : '')])),
-      sec('As causas que o plano ataca', lista(D.causas || [], (c) => c.texto)));
-
-    // 2. estratégia
-    const p = D.plano || {};
+    const G = D.diagnostico || {}; const p = D.plano || {}; const P = D.plataforma || {};
+    const POSD = { entrega: ['entregava', 'ok'], entrega_mal: ['entregava mal', 'meio'], nao_entrega: ['não entregava', 'bad'] };
+    const STPC = { coerente: ['coerente', 'ok'], irregular: ['irregular', 'meio'], fora: ['fora da marca', 'bad'] };
+    const STC = { se_confirma: ['se confirma', 'ok'], em_observacao: ['em observação', 'meio'], sem_dados: ['sem dados ainda', null], nao_se_confirma: ['não se confirma', 'bad'] };
     const NIVO = { negocio: 'Negócio', marca: 'Marca', comunicacao: 'Comunicação' };
-    const STC = { se_confirma: 'se confirma', em_observacao: 'em observação', sem_dados: 'sem dados ainda', nao_se_confirma: 'não se confirma' };
-    const esc = (t) => (D.escolhas || []).filter((x) => x.tipo === t);
-    const estr = parte('02', 'Estratégia',
-      p.estrategia_aprovada_em ? el('p', 'rel__muted', 'Aprovada em ' + U.mesAno(p.estrategia_aprovada_em)) : null,
-      sec('Posicionamento', destaque(D.plataforma && D.plataforma.posicionamento)),
-      sec('O desafio', par(p.desafio)),
-      sec('Como vamos vencer', par(p.como_vencer)),
-      sec('Objetivos', lista(D.objetivos || [], (o) => o.nivel === 'comunicacao'
-        ? [el('strong', null, 'Comunicação: '), ['notar ' + (o.notar || '—'), 'acreditar ' + (o.acreditar || '—'), 'sentir ' + (o.sentir || '—')].join(' · ')]
-        : [el('strong', null, (NIVO[o.nivel] || 'Objetivo') + ': '), (o.destaque ? o.destaque + ' ' : '') + txt(o.titulo)])),
-      sec('Onde jogamos', lista(esc('prioridade'), (x) => x.texto)),
-      sec('O que deixamos de lado', lista([...esc('deixa_de_lado').map((x) => x.texto), ...(D.descartadas || []).map((x) => x.texto)], (t) => t)),
-      sec('O que acompanhamos', lista(D.condicoes || [], (c) => [el('strong', null, c.texto), (c.como_verificar ? ' · verificamos por ' + c.como_verificar.charAt(0).toLowerCase() + c.como_verificar.slice(1) : '') + (STC[c.status] ? ' · ' + STC[c.status] : '')])),
-      sec('Como medimos', lista(D.metricas || [], (m) => [el('strong', null, m.nome), m.frequencia ? ' · ' + ({ mensal: 'todo mês', semestral: 'a cada 6 meses', anual: 'todo ano' }[m.frequencia] || m.frequencia) : ''])));
-
-    // 3. narrativa
-    const P = D.plataforma || {};
-    const IC = D.identidade_central || [];
+    const fat = (tipo) => (D.fatores || []).filter((f) => f.tipo === tipo);
+    const ent = (fs) => fs.filter((f) => f.posicao === 'entrega').length;
+    const marcas = [(D.impressoes || []).find((x) => x.eh_cliente), ...(D.impressoes || []).filter((x) => !x.eh_cliente)].filter(Boolean);
+    const pcs = D.pontos_contato || [];
+    const esc = (t) => (D.escolhas || []).filter((x) => x.tipo === t).map((x) => x.texto);
+    const deixa = [...esc('deixa_de_lado'), ...(D.descartadas || []).map((x) => x.texto)];
     const facs = FACETAS.filter(([k]) => D.facetas && D.facetas[k]);
-    const diz = (D.tom_exemplos || []).filter((x) => x.tipo === 'diz');
-    const nunca = (D.tom_exemplos || []).filter((x) => x.tipo === 'nunca_diz');
-    const narr = parte('03', 'Narrativa',
-      sec('Mensagem central', destaque(P.mensagem_central)),
-      sec('Mensagens de apoio', lista(D.mensagens_apoio || [], (m) => m.texto)),
-      sec('O que a marca é, no centro', lista(IC, (x) => [el('strong', null, x.texto), txt(x.explicacao) ? ' · ' + txt(x.explicacao) : ''])),
-      facs.length ? sec('Quem a marca é', el('dl', 'pm__dl', facs.map(([k, t]) => el('div', null, el('dt', null, t), el('dd', null, D.facetas[k]))))) : null,
-      sec('Tom de voz', lista(D.tom_atributos || [], (a) => [el('strong', null, a.nome), txt(a.descricao) ? ' · ' + txt(a.descricao) : ''])),
-      (diz.length || nunca.length) ? sec('Como a marca fala', el('div', 'pm__duas',
-        diz.length ? el('div', null, el('p', 'rel__k', 'Diz'), lista(diz, (x) => x.texto)) : null,
-        nunca.length ? el('div', null, el('p', 'rel__k', 'Nunca diz'), lista(nunca, (x) => x.texto)) : null)) : null);
-
-    // 4. identidade visual
-    const ident = parte('04', 'Identidade Visual',
-      (D.cores || []).length ? sec('Cores', el('div', 'pm__cores', D.cores.map((c) => el('div', 'pm__cor',
-        el('span', { class: 'pm__amostra', style: 'background:' + (c.hex || '#ccc') }), el('p', 'pm__cor-n', c.nome || ''),
-        el('p', 'rel__muted', [c.hex, c.cmyk ? 'CMYK ' + c.cmyk : null, c.pantone ? 'Pantone ' + c.pantone : null].filter(Boolean).join(' · ')))))) : null,
-      sec('Tipografia', lista(D.tipografias || [], (t) => [el('strong', null, t.nome), txt(t.uso) ? ' · ' + txt(t.uso) : ''])),
-      sec('Elementos da marca', lista(D.elementos_marca || [], (x) => [el('strong', null, x.nome), txt(x.descricao) ? ' · ' + txt(x.descricao) : ''])),
-      sec('Ativos que tornam a marca reconhecível', lista(D.ativos || [], (x) => [el('strong', null, x.nome || x.tipo || 'Ativo'), txt(x.texto) ? ' · ' + txt(x.texto) : ''])));
-
-    const partes = [diag, estr, narr, ident].filter(Boolean);
-    // o logo vai como imagem de verdade (fundo de elemento some na impressão quando o navegador não imprime fundos)
-    const urlLogo = D.empresa && D.empresa.logo_url;
-    const logo = urlLogo ? el('img', { class: 'pm__logo pm__logo--img', src: urlLogo, alt: 'Logo ' + nome }) : el('span', 'pm__logo', U.iniciais ? U.iniciais(nome) : nome.slice(0, 2).toUpperCase());
-    const barra = el('div', 'rel__bar no-print',
-      el('a', { class: 'link', href: '#estrategia' }, '← Voltar'),
-      el('button', { class: 'btn btn--light btn--sm', type: 'button', onclick: () => window.print() }, 'Imprimir ou salvar em PDF'));
-    return [el('article', 'rel pm', barra,
-      el('section', 'pm__capa',
-        el('div', null, logo, el('p', 'rel__eyebrow', 'Plano de marca'), el('h1', 'pm__titulo', nome),
-          el('p', 'rel__sub', ['Diagnóstico, estratégia, narrativa', el('br'), 'e identidade visual.'])),
-        el('div', 'pm__capa-pe', el('p', 'rel__by', 'GANG - Consultoria de Marca'), el('p', 'rel__muted', 'Atualizado em ' + U.diaAno(new Date())))),
-      partes.length ? partes : el('p', 'rel__p', 'O plano de marca aparece aqui assim que o consultor preencher o diagnóstico e a estratégia.'))];
+    const diz = (D.tom_exemplos || []).filter((x) => x.tipo === 'diz').map((x) => x.texto);
+    const nunca = (D.tom_exemplos || []).filter((x) => x.tipo === 'nunca_diz').map((x) => x.texto);
+    const mot = fat('motivador'); const dis = fat('discriminador');
+    const slides = [
+      capa('Plano de marca', 'Diagnóstico, estratégia, narrativa e identidade visual.'),
+      // diagnóstico
+      sFrase('diagnóstico', G.resumo, G.data ? el('p', { class: 'sl__s', style: 'margin-top:1.4cqw' }, 'Ponto de partida · ' + U.mesAno(G.data)) : null),
+      sNums('diagnóstico · onde a marca estava', [mot.length ? [ent(mot) + '/' + mot.length, 'Do que todo cliente exige, a marca entregava', null] : null,
+        dis.length ? [ent(dis) + '/' + dis.length, 'Do que faz escolher uma marca, a marca entregava', null] : null,
+        pcs.length ? [pcs.filter((x) => x.status === 'coerente').length + '/' + pcs.length, 'Pontos de contato coerentes com a marca', null] : null].filter(Boolean)),
+      ...sCols('diagnóstico · como cada marca era vista', marcas.map((m) => [m.eh_cliente ? 'Sua marca' : 'Concorrente', txt(m.marca_nome) || 'Marca',
+        el('div', { style: 'display:grid;gap:.8cqw;margin-top:.6cqw' }, [['Notavam', m.notam], ['Acreditavam', m.acreditam], ['Sentiam', m.sentem]].map(([k, v]) => el('div', null, el('p', 'sl__l', k), el('p', 'sl__s', txt(v) || '—'))))]), 4),
+      ...sLinhas('diagnóstico · o que pesa na escolha', [...mot.map((f) => [f.texto, 'Todo cliente exige', POSD[f.posicao] ? POSD[f.posicao][0] : '', POSD[f.posicao] ? POSD[f.posicao][1] : null]),
+        ...dis.map((f) => [f.texto, 'Faz escolher', POSD[f.posicao] ? POSD[f.posicao][0] : '', POSD[f.posicao] ? POSD[f.posicao][1] : null])], 7),
+      ...sLinhas('diagnóstico · o que a marca mostra hoje', pcs.map((x) => [x.canal, txt(x.nota), (STPC[x.status] || STPC.irregular)[0], (STPC[x.status] || STPC.irregular)[1]]), 5),
+      ...sGrade('diagnóstico · as causas que o plano ataca', (D.causas || []).map((c) => [c.texto, null]), 4),
+      // estratégia
+      txt(p.desafio) ? slide('estratégia · o desafio', el('div', 'sl__fim', el('p', 'sl__t', txt(p.desafio)),
+        txt(p.como_vencer) ? el('div', { style: 'margin-top:3cqw;max-width:64%' }, el('p', 'sl__l', 'Como vamos vencer'), el('p', 'sl__s', txt(p.como_vencer))) : null)) : null,
+      sFrase('estratégia · posicionamento', P.posicionamento, null, 'm'),
+      ...sCols('estratégia · objetivos', (D.objetivos || []).map((o) => [NIVO[o.nivel] || 'Objetivo', (o.destaque ? o.destaque + ' ' : '') + txt(o.titulo),
+        o.nivel === 'comunicacao' && (o.notar || o.acreditar || o.sentir) ? ['Notar ' + (o.notar || '—'), 'acreditar ' + (o.acreditar || '—'), 'sentir ' + (o.sentir || '—')].join(' · ') : null]), 4),
+      esc('prioridade').length || deixa.length ? slide('estratégia · onde jogamos', el('div', 'sl__duas',
+        el('div', null, el('p', 'sl__l', 'Prioridade'), el('ul', 'sl__lista', esc('prioridade').map((t) => el('li', null, t)))),
+        el('div', null, el('p', 'sl__l', 'Deixamos de lado'), el('ul', 'sl__lista', deixa.map((t) => el('li', null, t)))))) : null,
+      ...sLinhas('estratégia · o que acompanhamos', (D.condicoes || []).map((c) => [c.texto, txt(c.como_verificar), (STC[c.status] || STC.sem_dados)[0], (STC[c.status] || STC.sem_dados)[1]]), 5),
+      // narrativa
+      sFrase('narrativa · mensagem central', P.mensagem_central, null, 'g'),
+      ...sGrade('narrativa · o que nunca muda', (D.identidade_central || []).map((x) => [x.texto, txt(x.explicacao)]), 4),
+      ...sGrade('narrativa · mensagens de apoio', (D.mensagens_apoio || []).map((m) => [m.texto, null]), 4),
+      ...sCols('narrativa · tom de voz', (D.tom_atributos || []).map((a) => [null, a.nome, txt(a.descricao)]), 4),
+      diz.length || nunca.length ? slide('narrativa · como a marca fala', el('div', 'sl__duas',
+        el('div', null, el('p', 'sl__l', 'Diz'), el('ul', 'sl__lista', diz.map((t) => el('li', null, t)))),
+        el('div', null, el('p', 'sl__l', 'Nunca diz'), el('ul', 'sl__lista', nunca.map((t) => el('li', null, t)))))) : null,
+      ...sCols('narrativa · quem a marca é', facs.map(([k, t]) => [t, null, D.facetas[k]]), 3),
+      // identidade visual
+      (D.cores || []).length ? partes(D.cores, 5).map((g, i) => slide('identidade visual · cores' + (i ? ' · continuação' : ''), el('div', { class: 'sl__cores', style: '--n:' + Math.max(g.length, 3) },
+        g.map((c) => el('div', 'sl__cor', el('span', { class: 'sl__amostra', style: 'background:' + (c.hex || '#ccc') }), el('p', 'sl__n', c.nome || ''),
+          el('p', 'sl__l', [c.hex, c.cmyk ? 'CMYK ' + c.cmyk : null, c.pantone ? 'Pantone ' + c.pantone : null].filter(Boolean).join(' · '))))))) : [],
+      ...sCols('identidade visual · tipografia', (D.tipografias || []).map((t) => [txt(t.uso) || 'Fonte', null,
+        el('div', null, el('p', { class: 'sl__aa', style: 'font-family:"' + t.nome + '", var(--font)' }, 'Aa'), el('p', 'sl__n', t.nome))]), 3),
+      ...sGrade('identidade visual · elementos da marca', (D.elementos_marca || []).map((x) => [x.nome, txt(x.descricao)]), 4),
+      ...sGrade('identidade visual · ativos que tornam a marca reconhecível', (D.ativos || []).map((x) => [x.nome || x.tipo || 'Ativo', txt(x.texto)]), 4),
+    ].flat().filter(Boolean);
+    return [el('article', 'deck', deckBarra('#estrategia', el('span', 'small', slides.length + ' páginas')), slides)];
   };
 
   // ===== telas =====
