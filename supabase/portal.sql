@@ -1705,7 +1705,7 @@ begin
   select * into a from public.acoes where id = p_acao and empresa_id = e;
   if a.id is null then raise exception 'Ação não encontrada.'; end if;
   if a.responsavel = 'gang' or a.status <> 'a_fazer' or a.mes_previsto <> prox then raise exception 'Só dá para adiantar uma ação do próximo mês que ainda não começou.'; end if;
-  if prox > public.mes_liberado(e) then raise exception 'O próximo mês abre quando a mensalidade dele for paga.'; end if;
+  if prox > public.mes_liberado(e) then raise exception 'O próximo mês chega com a mensalidade dele.'; end if;
   -- só quem já terminou as ações do mês (as suas) pode adiantar
   select count(*) into n from public.acoes where empresa_id = e and responsavel <> 'gang' and status <> 'feita' and mes_previsto <= agora;
   if n > 0 then raise exception 'Termine as ações deste mês antes de adiantar.'; end if;
