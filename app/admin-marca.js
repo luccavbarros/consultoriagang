@@ -800,7 +800,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     ['fonte_propria', 'Fonte própria'], ['som', 'Som / jingle'], ['cheiro', 'Cheiro do ambiente'], ['outro', 'Outro']];
   const EL_T = Object.fromEntries(EL);
   montar('pane-identidade', [
-    [ficha, { icone: 'forma', titulo: 'Identidade visual', tabela: 'identidades', pasta: 'identidade', fields: [
+    [ficha, { icone: 'forma', titulo: 'Identidade Visual', tabela: 'identidades', pasta: 'identidade', fields: [
       { k: 'entregue_em', label: 'Entregue em', type: 'date' }, { k: 'versao', label: 'Versão', placeholder: '1.0' },
       { k: 'zip', label: 'Tudo em um .zip', type: 'file', accept: '.zip,application/zip' }] }],
     [lista, { icone: 'estrela', tom: 'gang', titulo: 'Ativos distintivos', nota: 'O que faz reconhecer a marca sem ler o nome: cor, símbolo, frase, personagem. Na pesquisa, cada um aparece sem a marca e medimos fama e exclusividade.', tabela: 'ativos', fields: [
@@ -846,7 +846,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     ['plataforma', 'Narrativa', 'Mensagem central e tom de voz', async () => {
       const r = await sb.from('plataformas').select('mensagem_central').eq('empresa_id', id).maybeSingle();
       return !!(r.data && r.data.mensagem_central); }],
-    ['identidade', 'Identidade visual', 'Logos, cores e fontes', async () => {
+    ['identidade', 'Identidade Visual', 'Logos, cores e fontes', async () => {
       const [c, t] = await Promise.all([sb.from('cores').select('id').limit(1).eq('empresa_id', id), sb.from('tipografias').select('id').limit(1).eq('empresa_id', id)]);
       return (c.data || []).length > 0 && (t.data || []).length > 0; }],
     ['acoes', 'Plano de ações', 'As ações dos 18 meses', async () => {

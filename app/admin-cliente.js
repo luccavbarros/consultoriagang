@@ -405,7 +405,7 @@
     const fat = p.proxima_fatura ? String(p.proxima_fatura).slice(0, 10) : null; const dias = fat ? U.diasAte(fat) : null;
     const bloq = U.consultoriaBloqueada({ ...p, tipo: 'consultoria', sem_bloqueio: $('p-semblq').checked });
     $('con-sit').replaceChildren(...[
-      fat ? el('p', 'acesso-sit__t' + (dias < 0 ? ' is-off' : dias <= 5 ? ' is-warn' : ''), bloq ? 'Fatura de ' + U.diaAno(fat) + ' em aberto. O portal está bloqueado desde ' + U.diaAno(U.bloqueioEm(p)) + ': o cliente vê só a Identidade visual, a Narrativa e o Meu plano.'
+      fat ? el('p', 'acesso-sit__t' + (dias < 0 ? ' is-off' : dias <= 5 ? ' is-warn' : ''), bloq ? 'Fatura de ' + U.diaAno(fat) + ' em aberto. O portal está bloqueado desde ' + U.diaAno(U.bloqueioEm(p)) + ': o cliente vê só a Identidade Visual, a Narrativa e o Meu plano.'
         : dias < 0 ? 'Fatura de ' + U.diaAno(fat) + ' em aberto.' + ($('p-semblq').checked ? ' Este cliente não é bloqueado.' : ' O portal bloqueia em ' + U.diaAno(U.bloqueioEm(p)) + '.') : 'Próxima mensalidade em ' + U.diaAno(fat) + '. As ações de ' + U.nomeMes(fat.slice(0, 7)) + ' abrem para o cliente quando ela for paga.')
         : el('p', 'acesso-sit__t is-warn', 'Sem próxima mensalidade definida: o cliente vê o mês atual e o seguinte sem pagar.'),
       em && em.asaas_assinatura ? el('p', 'acesso-sit__t', 'Renovação automática no cartão ativa: cobra todo mês.')
@@ -2421,7 +2421,7 @@
 
   // ===== uso do portal (últimos 30 dias): o que o cliente abre de fato =====
   const TELAS_PORTAL = [['plano', 'Plano (tela inicial)'], ['acoes', 'Ações'], ['resultados', 'Resultados'], ['consultoria', 'Calendário'],
-    ['relatorio', 'Relatório do mês'], ['diagnostico', 'Diagnóstico'], ['estrategia', 'Estratégia'], ['plataforma', 'Narrativa'], ['identidade', 'Identidade visual'], ['inicio', 'Início (só acesso)']];
+    ['relatorio', 'Relatório do mês'], ['diagnostico', 'Diagnóstico'], ['estrategia', 'Estratégia'], ['plataforma', 'Narrativa'], ['identidade', 'Identidade Visual'], ['inicio', 'Início (só acesso)']];
   const tempo = (s) => (s < 60 ? s + ' s' : s < 3600 ? Math.round(s / 60) + ' min' : (s / 3600).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' h');
   const loadUso = async () => {
     const desde = U.addDias(new Date().toISOString().slice(0, 10), -30);

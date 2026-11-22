@@ -165,7 +165,7 @@
   const SO_CONSULTORIA = ['plano', 'calendario', 'acoes', 'resultados', 'consultoria', 'relatorio'];
   // a linha do plano no menu: mês do plano e o selo da situação (o mesmo do painel do consultor)
   const selo = U.situacaoPlano(D.plano); // Ativo, Pausado, Encerrado ou Pagamento pendente
-  // "Só acesso" com o período vencido, ou consultoria com a mensalidade atrasada há mais de 7 dias: ficam a Identidade visual,
+  // "Só acesso" com o período vencido, ou consultoria com a mensalidade atrasada há mais de 7 dias: ficam a Identidade Visual,
   // a Narrativa e o Meu plano para pagar (o banco também só entrega essas partes)
   const consBloq = !soAcesso && U.consultoriaBloqueada(D.plano);
   const vencido = (soAcesso && U.acessoVencido(D.plano)) || consBloq;
@@ -202,7 +202,7 @@
     const g1 = document.getElementById('g1'); if (g1) g1.hidden = true;
     const ini = document.querySelector('[data-route="inicio"] span'); if (ini) ini.textContent = 'Início';
   } else {
-    // na consultoria, o Plano já é a visão geral: a tela "Visão geral" sai do menu
+    // na consultoria, o Plano já é a visão geral: a tela "Visão Geral" sai do menu
     const li = document.querySelector('[data-route="inicio"]'); if (li) li.closest('li').hidden = true;
   }
 
@@ -244,8 +244,8 @@
       if (P.mensagem_central) out.push({ grupo: 'Sua marca', titulo: 'Mensagem central', sub: P.mensagem_central, href: '#plataforma' });
     }
     (D.objetivos || []).forEach((o) => o.titulo && out.push({ grupo: 'Sua marca', titulo: U.cap(o.titulo), sub: 'Objetivo · Estratégia', href: '#estrategia' }));
-    (D.cores || []).forEach((c) => out.push({ grupo: 'Sua marca', titulo: 'Cor ' + c.nome, sub: (c.hex || '').toUpperCase() + ' · Identidade visual', href: '#identidade' }));
-    (D.tipografias || []).forEach((t) => out.push({ grupo: 'Sua marca', titulo: 'Fonte ' + t.nome, sub: 'Identidade visual', href: '#identidade' }));
+    (D.cores || []).forEach((c) => out.push({ grupo: 'Sua marca', titulo: 'Cor ' + c.nome, sub: (c.hex || '').toUpperCase() + ' · Identidade Visual', href: '#identidade' }));
+    (D.tipografias || []).forEach((t) => out.push({ grupo: 'Sua marca', titulo: 'Fonte ' + t.nome, sub: 'Identidade Visual', href: '#identidade' }));
     (D.pedidos || []).forEach((pd) => out.push({ grupo: 'Peças', titulo: pd.titulo || pd.tipo_peca, sub: ({ em_analise: 'Em análise', ajustar: 'Ajustar', aprovado: 'Aprovada' })[pd.status] || '', href: '#acoes', extra: pd.resposta || '' }));
     (D.vozes || []).forEach((v) => out.push({ grupo: 'O que os clientes disseram', titulo: v.texto, sub: U.cap(U.nomeMes(v.mes_ref)), href: '#resultados' }));
     return out;
@@ -309,7 +309,7 @@
   };
   const proximoPasso = (a) => (a.passos || []).find((x) => !x.ok);
 
-  const telaInicio = () => telaInicioAcesso(); // o Início é a tela do Só acesso; a consultoria abre na Visão geral
+  const telaInicio = () => telaInicioAcesso(); // o Início é a tela do Só acesso; a consultoria abre na Visão Geral
 
   // ===== acesso ao consultor: o encontro é o lugar dele =====
   const diasResposta = () => U.diasComArtigo((D.plano && D.plano.dias_resposta) || 'terças e quintas'); // já vem com "às"/"aos"
@@ -524,7 +524,7 @@
   };
   // ===== micro animações: só no que acabou de acontecer (não repetem a cada redesenho) =====
   let recemFeita = null;            // a ação marcada como feita neste clique: ✓ se desenha e o título é riscado
-  const concluidasAgora = new Set(); // ações feitas nesta visita: a missão delas pulsa quando a Visão geral aparecer
+  const concluidasAgora = new Set(); // ações feitas nesta visita: a missão delas pulsa quando a Visão Geral aparecer
   let cfRecente = null;             // a resposta de "Como foi o mês?" que acabou de ser dada
   let cfMissaoNova = false;         // ...e a missão "Contar como foi" pulsa uma vez
   let misPctAntes = null; let misFeitasAntes = null; // a barra das missões cresce do valor anterior
@@ -1933,7 +1933,7 @@
     document.body.append(dlg); dlg.showModal();
   };
 
-  // Identidade visual
+  // Identidade Visual
   const imgAssinada = (caminho, alt) => {
     const img = el('img', { alt: alt || '', loading: 'lazy' });
     sb.storage.from('portal').createSignedUrl(caminho, 3600).then(({ data }) => { if (data) img.src = data.signedUrl; });
@@ -1960,7 +1960,7 @@
   };
   const telaIdentidade = () => {
     const I = D.identidade;
-    const out = [head(I ? [I.entregue_em ? 'Entregue em ' + U.mesAno(I.entregue_em) : null, I.versao ? 'versão ' + I.versao : null].filter(Boolean).join(' · ') : '', 'Identidade visual',
+    const out = [head(I ? [I.entregue_em ? 'Entregue em ' + U.mesAno(I.entregue_em) : null, I.versao ? 'versão ' + I.versao : null].filter(Boolean).join(' · ') : '', 'Identidade Visual',
       'A marca para usar, não só para ler: copie as cores certas, veja as fontes e teste logo, combinações e\u00a0títulos\u00a0antes\u00a0de\u00a0publicar.',
       I && I.zip ? baixar(I.zip, 'Baixar tudo (.zip)') : null)];
     if (!I && !D.arquivos_marca.length && !D.cores.length && !(D.elementos_marca || []).length) return out.concat(vazio());
@@ -2468,7 +2468,7 @@
       'Terminou em ' + U.diaAno(v) + '. A identidade visual e a narrativa continuam aqui para\u00a0você. Para voltar a usar o diagnóstico, a estratégia e as ferramentas da marca, escolha um\u00a0plano.'),
       el('section', { class: 'box', 'aria-labelledby': 'planos-ac-t' }, el('h2', { class: 'box__title', id: 'planos-ac-t' }, 'Escolha um plano'), escolherPlano()),
       el('section', { class: 'brand-tiles', 'aria-label': 'O que continua aberto' },
-        el('a', { class: 'brand-tile', href: '#identidade' }, el('span', 'brand-tile__n', '1'), el('span', 'brand-tile__t', 'Identidade visual'), el('span', 'brand-tile__d', 'Logos, cores, fontes e arquivos')),
+        el('a', { class: 'brand-tile', href: '#identidade' }, el('span', 'brand-tile__n', '1'), el('span', 'brand-tile__t', 'Identidade Visual'), el('span', 'brand-tile__d', 'Logos, cores, fontes e arquivos')),
         el('a', { class: 'brand-tile', href: '#plataforma' }, el('span', 'brand-tile__n', '2'), el('span', 'brand-tile__t', 'Narrativa'), el('span', 'brand-tile__d', 'Quem a marca é e como ela fala')))];
   };
   const telaInicioAcesso = () => {
@@ -2495,7 +2495,7 @@
       tile('01', '#diagnostico', 'Diagnóstico', 'O ponto de partida: como as pessoas percebiam a marca.'),
       tile('02', '#estrategia', 'Estratégia', 'Aonde a marca vai e os caminhos para chegar lá.'),
       tile('03', '#plataforma', 'Narrativa', 'O que dizer e o tom de voz certo para transmitir seu valor.'),
-      tile('04', '#identidade', 'Identidade visual', 'Os elementos que tornam a marca fácil de reconhecer.')));
+      tile('04', '#identidade', 'Identidade Visual', 'Os elementos que tornam a marca fácil de reconhecer.')));
     out.push(el('section', { class: 'upsell', 'aria-labelledby': 'up-t' },
       el('div', null, el('p', 'eyebrow', 'Consultoria mensal GANG'), el('h2', { class: 'upsell__t', id: 'up-t' }, 'Quer colocar a marca em prática com acompanhamento?'),
         el('p', 'box__text', 'Um consultor define as ações do mês com você, acompanha os resultados, mede como a marca é lembrada e revisa suas peças antes de publicar.')),
@@ -2527,7 +2527,7 @@
     const fraseMeta = numero ? frase : frase.charAt(0).toUpperCase() + frase.slice(1);
     // a tela abre no que fazer agora (as missões); a meta vira o título do caminho, logo abaixo.
     // "Mês X de Y" aparece uma vez só, na linha de cima do título
-    const out = [head(inicioRef ? 'Mês ' + mesAgora + ' de ' + dur + ' · ' + U.cap(U.nomeMes(hoje)) + ' ' + hoje.slice(0, 4) : 'Plano de marca', 'Visão geral',
+    const out = [head(inicioRef ? 'Mês ' + mesAgora + ' de ' + dur + ' · ' + U.cap(U.nomeMes(hoje)) + ' ' + hoje.slice(0, 4) : 'Plano de marca', 'Visão Geral',
       ['O que fazer este mês e o caminho até a meta.', el('br'), 'Cada mês concluído deixa a marca mais perto dela.'])];
     const bm = bannerMensagem(); if (bm) out.push(bm);
     if (!inicioRef) return out.concat(vazio('A trilha aparece assim que o consultor cadastrar o plano.'));
@@ -2802,14 +2802,14 @@
 
   // ===== telas =====
   const SCREENS = {
-    plano: { crumb: 'Visão geral · ' + U.nomeMes(hoje) + ' de ' + hoje.slice(0, 4), render: telaCaminho },
+    plano: { crumb: 'Visão Geral · ' + U.nomeMes(hoje) + ' de ' + hoje.slice(0, 4), render: telaCaminho },
     inicio: { crumb: 'Início · ' + U.nomeMes(hoje) + ' de ' + hoje.slice(0, 4), render: telaInicio },
     acoes: { crumb: 'Acompanhamento / Ações', render: telaAcoes },
     resultados: { crumb: 'Acompanhamento / Resultados', render: telaResultados },
     relatorio: { crumb: 'Acompanhamento / Relatório do mês', render: telaRelatorio },
     consultoria: { crumb: 'Acompanhamento / Calendário', render: telaConsultoria },
     plataforma: { crumb: 'Sua marca / Narrativa', render: telaPlataforma },
-    identidade: { crumb: 'Sua marca / Identidade visual', render: telaIdentidade },
+    identidade: { crumb: 'Sua marca / Identidade Visual', render: telaIdentidade },
     estrategia: { crumb: 'Sua marca / Estratégia', render: telaEstrategia },
     diagnostico: { crumb: 'Sua marca / Diagnóstico', render: telaDiagnostico },
     assinatura: { crumb: 'Conta / Meu plano', render: telaAssinatura },

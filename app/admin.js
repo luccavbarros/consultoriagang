@@ -277,7 +277,7 @@
       return el('li', 'row', el('div', 'row__main',
         el('p', 'row__eyebrow', (c.active === false ? 'Desativado · ' : '') + c.email),
         el('p', 'row__title', c.name || c.email),
-        el('p', 'row__text', deles.length ? deles.length + (deles.length === 1 ? ' cliente: ' : ' clientes: ') + deles.map((e) => e.nome).join(', ') : 'Nenhum cliente ainda. Direcione em Visão geral, na lista de clientes.'), msg),
+        el('p', 'row__text', deles.length ? deles.length + (deles.length === 1 ? ' cliente: ' : ' clientes: ') + deles.map((e) => e.nome).join(', ') : 'Nenhum cliente ainda. Direcione em Visão Geral, na lista de clientes.'), msg),
         el('div', 'row__actions',
           el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: async () => {
             const nova = randomPass();
@@ -386,8 +386,8 @@
   });
 
   // ===== telas separadas pelo menu: visão geral, novo cliente, seu perfil =====
-  const ROTULO = principal ? { geral: 'Visão geral', novo: 'Novo cliente', consultores: 'Consultores', pagamentos: 'Pagamentos', aprendizado: 'O que funciona', perfil: 'Seu perfil' }
-    : { geral: 'Visão geral', aprendizado: 'O que funciona', perfil: 'Seu perfil' };
+  const ROTULO = principal ? { geral: 'Visão Geral', novo: 'Novo cliente', consultores: 'Consultores', pagamentos: 'Pagamentos', aprendizado: 'O que funciona', perfil: 'Seu perfil' }
+    : { geral: 'Visão Geral', aprendizado: 'O que funciona', perfil: 'Seu perfil' };
   const mostraTela = (foco) => {
     let v = location.hash.slice(1); if (!ROTULO[v]) v = 'geral';
     document.querySelectorAll('[data-view]').forEach((n) => {
