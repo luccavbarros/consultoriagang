@@ -1374,6 +1374,7 @@
     el('tbody', null, linhas.map((l) => el('tr', null, l.map((v, i) => (i === 0 ? el('th', { scope: 'row' }, v) : el('td', null, v))))))));
 
   // "Como foi o mês?": no lugar dos números da empresa, o cliente diz em um clique se o mês foi melhor, igual ou pior
+  // que o mesmo mês do ano passado (comparar com o mês anterior misturaria a época do ano com o efeito do plano)
   const COMO = { melhor: ['Melhor', '↑'], igual: ['Igual', '='], pior: ['Pior', '↓'] };
   const blocoComoFoi = () => {
     if (!inicioRef || mesPassado < inicioRef) return null;
@@ -1394,12 +1395,12 @@
     const melhores = respondidos.filter((r) => comoFoi(r) === 'melhor').length;
     return el('section', { class: 'box comofoi' + (respondidos.length > 1 ? ' comofoi--dois' : ''), id: 'como-foi', tabindex: '-1', 'aria-labelledby': 'cf-t' },
       el('div', 'comofoi__q', el('div', 'box__head', el('h2', { class: 'box__title', id: 'cf-t' }, 'Como foi ' + U.nomeMes(mesPassado) + '?'), atual ? chip('done', 'Respondido') : null),
-      el('p', 'box__text', ['Comparado com o mês anterior, para a empresa.', el('br'), 'Sem números: só você e o consultor veem.']),
+      el('p', 'box__text', ['Comparado com ' + U.nomeMes(mesPassado) + ' do ano passado.', el('br'), 'Sem números: só você e o consultor veem.']),
       el('div', { class: 'comofoi__btns', role: 'group', 'aria-label': 'Como foi ' + U.nomeMes(mesPassado) },
         Object.entries(COMO).map(([k, [t, ic]]) => el('button', { class: 'comofoi__btn comofoi__btn--' + k, type: 'button', 'aria-pressed': String(atual === k),
           onclick: (ev) => responde(k, ev.currentTarget) }, el('span', { class: 'comofoi__ic', 'aria-hidden': 'true' }, ic), t)))),
       respondidos.length > 1 ? el('div', 'comofoi__hist',
-        el('p', 'comofoi__res', melhores + ' de ' + respondidos.length + (respondidos.length === 1 ? ' mês melhor' : ' meses melhores') + ' que o anterior'),
+        el('p', 'comofoi__res', melhores + ' de ' + respondidos.length + (respondidos.length === 1 ? ' mês melhor' : ' meses melhores') + ' que no ano passado'),
         el('ol', { class: 'comofoi__meses', 'aria-label': 'Como foi cada mês' }, ult.map((r) => { const v = comoFoi(r);
           return el('li', 'comofoi__m' + (v ? ' is-' + v : ''), el('span', 'comofoi__mi', v ? COMO[v][1] : '·'), el('span', 'comofoi__ml', U.nomeMesCurto(r)),
             el('span', 'sr-only', v ? COMO[v][0] : 'sem resposta')); }))) : null);
@@ -2757,7 +2758,7 @@
       const objNeg = D.objetivos.find((o) => o.nivel === 'negocio');
       const cf = comoFoi(mesPassado);
       const kpis = [
-        ['Como foi ' + U.nomeMes(mesPassado), cf ? COMO[cf][1] + ' ' + COMO[cf][0] : '—', cf ? 'comparado com o mês anterior' : 'sem resposta'],
+        ['Como foi ' + U.nomeMes(mesPassado), cf ? COMO[cf][1] + ' ' + COMO[cf][0] : '—', cf ? 'comparado com o ano passado' : 'sem resposta'],
         ['Ações concluídas', D.acoes.filter((a) => a.status === 'feita').length + ' de ' + D.acoes.filter((a) => a.mes_previsto <= r1).length, 'até ' + U.nomeMes(r1)],
         ['Mês do plano', mesN + ' de ' + dur, objNeg && objNeg.destaque ? 'meta ' + objNeg.destaque : ''],
         ['Próximo encontro', D.proximo ? U.dia(D.proximo.inicio) : 'a marcar', D.proximo ? U.hora(D.proximo.inicio) : ''],
