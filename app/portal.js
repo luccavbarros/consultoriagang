@@ -1228,7 +1228,7 @@
           atual.n && atual.n < 30
             ? el('span', { class: 'chip chip--doing', title: 'Com menos de 30 respostas, leia como tendência: uma pessoa a mais muda o resultado em vários pontos.' }, 'Amostra pequena · ' + atual.n + (atual.n === 1 ? ' resposta' : ' respostas'))
             : el('p', 'box__note', atual.q.titulo + ' · ' + atual.n + (atual.n === 1 ? ' resposta' : ' respostas'))),
-        el('p', 'box__text', 'O que seus clientes responderam na pesquisa ' + (atual.q.titulo ? '“' + atual.q.titulo + '”' : '') + '.'));
+        el('p', 'box__text', atual.q.titulo ? ['O que seus clientes responderam na pesquisa', el('br'), '“' + atual.q.titulo + '”.'] : 'O que seus clientes responderam na pesquisa.'));
       if (temGrupo) {
         const nG = (g) => D.respostas.filter((r) => r.pesquisa_id === atual.q.id && (g === 'todos' || (g === 'novos' ? r.ja_cliente === false && r.recencia !== 'nunca' : r.ja_cliente === true))).length;
         box.append(el('div', 'grupo',
