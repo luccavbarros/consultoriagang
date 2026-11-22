@@ -137,6 +137,11 @@
               <label class="label" for="p-setor">Setor (filtra as ações sugeridas)</label>
               <select class="field" id="p-setor"><option value="">Não definido</option></select>
             </div>
+            <div>
+              <label class="label" for="p-vende">O cliente vende</label>
+              <select class="field" id="p-vende" aria-describedby="p-vende-d"><option value="">Pelo setor</option><option value="produto">Produto</option><option value="servico">Serviço</option><option value="ambos">Os dois, meio a meio</option></select>
+              <p class="field-hint" id="p-vende-d">Vende os dois? Escolha o que pesa mais no faturamento.<br />“Os dois” mantém o texto original do plano.</p>
+            </div>
             <div><label class="label" for="p-consultor">Consultor</label><select class="field" id="p-consultor"></select></div>
             <div hidden><label class="label" for="p-meta">Meta de faturamento (%)</label><select class="field" id="p-meta" data-num><option value="">Sem meta</option><option value="10">+10%</option><option value="15">+15%</option><option value="20">+20%</option><option value="25">+25%</option><option value="30">+30%</option><option value="40">+40%</option><option value="50">+50%</option><option value="100">+100% (dobrar)</option></select></div>
             <div hidden><label class="label" for="p-base">Faturamento de partida</label><input class="field" id="p-base" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" aria-describedby="p-base-d" /><p class="field-hint" id="p-base-d">Média mensal dos 12 meses antes do plano</p></div>
@@ -594,11 +599,11 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script src="app/config.js"></script>
   <script src="app/auth.js?v=4"></script>
-  <script src="app/ui.js?v=47"></script>
+  <script src="app/ui.js?v=48"></script>
   <script src="app/cerebro.js?v=1"></script>
   <script src="app/admin-briefing.js?v=5"></script>
   <script src="app/admin-marca.js?v=69"></script>
   <script src="app/saude.js?v=20"></script>
-  <script src="app/admin-cliente.js?v=144"></script>
+  <script src="app/admin-cliente.js?v=145"></script>
 </body>
 </html>
