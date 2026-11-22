@@ -362,7 +362,7 @@ a.kpi:hover { background: #1f1f1f; }
 .side__link[data-tab="plano"] { --ico: var(--i-sliders); }
 .side__link[href="#acessos"] { --ico: var(--i-key); }
 .side__link[data-route="plano"] { --ico: var(--i-flag); }
-.side__link[href="#consultoria"] { --ico: var(--i-chat); }
+.side__link[href="#consultoria"] { --ico: var(--i-cal); }
 .side__ind { margin-left: auto; }
 .side__back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ganggrey); text-decoration: none; }
 .side__back::before { --ico: var(--i-back); width: 14px; height: 14px; }
