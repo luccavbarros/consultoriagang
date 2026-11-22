@@ -7415,3 +7415,57 @@
     return s;
   };
 })();
+
+// ===== Marca de produto e varejo: o desafio de ocasião e textos de marca para quem vende produto =====
+// Base: pontos de entrada na categoria e disponibilidade mental (a marca precisa estar ligada a mais situações de compra,
+// não só às ocasiões especiais) e continuidade da comunicação (marca construída o ano todo, não em picos sazonais).
+// Os grupos são neutros (a fonte nunca aparece). "setores" faz a opção aparecer primeiro para esses setores no painel.
+(function () {
+  const P = window.GangPresets; if (!P || !P.desafios || !P.abordagens || !P.causas) return;
+  const G = 'Produto e varejo';
+  const PRODUTO = ['varejo', 'alimentacao', 'loja_online', 'beleza'];
+  const ab = (ini) => (P.abordagens.find((a) => a.texto.startsWith(ini)) || {}).texto;
+  const D_OC = 'A marca é lembrada em ocasiões especiais, mas não entra na rotina do cliente, então vende nas datas e some no resto do ano';
+  if (!P.desafios.some((d) => d.texto === D_OC)) {
+    P.desafios.push({ grupo: G, texto: D_OC, abordagens: [ab('Ser a marca dona de uma situação de compra'), ab('Construir a marca de forma contínua'), ab('Ganhar mercado conquistando quem ainda não compra')].filter(Boolean) });
+  }
+  const D = (ini) => (P.desafios.find((d) => d.texto.startsWith(ini)) || {}).texto;
+  // as causas que levam a ele (além dos desafios que já tinham)
+  ['A marca não está ligada às situações em que o cliente compra', 'A comunicação fala do produto, e não do momento em que ele é usado', 'As campanhas duram pouco tempo e passam por poucos canais']
+    .forEach((t) => { const c = P.causas.find((x) => x.texto === t); if (c) c.desafios = [...new Set([...(c.desafios || []), D_OC])]; });
+  const C_OC = 'A marca é lembrada só em datas especiais e some no resto do ano';
+  if (!P.causas.some((c) => c.texto === C_OC)) P.causas.push({ grupo: G, texto: C_OC, desafios: [D_OC, D('A comunicação é irregular')].filter(Boolean) });
+  // o diagnóstico em uma frase que continua nele
+  const R_OC = 'As vendas se concentravam nas datas especiais; no resto do ano, quase ninguém pensava na marca para o uso do dia a dia.';
+  if (P.resumosDiagnostico && !P.resumosDiagnostico.some((x) => x.texto === R_OC)) P.resumosDiagnostico.push({ grupo: G, texto: R_OC });
+  if (P.resumoDesafios && !P.resumoDesafios.some(([ini]) => ini === 'As vendas se concentravam nas datas especiais')) P.resumoDesafios.push(['As vendas se concentravam nas datas especiais', ['A marca é lembrada em ocasiões especiais', 'A comunicação é irregular']]);
+
+  const add = (k, itens) => { P[k] = P[k] || []; itens.forEach((x) => { const o = typeof x === 'string' ? { texto: x } : x; if (!P[k].some((y) => y.texto === o.texto)) P[k].push({ grupo: G, setores: PRODUTO, ...o }); }); };
+  add('mensagensCentrais', ['Para usar todo dia, não só em ocasiões especiais.', 'Feito com cuidado, do ingrediente à embalagem.',
+    'A marca que você reconhece de longe e escolhe de novo.', 'Tradição que você usa no dia a dia.']);
+  add('identidadeCentral', [
+    { texto: 'Origem e tradição que se contam', explicacao: 'Cada produto diz de onde veio e por que é feito assim; a história aparece na embalagem, na loja e nas redes.' },
+    { texto: 'Reconhecível na prateleira', explicacao: 'Cores, formas e rótulos próprios se repetem em tudo, para a marca ser achada sem ler o nome.' },
+    { texto: 'Feito para o uso de todo dia', explicacao: 'O produto é pensado para a rotina do cliente, e a comunicação mostra esse uso, não só as ocasiões especiais.' }]);
+  add('mensagensApoio', ['Ingredientes escolhidos e explicados em cada produto', 'Uma história de origem que dá para contar',
+    'Embalagens que se reconhecem na prateleira', 'Lojas onde dá para experimentar antes de levar', 'Produtos pensados para usar todos os dias']);
+})();
+
+// ===== Vereditos sem números da empresa: o cliente não passa faturamento =====
+// O veredito se apoia no que a plataforma mede: como foi o mês (comparado ao mesmo mês do ano passado), a execução das ações
+// e a pesquisa de marca. Saem as sugestões que dependiam de faturamento, ticket ou vendas.
+(function () {
+  const P = window.GangPresets; if (!P || !P.vereditos) return;
+  const sai = ['O ticket médio subiu', 'As vendas cresceram sem desconto', 'As vendas subiram, mas vieram quase só', 'Os números caíram e o plano precisa',
+    'A recompra subiu junto com os clientes novos', 'O preço subiu e as vendas se mantiveram'];
+  P.vereditos = P.vereditos.filter((v) => !sai.some((ini) => v.texto.startsWith(ini)));
+  P.vereditos.forEach((v) => { if (/^Sem os números do mês, o veredito é sobre a execução: /.test(v.texto)) { v.texto = v.texto.replace(/^Sem os números do mês, o veredito é sobre a execução: /, 'Na execução, '); v.grupo = 'Execução'; } });
+  const G = 'Como foi o mês';
+  [
+    'O cliente disse que o mês foi melhor que no ano passado e as ações de marca saíram no prazo: o plano está funcionando.',
+    'O mês foi igual ao do ano passado, com as ações em dia: a marca está sendo construída e o efeito vem com a continuidade.',
+    'O mês foi pior que no ano passado e as ações atrasaram: recuperar as essenciais é a prioridade do próximo mês.',
+    'O mês foi pior que no ano passado mesmo com as ações em dia: no encontro, vamos entender o que mudou fora do plano.',
+    'A busca pelo nome da marca cresceu: mais gente está lembrando dela.',
+  ].forEach((t) => { if (!P.vereditos.some((v) => v.texto === t)) P.vereditos.unshift({ grupo: G, texto: t }); });
+})();
