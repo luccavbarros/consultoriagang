@@ -1458,6 +1458,9 @@ input[type=date].field::-webkit-date-and-time-value { text-align: left; }
 /* a nota do cabeçalho vai para o canto direito da caixa, alinhada à direita; no celular desce para baixo do título */
 .gh__nota { flex: 0 1 auto; max-width: 60%; margin-left: auto; text-align: right; }
 @media (max-width: 640px) { .gh__nota { flex-basis: 100%; max-width: none; margin-left: 0; text-align: left; } }
+/* quadro estreito: a nota não cabe ao lado do título e desce; aí fica alinhada à esquerda, embaixo dele */
+.gh { container-type: inline-size; }
+@container (max-width: 820px) { .gh__nota { flex-basis: 100%; max-width: none; margin-left: 0; text-align: left; } }
 .gl { list-style: none; margin: 0; padding: 0; border-radius: 12px; border: 1px solid var(--line); background: #171717; overflow: hidden; }
 .gl__i { display: flex; align-items: center; gap: 12px; padding: 11px 14px; min-width: 0; }
 .gl__i + .gl__i { border-top: 1px solid var(--line); }
