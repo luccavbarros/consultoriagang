@@ -113,6 +113,10 @@
 
     // ===== Métricas (nome → já sugere nível e frequência) =====
     metricas: [
+      ...g('Sem os números do cliente', [
+        { texto: 'Como foi o mês, na avaliação do cliente', nivel: 'negocio', frequencia: 'mensal' },
+        { texto: 'Ações do mês feitas no prazo', nivel: 'marketing', frequencia: 'mensal' },
+      ]),
       ...g(S, [
         { texto: 'Lembrança em situações de compra', nivel: 'marca', frequencia: 'semestral' },
         { texto: 'Clientes novos (penetração)', nivel: 'negocio', frequencia: 'mensal' },
@@ -122,17 +126,18 @@
         { texto: 'Participação nas buscas', nivel: 'marketing', frequencia: 'mensal' },
         { texto: 'Lembrança e preferência', nivel: 'marca', frequencia: 'semestral' },
       ]),
+      ...g(S, [{ texto: 'Fatia nas lembranças da categoria', nivel: 'marca', frequencia: 'semestral' }]),
+      // dependem do faturamento: só para o cliente que compartilha os números
       ...g(J, [
         { texto: 'Ticket médio', nivel: 'negocio', frequencia: 'mensal' },
         { texto: 'Leads · conversão', nivel: 'marketing', frequencia: 'mensal' },
         { texto: 'Faturamento', nivel: 'negocio', frequencia: 'mensal' },
       ]),
-      ...g(S, [{ texto: 'Fatia nas lembranças da categoria', nivel: 'marca', frequencia: 'semestral' }]),
     ],
 
     // ===== Encontros =====
     pauta: [
-      ...g(J, ['As ações do mês saíram no prazo?', 'Números do mês passado', 'Plano de ações do próximo mês', 'Decisões e responsáveis']),
+      ...g(J, ['As ações do mês saíram no prazo?', 'Como foi o mês para a empresa', 'Plano de ações do próximo mês', 'Decisões e responsáveis']),
       ...g(B, ['Equilíbrio entre marca e vendas']),
       ...g(S, ['Resultados da pesquisa de marca', 'Situação de compra mais fraca: o que fazer']),
       ...g(M, ['Revisar as condições da estratégia']),
@@ -162,13 +167,18 @@
 
     // ===== Estratégia =====
     objetivos: [
-      ...g(B, [
-        { texto: 'faturamento em 18 meses, com ticket médio maior', nivel: 'negocio' },
-        { texto: 'faturamento em 12 meses com mais clientes novos', nivel: 'negocio' },
+      ...g('Sem os números do cliente', [
+        { texto: 'Ser escolhida sem que o cliente compare só o preço', nivel: 'negocio' },
+        { texto: 'Mais clientes chegando por indicação', nivel: 'negocio' },
       ]),
       ...g(S, [
         { texto: 'Ser lembrada em mais situações de compra que os concorrentes', nivel: 'marca' },
         { texto: 'Ser reconhecida sem precisar ler o nome', nivel: 'marca' },
+      ]),
+      // dependem do faturamento: só para o cliente que compartilha os números
+      ...g(B, [
+        { texto: 'faturamento em 18 meses, com ticket médio maior', nivel: 'negocio' },
+        { texto: 'faturamento em 12 meses com mais clientes novos', nivel: 'negocio' },
       ]),
       ...g(K, [
         { texto: 'O que o cliente precisa notar, acreditar e sentir', nivel: 'comunicacao' },
@@ -190,7 +200,7 @@
       'Os clientes-alvo valorizam a especialização', 'Clientes de alto valor aceitam pagar mais pelo diferencial', 'A equipe entrega a promessa em todo atendimento',
       'Os concorrentes não copiam o diferencial no curto prazo', 'O canal escolhido alcança o cliente-alvo', 'A operação comporta o crescimento',
     ]),
-    verificacoes: g(M, ['Ticket médio das propostas novas', 'Avaliação dos clientes ao fim do serviço', 'Taxa de fechamento das propostas', 'Pesquisa de marca semestral', 'Leitura trimestral dos sites e propostas dos concorrentes', 'Capacidade da equipe no mês']),
+    verificacoes: g(M, ['Avaliação dos clientes ao fim do serviço', 'Pesquisa de marca semestral', 'Como foi o mês, na avaliação do cliente', 'Propostas fechadas sem desconto, na conversa do encontro', 'Leitura trimestral dos sites e propostas dos concorrentes', 'Capacidade da equipe no mês', 'Ticket médio das propostas novas', 'Taxa de fechamento das propostas']),
     donos: g('Quem checa', ['Cliente', 'GANG', 'Cliente e GANG']),
 
     // ===== Plataforma (Kapferer) =====
