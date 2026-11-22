@@ -530,6 +530,9 @@
   let misPctAntes = null; let misFeitasAntes = null; // a barra das missões cresce do valor anterior
   const guarda = { get(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* sem armazenamento: sem animação */ } } };
 
+  // tarefas de medição e de revisão (pesquisa, revisão do semestre ou do ano): medem a marca, não constroem lembrança,
+  // então não levam a etiqueta de efeito de marca
+  const ehMedicao = (a) => /pesquisa|revis[aã]o (semestral|anual)|plano do segundo ano/i.test(a.titulo_base || a.titulo || '');
   const cartaoAcao = (a) => {
     const o = objetivo[a.objetivo_id];
     const p = prazo(a);
@@ -626,7 +629,7 @@
       check,
       el('div', 'task__main',
         el('p', 'task__title', a.titulo),
-        el('p', 'task__sub', ehNova(a) ? el('span', 'task__novo', 'Novo') : null, ehNova(a) ? ' ' : null, [mesNaLinha(a), ps.length ? feitos + ' de ' + ps.length + ' passos' : null, a.tamanho ? 'tamanho ' + a.tamanho : null, a.esforco === 'marca' ? 'efeito em 6 a 12 meses' : null, a.observacao ? 'nota do consultor' : null,
+        el('p', 'task__sub', ehNova(a) ? el('span', 'task__novo', 'Novo') : null, ehNova(a) ? ' ' : null, [mesNaLinha(a), ps.length ? feitos + ' de ' + ps.length + ' passos' : null, a.tamanho ? 'tamanho ' + a.tamanho : null, a.esforco === 'marca' && !ehMedicao(a) ? 'efeito em 6 a 12 meses' : null, a.observacao ? 'nota do consultor' : null,
           a.travada && a.status !== 'feita' ? 'travada: ' + MOTIVOS[a.travada].toLowerCase() : null, a.adiantada_de ? 'adiantada de ' + U.nomeMesCurto(a.adiantada_de).toLowerCase() : null].filter(Boolean).join(' · '))),
       // quem faz: só aparece quando não é só o cliente (GANG, junto com a GANG ou com outra pessoa)
       el('div', 'task__tags', p.text ? el('span', 'mtag mtag--date' + (p.hot ? ' is-hot' : ''), p.text) : null),
@@ -647,7 +650,7 @@
     const txt = el('textarea', { class: 'field result__input', rows: 2, maxlength: 1000, placeholder: 'O que aprendemos? (opcional)', 'aria-label': 'O que aprendemos com “' + a.titulo + '”' });
     txt.value = a.aprendizado || '';
     const msg = el('p', { class: 'msg', role: 'status' });
-    const marca = a.esforco === 'marca';
+    const marca = a.esforco === 'marca' || ehMedicao(a); // medição também se avalia por "foi feita como planejado?"
     const salva = async (r) => {
       const { error } = await sb.rpc('portal_resultado_acao', { p_acao: a.id, p_resultado: r, p_aprendizado: txt.value });
       if (error) return U.say(msg, 'Não foi possível salvar.', 'error');
@@ -655,7 +658,7 @@
     };
     return el('div', 'result',
       el('p', 'result__q', marca ? 'Foi feita como planejado?' : a.metrica_sucesso ? 'Funcionou? (' + a.metrica_sucesso + ')' : 'Funcionou?'),
-      marca ? el('p', 'box__note', 'Ação de marca: o efeito aparece em 6 a 12 meses e é medido na pesquisa do semestre, não agora.') : null,
+      marca && !ehMedicao(a) ? el('p', 'box__note', 'Ação de marca: o efeito aparece em 6 a 12 meses e é medido na pesquisa do semestre, não agora.') : null,
       el('div', { class: 'seg seg--sm', role: 'group', 'aria-label': 'Resultado de “' + a.titulo + '”' },
         Object.entries(RES).map(([k, [, t]]) => el('button', { class: 'seg__btn', type: 'button', 'aria-pressed': String(a.resultado === k), onclick: () => salva(k) }, marca ? { sim: 'Sim', parcial: 'Em parte', nao: 'Não' }[k] : t.replace('Funcionou em parte', 'Em parte').replace('Não funcionou', 'Não').replace('Funcionou', 'Sim')))),
       txt,

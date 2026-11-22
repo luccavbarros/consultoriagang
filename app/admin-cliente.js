@@ -871,6 +871,41 @@
     loadAcoes(); loadSugs();
   });
 
+  // ===== ligar cada ação à causa que ela ataca e ao objetivo que ela serve, pela cadeia do cérebro =====
+  // causa → desafios → abordagens → ações. Só preenche o que está vazio: o que o consultor ligou à mão fica como está
+  const acoesDaCausa = (texto) => {
+    const P = window.GangPresets || {}; const set = new Set();
+    const c = (P.causas || []).find((x) => x.texto === texto);
+    (c && c.desafios || []).forEach((d) => {
+      const dd = (P.desafios || []).find((x) => x.texto === d);
+      (dd && dd.abordagens || []).forEach((ab) => { const aa = (P.abordagens || []).find((x) => x.texto === ab); (aa && aa.acoes || []).forEach((t) => set.add(t)); });
+    });
+    return set;
+  };
+  const dadosLigacao = async () => {
+    const [{ data: cs }, { data: ob }, { data: pl }] = await Promise.all([
+      sb.from('causas').select('id, texto').eq('empresa_id', id).order('ordem'),
+      sb.from('objetivos').select('id, nivel').eq('empresa_id', id).order('ordem'),
+      sb.from('planos').select('desafio').eq('empresa_id', id).maybeSingle()]);
+    return { causas: cs || [], objetivos: ob || [], desafio: pl && pl.desafio };
+  };
+  const ligaAcoes = (lista, { causas, objetivos, desafio }) => {
+    const P = window.GangPresets || {};
+    const cands = causas.map((c) => ({ c, set: acoesDaCausa(c.texto), principal: (((P.causas || []).find((x) => x.texto === c.texto) || {}).desafios || []).includes(desafio) }));
+    const usos = new Map(causas.map((c) => [c.id, lista.filter((a) => a.causa_id === c.id).length]));
+    const objM = objetivos.find((o) => o.nivel === 'marca'); const objN = objetivos.find((o) => o.nivel === 'negocio');
+    lista.forEach((a) => {
+      const t = a.titulo_base || a.titulo;
+      if (!a.causa_id) {
+        // a ação que executa a abordagem ataca as causas que levaram ao desafio escolhido; as outras, as causas cuja cadeia chega nelas
+        const ok = cands.filter((x) => x.set.has(t) || (a.executa && x.principal));
+        if (ok.length) { ok.sort((x, y) => usos.get(x.c.id) - usos.get(y.c.id)); a.causa_id = ok[0].c.id; usos.set(ok[0].c.id, usos.get(ok[0].c.id) + 1); }
+      }
+      if (!a.objetivo_id) { const o = a.esforco === 'marca' ? (objM || objN) : (objN || objM); if (o) a.objetivo_id = o.id; }
+    });
+    return lista;
+  };
+
   const desenhaEquilibrio = async () => {
     const B = window.GangSaude && await window.GangSaude.carregar(sb, id);
     const box = $('equil'); if (!B || !B.acoes.length) { box.hidden = true; return; }
@@ -881,6 +916,40 @@
     if (E.semMarcaTotal) avisos.push(E.semMarcaTotal + (E.semMarcaTotal === 1 ? ' mês' : ' meses') + ' pela frente sem ação de marca: ' + E.semMarca.map((r) => U.nomeMes(r)).join(', ') + (E.semMarcaTotal > E.semMarca.length ? '…' : '') + '.');
     E.causasSemAcao.forEach((c) => avisos.push('Causa do diagnóstico sem ação: "' + c.texto + '".'));
     E.objetivosSemAcao.forEach((o) => avisos.push('Objetivo sem ação ligada: "' + o.titulo + '".'));
+    // o que resolve esses avisos com um clique: ligar o que já está no plano e, para a causa que sobrar, sugerir uma ação da biblioteca
+    const resolver = [];
+    if (E.causasSemAcao.length || E.objetivosSemAcao.length) {
+      const semLigacao = B.acoes.filter((a) => a.status !== 'feita' && (!a.causa_id || !a.objetivo_id));
+      if (semLigacao.length) resolver.push(el('button', { class: 'btn btn--light btn--sm', type: 'button', onclick: async (ev) => {
+        ev.currentTarget.disabled = true;
+        const L = await dadosLigacao();
+        const copia = semLigacao.map((a) => ({ ...a }));
+        ligaAcoes(copia, L);
+        const mudou = copia.filter((a, i) => a.causa_id !== semLigacao[i].causa_id || a.objetivo_id !== semLigacao[i].objetivo_id);
+        for (const a of mudou) await sb.from('acoes').update({ causa_id: a.causa_id || null, objetivo_id: a.objetivo_id || null }).eq('id', a.id);
+        say($('acoes-msg'), mudou.length ? mudou.length + (mudou.length === 1 ? ' ação ligada' : ' ações ligadas') + ' às causas e aos objetivos.' : 'Nenhuma ação do plano ataca essas causas: use as sugestões abaixo.', 'ok');
+        await loadAcoes();
+      } }, 'Ligar as ações às causas e aos objetivos'));
+      const noPlano = new Set(B.acoes.map((a) => a.titulo_base || a.titulo));
+      const proxMes = U.addRef(U.ref(), 1);
+      E.causasSemAcao.forEach((c) => {
+        const t = [...acoesDaCausa(c.texto)].find((x) => !noPlano.has(x) && (P.acoes || []).some((y) => y.texto === x));
+        if (!t) return;
+        const x = (P.acoes || []).find((y) => y.texto === t);
+        resolver.push(el('div', 'equil__sug', el('p', 'small', 'Para “' + c.texto + '”: ' + t),
+          el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: async (ev) => {
+            ev.currentTarget.disabled = true;
+            const L = await dadosLigacao();
+            const obj = (x.esforco === 'marca' ? L.objetivos.find((o) => o.nivel === 'marca') : null) || L.objetivos.find((o) => o.nivel === 'negocio') || L.objetivos.find((o) => o.nivel === 'marca');
+            const r = await sb.from('acoes').insert({ ...detalheDe(t), prazo: distribuiPrazos(proxMes, [{ ...x, essencial: 0, tam: 'G' }])[t] || null, empresa_id: id, titulo: t, mes_previsto: proxMes, esforco: x.esforco || null,
+              metrica_sucesso: x.metrica || null, porque: x.porque || null, promessa: x.promessa || null, peso: 'ajuda', causa_id: c.id, objetivo_id: obj ? obj.id : null,
+              responsavel: 'cliente', status: 'a_fazer', atualizada_por: me.id, atualizada_em: new Date().toISOString() });
+            if (r.error) { ev.currentTarget.disabled = false; return say($('acoes-msg'), 'Não foi possível adicionar.', 'error'); }
+            say($('acoes-msg'), '“' + t + '” entrou em ' + U.nomeMes(proxMes) + ', ligada a “' + c.texto + '”.', 'ok');
+            await loadAcoes();
+          } }, 'Adicionar em ' + U.nomeMes(proxMes))));
+      });
+    }
     const tot = E.porPromessa.vendas + E.porPromessa.pessoas + E.porPromessa.valor;
     box.hidden = false;
     box.replaceChildren(
@@ -889,7 +958,8 @@
         E.marcaPct != null ? el('div', 'equil__barra', el('p', 'equil__lbl', 'Marca e ativação, pelo tamanho das ações'), el('div', 'equil__track', el('span', { class: 'is-marca', style: 'width:' + E.marcaPct + '%' }), el('span', { class: 'is-alvo', style: 'left:' + E.planejado + '%' })), el('p', 'equil__num', E.marcaPct + '% marca · ' + (100 - E.marcaPct) + '% ativação · planejado ' + E.planejado + '%' + (E.nBase ? ' · ' + E.nBase + (E.nBase === 1 ? ' ação de base fora da conta' : ' ações de base fora da conta') : ''))) : null,
         el('div', 'equil__barra', el('p', 'equil__lbl', 'Ações por parte da promessa'), el('div', 'equil__track equil__track--3', Object.keys(PR).map((k) => el('span', { class: 'is-' + k, style: 'width:' + (tot ? Math.round(E.porPromessa[k] / tot * 100) : 0) + '%' }))),
           el('p', 'equil__num', Object.entries(PR).map(([k, t]) => t + ' ' + E.porPromessa[k]).join(' · ')))),
-      avisos.length ? el('ul', 'equil__avisos', avisos.map((t) => el('li', null, t))) : '');
+      avisos.length ? el('ul', 'equil__avisos', avisos.map((t) => el('li', null, t))) : '',
+      resolver.length ? el('div', 'equil__resolver', resolver) : '');
   };
 
   // filtro das ações por andamento (menu com caixas de seleção e contadores)
@@ -1877,13 +1947,14 @@
     const nMeses = new Set(novas.map((x) => x.mes)).size;
     if (!(await U.confirma('Montar o plano “' + m.nome + '” até o fim do prazo: ' + novas.length + ' ações em ' + nMeses + ' meses. As que já existem não se repetem.'))) return;
     $('mod-go').disabled = true;
+    ligaAcoes(novas, await dadosLigacao()); // cada ação nova já sai ligada à causa que ataca e ao objetivo que serve
     const prz = {};
     [...new Set(novas.map((x) => x.mes))].forEach((mm) => {
       const doM = novas.filter((x) => x.mes === mm).map((x) => ({ ...((P.acoes || []).find((a) => a.texto === x.titulo) || { texto: x.titulo }), essencial: x.peso === 'essencial' ? 1 : 0 }));
       Object.assign(prz, Object.fromEntries(Object.entries(distribuiPrazos(mm, doM)).map(([t, d]) => [mm + '|' + t, d])));
     });
     const r = await sb.from('acoes').insert(novas.map((x) => ({ ...detalheDe(x.titulo), prazo: prz[x.mes + '|' + x.titulo] || null, empresa_id: id, titulo: x.titulo, mes_previsto: x.mes, peso: x.peso, promessa: x.promessa, esforco: x.esforco,
-      porque: x.porque, metrica_sucesso: x.metrica, ...(x.executa ? { executa: x.executa } : {}), responsavel: 'cliente', status: 'a_fazer', atualizada_por: me.id, atualizada_em: new Date().toISOString() })));
+      porque: x.porque, metrica_sucesso: x.metrica, ...(x.executa ? { executa: x.executa } : {}), ...(x.causa_id ? { causa_id: x.causa_id } : {}), ...(x.objetivo_id ? { objetivo_id: x.objetivo_id } : {}), responsavel: 'cliente', status: 'a_fazer', atualizada_por: me.id, atualizada_em: new Date().toISOString() })));
     if (!r.error && novas.executaExistentes.length) await sb.from('acoes').update({ executa: E.ab.curto }).in('id', novas.executaExistentes.map((a) => a.id));
     $('mod-go').disabled = false;
     if (r.error) {

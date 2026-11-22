@@ -2488,3 +2488,8 @@ html.side-abrindo .side__plan .badge { display: none; }
 .gjan__msg { margin: 0 0 16px; font-size: 15px; line-height: 1.5; color: #f0f0f0; }
 .gjan__copiar { width: 100%; margin-bottom: 16px; }
 .gjan .dialog__foot { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* equilíbrio do plano: o que resolve os avisos com um clique */
+.equil__resolver { display: grid; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); justify-items: start; }
+.equil__sug { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.equil__sug .small { margin: 0; max-width: 60ch; }

@@ -7,6 +7,8 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   const nomeEmpresa = sb.from('empresas').select('nome').eq('id', id).maybeSingle().then((r) => (r.data ? r.data.nome : ''));
   // setor do cadastro (Contrato): separa as abordagens que têm ações para o setor das que quase não têm
   const setorEmpresa = () => sb.from('empresas').select('setor').eq('id', id).maybeSingle().then((r) => (r.data ? r.data.setor : null), () => null);
+  // o setor do cliente, para as respostas prontas feitas para ele aparecerem primeiro (ex.: textos de marca de produto no varejo)
+  let setorAtual = null; const setorPronto = setorEmpresa().then((x) => { setorAtual = x; });
   // a estratégia e o setor atuais, para sugerir verificações que combinam com a abordagem
   let ctxEst = { ab: null, setor: null };
   const atualizaCtx = async () => {
@@ -32,6 +34,13 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     await ctxPronto; const P = window.GangPresets || {};
     const r = P.renunciaDa ? P.renunciaDa(ctxEst.ab) : null; if (!r) return [];
     const xs = [r.frase, ...r.deixados]; xs.titulo = 'Do que a abordagem escolhida abre mão'; return xs;
+  };
+  // as condições sugeridas já entram com a forma de verificar (também sugerida pela abordagem), quem checa e a próxima checagem
+  const condicoesSug = async () => {
+    const xs = await daEstrategia('condicoes', 3, 'Condições que a abordagem escolhida precisa manter')();
+    const vs = verifDaEstrategia().map((v) => (typeof v === 'string' ? v : v.texto)).filter(Boolean);
+    const em = (m) => { const d = new Date(); d.setMonth(d.getMonth() + m, 1); return d.toLocaleDateString('sv-SE'); };
+    return Object.assign(xs.map((t, i) => ({ t, row: { texto: t, como_verificar: vs.length ? vs[i % vs.length] : null, dono: 'GANG', status: 'sem_dados', checar_em: em(i + 1) } })), { titulo: xs.titulo });
   };
   const verifDaEstrategia = () => { const P = window.GangPresets || {}; return P.sugereDaEstrategia && ctxEst.ab ? P.sugereDaEstrategia('verificacoes', ctxEst.ab, ctxEst.setor, [], 4) : []; };
   const MIN_ACOES_SETOR = 4; // abaixo disso o plano não consegue executar a abordagem naquele setor (o plano modelo pede pelo menos 4 ações da estratégia)
@@ -81,9 +90,13 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       const dest = f.destaca ? f.destaca() : [];
       if (dest.length) todas = dest.map((t) => ({ ...(todas.find((x) => x.texto === t) || { texto: t }), grupo: 'Sugeridas pela estratégia' }))
         .concat(todas.filter((x) => !dest.includes(x.texto)).map((x) => ({ ...x, grupo: 'Todas' })));
+      // respostas feitas para o setor do cliente vêm primeiro; as de outros setores continuam na lista, depois
+      const doSetor = !dest.length && setorAtual && todas.some((x) => x.setores && x.setores.includes(setorAtual));
+      if (doSetor) todas = todas.filter((x) => x.setores && x.setores.includes(setorAtual)).map((x) => ({ ...x, grupo: 'Para o seu setor' }))
+        .concat(todas.filter((x) => !(x.setores && x.setores.includes(setorAtual))).map((x) => ({ ...x, grupo: 'Todas' })));
       const ja = new Set(usados || []);
       input = U.combo(idc, ja.size ? todas.filter((i) => !ja.has(i.texto) || i.texto === valor) : todas, valor, {
-        semGrupos: !f.comGrupos && !dest.length, // a fonte de cada resposta pronta fica só por trás (só listas com grupos neutros os mostram)
+        semGrupos: !f.comGrupos && !dest.length && !doSetor, // a fonte de cada resposta pronta fica só por trás (só listas com grupos neutros os mostram)
         longo: !!f.longo, // frases longas: lista própria que mostra o texto inteiro
         onPick: (item) => Object.entries(f.fill || {}).forEach(([de, para]) => {
           if (item[de] == null) return;
@@ -199,6 +212,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
 
   // ----- ficha: um registro por empresa (diagnosticos, plataformas, identidades, planos) -----
   const ficha = async (mount, cfg) => {
+    await setorPronto;
     const { titulo, nota, tabela, fields, pasta } = cfg;
     mount.classList.add('is-largo');
     const pre = 'fi-' + tabela + '-';
@@ -292,6 +306,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   };
   // ----- lista: vários itens com ordem -----
   const lista = async (mount, { titulo, nota, tabela, fields, fixo = {}, resumo, pasta, vazio, ordem = true, icone, tom, largo, max, aoAbrir, sugere, limpar }) => {
+    await setorPronto;
     if (largo) mount.classList.add('is-largo');
     const pre = 'li-' + tabela + '-' + Object.values(fixo).join('-') + '-';
     let q = sb.from(tabela).select('*').eq('empresa_id', id);
@@ -418,7 +433,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   const montar = (pane, blocos) => {
     const box = $(pane);
     box.replaceChildren(); box.classList.add('ed-grade');
-    const limpavel = pane === 'pane-diagnostico' || pane === 'pane-estrategia'; // "Limpar" para começar de novo
+    const limpavel = ['pane-diagnostico', 'pane-estrategia', 'pane-plataforma', 'pane-identidade'].includes(pane); // "Limpar" para começar de novo, em todas as partes da marca
     blocos.forEach(([fn, cfg]) => { if (limpavel) cfg.limpar = true; const m = el('div', 'editor-block'); m.montagem = [fn, cfg]; box.append(m); fn(m, cfg); });
   };
   const POS = [['entrega', 'Entregava'], ['entrega_mal', 'Entregava mal'], ['nao_entrega', 'Não entregava']];
@@ -760,7 +775,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     [lista, { icone: 'radar', largo: true, titulo: 'O que acompanhamos', nota: 'Condições que precisam continuar verdadeiras. Quando uma vira “Não se confirma”, o cliente vê o aviso e\u00a0o\u00a0tema entra na pauta do próximo encontro.', tabela: 'condicoes', fields: [
       { k: 'texto', label: 'Condição', req: true, full: true, type: 'preset', presets: 'condicoes' }, { k: 'como_verificar', label: 'Como verificamos', type: 'preset', presets: 'verificacoes', destaca: verifDaEstrategia }, { k: 'status', label: 'Hoje', type: 'select', options: CON, def: 'sem_dados' },
       { k: 'checar_em', label: 'Próxima checagem', type: 'date' }],
-    sugere: daEstrategia('condicoes', 3, 'Condições que a abordagem escolhida precisa manter'), resumo: (r) => [r.texto, [r.como_verificar, CON_T[r.status], r.checar_em ? 'próxima: ' + U.dia(r.checar_em) : null].filter(Boolean).join(' · ')] }],
+    sugere: condicoesSug, resumo: (r) => [r.texto, [r.como_verificar, CON_T[r.status], r.checar_em ? 'próxima: ' + U.dia(r.checar_em) : null].filter(Boolean).join(' · ')] }],
   ]);
   // quando o Diagnóstico muda em outra aba, a Estratégia se atualiza ao ser aberta (sem recarregar a página)
   let estrategiaVelha = false;
