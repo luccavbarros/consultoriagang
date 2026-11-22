@@ -51,13 +51,17 @@
   // account changes need the service key, so the panel calls our own server function, which checks you are the admin
   const adminApi = async (body) => {
     const { data: { session } } = await sb.auth.getSession();
-    const r = await fetch('/api/admin-users', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (session ? session.access_token : '') },
-      body: JSON.stringify(body),
-    });
+    let r;
+    try {
+      r = await fetch('/api/admin-users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (session ? session.access_token : '') },
+        body: JSON.stringify(body),
+      });
+    } catch (e) { throw new Error('Sem conexão com o servidor. Confira a internet e tente de novo.'); }
     const out = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(out.error || 'Não deu certo. Tente de novo.');
+    // quando o servidor não explica, a mensagem diz o que aconteceu (em vez de só "não deu certo")
+    if (!r.ok) throw new Error(out.error || (r.status >= 500 ? 'O servidor falhou ao processar o pedido (erro ' + r.status + '). Tente de novo em instantes; se continuar, avise o suporte.' : 'O pedido não foi aceito (erro ' + r.status + ').'));
     return out;
   };
 

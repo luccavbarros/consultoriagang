@@ -283,7 +283,7 @@
             const nova = randomPass();
             try { await adminApi({ action: 'set_password', id: c.id, password: nova }); say(msg, 'Nova senha: ' + nova + ' (copie e envie ao consultor)', 'ok'); } catch (err) { say(msg, err.message, 'error'); } } }, 'Nova senha'),
           el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: async () => {
-            if (c.active !== false && !confirm('Desativar ' + (c.name || c.email) + '? Ele deixa de entrar, e os clientes dele continuam com você.')) return;
+            if (c.active !== false && !(await U.confirma('Desativar ' + (c.name || c.email) + '? Ele deixa de entrar, e os clientes dele continuam com você.'))) return;
             try { await adminApi({ action: 'set_active', id: c.id, active: c.active === false }); consultores(); } catch (err) { say(msg, err.message, 'error'); } } }, c.active === false ? 'Ativar' : 'Desativar')));
     }) : [el('li', 'clients__empty', 'Nenhum consultor ainda.')]));
   };
@@ -416,8 +416,11 @@
     ev.preventDefault();
     const empresa = $('nc-company').value.trim();
     const conta = { action: 'create', name: $('nc-name').value.trim(), company: empresa, email: $('nc-email').value.trim(), password: $('nc-pass').value };
-    if (!empresa || !conta.name || !conta.email) return say($('nc-msg'), 'Preencha empresa, nome e e-mail.', 'error');
-    if (conta.password.length < 8) return say($('nc-msg'), 'A senha precisa ter pelo menos 8 caracteres.', 'error');
+    // o acesso é opcional: sem nome e e-mail, cria só a empresa e o plano (o acesso vem depois, na página da empresa)
+    const comAcesso = !!(conta.name || conta.email);
+    if (!empresa) return say($('nc-msg'), 'Preencha o nome da empresa.', 'error');
+    if (comAcesso && (!conta.name || !conta.email)) return say($('nc-msg'), 'Para criar o acesso, preencha o nome e o e-mail. Ou deixe os dois em branco e crie o acesso depois.', 'error');
+    if (comAcesso && conta.password.length < 8) return say($('nc-msg'), 'A senha precisa ter pelo menos 8 caracteres.', 'error');
     if (!$('nc-start').value) return say($('nc-msg'), 'Escolha a data de início do plano.', 'error');
     if (!$('nc-setor').value) return say($('nc-msg'), 'Escolha o setor do cliente: ele define o plano modelo.', 'error');
 
@@ -431,12 +434,21 @@
       const p = await sb.from('planos').insert({
         empresa_id: empresaId, consultor_id: me.id, inicio: $('nc-start').value,
         duracao_meses: num('nc-months') || 18, meta_faturamento_pct: num('nc-goal'), faturamento_base: num('nc-base'), tipo: $('nc-tipo').value,
-        // consultoria: o 1º mês é grátis; a primeira mensalidade vence no início do 2º mês (e abre as ações dele)
-        ...($('nc-tipo').value === 'acesso' ? {} : { proxima_fatura: (() => { const d = new Date($('nc-start').value + 'T12:00:00'); d.setMonth(d.getMonth() + 1); return d.toLocaleDateString('sv-SE'); })() }),
+        // consultoria: o 1º mês é grátis; a primeira mensalidade vence no início do 2º mês (e abre as ações dele).
+        // Com início no passado (cliente que já estava em andamento), ela vai para o próximo vencimento a partir de hoje,
+        // para o cliente não nascer com meses de mensalidade "em aberto"
+        ...($('nc-tipo').value === 'acesso' ? {} : { proxima_fatura: (() => {
+          const d = new Date($('nc-start').value + 'T12:00:00'); d.setMonth(d.getMonth() + 1);
+          const hojeD = new Date(); hojeD.setHours(0, 0, 0, 0);
+          while (d < hojeD) d.setMonth(d.getMonth() + 1);
+          return d.toLocaleDateString('sv-SE');
+        })() }),
       });
       if (p.error) throw new Error('Não foi possível criar o plano.');
-      await adminApi({ ...conta, empresa_id: empresaId });
-      say($('nc-msg'), 'Cliente criado. Envie o acesso: ' + conta.email + ' / ' + conta.password, 'ok');
+      if (comAcesso) {
+        await adminApi({ ...conta, empresa_id: empresaId });
+        say($('nc-msg'), 'Cliente criado. Envie o acesso: ' + conta.email + ' / ' + conta.password, 'ok');
+      } else say($('nc-msg'), 'Cliente criado, sem acesso ainda. Crie o login em Acesso do cliente, na página da empresa.', 'ok');
       card.querySelectorAll('input').forEach((i) => { i.value = ''; }); $('nc-setor').value = '';
       $('nc-pass').value = randomPass(); $('nc-start').value = primeiroDoMes();
       await load();

@@ -784,5 +784,24 @@
   const consultoriaBloqueada = (p) => { const a = faturaAtraso(p); return a != null && !p.sem_bloqueio && a > TOLERANCIA_DIAS; };
   const situacaoPlano = (p) => (!p ? null : p.status === 'encerrado' ? [' is-off', 'Encerrado'] : p.status === 'pausado' ? [' is-warn', 'Pausado']
     : acessoVencido(p) || consultoriaBloqueada(p) ? [' is-warn', 'Pagamento pendente'] : ['', 'Ativo']);
-  window.GangUI = { buscaFonte, acessoVence, acessoVencido, acessoDiasRestantes, situacaoPlano, TOLERANCIA_DIAS, faturaAtraso, bloqueioEm, consultoriaBloqueada, graficos, esforcoPadrao, ESFORCO_SETOR, setorBase, setorNome, setorOpcoes, metaMarcaMes, mesesDeHistorico, metaMarcaPlano, esforcoReferencia, addDias, moedaFmt, moedaValor, moedaSet, PROMESSAS, promessaDe, tipoEsforco, pesoTamanho, combo, comboValue, comboSet, diasSemana, diasComArtigo, multi, multiValue, avatar, iniciais, $, el, say, day, fmt, cap, dia, diaAno, mesAno, hora, quando, ref, refDate, addRef, nomeMes, nomeMesCurto, mesesEntre, mesDoPlano, diasAte, reais, pct };
+  // confirmação e aviso da própria plataforma, no lugar de confirm()/alert()/prompt() do navegador
+  // (alguns navegadores, como o do app, bloqueiam essas janelas). confirma() devolve uma promessa: true ou false
+  const janela = (msg, { ok = 'OK', cancelar = null, perigo = false, copiar = null } = {}) => new Promise((resolve) => {
+    const d = document.createElement('dialog'); d.className = 'dialog gjan';
+    const corpo = el('div', 'dialog__body',
+      el('p', 'gjan__msg', msg),
+      copiar ? el('input', { class: 'field gjan__copiar', value: copiar, readonly: true, 'aria-label': 'Texto para copiar', onfocus: (e) => e.target.select() }) : null,
+      el('div', 'dialog__foot',
+        cancelar ? el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => fecha(false) }, cancelar) : null,
+        el('button', { class: 'btn btn--sm ' + (perigo ? 'btn--danger' : 'btn--light'), type: 'button', onclick: () => fecha(true) }, ok)));
+    d.append(corpo);
+    const fecha = (v) => { d.close(); d.remove(); resolve(v); };
+    d.addEventListener('cancel', (e) => { e.preventDefault(); fecha(false); });
+    document.body.append(d); d.showModal();
+    const alvo = d.querySelector('.gjan__copiar') || d.querySelector('.dialog__foot .btn:last-child'); if (alvo) alvo.focus();
+  });
+  const confirma = (msg, opts = {}) => janela(msg, { ok: opts.ok || (/excluir|apagar|tirar|desativar|limpar/i.test(msg) ? 'Confirmar' : 'Continuar'), cancelar: 'Cancelar', perigo: opts.perigo != null ? opts.perigo : /excluir|apagar|tirar|desativar|limpar/i.test(msg) });
+  const avisa = (msg, copiar) => janela(msg, { copiar });
+
+  window.GangUI = { confirma, avisa, buscaFonte, acessoVence, acessoVencido, acessoDiasRestantes, situacaoPlano, TOLERANCIA_DIAS, faturaAtraso, bloqueioEm, consultoriaBloqueada, graficos, esforcoPadrao, ESFORCO_SETOR, setorBase, setorNome, setorOpcoes, metaMarcaMes, mesesDeHistorico, metaMarcaPlano, esforcoReferencia, addDias, moedaFmt, moedaValor, moedaSet, PROMESSAS, promessaDe, tipoEsforco, pesoTamanho, combo, comboValue, comboSet, diasSemana, diasComArtigo, multi, multiValue, avatar, iniciais, $, el, say, day, fmt, cap, dia, diaAno, mesAno, hora, quando, ref, refDate, addRef, nomeMes, nomeMesCurto, mesesEntre, mesDoPlano, diasAte, reais, pct };
 })();

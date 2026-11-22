@@ -1016,6 +1016,11 @@
     const mv = marcaVista();
     const busca = mv.find((x) => x.getAttribute('aria-labelledby') === 'busca-t');
     out.push(...mv.filter((x) => x !== busca));
+    // sem pesquisa ainda: a aba explica o que vai aparecer e quando, em vez de ficar vazia
+    if (!D.pesquisas.length) out.push(el('section', { class: 'box', 'aria-labelledby': 'mv-vazio-t' },
+      el('h2', { class: 'box__title', id: 'mv-vazio-t' }, 'Como a marca é vista'),
+      el('p', 'box__text', ['Aparece com a primeira pesquisa com seus clientes:', el('br'), 'quem lembra da marca, em que situações e com que palavras.']),
+      el('p', 'box__note', ['O consultor abre a pesquisa e o convite pronto chega aqui.', el('br'), 'Depois, a cada 6 meses, uma nova rodada mostra a evolução.'])));
     const dp = D.disponibilidade[0];
     if (dp) {
       const DISP = { google: 'Perfil completo no Google', mapas: 'Aparece nos mapas e marketplaces', resposta: 'Responde em até 1 hora', pagamento: 'Pix, cartão e orçamento rápido', site: 'Contato em um clique', onde_procura: 'Está onde o cliente procura' };
@@ -1329,7 +1334,7 @@
         };
         convite.addEventListener('input', atualiza); atualiza();
         const copiaLink = el('button', { class: 'link', type: 'button', onclick: async () => {
-          try { await navigator.clipboard.writeText(url); copiaLink.textContent = 'Link copiado ✓'; clearTimeout(copiaLink._t); copiaLink._t = setTimeout(() => { copiaLink.textContent = 'Copiar só o link'; }, 2000); } catch (e) { window.prompt('Copie o link:', url); }
+          try { await navigator.clipboard.writeText(url); copiaLink.textContent = 'Link copiado ✓'; clearTimeout(copiaLink._t); copiaLink._t = setTimeout(() => { copiaLink.textContent = 'Copiar só o link'; }, 2000); } catch (e) { U.avisa('Copie o link:', url); }
         } }, 'Copiar só o link');
         box.append(el('div', 'share',
           el('div', 'share__head', el('div', null, el('p', 'share__t', 'Convide mais pessoas'),
@@ -1811,7 +1816,7 @@
   const copia = (txt) => {
     const b = el('button', { class: 'copy', type: 'button', title: 'Copiar ' + txt }, txt);
     b.addEventListener('click', async () => {
-      try { await navigator.clipboard.writeText(txt); b.classList.add('is-ok'); b.dataset.label = 'Copiado'; setTimeout(() => { b.classList.remove('is-ok'); }, 1400); } catch (e) { window.prompt('Copie:', txt); }
+      try { await navigator.clipboard.writeText(txt); b.classList.add('is-ok'); b.dataset.label = 'Copiado'; setTimeout(() => { b.classList.remove('is-ok'); }, 1400); } catch (e) { U.avisa('Copie:', txt); }
     });
     return b;
   };
@@ -2083,9 +2088,9 @@
         return el('article', 'oc',
           el('div', 'oc__head', quad(ico), el('p', 'oc__rot', rot)),
           corpo,
-          el('div', 'oc__pe', el('span', 'oc__pe-rot', 'Medimos por'),
-            mets.length ? mets.map((m) => el('span', 'oc__met', m.nome, el('span', 'oc__freq', ' · ' + (FREQ_O[m.frequencia] || m.frequencia))))
-              : el('span', 'oc__met oc__met--vazio', 'a definir com o consultor')));
+          // sem métrica cadastrada, o rodapé não aparece (um "a definir" em cada cartão parecia coisa inacabada)
+          mets.length ? el('div', 'oc__pe', el('span', 'oc__pe-rot', 'Medimos por'),
+            mets.map((m) => el('span', 'oc__met', m.nome, el('span', 'oc__freq', ' · ' + (FREQ_O[m.frequencia] || m.frequencia))))) : null);
       };
       out.push(secN('obj-t', 'Objetivos', D.objetivos.length, 'Toda ação do plano liga a um destes.', el('div', 'ocs', D.objetivos.map(card))));
     }
@@ -2228,7 +2233,7 @@
   // cancelar uma mensagem que o consultor ainda não leu
   const recarregaMsgs = async () => { D.mensagens = (await sb.from('mensagens').select('*').order('criada_em')).data || D.mensagens; };
   const cancelaMsg = async (m) => {
-    if (!confirm('Cancelar esta mensagem? O consultor não vai recebê-la.')) return;
+    if (!(await U.confirma('Cancelar esta mensagem? O consultor não vai recebê-la.', { ok: 'Cancelar mensagem', perigo: true }))) return;
     const { error } = await sb.rpc('portal_cancelar_mensagem', { p_mensagem: m.id });
     if (error) { U.say($('chat-msg'), error.message || 'Não foi possível cancelar.', 'error'); await recarregaMsgs(); return desenhaFio(); }
     D.mensagens = D.mensagens.filter((x) => x !== m); desenhaFio(); U.say($('chat-msg'), 'Mensagem cancelada.', 'ok');
@@ -2895,9 +2900,8 @@
       el('section', 'pm__capa',
         el('div', null, logo, el('p', 'rel__eyebrow', 'Plano de marca'), el('h1', 'pm__titulo', nome),
           el('p', 'rel__sub', ['Diagnóstico, estratégia, narrativa', el('br'), 'e identidade visual.'])),
-        el('div', 'pm__capa-pe', el('p', 'rel__by', 'Consultoria de marca GANG'), el('p', 'rel__muted', 'Atualizado em ' + U.diaAno(new Date())))),
-      partes.length ? partes : el('p', 'rel__p', 'O plano de marca aparece aqui assim que o consultor preencher o diagnóstico e a estratégia.'),
-      el('footer', 'rel__foot', 'Plano de marca de ' + nome + ' · gerado pela plataforma GANG em ' + U.diaAno(new Date()) + '.'))];
+        el('div', 'pm__capa-pe', el('p', 'rel__by', 'GANG - Consultoria de Marca'), el('p', 'rel__muted', 'Atualizado em ' + U.diaAno(new Date())))),
+      partes.length ? partes : el('p', 'rel__p', 'O plano de marca aparece aqui assim que o consultor preencher o diagnóstico e a estratégia.'))];
   };
 
   // ===== telas =====

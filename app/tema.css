@@ -2482,3 +2482,9 @@ html.side-abrindo .side__plan .badge { display: none; }
 .client__extra-l { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .client__extra-l .field { flex: 1 1 220px; max-width: 320px; }
 .client__extra[hidden] { display: none; }
+
+/* confirmação e aviso da própria plataforma (no lugar das janelas do navegador) */
+.gjan { max-width: 440px; width: calc(100% - 32px); }
+.gjan__msg { margin: 0 0 16px; font-size: 15px; line-height: 1.5; color: #f0f0f0; }
+.gjan__copiar { width: 100%; margin-bottom: 16px; }
+.gjan .dialog__foot { display: flex; justify-content: flex-end; gap: 8px; }

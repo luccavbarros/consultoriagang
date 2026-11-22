@@ -185,9 +185,9 @@
   };
   // cliente que não vai mandar números: para de cobrar (pode voltar quando quiser)
   const semNumeros = async (on) => {
-    if (on && !confirm('Marcar que este cliente não envia os números do mês? O painel e o portal param de cobrar e de avisar. Dá para desfazer em Plano.')) return;
+    if (on && !(await U.confirma('Marcar que este cliente não envia os números do mês? O painel e o portal param de cobrar e de avisar. Dá para desfazer em Plano.'))) return;
     const r = await sb.from('planos').update({ sem_numeros: on }).eq('empresa_id', id);
-    if (r.error) return alert('Não foi possível salvar.');
+    if (r.error) return U.avisa('Não foi possível salvar.');
     $('p-semnum').checked = on; desenhaFechamento();
   };
   desenhaFechamento();
@@ -491,9 +491,9 @@
   });
 
   $('del-empresa').addEventListener('click', async () => {
-    if (!confirm('Excluir ' + emp.nome + ' e tudo o que foi cadastrado para ela? Isso não pode ser desfeito.')) return;
+    if (!(await U.confirma('Excluir ' + emp.nome + ' e tudo o que foi cadastrado para ela? Isso não pode ser desfeito.'))) return;
     const r = await sb.from('empresas').delete().eq('id', id);
-    if (r.error) return alert('Não foi possível excluir.');
+    if (r.error) return U.avisa('Não foi possível excluir.');
     location.replace('admin.html');
   });
 
@@ -592,8 +592,16 @@
   const prom = () => (BP && G ? G.promessa(BP) : {});
   const desenhaNums = () => {
     const pr = prom();
-    const ult = BP ? BP.numeros.filter((n) => n.faturamento != null).slice(-1)[0] : null;
-    $('pl-ver-ref').textContent = ult ? '· números até ' + U.nomeMes(ult.mes_ref) : '· ainda sem números';
+    // sem financeiro: o veredito se apoia no que o cliente contou do mês (melhor, igual ou pior que no ano passado).
+    // Os números e "por que caíram" só aparecem para o raro cliente com números lançados
+    const temNum = Object.values(pr).some((v) => v != null);
+    const mAnt = U.addRef(mesSel(), -1);
+    const cf = BP ? (BP.numeros || []).find((n) => n.mes_ref === mAnt && n.como_foi) : null;
+    const CF_T = { melhor: 'melhor', igual: 'igual', pior: 'pior' };
+    $('pl-ver-ref').textContent = cf ? '· o cliente disse que ' + U.nomeMes(mAnt) + ' foi ' + CF_T[cf.como_foi] + ' que no ano passado'
+      : '· o cliente ainda não contou como foi ' + U.nomeMes(mAnt);
+    $('pl-notas').hidden = !temNum;
+    if (!temNum) { $('pl-nums').replaceChildren(); return; }
     $('pl-nums').replaceChildren(...Object.keys(PROMN).map((k) => {
       const v = pr[k];
       return el('div', 'plan__num' + (v == null ? ' is-nd' : v < 0 ? ' is-down' : ' is-up'), el('span', 'plan__num-l', PROMN[k]),
@@ -688,7 +696,7 @@
       el('div', 'row__actions',
         rowBtn('Abrir', () => { $('f-mes').value = f.mes_ref; preenche(f); $('foco-form').scrollIntoView({ block: 'start' }); }),
         rowBtn('Excluir', async () => {
-          if (!confirm('Excluir o foco de ' + MESES(f.mes_ref) + '?')) return;
+          if (!(await U.confirma('Excluir o foco de ' + MESES(f.mes_ref) + '?'))) return;
           await sb.from('orientacoes').delete().eq('id', f.id); loadFocos();
         }, true)),
     )) : [el('li', 'clients__empty', 'Nenhum mês publicado ainda.')]));
@@ -1042,7 +1050,7 @@
           })(), sel,
             rowBtn('Editar', () => abreForm(a)),
             rowBtn('Excluir', async () => {
-              if (!confirm('Excluir a ação “' + a.titulo + '”?')) return;
+              if (!(await U.confirma('Excluir a ação “' + a.titulo + '”?'))) return;
               await sb.from('acoes').delete().eq('id', a.id); loadAcoes();
             }, true)));
       })))));
@@ -1867,7 +1875,7 @@
     const novas = await montaModeloOtimo(m, E.ab);
     if (!novas.length) return say($('acoes-msg'), 'O plano já cobre todos os meses com este modelo.', 'ok');
     const nMeses = new Set(novas.map((x) => x.mes)).size;
-    if (!confirm('Montar o plano “' + m.nome + '” até o fim do prazo: ' + novas.length + ' ações em ' + nMeses + ' meses. As que já existem não se repetem.')) return;
+    if (!(await U.confirma('Montar o plano “' + m.nome + '” até o fim do prazo: ' + novas.length + ' ações em ' + nMeses + ' meses. As que já existem não se repetem.'))) return;
     $('mod-go').disabled = true;
     const prz = {};
     [...new Set(novas.map((x) => x.mes))].forEach((mm) => {
@@ -2112,7 +2120,7 @@
       el('div', 'row__main', el('p', 'row__eyebrow', NIV_M[m.nivel] + ' · ' + FREQ[m.frequencia]), el('p', 'row__title', m.nome),
         el('p', 'row__text', m.valor_atual ? 'Agora: ' + m.valor_atual : (m.proxima_medicao ? '1ª medição em ' + U.mesAno(m.proxima_medicao) : 'Sem valor ainda'))),
       el('div', 'row__actions', rowBtn('Editar', () => abreMet(m)),
-        rowBtn('Excluir', async () => { if (!confirm('Excluir a métrica “' + m.nome + '”?')) return; await sb.from('metricas').delete().eq('id', m.id); loadMets(); }, true)))) : [el('li', 'ed-vazio', 'Nenhuma métrica ainda. Cadastre uma por objetivo em Nova métrica.')]));
+        rowBtn('Excluir', async () => { if (!(await U.confirma('Excluir a métrica “' + m.nome + '”?'))) return; await sb.from('metricas').delete().eq('id', m.id); loadMets(); }, true)))) : [el('li', 'ed-vazio', 'Nenhuma métrica ainda. Cadastre uma por objetivo em Nova métrica.')]));
     return data || [];
   };
   metForm.addEventListener('submit', async (ev) => {
@@ -2234,10 +2242,10 @@
         el('div', 'row__main', el('p', 'row__eyebrow', (q.aberta ? 'Aberta' : 'Fechada') + ' · criada em ' + U.diaAno(q.criada_em)), el('p', 'row__title', q.titulo),
           el('p', 'row__text', n(q.id) + ' respostas · ' + nMercado(q.id) + ' de 30 de quem compra a categoria e não é cliente · ' + q.categoria + ' · ' + (q.situacoes || []).length + ' situações · ' + (q.ativos || []).length + ' ativos')),
         el('div', 'row__actions',
-          q.aberta ? rowBtn('Copiar link', async (e) => { try { await navigator.clipboard.writeText(url); e.target.textContent = 'Copiado'; } catch (er) { window.prompt('Link da pesquisa:', url); } }) : null,
+          q.aberta ? rowBtn('Copiar link', async (e) => { try { await navigator.clipboard.writeText(url); e.target.textContent = 'Copiado'; } catch (er) { U.avisa('Copie o link da pesquisa:', url); } }) : null,
           rowBtn('Editar', () => editaPesq(q, n(q.id))),
           rowBtn(q.aberta ? 'Fechar' : 'Reabrir', async () => { await sb.from('pesquisas').update({ aberta: !q.aberta }).eq('id', q.id); loadPesqs(); }),
-          rowBtn('Excluir', async () => { if (!confirm('Excluir a rodada “' + q.titulo + '” e as respostas dela?')) return; await sb.from('pesquisas').delete().eq('id', q.id); loadPesqs(); }, true)));
+          rowBtn('Excluir', async () => { if (!(await U.confirma('Excluir a rodada “' + q.titulo + '” e as respostas dela?'))) return; await sb.from('pesquisas').delete().eq('id', q.id); loadPesqs(); }, true)));
     }) : [el('li', 'clients__empty', 'Nenhuma rodada ainda.')]));
   };
   loadPesqs();
@@ -2350,7 +2358,7 @@
       el('div', 'row__main', el('p', 'row__eyebrow', TIPO_E[e.tipo] + ' · ' + e.duracao_min + ' min · ' + SIT_E[e.status]), el('p', 'row__title', U.quando(e.inicio)),
         el('p', 'row__text', (e.decisoes || []).length ? 'Decisões: ' + e.decisoes.join('; ') : ((e.pauta || []).length ? 'Pauta: ' + e.pauta.join('; ') : 'Sem pauta'))),
       el('div', 'row__actions', rowBtn('Editar', () => abreEnc(e)),
-        rowBtn('Excluir', async () => { if (!confirm('Excluir o encontro de ' + U.quando(e.inicio) + '?')) return; await sb.from('encontros').delete().eq('id', e.id); loadEncs(); }, true)))) : [el('li', 'vz-li', vazioC('lista', 'Nenhum encontro ainda', 'Agende o primeiro no botão acima: o cliente vê a data, a pauta e pode adicionar à agenda.'))]));
+        rowBtn('Excluir', async () => { if (!(await U.confirma('Excluir o encontro de ' + U.quando(e.inicio) + '?'))) return; await sb.from('encontros').delete().eq('id', e.id); loadEncs(); }, true)))) : [el('li', 'vz-li', vazioC('lista', 'Nenhum encontro ainda', 'Agende o primeiro no botão acima: o cliente vê a data, a pauta e pode adicionar à agenda.'))]));
   };
   loadEncs();
 
@@ -2358,7 +2366,7 @@
   const PED = { em_analise: ['is-mid', 'Em análise'], ajustar: ['is-warn', 'Ajustar'], aprovado: ['is-ok', 'Aprovado'] };
   const abreArquivo = async (caminho) => {
     const { data, error } = await sb.storage.from('portal').createSignedUrl(caminho, 600);
-    if (error || !data) return alert('Não foi possível abrir o arquivo.');
+    if (error || !data) return U.avisa('Não foi possível abrir o arquivo.');
     window.open(data.signedUrl, '_blank', 'noopener');
   };
   const p0 = p; // o plano (prazo de revisão em dias úteis)

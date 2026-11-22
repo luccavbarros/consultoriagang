@@ -63,7 +63,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   };
   const abre = async (caminho) => {
     const { data, error } = await sb.storage.from('portal').createSignedUrl(caminho, 600);
-    if (error || !data) return alert('Não foi possível abrir o arquivo.');
+    if (error || !data) return U.avisa('Não foi possível abrir o arquivo.');
     window.open(data.signedUrl, '_blank', 'noopener');
   };
   const nomeArquivo = (c) => (c || '').split('/').pop().replace(/^[0-9a-f-]{36}-/, '');
@@ -210,7 +210,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       el('div', 'ed-head', tile(cfg.icone || 'pulso'), el('div', 'ed-head__txt', el('h3', 'ed-head__t', titulo), nota ? el('p', 'ed-head__n', nota) : null),
         el('div', 'ed-head__acts',
           cfg.limpar && atual && fields.some((f) => atual[f.k] != null && atual[f.k] !== '') ? el('button', { class: 'ed-limpar', type: 'button', onclick: async () => {
-            if (!confirm('Limpar todos os campos de “' + titulo + '”? Isso não pode ser desfeito.')) return;
+            if (!(await U.confirma('Limpar todos os campos de “' + titulo + '”? Isso não pode ser desfeito.'))) return;
             const r = await sb.from(tabela).upsert({ empresa_id: id, ...Object.fromEntries(fields.map((f) => [f.k, null])) }).select('*').single();
             if (r.error) return say(msg, 'Não foi possível limpar.', 'error');
             document.dispatchEvent(new CustomEvent('gang:marca-salva', { detail: { tabela } }));
@@ -229,7 +229,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
         try {
           const row = await ler(fields, pre, pasta, atual);
           const r = await sb.from(tabela).upsert({ empresa_id: id, ...row }).select('*').single();
-          if (r.error) throw new Error('Não foi possível salvar.');
+          if (r.error) throw new Error(erroSalvar(r.error));
           atual = r.data; delete form.dataset.sujo;
           document.dispatchEvent(new CustomEvent('gang:marca-salva', { detail: { tabela } }));
           if (comArquivo) { comArquivo = false; await ficha(mount, cfg); say(mount.querySelector('.msg'), 'Salvo. O cliente já vê no portal.', 'ok'); }
@@ -280,6 +280,16 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     });
   };
 
+  // erro do banco em português, com o motivo provável (em vez de só "não foi possível salvar")
+  const erroSalvar = (e, base = 'Não foi possível salvar') => {
+    const c = e && e.code; const m = String((e && e.message) || '');
+    if (c === '42P01' || /does not exist|relation/.test(m)) return base + ': falta uma parte do banco. Rode o último trecho do portal.sql no Supabase.';
+    if (c === '42703' || /column/.test(m)) return base + ': o banco está desatualizado. Rode o portal.sql mais recente no Supabase.';
+    if (c === '23514' || /check constraint/.test(m)) return base + ': um dos valores não é aceito. Confira as opções escolhidas.';
+    if (c === '42501' || /permission|policy|row-level/.test(m)) return base + ': sem permissão para este cliente.';
+    if (/fetch|network|Failed/.test(m)) return base + ': sem conexão. Confira a internet e tente de novo.';
+    return base + '. Tente de novo; se continuar, avise o suporte.';
+  };
   // ----- lista: vários itens com ordem -----
   const lista = async (mount, { titulo, nota, tabela, fields, fixo = {}, resumo, pasta, vazio, ordem = true, icone, tom, largo, max, aoAbrir, sugere, limpar }) => {
     if (largo) mount.classList.add('is-largo');
@@ -309,7 +319,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
           const row = { ...(await ler(fields, pre, pasta, editando)), ...fixo, empresa_id: id };
           if (!editando && ordem) row.ordem = rows.reduce((m, x) => Math.max(m, x.ordem || 0), 0) + 1;
           const r = editando ? await sb.from(tabela).update(row).eq('id', editando.id) : await sb.from(tabela).insert(row);
-          if (r.error) throw new Error('Não foi possível salvar.');
+          if (r.error) throw new Error(erroSalvar(r.error));
           lista(mount, cfg); document.dispatchEvent(new CustomEvent('gang:marca-salva', { detail: { tabela } }));
         } catch (err) { say(msg, err.message, 'error'); btn.disabled = false; }
       });
@@ -378,7 +388,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
         el('div', 'ed-head__txt', el('h3', 'ed-head__t', titulo, el('span', 'ed-n', String(rows.length))), nota ? el('p', 'ed-head__n', nota) : null),
         el('div', 'ed-head__acts',
           limpar && rows.length ? el('button', { class: 'ed-limpar', type: 'button', onclick: async () => {
-            if (!confirm('Apagar ' + (rows.length === 1 ? 'o item' : 'os ' + rows.length + ' itens') + ' de “' + titulo + '”? Isso não pode ser desfeito.')) return;
+            if (!(await U.confirma('Apagar ' + (rows.length === 1 ? 'o item' : 'os ' + rows.length + ' itens') + ' de “' + titulo + '”? Isso não pode ser desfeito.'))) return;
             let q = sb.from(tabela).delete().eq('empresa_id', id);
             Object.entries(fixo).forEach(([k, v]) => { q = q.eq(k, v); });
             const r = await q;
@@ -398,7 +408,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
           el('div', 'ed-item__main', el('p', 'ed-item__t', t), sub ? el('p', 'ed-item__s', sub) : null),
           el('div', 'ed-item__acoes',
             btn('lapis', 'Editar', () => abreForm(r)),
-            btn('lixo', 'Excluir', async () => { if (!confirm('Excluir “' + (typeof t === 'string' ? t : 'este item') + '”?')) return; await sb.from(tabela).delete().eq('id', r.id); lista(mount, cfg); document.dispatchEvent(new CustomEvent('gang:marca-salva', { detail: { tabela } })); }, ' ed-acao--bad')));
+            btn('lixo', 'Excluir', async () => { if (!(await U.confirma('Excluir “' + (typeof t === 'string' ? t : 'este item') + '”?'))) return; await sb.from(tabela).delete().eq('id', r.id); lista(mount, cfg); document.dispatchEvent(new CustomEvent('gang:marca-salva', { detail: { tabela } })); }, ' ed-acao--bad')));
       }) : [el('li', 'ed-vazio', vazio || 'Nada cadastrado ainda.')]));
     const cfg = { titulo, nota, tabela, fields, fixo, resumo, pasta, vazio, ordem, icone, tom, largo, max, aoAbrir, sugere, limpar };
     if (max && rows.length >= max) addBtn.hidden = true;
@@ -453,12 +463,12 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     const salvaBf = (k, v) => window.GangBriefing && window.GangBriefing.set && window.GangBriefing.set(k, v);
     const insere = async (t, nota) => {
       const r = await sb.from('causas').insert({ empresa_id: id, texto: t, ordem: causas.reduce((m, x) => Math.max(m, x.ordem || 0), 0) + 1 });
-      if (r.error) return say(msg, 'Não foi possível salvar a causa.', 'error');
+      if (r.error) return say(msg, erroSalvar(r.error, 'Não foi possível salvar a causa'), 'error');
       if (nota) salvaBf('evidencias', { ...(BF().evidencias || {}), [t]: nota });
       if ((BF().hipDescartadas || []).includes(t)) salvaBf('hipDescartadas', BF().hipDescartadas.filter((x) => x !== t));
       avisa();
     };
-    const tira = async (c) => { if (!confirm('Tirar a causa “' + c.texto + '”?')) return; await sb.from('causas').delete().eq('id', c.id); avisa(); };
+    const tira = async (c) => { if (!(await U.confirma('Tirar a causa “' + c.texto + '”?'))) return; await sb.from('causas').delete().eq('id', c.id); avisa(); };
     // confirmar: abre um campo curto e opcional com o que confirmou (a pesquisa, a comparação, um número)
     const confirma = (t, li) => {
       const inp = el('input', { class: 'field', placeholder: 'O que confirmou (opcional). Ex.: pesquisa, 18% lembram da marca' });
@@ -736,7 +746,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       { k: 'posicionamento', label: 'Posicionamento', type: 'textarea', rows: 3, full: true, placeholder: 'Para [quem], [marca] é [o quê] que [benefício], porque [prova], ao contrário de [alternativa].',
         dica: 'Comece pela alternativa real: o que o cliente faria se a marca não existisse. Depois, o que só a marca tem, o valor disso e quem se importa muito com esse valor. Por último, escolha a categoria em que ela vira a escolha óbvia.' },
     ] }],
-    [lista, { icone: 'alvo', tom: 'gang', titulo: 'Objetivos', nota: 'Negócio, Marca e Comunicação\u00a0(notar,\u00a0acreditar,\u00a0sentir). As ações se ligam a eles.', tabela: 'objetivos', sugere: bfObjetivo, fields: [
+    [lista, { icone: 'alvo', tom: 'gang', titulo: 'Objetivos', nota: 'Negócio, Marca e Comunicação\u00a0(notar,\u00a0acreditar,\u00a0sentir). As ações se ligam a eles. Como medir cada um: em Resultados, Métricas.', tabela: 'objetivos', sugere: bfObjetivo, fields: [
       { k: 'titulo', label: 'Objetivo', full: true, type: 'preset', presets: 'objetivos', fill: { nivel: 'nivel' }, dicaId: 'objetivo',
         dica: 'No objetivo de negócio, diga aonde a empresa quer chegar e até quando, sem número de faturamento (ex.: ser a clínica que os pacientes mais indicam no bairro até dezembro de 2027). Uma meta sem linha de chegada não orienta a equipe.' },
       { k: 'nivel', label: 'Nível', type: 'select', options: NIV },
@@ -782,7 +792,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       ev.preventDefault();
       const rows = FAC.map(([k]) => ({ empresa_id: id, chave: k, texto: U.comboValue('fa-' + k) }));
       const r = await sb.from('facetas').upsert(rows, { onConflict: 'empresa_id,chave' });
-      say(msg, r.error ? 'Não foi possível salvar.' : 'Facetas salvas.', r.error ? 'error' : 'ok');
+      say(msg, r.error ? erroSalvar(r.error) : 'Facetas salvas.', r.error ? 'error' : 'ok');
     });
     let filaF = null; form.addEventListener('change', () => { clearTimeout(filaF); filaF = setTimeout(() => form.requestSubmit(), 400); }); // salva sozinho
     mount.replaceChildren(form);
