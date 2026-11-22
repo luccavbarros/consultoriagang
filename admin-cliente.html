@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="app/app.css?v=25" />
   <link rel="stylesheet" href="app/portal.css?v=65" />
-  <link rel="stylesheet" href="app/tema.css?v=185" />
+  <link rel="stylesheet" href="app/tema.css?v=187" />
   <script src="app/entrada.js?v=2"></script>
 </head>
 <body class="portal-body">
@@ -182,7 +182,7 @@
             <div class="full"><details class="plan__mais"><summary>Faturamento mês a mês do ano anterior <span class="plan__mais-sub">deixa o “O plano pagou?” justo com a época do ano</span></summary>
               <div class="new-client new-client--4 sazonal"><div><label class="label" for="p-fa-01">Jan</label><input class="field" id="p-fa-01" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-02">Fev</label><input class="field" id="p-fa-02" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-03">Mar</label><input class="field" id="p-fa-03" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-04">Abr</label><input class="field" id="p-fa-04" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-05">Mai</label><input class="field" id="p-fa-05" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-06">Jun</label><input class="field" id="p-fa-06" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-07">Jul</label><input class="field" id="p-fa-07" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-08">Ago</label><input class="field" id="p-fa-08" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-09">Set</label><input class="field" id="p-fa-09" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-10">Out</label><input class="field" id="p-fa-10" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-11">Nov</label><input class="field" id="p-fa-11" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-12">Dez</label><input class="field" id="p-fa-12" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div></div></details></div>
             <div><label class="label" for="p-partmerc">Participação de mercado estimada (%)</label><input class="field" id="p-partmerc" type="number" min="0" max="100" step="any" placeholder="Ex.: 10" /></div>
-            <div class="full"><label class="chk"><input type="checkbox" id="p-semnum" /> O cliente combinou não enviar os números do mês (o painel e o portal param de cobrar e de avisar)</label></div>
+            <div class="full"><label class="chk"><input type="checkbox" id="p-semnum" /> Não avisar quando faltarem os números do mês deste cliente</label></div>
           </div>
         </fieldset>
         <div class="new-client__foot">
@@ -365,10 +365,10 @@
 
     <!-- ===== Resultados ===== -->
     <section class="app-section" id="pane-resultados" role="tabpanel" aria-labelledby="tab-resultados" hidden>
-      <nav class="subnav" aria-label="Partes de Resultados"><a href="#res-num">Números</a><a href="#res-pesq">Pesquisa de marca</a><a href="#res-met">Métricas</a><a href="#res-busca">Buscas</a><a href="#res-voz">Clientes disseram</a></nav>
+      <nav class="subnav" aria-label="Partes de Resultados"><a href="#res-num">Meses</a><a href="#res-pesq">Pesquisa de marca</a><a href="#res-met">Métricas</a><a href="#res-busca">Buscas</a><a href="#res-voz">Clientes disseram</a></nav>
       <div class="bloco" id="res-num">
-      <h2 class="title-sm">Números enviados</h2>
-      <p class="small">O cliente envia todo mês pelo portal. Você também pode lançar ou corrigir aqui.</p>
+      <h2 class="title-sm">Como foi cada mês</h2>
+      <p class="small">O cliente diz no portal se o mês foi melhor, igual ou pior.<br />Se ele contar algum número, você lança aqui.</p>
       <div class="graf-grade" id="nums-graf" aria-label="Gráficos dos números"></div>
       <div class="table-wrap"><table class="table" id="nums"></table></div>
       <form class="card" id="num-form" novalidate>
@@ -599,6 +599,6 @@
   <script src="app/admin-briefing.js?v=3"></script>
   <script src="app/admin-marca.js?v=60"></script>
   <script src="app/saude.js?v=19"></script>
-  <script src="app/admin-cliente.js?v=137"></script>
+  <script src="app/admin-cliente.js?v=138"></script>
 </body>
 </html>
