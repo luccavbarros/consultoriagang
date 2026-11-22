@@ -743,7 +743,7 @@
       extra = ra.error ? ' As ações não entraram: tente de novo em Ações.' : ' ' + novas.length + (novas.length === 1 ? ' ação entrou' : ' ações entraram') + ' em ' + U.nomeMes(mes) + '.';
     }
     $('f-save').disabled = false;
-    say($('f-msg'), (fid ? 'Mês salvo.' : 'Publicado: o cliente já vê o foco no Plano e o veredito em Resultados.') + extra, 'ok');
+    say($('f-msg'), (fid ? 'Mês salvo.' : 'Publicado: o cliente já vê o foco na Visão Geral e o veredito em Resultados.') + extra, 'ok');
     carregaMes(mes); loadFocos();
     if (typeof loadAcoes === 'function') loadAcoes();
     if (typeof desenhaFechamento === 'function') desenhaFechamento();
@@ -2335,7 +2335,7 @@
     const eid = $('e-id').value;
     const r = eid ? await sb.from('encontros').update(row).eq('id', eid) : await sb.from('encontros').insert(row);
     if (r.error) return say($('e-msg'), 'Não foi possível salvar.', 'error');
-    toggle(encForm, $('open-enc'), false); say($('enc-msg'), eid ? 'Encontro atualizado.' : 'Encontro agendado. O cliente já vê em Consultoria.', 'ok');
+    toggle(encForm, $('open-enc'), false); say($('enc-msg'), eid ? 'Encontro atualizado.' : 'Encontro agendado. O cliente já vê no Calendário.', 'ok');
     loadEncs();
   });
   const loadEncs = async () => {

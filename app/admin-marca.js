@@ -610,6 +610,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
 
   // ===== Teste de estratégia ruim: o que costuma faltar numa estratégia que é só desejo =====
   const testeEstrategia = async (mount) => {
+    mount.classList.add('is-teste'); // o redesenho acha este bloco pela classe, não pela posição na tela
     mount.classList.add('is-largo');
     const [{ data: p }, { data: acs }, { data: obs }, { data: esc }, diag] = await Promise.all([
       sb.from('planos').select('desafio, como_vencer').eq('empresa_id', id).maybeSingle(),
@@ -667,7 +668,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
         el('div', 'ed-item__main', el('p', 'ed-item__t', t), el('p', 'ed-item__s', d)))))));
   };
   // o teste refaz a conta quando algo da Estratégia é salvo
-  const refazTeste = () => { const m = document.querySelector('#pane-estrategia .editor-block:nth-child(2)'); if (m) testeEstrategia(m); };
+  const refazTeste = () => { const m = document.querySelector('#pane-estrategia .editor-block.is-teste'); if (m) testeEstrategia(m); };
   document.addEventListener('gang:marca-salva', () => setTimeout(refazTeste, 300));
 
   const NIV = [['negocio', 'Negócio'], ['marca', 'Marca'], ['comunicacao', 'Comunicação']];
