@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="app/app.css?v=25" />
   <link rel="stylesheet" href="app/portal.css?v=65" />
-  <link rel="stylesheet" href="app/tema.css?v=193" />
+  <link rel="stylesheet" href="app/tema.css?v=194" />
   <script src="app/entrada.js?v=2"></script>
 </head>
 <body class="portal-body">
@@ -92,18 +92,18 @@
     <section class="app-section" aria-labelledby="t-novo" id="novo" data-view="novo" hidden>
       <h1 class="title-xl" id="t-novo">Novo cliente</h1>
       <form class="card" id="new-card" novalidate>
-        <p class="small">Cria a empresa, o plano e o acesso do cliente.<br />O resto (estratégia, marca, ações) você preenche na página da empresa.</p>
+        <p class="small">Cria a empresa e o plano. O acesso do cliente é opcional:<br />dá para criar depois, em Acesso do cliente, na página da empresa.</p>
         <fieldset class="fset">
           <legend class="fset__title">Empresa e acesso</legend>
           <div class="new-client">
             <div><label class="label" for="nc-company">Empresa</label><input class="field" id="nc-company" autocomplete="off" required /></div>
             <div><label class="label" for="nc-setor">Setor</label><select class="field" id="nc-setor" aria-describedby="nc-setor-d"></select><p class="field-hint" id="nc-setor-d">Define o plano modelo e as ações sugeridas. Dá para mudar depois em Contrato.</p></div>
-            <div><label class="label" for="nc-name">Nome de quem acessa</label><input class="field" id="nc-name" autocomplete="off" required /></div>
-            <div><label class="label" for="nc-email">E-mail de acesso</label><input class="field" id="nc-email" type="email" autocomplete="off" required /></div>
+            <div><label class="label" for="nc-name">Nome de quem acessa (opcional)</label><input class="field" id="nc-name" autocomplete="off" /></div>
+            <div><label class="label" for="nc-email">E-mail de acesso (opcional)</label><input class="field" id="nc-email" type="email" autocomplete="off" /></div>
             <div class="full">
               <label class="label" for="nc-pass">Senha inicial (mínimo 8 caracteres)</label>
               <div class="new-client__pass">
-                <input class="field" id="nc-pass" type="text" autocomplete="off" minlength="8" required />
+                <input class="field" id="nc-pass" type="text" autocomplete="off" minlength="8" />
                 <button class="btn btn--ghost btn--sm" type="button" id="nc-gen">Gerar</button>
               </div>
             </div>
@@ -210,10 +210,10 @@ Com menos de 5 casos é sorte, não evidência.</p>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script src="app/config.js"></script>
-  <script src="app/auth.js?v=3"></script>
-  <script src="app/ui.js?v=46"></script>
+  <script src="app/auth.js?v=4"></script>
+  <script src="app/ui.js?v=47"></script>
   <script src="app/cerebro.js?v=1"></script>
   <script src="app/saude.js?v=20"></script>
-  <script src="app/admin.js?v=36"></script>
+  <script src="app/admin.js?v=37"></script>
 </body>
 </html>
