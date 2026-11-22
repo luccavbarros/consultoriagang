@@ -2503,36 +2503,12 @@
     let frase = numero ? (objMeta.titulo || '') : destino;
     if (!numero) { const m = destino.match(/^([+\-\u2212]?\d[\d.,]*\s?%?)\s+(?:de\s+)?(.+)$/); if (m) { numero = m[1].trim(); frase = m[2]; } }
     frase = frase.replace(/^de\s+/i, '');
-    // a meta como um card de indicador (no estilo das referências): rótulo com ícone, o número, a frase e o tempo do plano em segmentos
-    const fimRef = inicioRef ? U.addRef(inicioRef, dur - 1) : null;
     const mesAgora = inicioRef ? Math.min(Math.max(mesN || 1, 1), dur) : 0;
     const fraseMeta = numero ? frase : frase.charAt(0).toUpperCase() + frase.slice(1);
-    // cabeçalho da tela, no mesmo formato de Ações: onde estamos, o título e o que a tela mostra
+    // a tela abre no que fazer agora (as missões); a meta vira o título do caminho, logo abaixo.
+    // "Mês X de Y" aparece uma vez só, na linha de cima do título
     const out = [head(inicioRef ? 'Mês ' + mesAgora + ' de ' + dur + ' · ' + U.cap(U.nomeMes(hoje)) + ' ' + hoje.slice(0, 4) : 'Plano de marca', 'Visão geral',
-      'Onde estamos e o que fazer este mês. Cada mês concluído deixa a marca mais perto da\u00a0meta.'),
-      el('section', { class: 'goal goal--kpi', 'aria-labelledby': 'goal-t' },
-      el('div', 'goal__head',
-        el('span', { class: 'goal__ico', 'aria-hidden': 'true' }),
-        el('p', 'goal__lbl2', 'Meta do plano'),
-        inicioRef ? el('span', 'goal__chip', 'Mês ' + mesAgora + ' de ' + dur) : null),
-      el('h1', { class: 'goal__val', id: 'goal-t' },
-        numero ? el('span', 'goal__n', numero) : null,
-        el('span', 'goal__f' + (numero ? '' : ' is-so'), fraseMeta)),
-      inicioRef ? el('div', 'goal__tempo',
-        el('div', { class: 'goal__segs', role: 'img', 'aria-label': 'Mês ' + mesAgora + ' de ' + dur + ' do plano', style: '--n:' + dur },
-          Array.from({ length: dur }, (_, i) => el('span', i < mesAgora - 1 ? 'is-ok' : i === mesAgora - 1 ? 'is-now' : null))),
-        el('div', 'goal__ends', el('span', null, U.cap(U.nomeMesCurto(inicioRef)) + ' ' + inicioRef.slice(2, 4)), el('span', null, 'Chegada · ' + U.nomeMesCurto(fimRef) + ' ' + fimRef.slice(2, 4)))) : null)];
-    if (inicioRef) {
-      const minhas = D.acoes.filter(comCliente);
-      const ate = minhas.filter((a) => a.mes_previsto <= hoje);
-      const feitasP = minhas.filter((a) => a.status === 'feita');
-      const noPrazo = feitasP.filter((a) => !a.prazo || (a.concluida_em && a.concluida_em <= a.prazo)).length;
-      out.push(faixa([
-        ['Ações do plano até agora', ate.filter((a) => a.status === 'feita').length + ' de ' + ate.length, 'concluídas'],
-        feitasP.length ? ['Feitas no prazo', Math.round((noPrazo / feitasP.length) * 100) + '%', noPrazo + ' de ' + feitasP.length] : ['Feitas no prazo', '—', 'aparece com a primeira ação'],
-        D.pedidos.length ? ['Peças revisadas', D.pedidos.filter((x) => x.status === 'aprovado').length + ' de ' + D.pedidos.length, 'aprovadas'] : null,
-        ['Próximo encontro', D.proximo ? U.dia(D.proximo.inicio) : 'A marcar', D.proximo ? U.cap(U.fmt(D.proximo.inicio, { weekday: 'long' })) + ' · ' + U.hora(D.proximo.inicio) : 'ver no calendário', '#consultoria']]));
-    }
+      ['O que fazer este mês e o caminho até a meta.', el('br'), 'Cada mês concluído deixa a marca mais perto dela.'])];
     const bm = bannerMensagem(); if (bm) out.push(bm);
     if (!inicioRef) return out.concat(vazio('A trilha aparece assim que o consultor cadastrar o plano.'));
 
@@ -2668,8 +2644,10 @@
     });
     wrap.addEventListener('scroll', () => { trilhaX = wrap.scrollLeft; }, { passive: true });
     const nav = (d) => { wrap.scrollBy({ left: d * wrap.clientWidth * 0.7, behavior: 'smooth' }); };
-    out.push(el('div', 'step-sec__head', el('h2', { class: 'step-sec__t' }, 'O caminho até a meta'),
-      el('p', 'step-sec__d', 'Mês ' + mesN + ' de ' + dur + (cincoEstrelas ? ' · ' + cincoEstrelas + ' ★' : ''))));
+    out.push(el('div', 'step-sec__head caminho-head',
+      el('div', null, el('p', 'eyebrow', 'O caminho até a meta'),
+        el('h2', { class: 'step-sec__t caminho-head__meta' }, numero ? el('span', 'caminho-head__n', numero) : null, numero ? ' ' + frase : fraseMeta)),
+      cincoEstrelas ? el('p', 'step-sec__d', cincoEstrelas + (cincoEstrelas === 1 ? ' mês 5 ★' : ' meses 5 ★')) : null));
     out.push(el('section', { class: 'trail-box', 'aria-label': 'Trilha' },
       el('div', 'trail-nav',
         el('button', { class: 'trail-nav__btn', type: 'button', 'aria-label': 'Voltar na trilha', onclick: () => nav(-1) }, '‹'),

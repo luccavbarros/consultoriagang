@@ -2397,3 +2397,9 @@ html.side-abrindo .side__plan .badge { display: none; }
 .comofoi__m.is-pior .comofoi__mi { color: var(--warn); }
 .comofoi__m.is-igual .comofoi__mi { color: #e6e6e6; }
 .comofoi__ml { font-size: var(--t-micro); color: var(--ganggrey); }
+
+/* Visão geral: a meta vira o título do caminho (sem o cartão de meta à parte) */
+.caminho-head { align-items: flex-end; }
+.caminho-head .eyebrow { margin: 0 0 6px; }
+.caminho-head__meta { max-width: 46ch; text-wrap: balance; }
+.caminho-head__n { font-weight: 700; }
