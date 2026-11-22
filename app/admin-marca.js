@@ -413,6 +413,11 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
   };
   const POS = [['entrega', 'Entregava'], ['entrega_mal', 'Entregava mal'], ['nao_entrega', 'Não entregava']];
   const POS_T = Object.fromEntries(POS);
+  // o que a marca mostra hoje: os pontos de contato e como cada um está
+  const CANAIS_PC = ['Site', 'Instagram', 'LinkedIn', 'Facebook', 'TikTok', 'YouTube', 'WhatsApp', 'Perfil no Google', 'Apresentação comercial', 'Proposta comercial',
+    'Fachada e ponto de venda', 'Embalagem', 'Uniforme e materiais impressos', 'Atendimento', 'Outro'].map((c) => [c, c]);
+  const STATUS_PC = [['coerente', 'Coerente com a marca'], ['irregular', 'Irregular'], ['fora', 'Fora da marca']];
+  const STATUS_PC_T = Object.fromEntries(STATUS_PC);
 
   // ===== Da cascata: o briefing (app/admin-briefing.js) sugere; o consultor adiciona com um clique. Nada entra sozinho =====
   const BF = () => (window.GangBriefing && window.GangBriefing.dados()) || {};
@@ -589,6 +594,12 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
       { k: 'notam', label: 'O que notavam', type: 'preset', presets: 'notam' }, { k: 'acreditam', label: 'O que acreditavam', type: 'preset', presets: 'acreditam' },
       { k: 'sentem', label: 'O que sentiam', type: 'preset', presets: 'sentem' }],
     resumo: (r) => [r.marca_nome, [r.notam, r.acreditam, r.sentem].filter(Boolean).join(' · ')] }],
+    [lista, { icone: 'olho', titulo: 'O que a marca mostra hoje', nota: 'Sua leitura de cada ponto de contato: site, redes, apresentação, fachada. O cliente vê em Diagnóstico.', tabela: 'pontos_contato',
+      vazio: 'Nenhum ponto de contato lido ainda.', fields: [
+      { k: 'canal', label: 'Ponto de contato', req: true, type: 'select', options: CANAIS_PC },
+      { k: 'status', label: 'Está', type: 'select', options: STATUS_PC },
+      { k: 'nota', label: 'O que comunica de verdade', type: 'textarea', full: true, placeholder: 'Ex.: tom formal e visual antigo; não diz o que a empresa faz de diferente' }],
+    resumo: (r) => [r.canal + ' · ' + (STATUS_PC_T[r.status] || ''), r.nota] }],
     [lista, { icone: 'check', titulo: 'O que todo cliente exige', nota: 'Motivadores: o mínimo da categoria.', tabela: 'fatores', fixo: { tipo: 'motivador' }, sugere: bfFatores('motivadores'), fields: [
       { k: 'texto', label: 'Item', req: true, type: 'preset', presets: 'motivadores' }, { k: 'posicao', label: 'A marca…', type: 'select', options: POS }],
     resumo: (r) => [r.texto, POS_T[r.posicao]] }],

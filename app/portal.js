@@ -102,7 +102,7 @@
   };
   // o material entregue (somente leitura)
   const MARCA = ['escolhas', 'condicoes', 'impressoes', 'fatores', 'causas', 'mensagens_apoio', 'tom_atributos', 'tom_exemplos',
-    'arquivos_marca', 'cores', 'tipografias', 'aplicacoes', 'situacoes', 'ativos', 'elementos_marca', 'identidade_central'];
+    'arquivos_marca', 'cores', 'tipografias', 'aplicacoes', 'situacoes', 'ativos', 'elementos_marca', 'identidade_central', 'pontos_contato'];
   const [plat, ident, facs, ...listas] = await Promise.all([
     sb.from('plataformas').select('*').maybeSingle(),
     sb.from('identidades').select('*').maybeSingle(),
@@ -2047,7 +2047,8 @@
     const out = [head([p.estrategia_aprovada_em ? 'Aprovada em ' + U.mesAno(p.estrategia_aprovada_em) : null,
       p.proxima_revisao_estrategia ? 'próxima revisão em ' + U.mesAno(p.proxima_revisao_estrategia) : null].filter(Boolean).join(' · '),
     'Estratégia', 'O desafio da marca, como vamos vencê-lo e\u00a0as\u00a0escolhas\u00a0que\u00a0fizemos. Toda ação do plano sai daqui.',
-    p.estrategia_pdf ? baixar(p.estrategia_pdf, 'Baixar plano completo (PDF)') : null)];
+    el('div', 'head-btns', el('a', { class: 'btn btn--light', href: '#marca-pdf' }, 'Baixar plano de marca (PDF)'),
+      p.estrategia_pdf ? baixar(p.estrategia_pdf, 'Plano completo da consultoria') : null))];
     const posic = D.plataforma && D.plataforma.posicionamento;
     if (!D.objetivos.length && !D.escolhas.length && !p.como_vencer && !p.desafio && !D.condicoes.length && !posic) return out.concat(vazio());
     const conf = D.condicoes.filter((c) => c.status === 'se_confirma').length;
@@ -2168,6 +2169,15 @@
       dis.length ? fatores('dis-t', 'O que faz escolher uma marca', dis) : null].filter(Boolean);
     if (esq.length || dir.length) out.push(el('div', 'diag-topo',
       esq.length ? el('div', 'diag-col', esq) : null, dir.length ? el('div', 'diag-col', dir) : null));
+
+    // o que a marca mostra hoje: a leitura do consultor em cada ponto de contato (o meio entre o que o dono diz e o que as pessoas percebem)
+    const pcs = D.pontos_contato || [];
+    if (pcs.length) {
+      const STP = { coerente: ['done', 'Coerente', 'ok', 'ok'], irregular: ['doing', 'Irregular', 'meio', 'warn'], fora: ['warn', 'Fora da marca', 'alerta', 'bad'] };
+      out.push(secN('pc-t', 'O que a marca mostra hoje', pcs.filter((x) => x.status === 'coerente').length + '/' + pcs.length,
+        ['A leitura do consultor em cada ponto de contato:', el('br'), 'o que a marca comunica de verdade.'],
+        grupo(pcs.map((x) => { const P = STP[x.status] || STP.irregular; return [quad(P[2], P[3]), x.canal, x.nota || null, chip(P[0], P[1])]; }))));
+    }
 
     // cada marca num cartão, com as mesmas três perguntas uma embaixo da outra: dá para comparar lendo na horizontal
     const PERG = (i) => [['Notavam', i.notam], ['Acreditavam', i.acreditam], ['Sentiam', i.sentem]];
@@ -2800,6 +2810,94 @@
       el('footer', 'rel__foot', 'Gerado pelo portal da marca em ' + U.diaAno(new Date()) + '.'))];
   };
 
+  // ===== Plano de marca: Diagnóstico, Estratégia, Narrativa e Identidade Visual num documento (sem as ações) =====
+  // gerado na hora com o que está preenchido; cada parte começa numa página nova; seção vazia não entra
+  const telaPlanoMarca = () => {
+    const nome = D.empresa ? D.empresa.nome : 'Sua marca';
+    const txt = (v) => (v == null ? '' : String(v)).trim();
+    const sec = (t, ...k) => { const kids = k.flat().filter(Boolean); return kids.length ? el('section', 'rel__sec pm__sec', el('h3', 'rel__h', t), kids) : null; };
+    const par = (v) => (txt(v) ? el('p', 'rel__p', txt(v)) : null);
+    const lista = (arr, f) => (arr.length ? el('ul', 'rel__list', arr.map((x) => el('li', null, f(x)))) : null);
+    const destaque = (v) => (txt(v) ? el('p', 'pm__frase', txt(v)) : null);
+    const parte = (n, t, ...k) => { const kids = k.flat().filter(Boolean); return kids.length ? el('section', 'pm__parte', el('p', 'pm__num', n), el('h2', 'pm__t', t), kids) : null; };
+
+    // 1. diagnóstico
+    const G = D.diagnostico || {};
+    const POSD = { entrega: 'entregava', entrega_mal: 'entregava mal', nao_entrega: 'não entregava' };
+    const fat = (tipo) => (D.fatores || []).filter((f) => f.tipo === tipo);
+    const cli = (D.impressoes || []).find((x) => x.eh_cliente);
+    const conc = (D.impressoes || []).filter((x) => !x.eh_cliente);
+    const STPC = { coerente: 'coerente', irregular: 'irregular', fora: 'fora da marca' };
+    const tabelaMarcas = (cli || conc.length) ? el('table', 'pm__tab',
+      el('thead', null, el('tr', null, ['Marca', 'Notavam', 'Acreditavam', 'Sentiam'].map((h) => el('th', null, h)))),
+      el('tbody', null, [cli, ...conc].filter(Boolean).map((i) => el('tr', i.eh_cliente ? 'is-sua' : null,
+        el('td', null, txt(i.marca_nome) || 'Marca'), el('td', null, txt(i.notam) || '—'), el('td', null, txt(i.acreditam) || '—'), el('td', null, txt(i.sentem) || '—'))))) : null;
+    const diag = parte('01', 'Diagnóstico',
+      G.data ? el('p', 'rel__muted', 'Ponto de partida · ' + U.mesAno(G.data)) : null,
+      G.resumo ? sec('O diagnóstico em uma frase', destaque(G.resumo)) : null,
+      tabelaMarcas ? sec('Como cada marca era vista', tabelaMarcas) : null,
+      sec('O que todo cliente exige', lista(fat('motivador'), (f) => [el('strong', null, f.texto), ' · a marca ' + (POSD[f.posicao] || 'não entregava')])),
+      sec('O que faz escolher uma marca', lista(fat('discriminador'), (f) => [el('strong', null, f.texto), ' · a marca ' + (POSD[f.posicao] || 'não entregava')])),
+      sec('O que a marca mostra hoje', lista(D.pontos_contato || [], (x) => [el('strong', null, x.canal), ' · ' + (STPC[x.status] || 'irregular') + (txt(x.nota) ? '. ' + txt(x.nota) : '')])),
+      sec('As causas que o plano ataca', lista(D.causas || [], (c) => c.texto)));
+
+    // 2. estratégia
+    const p = D.plano || {};
+    const NIVO = { negocio: 'Negócio', marca: 'Marca', comunicacao: 'Comunicação' };
+    const STC = { se_confirma: 'se confirma', em_observacao: 'em observação', sem_dados: 'sem dados ainda', nao_se_confirma: 'não se confirma' };
+    const esc = (t) => (D.escolhas || []).filter((x) => x.tipo === t);
+    const estr = parte('02', 'Estratégia',
+      p.estrategia_aprovada_em ? el('p', 'rel__muted', 'Aprovada em ' + U.mesAno(p.estrategia_aprovada_em)) : null,
+      sec('Posicionamento', destaque(D.plataforma && D.plataforma.posicionamento)),
+      sec('O desafio', par(p.desafio)),
+      sec('Como vamos vencer', par(p.como_vencer)),
+      sec('Objetivos', lista(D.objetivos || [], (o) => o.nivel === 'comunicacao'
+        ? [el('strong', null, 'Comunicação: '), ['notar ' + (o.notar || '—'), 'acreditar ' + (o.acreditar || '—'), 'sentir ' + (o.sentir || '—')].join(' · ')]
+        : [el('strong', null, (NIVO[o.nivel] || 'Objetivo') + ': '), (o.destaque ? o.destaque + ' ' : '') + txt(o.titulo)])),
+      sec('Onde jogamos', lista(esc('prioridade'), (x) => x.texto)),
+      sec('O que deixamos de lado', lista([...esc('deixa_de_lado').map((x) => x.texto), ...(D.descartadas || []).map((x) => x.texto)], (t) => t)),
+      sec('O que acompanhamos', lista(D.condicoes || [], (c) => [el('strong', null, c.texto), (c.como_verificar ? ' · verificamos por ' + c.como_verificar.charAt(0).toLowerCase() + c.como_verificar.slice(1) : '') + (STC[c.status] ? ' · ' + STC[c.status] : '')])),
+      sec('Como medimos', lista(D.metricas || [], (m) => [el('strong', null, m.nome), m.frequencia ? ' · ' + ({ mensal: 'todo mês', semestral: 'a cada 6 meses', anual: 'todo ano' }[m.frequencia] || m.frequencia) : ''])));
+
+    // 3. narrativa
+    const P = D.plataforma || {};
+    const IC = D.identidade_central || [];
+    const facs = FACETAS.filter(([k]) => D.facetas && D.facetas[k]);
+    const diz = (D.tom_exemplos || []).filter((x) => x.tipo === 'diz');
+    const nunca = (D.tom_exemplos || []).filter((x) => x.tipo === 'nunca_diz');
+    const narr = parte('03', 'Narrativa',
+      sec('Mensagem central', destaque(P.mensagem_central)),
+      sec('Mensagens de apoio', lista(D.mensagens_apoio || [], (m) => m.texto)),
+      sec('O que a marca é, no centro', lista(IC, (x) => [el('strong', null, x.texto), txt(x.explicacao) ? ' · ' + txt(x.explicacao) : ''])),
+      facs.length ? sec('Quem a marca é', el('dl', 'pm__dl', facs.map(([k, t]) => el('div', null, el('dt', null, t), el('dd', null, D.facetas[k]))))) : null,
+      sec('Tom de voz', lista(D.tom_atributos || [], (a) => [el('strong', null, a.nome), txt(a.descricao) ? ' · ' + txt(a.descricao) : ''])),
+      (diz.length || nunca.length) ? sec('Como a marca fala', el('div', 'pm__duas',
+        diz.length ? el('div', null, el('p', 'rel__k', 'Diz'), lista(diz, (x) => x.texto)) : null,
+        nunca.length ? el('div', null, el('p', 'rel__k', 'Nunca diz'), lista(nunca, (x) => x.texto)) : null)) : null);
+
+    // 4. identidade visual
+    const ident = parte('04', 'Identidade Visual',
+      (D.cores || []).length ? sec('Cores', el('div', 'pm__cores', D.cores.map((c) => el('div', 'pm__cor',
+        el('span', { class: 'pm__amostra', style: 'background:' + (c.hex || '#ccc') }), el('p', 'pm__cor-n', c.nome || ''),
+        el('p', 'rel__muted', [c.hex, c.cmyk ? 'CMYK ' + c.cmyk : null, c.pantone ? 'Pantone ' + c.pantone : null].filter(Boolean).join(' · ')))))) : null,
+      sec('Tipografia', lista(D.tipografias || [], (t) => [el('strong', null, t.nome), txt(t.uso) ? ' · ' + txt(t.uso) : ''])),
+      sec('Elementos da marca', lista(D.elementos_marca || [], (x) => [el('strong', null, x.nome), txt(x.descricao) ? ' · ' + txt(x.descricao) : ''])),
+      sec('Ativos que tornam a marca reconhecível', lista(D.ativos || [], (x) => [el('strong', null, x.nome || x.tipo || 'Ativo'), txt(x.texto) ? ' · ' + txt(x.texto) : ''])));
+
+    const partes = [diag, estr, narr, ident].filter(Boolean);
+    const logo = el('span', 'pm__logo'); U.avatar(logo, nome, D.empresa && D.empresa.logo_url);
+    const barra = el('div', 'rel__bar no-print',
+      el('a', { class: 'link', href: '#estrategia' }, '← Voltar'),
+      el('button', { class: 'btn btn--light btn--sm', type: 'button', onclick: () => window.print() }, 'Imprimir ou salvar em PDF'));
+    return [el('article', 'rel pm', barra,
+      el('section', 'pm__capa',
+        el('div', null, logo, el('p', 'rel__eyebrow', 'Plano de marca'), el('h1', 'pm__titulo', nome),
+          el('p', 'rel__sub', ['Diagnóstico, estratégia, narrativa', el('br'), 'e identidade visual.'])),
+        el('div', 'pm__capa-pe', el('p', 'rel__by', 'Consultoria de marca GANG'), el('p', 'rel__muted', 'Atualizado em ' + U.diaAno(new Date())))),
+      partes.length ? partes : el('p', 'rel__p', 'O plano de marca aparece aqui assim que o consultor preencher o diagnóstico e a estratégia.'),
+      el('footer', 'rel__foot', 'Plano de marca de ' + nome + ' · gerado pela plataforma GANG em ' + U.diaAno(new Date()) + '.'))];
+  };
+
   // ===== telas =====
   const SCREENS = {
     plano: { crumb: 'Visão Geral · ' + U.nomeMes(hoje) + ' de ' + hoje.slice(0, 4), render: telaCaminho },
@@ -2807,6 +2905,7 @@
     acoes: { crumb: 'Acompanhamento / Ações', render: telaAcoes },
     resultados: { crumb: 'Acompanhamento / Resultados', render: telaResultados },
     relatorio: { crumb: 'Acompanhamento / Relatório do mês', render: telaRelatorio },
+    'marca-pdf': { crumb: 'Sua marca / Plano de marca', render: telaPlanoMarca },
     consultoria: { crumb: 'Acompanhamento / Calendário', render: telaConsultoria },
     plataforma: { crumb: 'Sua marca / Narrativa', render: telaPlataforma },
     identidade: { crumb: 'Sua marca / Identidade Visual', render: telaIdentidade },
