@@ -394,7 +394,7 @@
     });
 
     const doGrupo = grupos[abaAcoes];
-    if (abaAcoes === 'mes' && mesNaoPago(hoje)) lista.append(el('li', 'tasks__empty', 'As ações de ' + U.nomeMes(hoje) + ' abrem quando a mensalidade for paga. ', el('a', { href: '#assinatura' }, 'Pagar em Meu plano')));
+    if (abaAcoes === 'mes' && mesNaoPago(hoje)) lista.append(el('li', 'tasks__empty', 'As ações de ' + U.nomeMes(hoje) + ' chegam com a mensalidade do mês. ', el('a', { href: '#assinatura' }, 'Ver Meu plano')));
     else if (!doGrupo.length && abaAcoes !== 'proximos') lista.append(el('li', 'tasks__empty', { mes: 'Nenhuma ação pendente neste mês.', proximos: 'Nenhuma ação prevista para os próximos meses.', feitas: 'Nenhuma ação concluída ainda.' }[abaAcoes]));
     const primeira = abaAcoes === 'mes' ? doGrupo.find((a) => a.responsavel !== 'gang') : null;
     if (abaAcoes === 'proximos') {
@@ -430,7 +430,7 @@
           if (porMes[m] || (m === U.addRef(hoje, 1) && !mesNaoPago(m))) continue;
           lista.append(el('li', 'tasks__mesli', el('div', 'tasks__mes tasks__mes--fechado',
             el('div', 'tasks__fech', el('span', 'tasks__mes-t', U.cap(U.nomeMes(m)) + ' ' + m.slice(0, 4)),
-              mesNaoPago(m) ? el('a', { class: 'tasks__cad', href: '#assinatura' }, 'Abre quando a mensalidade for paga')
+              mesNaoPago(m) ? el('a', { class: 'tasks__cad', href: '#assinatura' }, 'Abre com a mensalidade de ' + U.nomeMes(m))
                 : el('span', 'tasks__cad', 'Abre em ' + U.nomeMes(U.addRef(m, -1)))))));
         }
       }
@@ -455,7 +455,7 @@
         el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: async (e) => {
           e.currentTarget.disabled = true;
           const { error } = await sb.rpc('portal_adiantar_acao', { p_acao: a.id });
-          if (error) { e.currentTarget.disabled = false; return anuncia(/Termine/.test(error.message || '') ? 'Termine as ações deste mês antes de adiantar.' : 'Não foi possível adiantar agora.'); }
+          if (error) { e.currentTarget.disabled = false; return anuncia(/Termine/.test(error.message || '') ? 'Termine as ações deste mês antes de adiantar.' : /mensalidade/.test(error.message || '') ? 'O próximo mês chega com a mensalidade dele.' : 'Não foi possível adiantar agora.'); }
           a.adiantada_de = a.mes_previsto; a.mes_previsto = hoje; a.atualizada_em = new Date().toISOString();
           const dias = { G: 14, M: 7 }[a.tamanho] || 3; const d = new Date(); d.setDate(d.getDate() + dias);
           const fimMes = new Date(d.getFullYear(), new Date().getMonth() + 1, 0); a.prazo = (d > fimMes ? fimMes : d).toLocaleDateString('sv-SE');
@@ -2885,7 +2885,9 @@
       sec('Ativos que tornam a marca reconhecível', lista(D.ativos || [], (x) => [el('strong', null, x.nome || x.tipo || 'Ativo'), txt(x.texto) ? ' · ' + txt(x.texto) : ''])));
 
     const partes = [diag, estr, narr, ident].filter(Boolean);
-    const logo = el('span', 'pm__logo'); U.avatar(logo, nome, D.empresa && D.empresa.logo_url);
+    // o logo vai como imagem de verdade (fundo de elemento some na impressão quando o navegador não imprime fundos)
+    const urlLogo = D.empresa && D.empresa.logo_url;
+    const logo = urlLogo ? el('img', { class: 'pm__logo pm__logo--img', src: urlLogo, alt: 'Logo ' + nome }) : el('span', 'pm__logo', U.iniciais ? U.iniciais(nome) : nome.slice(0, 2).toUpperCase());
     const barra = el('div', 'rel__bar no-print',
       el('a', { class: 'link', href: '#estrategia' }, '← Voltar'),
       el('button', { class: 'btn btn--light btn--sm', type: 'button', onclick: () => window.print() }, 'Imprimir ou salvar em PDF'));
