@@ -2403,3 +2403,42 @@ html.side-abrindo .side__plan .badge { display: none; }
 .caminho-head .eyebrow { margin: 0 0 6px; }
 .caminho-head__meta { max-width: 46ch; text-wrap: balance; }
 .caminho-head__n { font-weight: 700; }
+
+/* ===== Micro animações: respondem ao que o cliente acabou de fazer; somem para quem pede menos movimento ===== */
+@media (prefers-reduced-motion: no-preference) {
+  /* 1. ação feita: o círculo dá um pop, o ✓ se desenha e o título é riscado da esquerda para a direita */
+  .task.is-recem .task__check::before { animation: ma-pop .38s cubic-bezier(.3, 1.6, .5, 1) both; }
+  .task.is-recem .task__check::after { animation: ma-desenha .3s .12s ease-out both; }
+  .task.is-recem .task__title { width: fit-content; max-width: 100%; text-decoration: none;
+    background: linear-gradient(#555, #555) left 58% / 0% 1px no-repeat; animation: ma-risca .45s .15s ease-out forwards; }
+  .missoes__bar > span { transition: width .6s cubic-bezier(.2, .8, .2, 1); }
+
+  /* 2. estrela conquistada: acende com um pop e um brilho rápido */
+  .stars__row .is-nova { display: inline-block; animation: ma-estrela .7s cubic-bezier(.3, 1.6, .5, 1) both; }
+  .stars__chips li.is-nova { animation: ma-brilho 1.2s ease-out both; border-radius: 999px; }
+
+  /* 3. "Como foi o mês?": o botão afunda ao tocar, o "Respondido" aparece e o mês ganha a seta */
+  .comofoi__btn:active { transform: scale(.96); }
+  .comofoi__btn { transition: background .15s ease, border-color .15s ease, transform .1s ease; }
+  .comofoi__btn.is-recem { animation: ma-afunda .32s ease-out both; }
+  .chip.is-surge { animation: ma-surge .35s ease-out both; }
+  .comofoi__m.is-recem { animation: ma-pop .42s cubic-bezier(.3, 1.6, .5, 1) both; }
+
+  /* 4. missão cumprida: o cartão pulsa uma vez; mês completo ganha um destaque */
+  .missao.is-recem { animation: ma-pulso .9s ease-out both; }
+  .missoes__ok.is-recem { animation: ma-surge .4s ease-out both, ma-brilho 1.4s .2s ease-out both; }
+
+  /* 5. trilha: o mês atual pulsa devagar, só para dizer "você está aqui" */
+  .trail__step.is-hoje .trail__node { position: relative; }
+  .trail__step.is-hoje .trail__node::after { content: ""; position: absolute; inset: -2px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .55);
+    animation: ma-aqui 2.6s ease-out infinite; pointer-events: none; }
+}
+@keyframes ma-pop { 0% { transform: scale(.6); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
+@keyframes ma-desenha { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes ma-risca { to { background-size: 100% 1px; } }
+@keyframes ma-estrela { 0% { transform: scale(.4) rotate(-20deg); opacity: .3; } 55% { transform: scale(1.35) rotate(8deg); opacity: 1; text-shadow: 0 0 12px rgba(245, 165, 36, .9); } 100% { transform: scale(1) rotate(0); text-shadow: none; } }
+@keyframes ma-brilho { 0% { box-shadow: 0 0 0 0 rgba(245, 165, 36, .55); } 100% { box-shadow: 0 0 0 10px rgba(245, 165, 36, 0); } }
+@keyframes ma-afunda { 0% { transform: scale(.94); } 60% { transform: scale(1.03); } 100% { transform: scale(1); } }
+@keyframes ma-surge { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@keyframes ma-pulso { 0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, .5); transform: scale(1); } 35% { transform: scale(1.015); } 100% { box-shadow: 0 0 0 14px rgba(74, 222, 128, 0); transform: scale(1); } }
+@keyframes ma-aqui { 0% { transform: scale(1); opacity: .9; } 70% { transform: scale(1.45); opacity: 0; } 100% { transform: scale(1.45); opacity: 0; } }

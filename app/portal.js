@@ -522,6 +522,14 @@
     if (abaAcoes === 'mes' && a.mes_previsto && a.mes_previsto < U.ref(new Date()) && a.status !== 'feita') return 'de ' + U.nomeMes(a.mes_previsto);
     return null;
   };
+  // ===== micro animações: só no que acabou de acontecer (não repetem a cada redesenho) =====
+  let recemFeita = null;            // a ação marcada como feita neste clique: ✓ se desenha e o título é riscado
+  const concluidasAgora = new Set(); // ações feitas nesta visita: a missão delas pulsa quando a Visão geral aparecer
+  let cfRecente = null;             // a resposta de "Como foi o mês?" que acabou de ser dada
+  let cfMissaoNova = false;         // ...e a missão "Contar como foi" pulsa uma vez
+  let misPctAntes = null; let misFeitasAntes = null; // a barra das missões cresce do valor anterior
+  const guarda = { get(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* sem armazenamento: sem animação */ } } };
+
   const cartaoAcao = (a) => {
     const o = objetivo[a.objetivo_id];
     const p = prazo(a);
@@ -624,7 +632,7 @@
       el('div', 'task__tags', p.text ? el('span', 'mtag mtag--date' + (p.hot ? ' is-hot' : ''), p.text) : null),
       el('div', 'task__st', status),
       temDetalhe ? el('span', { class: 'task__chev' + (aberta ? ' is-open' : ''), 'aria-hidden': 'true' }) : el('span', 'task__chev is-none'));
-    return el('li', { class: 'task' + (a.status === 'feita' ? ' is-feita' : '') + (aberta ? ' is-aberta' : ''), 'data-id': a.id }, linha, corpo);
+    return el('li', { class: 'task' + (a.status === 'feita' ? ' is-feita' : '') + (aberta ? ' is-aberta' : '') + (a.id === recemFeita ? ' is-recem' : ''), 'data-id': a.id }, linha, corpo);
   };
 
   const situacaoDe = (a) => { const x = (D.situacoes || []).find((s2) => s2.id === a.situacao_id); return x ? x.texto : null; };
@@ -672,7 +680,8 @@
     const antes = { status: a.status, concluida_em: a.concluida_em, travada: a.travada, travada_nota: a.travada_nota };
     a.travada = null; a.travada_nota = null;
     a.status = status; a.concluida_em = status === 'feita' ? new Date().toLocaleDateString('sv-SE') : null; // AAAA-MM-DD local
-    render(); indicadores();
+    if (status === 'feita' && !voltando) { recemFeita = a.id; concluidasAgora.add(a.id); } else concluidasAgora.delete(a.id);
+    render(); recemFeita = null; indicadores();
     const { error } = await sb.rpc('portal_status_acao', { p_acao: a.id, p_status: status });
     if (error) {
       Object.assign(a, antes); render(); indicadores();
@@ -1110,7 +1119,7 @@
       const pz = prazo(a);
       return { feita: a.status === 'feita', ord: a.status === 'feita' ? '9' : (a.prazo || '8'), titulo: a.titulo,
         sub: a.status === 'feita' ? 'Feita' : pz.text, hot: a.status !== 'feita' && pz.hot, tipo: 'acao', href: '#acoes', onclick: () => { abreAcao = a.id; },
-        botao: a.status === 'em_andamento' ? 'Continuar' : 'Começar', andamento: a.status === 'em_andamento' };
+        botao: a.status === 'em_andamento' ? 'Continuar' : 'Começar', andamento: a.status === 'em_andamento', recem: a.status === 'feita' && concluidasAgora.has(a.id), id: a.id };
     });
     if (inicioRef && mesPassado >= inicioRef) {
       const ok = !!comoFoi(mesPassado);
@@ -1127,7 +1136,16 @@
     const feitas = itens.filter((x) => x.feita).length;
     // nome curto (a parte antes dos dois-pontos), no máximo 2 linhas; o nome completo fica no título do cartão
     const curto = (t) => (t.includes(':') && t.indexOf(':') > 12 ? t.slice(0, t.indexOf(':')) : t);
-    const card = (x) => el('a', { class: 'missao missao--' + x.tipo + (x.feita ? ' is-ok' : '') + (x.andamento ? ' is-doing' : ''), href: x.href, onclick: x.onclick || null, title: x.titulo },
+    // a missão que acabou de ser cumprida pulsa uma vez; a barra cresce a partir do valor da última vez
+    itens.forEach((x) => { if (x.recem) concluidasAgora.delete(x.id); });
+    if (cfMissaoNova) { const x = itens.find((y) => y.tipo === 'num' && y.feita); if (x) x.recem = true; cfMissaoNova = false; }
+    const pct = itens.length ? Math.round(feitas / itens.length * 100) : 0;
+    const pctDe = misPctAntes != null && misPctAntes !== pct ? misPctAntes : pct;
+    const completouAgora = itens.length && feitas === itens.length && misFeitasAntes != null && misFeitasAntes < itens.length;
+    misPctAntes = pct; misFeitasAntes = feitas;
+    const barra = el('span', { style: 'width:' + pctDe + '%' });
+    if (pctDe !== pct) requestAnimationFrame(() => requestAnimationFrame(() => { barra.style.width = pct + '%'; }));
+    const card = (x) => el('a', { class: 'missao missao--' + x.tipo + (x.feita ? ' is-ok' : '') + (x.andamento ? ' is-doing' : '') + (x.recem ? ' is-recem' : ''), href: x.href, onclick: x.onclick || null, title: x.titulo },
       el('span', 'missao__top', el('span', { class: 'missao__ico', 'aria-hidden': 'true' }), el('span', 'missao__s' + (x.hot ? ' is-hot' : ''), x.sub)),
       el('span', 'missao__t', curto(x.titulo)),
       el('span', 'missao__btn' + (x.feita ? ' is-ok' : ''), x.feita ? 'Feita' : x.botao));
@@ -1136,9 +1154,9 @@
         el('div', null, el('h2', { class: 'missoes__t', id: 'mis-t' }, 'Missões de ' + U.nomeMes(hoje)),
           D.foco ? el('p', 'missoes__foco', 'Foco: ' + D.foco.titulo.replace(/\.$/, '')) : null),
         itens.length ? el('div', 'missoes__prog', el('span', 'missoes__n', feitas + ' de ' + itens.length),
-          el('span', 'missoes__bar', el('span', { style: 'width:' + Math.round(feitas / itens.length * 100) + '%' }))) : null),
+          el('span', 'missoes__bar', barra)) : null),
       itens.length ? el('div', 'missoes__grid', itens.map(card)) : el('p', 'missoes__vazio', 'Nenhuma missão neste mês. O consultor monta as próximas com você.'),
-      feitas === itens.length && itens.length ? el('p', 'missoes__ok', 'Mês completo. Missão cumprida!') : null);
+      feitas === itens.length && itens.length ? el('p', 'missoes__ok' + (completouAgora ? ' is-recem' : ''), 'Mês completo. Missão cumprida!') : null);
   };
 
   // o funil da clareza (o mesmo do site): o que você enxerga, o que comunica, o que as pessoas ouvem, o que entendem
@@ -1385,8 +1403,10 @@
       b.disabled = false;
       if (error) return anuncia('Não foi possível salvar agora.');
       const n = D.numeros.find((x) => x.mes_ref === mesPassado);
+      const primeira = !n || !n.como_foi;
       if (n) n.como_foi = v; else D.numeros.push({ mes_ref: mesPassado, como_foi: v });
-      render(); indicadores(); anuncia(U.cap(U.nomeMes(mesPassado)) + ': ' + COMO[v][0].toLowerCase() + '. Obrigado!');
+      cfRecente = v; if (primeira) cfMissaoNova = true;
+      render(); cfRecente = null; indicadores(); anuncia(U.cap(U.nomeMes(mesPassado)) + ': ' + COMO[v][0].toLowerCase() + '. Obrigado!');
     };
     // os meses do plano já encerrados (até 12), do mais antigo para o mais recente
     const meses = []; for (let r = inicioRef; r <= mesPassado; r = U.addRef(r, 1)) meses.push(r);
@@ -1394,15 +1414,15 @@
     const respondidos = ult.filter((r) => comoFoi(r));
     const melhores = respondidos.filter((r) => comoFoi(r) === 'melhor').length;
     return el('section', { class: 'box comofoi' + (respondidos.length > 1 ? ' comofoi--dois' : ''), id: 'como-foi', tabindex: '-1', 'aria-labelledby': 'cf-t' },
-      el('div', 'comofoi__q', el('div', 'box__head', el('h2', { class: 'box__title', id: 'cf-t' }, 'Como foi ' + U.nomeMes(mesPassado) + '?'), atual ? chip('done', 'Respondido') : null),
+      el('div', 'comofoi__q', el('div', 'box__head', el('h2', { class: 'box__title', id: 'cf-t' }, 'Como foi ' + U.nomeMes(mesPassado) + '?'), atual ? (() => { const c = chip('done', 'Respondido'); if (cfRecente) c.classList.add('is-surge'); return c; })() : null),
       el('p', 'box__text', ['Comparado com ' + U.nomeMes(mesPassado) + ' do ano passado.', el('br'), 'Sem números: só você e o consultor veem.']),
       el('div', { class: 'comofoi__btns', role: 'group', 'aria-label': 'Como foi ' + U.nomeMes(mesPassado) },
-        Object.entries(COMO).map(([k, [t, ic]]) => el('button', { class: 'comofoi__btn comofoi__btn--' + k, type: 'button', 'aria-pressed': String(atual === k),
+        Object.entries(COMO).map(([k, [t, ic]]) => el('button', { class: 'comofoi__btn comofoi__btn--' + k + (cfRecente === k ? ' is-recem' : ''), type: 'button', 'aria-pressed': String(atual === k),
           onclick: (ev) => responde(k, ev.currentTarget) }, el('span', { class: 'comofoi__ic', 'aria-hidden': 'true' }, ic), t)))),
       respondidos.length > 1 ? el('div', 'comofoi__hist',
         el('p', 'comofoi__res', melhores + ' de ' + respondidos.length + (respondidos.length === 1 ? ' mês melhor' : ' meses melhores') + ' que no ano passado'),
         el('ol', { class: 'comofoi__meses', 'aria-label': 'Como foi cada mês' }, ult.map((r) => { const v = comoFoi(r);
-          return el('li', 'comofoi__m' + (v ? ' is-' + v : ''), el('span', 'comofoi__mi', v ? COMO[v][1] : '·'), el('span', 'comofoi__ml', U.nomeMesCurto(r)),
+          return el('li', 'comofoi__m' + (v ? ' is-' + v : '') + (cfRecente && r === mesPassado ? ' is-recem' : ''), el('span', 'comofoi__mi', v ? COMO[v][1] : '·'), el('span', 'comofoi__ml', U.nomeMesCurto(r)),
             el('span', 'sr-only', v ? COMO[v][0] : 'sem resposta')); }))) : null);
   };
 
@@ -2663,15 +2683,21 @@
     const acs = [...e.acs].sort((a, b) => (PESO[b.peso] || PESO.ajuda)[1] - (PESO[a.peso] || PESO.ajuda)[1]);
     const ultimo = caminhoSel === fim;
     const st = estrelas(e); const k = st.filter((x) => x[2]).length; const futuro = e.fase === 'futuro';
+    // estrelas que acenderam desde a última vez que o cliente viu este mês (na primeira visita, nada pisca)
+    const chaveEst = 'gang-estrelas-' + ((D.empresa && D.empresa.id) || '') + '-' + caminhoSel;
+    const acesas = st.filter((x) => x[2]).map((x) => x[0]);
+    const vistas = guarda.get(chaveEst);
+    const novas = new Set(Array.isArray(vistas) && !futuro ? acesas.filter((t) => !vistas.includes(t)) : []);
+    if (!futuro) guarda.set(chaveEst, acesas);
     const cpEl = el('section', { class: 'cp' + (cpTrocou ? ' cp--entra' : '') + (k === 5 ? ' is-5' : ''), 'aria-labelledby': 'cp-t', 'aria-live': 'polite' },
       el('div', 'cp__head',
         el('div', null, el('p', 'eyebrow', (ultimo ? 'Chegada · ' : 'Mês ' + n + ' · ') + U.cap(U.nomeMes(caminhoSel)) + ' ' + caminhoSel.slice(0, 4)),
           el('h2', { class: 'cp__t', id: 'cp-t' }, futuro ? (caminhoSel > U.addRef(hoje, 1) && caminhoSel !== fim ? 'Trancado: abre em ' + U.nomeMes(U.addRef(caminhoSel, -1)) : 'Este mês ainda vai começar') : k === 5 ? 'Mês 5 estrelas' : k + ' de 5 estrelas' + (e.fase === 'agora' ? ' até agora' : ''))),
         futuro ? chip('todo', 'Por vir') : e.fase === 'agora' ? chip('doing', 'Em andamento') : chip(k === 5 ? 'done' : 'todo', 'Encerrado')),
-      futuro ? null : el('p', { class: 'stars__row', role: 'img', 'aria-label': k + ' de 5 estrelas' }, st.map((x) => el('span', x[2] ? 'is-on' : null, x[2] ? '★' : '☆'))),
+      futuro ? null : el('p', { class: 'stars__row', role: 'img', 'aria-label': k + ' de 5 estrelas' }, st.map((x) => el('span', x[2] ? 'is-on' + (novas.has(x[0]) ? ' is-nova' : '') : null, x[2] ? '★' : '☆'))),
       el('ul', 'stars__chips' + (futuro ? ' is-futuro' : ''), st.map(([t, d, ok]) => {
         const ir = irParaEstrela(t, e);
-        return el('li', { class: ok ? 'is-on' : null }, el('a', { href: ir.href, onclick: ir.onclick, title: ok ? 'Feito · ' + ir.dica : d + ' · ' + ir.dica },
+        return el('li', { class: ok ? 'is-on' + (novas.has(t) ? ' is-nova' : '') : null }, el('a', { href: ir.href, onclick: ir.onclick, title: ok ? 'Feito · ' + ir.dica : d + ' · ' + ir.dica },
           el('span', { class: 'stars__ico', 'aria-hidden': 'true' }, ok ? '★' : '☆'), t));
       })));
     out.push(cpEl);
