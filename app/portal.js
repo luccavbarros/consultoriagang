@@ -32,7 +32,7 @@
       el('p', 'small', 'A foto aparece ao lado do seu nome no menu. JPG ou PNG, até 5 MB.'),
       el('div', 'me-photo', prev, el('div', 'me-photo__ctl', el('label', { class: 'label', for: 'mf-arq' }, 'Escolher imagem'), arq, rm)),
       el('label', 'aviso-tg', avisos, el('span', null, el('span', 'aviso-tg__t', 'Receber lembretes por e-mail'),
-        el('span', 'aviso-tg__d', 'Números do mês, encontro no dia seguinte, peça revisada e mensagem do consultor. No máximo um e-mail por dia.'))),
+        el('span', 'aviso-tg__d', ['Encontro no dia seguinte, peça revisada e mensagem', el('br'), 'do consultor. No máximo um e-mail por dia.']))),
       msg,
       el('div', 'dialog__foot', el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => dlgF.close() }, 'Cancelar'), salvar));
     dlgF.append(formF); document.body.append(dlgF);
@@ -210,7 +210,10 @@
   const comCliente = (a) => a.responsavel !== 'gang';
   const pendentesDoMes = () => D.acoes.filter((a) => comCliente(a) && a.status !== 'feita' && a.mes_previsto <= hoje);
   const inicioRef = D.plano ? U.ref(D.plano.inicio) : null;
-  const semNumeros = !!(D.plano && D.plano.sem_numeros); // combinado com o consultor: o portal não cobra os números do mês
+  // o cliente não passa os números da empresa: o portal nunca pede nem cobra. Se o consultor lançar algum, os gráficos aparecem
+  const semNumeros = true;
+  // "como foi o mês": a resposta de um clique (melhor, igual, pior) que o cliente dá no lugar dos números
+  const comoFoi = (r) => { const n = D.numeros.find((x) => x.mes_ref === r); return n ? n.como_foi || null : null; };
   const faltaNumeros = () => !semNumeros && !!inicioRef && mesPassado >= inicioRef && !D.numeros.some((n) => n.mes_ref === mesPassado);
 
   // ===== indicadores =====
@@ -1238,15 +1241,15 @@
       })));
   };
   const telaResultados = () => {
-    const ultimo = [...D.numeros].reverse()[0];
+    const ultimo = [...D.numeros].reverse().find((n) => n.faturamento != null);
     const out = [head(ultimo ? 'Último mês informado: ' + U.nomeMes(ultimo.mes_ref) : 'Estamos chegando lá?', 'Resultados',
-      ['Vendas mudam em semanas, a marca em meses.', el('br'), 'Por isso medimos os dois, em ritmos diferentes.'],
+      ['A empresa muda em semanas, a marca em meses.', el('br'), 'Por isso acompanhamos os dois, em ritmos diferentes.'],
       el('a', { class: 'btn btn--ghost', href: '#relatorio' }, 'Relatório do mês')),
-    cartoesNumeros(), veredito(), funil(), parte('Negócio', 'O que o plano já devolveu e o que falta para a meta.'), pontoPartida('resultados'), metaHero(), lado(planoPagou(), simulador())].filter(Boolean);
+    cartoesNumeros(), veredito(), funil(), parte('Negócio', 'Como os meses estão indo para a empresa.'), pontoPartida('resultados'), metaHero(), lado(planoPagou(), simulador())].filter(Boolean);
 
     // formulário do mês passado (ou a confirmação depois de enviar); fica ao lado do gráfico
-    let numBox = null;
-    if (inicioRef && mesPassado >= inicioRef) {
+    let numBox = blocoComoFoi();
+    if (!semNumeros && inicioRef && mesPassado >= inicioRef) {
       const enviado = D.numeros.find((n) => n.mes_ref === mesPassado);
       if (!enviado || corrigindo) numBox = formNumeros(enviado);
       else {
@@ -1286,7 +1289,7 @@
       const temReal = realS.slice(1).some((v) => v != null);
       const pctFmt = (v) => U.pct(v, 1);
       const evol = {};
-      evol.fat = () => el('section', { class: 'box', 'aria-labelledby': 'fat-t' },
+      if (temReal) evol.fat = () => el('section', { class: 'box', 'aria-labelledby': 'fat-t' },
         el('div', 'box__head', el('h2', { class: 'box__title', id: 'fat-t' }, 'Faturamento mês a mês'), meta != null ? el('p', 'box__note', 'Meta: ' + U.pct(meta, 0) + ' em ' + dur + ' meses') : null),
         meta != null || temReal ? [
           el('div', 'chart__legend',
@@ -1326,6 +1329,7 @@
       // um gráfico por vez, escolhido nas abas (em vez de três blocos seguidos)
       const NOMES = { fat: 'Faturamento', leads: 'Leads', cli: 'Clientes' };
       const ks = Object.keys(evol); if (!ks.includes(abaEvol)) abaEvol = ks[0];
+      if (!ks.length) { if (numBox) out.push(numBox); numBox = null; } else {
       const tabsE = el('div', { class: 'tabs', role: 'tablist', 'aria-label': 'Evolução mês a mês' }, ks.map((k) =>
         el('button', { class: 'tabs__btn', role: 'tab', type: 'button', 'aria-selected': String(k === abaEvol), onclick: () => { abaEvol = k; render(); } }, NOMES[k])));
       tabsE.classList.add('tabs--mini');
@@ -1337,6 +1341,7 @@
       }
       out.push(lado([secE], [numBox]));
       numBox = null;
+      }
     }
     if (numBox) out.push(numBox);
 
@@ -1567,8 +1572,7 @@
   const metaHero = () => {
     const q = quantoFalta();
     if (!q) return null;
-    if (q.sem) return el('div', 'meta-q', el('p', 'meta-q__lbl', 'Quanto falta para a meta'), el('p', 'meta-q__v is-wait', 'Aparece com os primeiros números'),
-      el('p', 'meta-q__sub', 'A meta é faturar ' + U.reais(q.alvo) + ' por mês.'));
+    if (q.sem) return null; // o cliente não passa os números: sem faturamento, o bloco não aparece
     return el('div', 'meta-q',
       el('p', 'meta-q__lbl', 'Quanto falta para a meta'),
       el('p', 'meta-q__v', q.falta ? U.reais(q.falta) + ' por mês' : 'Meta alcançada'),
@@ -1598,7 +1602,7 @@
       const alvo = e.alvo.find((a) => a.status !== 'feita' && comCliente(a)) || e.alvo[0];
       return { href: '#acoes', dica: 'abrir em Ações', onclick: () => { if (alvo) abreAcao = alvo.id; } };
     }
-    if (/^Números/.test(t)) return { href: '#resultados', dica: 'enviar em Resultados', onclick: () => foca('n-fat') };
+    if (/^Contou/.test(t)) return { href: '#resultados', dica: 'responder em Resultados', onclick: () => foca('como-foi') };
     if (/^Presença/.test(t)) return { href: '#consultoria', dica: 'ver no Calendário', onclick: null };
     if (/^Ações avaliadas/.test(t)) {
       const alvo = e.acs.find((a) => a.status === 'feita' && !a.resultado && comCliente(a));
@@ -1616,10 +1620,10 @@
         sub: a.status === 'feita' ? 'Feita' : pz.text, hot: a.status !== 'feita' && pz.hot, tipo: 'acao', href: '#acoes', onclick: () => { abreAcao = a.id; },
         botao: a.status === 'em_andamento' ? 'Continuar' : 'Começar', andamento: a.status === 'em_andamento' };
     });
-    if (!semNumeros && inicioRef && mesPassado >= inicioRef) {
-      const ok = !faltaNumeros();
-      itens.push({ feita: ok, ord: ok ? '9' : '0', titulo: 'Enviar os números de ' + U.nomeMes(mesPassado), sub: ok ? 'Enviados' : 'Leva 2 minutos', hot: !ok, tipo: 'num', botao: 'Enviar',
-        href: '#resultados', onclick: () => { alvoRes = 'n-fat'; setTimeout(() => { const f = document.getElementById('n-fat'); if (f) { f.scrollIntoView({ block: 'center' }); f.focus({ preventScroll: true }); } }, 400); } });
+    if (inicioRef && mesPassado >= inicioRef) {
+      const ok = !!comoFoi(mesPassado);
+      itens.push({ feita: ok, ord: ok ? '9' : '0', titulo: 'Contar como foi ' + U.nomeMes(mesPassado), sub: ok ? 'Respondido' : 'Um clique', hot: false, tipo: 'num', botao: 'Responder',
+        href: '#resultados', onclick: () => foca('como-foi') });
     }
     const enc = D.encontros.filter((x) => x.inicio.slice(0, 7) === hoje).sort((x, y) => (x.inicio < y.inicio ? -1 : 1))[0];
     if (enc) {
@@ -2038,6 +2042,38 @@
   const tabela = (cols, linhas) => el('div', 'table-wrap', el('table', 'table',
     el('thead', null, el('tr', null, cols.map((c) => el('th', { scope: 'col' }, c)))),
     el('tbody', null, linhas.map((l) => el('tr', null, l.map((v, i) => (i === 0 ? el('th', { scope: 'row' }, v) : el('td', null, v))))))));
+
+  // "Como foi o mês?": no lugar dos números da empresa, o cliente diz em um clique se o mês foi melhor, igual ou pior
+  const COMO = { melhor: ['Melhor', '↑'], igual: ['Igual', '='], pior: ['Pior', '↓'] };
+  const blocoComoFoi = () => {
+    if (!inicioRef || mesPassado < inicioRef) return null;
+    const atual = comoFoi(mesPassado);
+    const responde = async (v, b) => {
+      b.disabled = true;
+      const { error } = await sb.rpc('portal_como_foi', { p_mes: mesPassado, p_valor: v });
+      b.disabled = false;
+      if (error) return anuncia('Não foi possível salvar agora.');
+      const n = D.numeros.find((x) => x.mes_ref === mesPassado);
+      if (n) n.como_foi = v; else D.numeros.push({ mes_ref: mesPassado, como_foi: v });
+      render(); indicadores(); anuncia(U.cap(U.nomeMes(mesPassado)) + ': ' + COMO[v][0].toLowerCase() + '. Obrigado!');
+    };
+    // os meses do plano já encerrados (até 12), do mais antigo para o mais recente
+    const meses = []; for (let r = inicioRef; r <= mesPassado; r = U.addRef(r, 1)) meses.push(r);
+    const ult = meses.slice(-12);
+    const respondidos = ult.filter((r) => comoFoi(r));
+    const melhores = respondidos.filter((r) => comoFoi(r) === 'melhor').length;
+    return el('section', { class: 'box comofoi' + (respondidos.length > 1 ? ' comofoi--dois' : ''), id: 'como-foi', tabindex: '-1', 'aria-labelledby': 'cf-t' },
+      el('div', 'comofoi__q', el('div', 'box__head', el('h2', { class: 'box__title', id: 'cf-t' }, 'Como foi ' + U.nomeMes(mesPassado) + '?'), atual ? chip('done', 'Respondido') : null),
+      el('p', 'box__text', ['Comparado com o mês anterior, para a empresa.', el('br'), 'Sem números: só você e o consultor veem.']),
+      el('div', { class: 'comofoi__btns', role: 'group', 'aria-label': 'Como foi ' + U.nomeMes(mesPassado) },
+        Object.entries(COMO).map(([k, [t, ic]]) => el('button', { class: 'comofoi__btn comofoi__btn--' + k, type: 'button', 'aria-pressed': String(atual === k),
+          onclick: (ev) => responde(k, ev.currentTarget) }, el('span', { class: 'comofoi__ic', 'aria-hidden': 'true' }, ic), t)))),
+      respondidos.length > 1 ? el('div', 'comofoi__hist',
+        el('p', 'comofoi__res', melhores + ' de ' + respondidos.length + (respondidos.length === 1 ? ' mês melhor' : ' meses melhores') + ' que o anterior'),
+        el('ol', { class: 'comofoi__meses', 'aria-label': 'Como foi cada mês' }, ult.map((r) => { const v = comoFoi(r);
+          return el('li', 'comofoi__m' + (v ? ' is-' + v : ''), el('span', 'comofoi__mi', v ? COMO[v][1] : '·'), el('span', 'comofoi__ml', U.nomeMesCurto(r)),
+            el('span', 'sr-only', v ? COMO[v][0] : 'sem resposta')); }))) : null);
+  };
 
   const formNumeros = (atual) => {
     const prox = D.proximo;
@@ -3181,10 +3217,11 @@
     const primeiro = (me.name || '').split(' ')[0];
     const objNeg = D.objetivos.find((o) => o.nivel === 'negocio');
     const objMarca = D.objetivos.find((o) => o.nivel === 'marca');
-    const destino = objNeg ? ((objNeg.destaque ? objNeg.destaque + ' de ' : '') + (objNeg.titulo || '')) : (D.plano && D.plano.meta_faturamento_pct ? U.pct(Number(D.plano.meta_faturamento_pct), 0) + ' de faturamento em ' + dur + ' meses' : 'O objetivo do plano');
+    const objMeta = objNeg || objMarca; // a meta é o objetivo que o consultor escreve; sem números, costuma ser o de marca
+    const destino = objMeta ? ((objMeta.destaque ? objMeta.destaque + ' de ' : '') + (objMeta.titulo || '')) : (D.plano && D.plano.meta_faturamento_pct ? U.pct(Number(D.plano.meta_faturamento_pct), 0) + ' de faturamento em ' + dur + ' meses' : 'O objetivo do plano');
     // a meta em duas partes: o número em destaque e a frase ao lado (sem quebrar a linha de qualquer jeito)
-    let numero = objNeg && objNeg.destaque ? objNeg.destaque : null;
-    let frase = numero ? (objNeg.titulo || '') : destino;
+    let numero = objMeta && objMeta.destaque ? objMeta.destaque : null;
+    let frase = numero ? (objMeta.titulo || '') : destino;
     if (!numero) { const m = destino.match(/^([+\-\u2212]?\d[\d.,]*\s?%?)\s+(?:de\s+)?(.+)$/); if (m) { numero = m[1].trim(); frase = m[2]; } }
     frase = frase.replace(/^de\s+/i, '');
     // a meta como um card de indicador (no estilo das referências): rótulo com ícone, o número, a frase e o tempo do plano em segmentos
@@ -3275,7 +3312,7 @@
     const agoraISO = new Date().toISOString();
     const estrelas = (e) => [
       ['Essenciais feitas', !e.alvo.length ? 'Nada previsto para o mês' : 'Fazer as ' + (e.essenciais ? 'essenciais' : 'ações') + ' do mês (' + e.feitas + ' de ' + e.alvo.length + ' feitas)', e.fase !== 'futuro' && e.alvo.length > 0 && e.feitas === e.alvo.length],
-      semNumeros ? ['Números do mês', 'Combinado com o consultor', e.fase !== 'futuro'] : ['Números enviados', 'Enviar faturamento e clientes do mês', D.numeros.some((x) => x.mes_ref === e.r)],
+      e.r === inicioRef ? ['Contou como foi o mês', 'Começo do plano: nada a contar ainda', e.fase !== 'futuro'] : ['Contou como foi o mês', 'Dizer se ' + U.nomeMes(U.addRef(e.r, -1)) + ' foi melhor, igual ou pior', !!comoFoi(U.addRef(e.r, -1))],
       (() => { const enc = D.encontros.filter((x) => x.inicio.slice(0, 7) === e.r);
         return enc.length ? ['Presença no encontro', 'Participar do encontro do mês', enc.some((x) => x.status === 'realizado' || (x.status === 'agendado' && x.inicio < agoraISO))]
           : ['Presença no encontro', 'Sem encontro marcado neste mês', false]; })(),

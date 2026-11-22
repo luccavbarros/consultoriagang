@@ -2370,3 +2370,30 @@ html.side-abrindo .side__plan .badge { display: none; }
 .aviso-fatura.is-hot { border-color: var(--bad); background: var(--bad-bg); }
 .aviso-fatura .box__title { margin-bottom: 4px; }
 .aviso-fatura .box__text { margin: 0; }
+
+/* "Como foi o mês?": a resposta de um clique no lugar dos números da empresa */
+.comofoi .box__text { margin-bottom: 14px; }
+.comofoi:focus { outline: none; }
+/* com histórico, a pergunta e os meses ficam lado a lado (sem sobra à direita); no celular, um embaixo do outro */
+.comofoi--dois { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 32px; align-items: start; }
+.comofoi--dois .comofoi__hist { margin-top: 0; padding: 0 0 0 32px; border-top: 0; border-left: 1px solid var(--line); align-self: stretch; }
+@media (max-width: 760px) { .comofoi--dois { grid-template-columns: 1fr; } .comofoi--dois .comofoi__hist { margin-top: 18px; padding: 14px 0 0; border-left: 0; border-top: 1px solid var(--line); } }
+.comofoi__btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.comofoi__btn { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: var(--r-sm); border: 1px solid var(--line-2); background: transparent; color: #e6e6e6; font: inherit; font-size: var(--t-ui); cursor: pointer; transition: background .15s ease, border-color .15s ease; }
+.comofoi__btn:hover { background: rgba(255,255,255,.05); }
+.comofoi__btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.comofoi__btn[disabled] { opacity: .6; cursor: wait; }
+.comofoi__ic { font-weight: 600; width: 1em; text-align: center; }
+.comofoi__btn--melhor .comofoi__ic { color: var(--ok); }
+.comofoi__btn--pior .comofoi__ic { color: var(--warn); }
+.comofoi__btn[aria-pressed="true"] { background: #fff; border-color: #fff; color: #111; }
+.comofoi__btn[aria-pressed="true"] .comofoi__ic { color: inherit; }
+.comofoi__hist { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+.comofoi__res { margin: 0 0 10px; font-size: var(--t-leg); color: var(--ganggrey); }
+.comofoi__meses { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.comofoi__m { display: grid; justify-items: center; gap: 2px; min-width: 38px; padding: 6px 4px; border-radius: 8px; background: #171717; border: 1px solid var(--line); }
+.comofoi__mi { font-weight: 600; font-size: 14px; color: var(--ganggrey); }
+.comofoi__m.is-melhor .comofoi__mi { color: var(--ok); }
+.comofoi__m.is-pior .comofoi__mi { color: var(--warn); }
+.comofoi__m.is-igual .comofoi__mi { color: #e6e6e6; }
+.comofoi__ml { font-size: var(--t-micro); color: var(--ganggrey); }

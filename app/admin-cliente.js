@@ -2074,9 +2074,9 @@
     const rows = data || [];
     desenhaGraficosNums(rows);
     const t = $('nums');
-    if (!rows.length) return t.replaceChildren(el('tbody', null, el('tr', null, el('td', 'clients__empty', 'Nenhum número enviado ainda.'))));
-    t.replaceChildren(...tabela(['Mês', 'Faturamento', 'Leads', 'Atendidos', 'Novos', 'Propostas', 'Enviado', ''], rows.map((n) => [
-      MESES(n.mes_ref), U.reais(n.faturamento), n.leads ?? '—', n.clientes_atendidos ?? '—', n.clientes_novos ?? '—',
+    if (!rows.length) return t.replaceChildren(el('tbody', null, el('tr', null, el('td', 'clients__empty', 'Nenhuma resposta nem número ainda.'))));
+    t.replaceChildren(...tabela(['Mês', 'Como foi', 'Faturamento', 'Leads', 'Atendidos', 'Novos', 'Propostas', 'Enviado', ''], rows.map((n) => [
+      MESES(n.mes_ref), { melhor: '↑ Melhor', igual: '= Igual', pior: '↓ Pior' }[n.como_foi] || '—', n.faturamento != null ? U.reais(n.faturamento) : '—', n.leads ?? '—', n.clientes_atendidos ?? '—', n.clientes_novos ?? '—',
       n.propostas != null ? n.propostas + ' · ' + (n.fechadas ?? 0) + ' fech. · ' + (n.sem_desconto ?? 0) + ' s/ desc.' : '—',
       U.dia(n.enviado_em) + (n.enviado_por === me.id ? ' · por você' : ''),
       rowBtn('Editar', () => {
