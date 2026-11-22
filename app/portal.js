@@ -2745,7 +2745,13 @@
   // ===== documentos em slides: plano de marca e relatório do mês =====
   // cada página é um slide A4 deitado, de tamanho fixo (nada quebra no meio); lista grande continua no slide seguinte
   const txt = (v) => (v == null ? '' : String(v)).trim();
-  const partes = (arr, n) => { const out = []; for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n)); return out; };
+  // divide uma lista em slides por igual (8 itens com limite de 7 viram 4 + 4): nunca sobra um item sozinho num slide
+  const partes = (arr, n) => {
+    const k = Math.ceil(arr.length / n); if (k <= 1) return arr.length ? [arr] : [];
+    const out = []; let i = 0;
+    for (let j = 0; j < k; j += 1) { const tam = Math.floor(arr.length / k) + (j < arr.length % k ? 1 : 0); out.push(arr.slice(i, i + tam)); i += tam; }
+    return out;
+  };
   const slide = (rot, ...corpo) => el('section', 'sl', el('div', 'sl__in', rot ? el('p', 'sl__rot', '/ ' + rot) : null, el('div', 'sl__corpo', corpo.flat().filter(Boolean))));
   // o título do slide sai do rótulo ("diagnóstico · como cada marca era vista" → "Como cada marca era vista")
   const tituloDe = (rot) => { const t = String(rot).replace(/ · continuação$/, '').split(' · ').pop(); return t.charAt(0).toUpperCase() + t.slice(1); };
@@ -2754,7 +2760,7 @@
   const sCols = (rot, itens, n) => (itens.length ? partes(itens, n || 4).map((g, i) => slide(rot + (i ? ' · continuação' : ''), cab(rot),
     el('div', { class: 'sl__cols', style: '--n:' + Math.max(g.length, 2) }, g.map(([l, t, s]) => el('div', 'sl__col', l ? el('p', 'sl__l', l) : null, t ? el('p', 'sl__n', t) : null, s ? (typeof s === 'string' ? el('p', 'sl__s', s) : s) : null))))) : []);
   const sGrade = (rot, itens, n) => (itens.length ? partes(itens, n || 4).map((g, i) => slide(rot + (i ? ' · continuação' : ''), cab(rot),
-    el('div', { class: 'sl__grade', style: '--n:' + (g.length > 2 ? 2 : g.length) }, g.map(([t, s], k) => el('div', 'sl__gi', el('p', 'sl__l', '/' + (i * (n || 4) + k + 1)), el('p', 'sl__n', t), s ? el('p', 'sl__s', s) : null))))) : []);
+    el('div', { class: 'sl__grade', style: '--n:' + (g.length > 2 ? 2 : g.length) }, g.map(([t, s], k) => el('div', 'sl__gi', el('p', 'sl__l', '/' + (itens.indexOf(g[k]) + 1)), el('p', 'sl__n', t), s ? el('p', 'sl__s', s) : null))))) : []);
   const sLinhas = (rot, itens, n, intro) => (itens.length ? partes(itens, n || 6).map((g, i) => slide(rot + (i ? ' · continuação' : ''), !i && intro ? el('p', 'sl__t sl__t--m', intro) : cab(rot),
     el('div', 'sl__linhas', g.map(([a, b, c, tom]) => el('div', 'sl__li' + (b == null ? ' sl__li--2' : ''), el('p', 'sl__s', el('span', { style: 'color:#3b3835' }, a)), b != null ? el('p', 'sl__s', b) : null, c ? el('span', 'sl__tag' + (tom ? ' is-' + tom : ''), c) : el('span')))))) : []);
   const sNums = (rot, itens, frase) => (itens.length ? slide(rot, frase ? el('p', 'sl__t sl__t--m', frase) : cab(rot),
