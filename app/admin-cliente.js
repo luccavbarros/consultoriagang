@@ -53,6 +53,9 @@
   };
   mostraLogo();
   if ($('p-setor')) { U.setorOpcoes($('p-setor')); $('p-setor').value = emp.setor || ''; } // um campo só: o setor define o plano modelo
+  // o que o cliente vende: vazio = pelo setor; a opção "Pelo setor" mostra o que o setor indica
+  const rotVende = () => { const o = $('p-vende') && $('p-vende').options[0]; if (o) o.textContent = 'Pelo setor: ' + ({ produto: 'produto', servico: 'serviço' })[U.vendeDe({ setor: $('p-setor').value })]; };
+  if ($('p-vende')) { $('p-vende').value = emp.vende || ''; rotVende(); $('p-setor').addEventListener('change', rotVende); }
 
   // trocar de cliente pelo topo do menu (seletor com busca, como nas referências)
   (async () => {
@@ -479,11 +482,11 @@
       logo = sb.storage.from('publico').getPublicUrl(caminho).data.publicUrl;
     } else if ($('p-logo-rm').checked) logo = null;
     const [a, b] = await Promise.all([
-      sb.from('empresas').update({ nome, logo_url: logo, setor: $('p-setor').value || null }).eq('id', id),
+      sb.from('empresas').update({ nome, logo_url: logo, setor: $('p-setor').value || null, ...($('p-vende') && ($('p-vende').value || 'vende' in emp) ? { vende: $('p-vende').value || null } : {}) }).eq('id', id),
       sb.from('planos').upsert(row),
     ]);
     if (a.error || b.error) return say($('plan-msg'), 'Não foi possível salvar.', 'error');
-    Object.assign(p, row); emp.nome = nome; emp.logo_url = logo; emp.setor = $('p-setor').value || null; $('name').textContent = nome; sub();
+    Object.assign(p, row); emp.nome = nome; emp.logo_url = logo; emp.setor = $('p-setor').value || null; if ($('p-vende')) emp.vende = $('p-vende').value || null; $('name').textContent = nome; sub();
     poeEsforco(p.esforco_marca_pct);
     $('p-logo').value = ''; $('p-logo-rm').checked = false; mostraLogo();
     document.dispatchEvent(new CustomEvent('gang:setor', { detail: emp.setor })); // a Estratégia reagrupa as abordagens pelo setor novo

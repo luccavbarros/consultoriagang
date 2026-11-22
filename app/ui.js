@@ -628,6 +628,49 @@
   ];
   const SETOR_BASE = { saude: 'servicos', beleza: 'servicos', educacao: 'servicos', alimentacao: 'varejo', loja_online: 'varejo', tecnologia: 'b2b' };
   const setorBase = (s) => (s ? SETOR_BASE[s] || s : null);
+  // ===== vocabulário do cliente: quem vende produto lê "produto" onde o sistema diz "serviço" =====
+  // O texto guardado no banco não muda (o cérebro liga causa, desafio, abordagem e ação pelo texto exato); só o que aparece na tela.
+  const VENDE_PRODUTO = ['varejo', 'alimentacao', 'loja_online'];
+  const vendeDe = (emp) => (emp && emp.vende) || (emp && VENDE_PRODUTO.includes(emp.setor) ? 'produto' : 'servico');
+  // trocas revisadas (não é troca cega): o gênero é o mesmo (o serviço / o produto); "contratar" vira "comprar" só quando o que se
+  // contrata é o que a empresa vende (contratar a equipe, uma pessoa ou uma agência continua "contratar")
+  // "contratar" muitas vezes é contratar pessoas (equipe, agência): só vira "comprar" quando é o cliente comprando da empresa
+  const PESSOA = '(?!\\s+(?:quem|gente|pessoas?|a\\s+equipe|equipe|algu[eé]m|funcion|colaborador|profission|vendedor|ag[eê]ncia|um\\s|uma\\s|mais\\s+gente))';
+  const TROCAS_PRODUTO = [
+    // frases que já falam dos dois ("produto ou serviço") ficam só com "produto", sem virar "produto ou produto"
+    [/\b(o |um |cada |no |do )?(produtos?|serviços?) (ou|e) (o |um |os |as )?(produtos?|serviços?)\b/gi, (m, art, a1) => (art || '') + (/s$/i.test(a1) ? 'produtos' : 'produto')],
+    // expressões de atendimento, que não são sobre o produto
+    [/\bníveis de serviço\b/g, 'opções'], [/\bfalhas de serviço\b/g, 'falhas'], [/\bserviço ao cliente\b/g, 'atendimento ao cliente'],
+    [/\bServiços\b/g, 'Produtos'], [/\bserviços\b/g, 'produtos'], [/\bServiço\b/g, 'Produto'], [/\bserviço\b/g, 'produto'],
+    [/\bprestadores de produtos\b/g, 'fornecedores'], [/\bprestador de produto\b/g, 'fornecedor'],
+    // "contratar a empresa" → "comprar da empresa"
+    [/\bcontratar a empresa\b/g, 'comprar da empresa'], [/\bcontratar a marca\b/g, 'comprar da marca'],
+    // o cliente comprando: "facilidade de contratar", "na hora de contratar", "ao contratar", "antes de contratar", "poderiam contratar"
+    [new RegExp('\\b(de|ao|para|quiser|poderiam|podem|pode|vai|v[aã]o|decidir|decide|decidiu|decidem|hora de)\\s+contratar\\b' + PESSOA, 'g'), '$1 comprar'],
+    [/\bcontratar (este|esse|o) (produto|servi[cç]o)\b/g, 'comprar $1 $2'],
+    [/\b(em que|onde|quando|que) contratou\b/g, '$1 comprou'],
+    [/\b(Facilidade|facilidade) de contratação\b/g, '$1 de compra'],
+  ];
+  const voc = (texto, vende) => {
+    if (vende !== 'produto' || texto == null) return texto;
+    let t = String(texto);
+    TROCAS_PRODUTO.forEach(([re, por]) => { t = t.replace(re, por); });
+    return t;
+  };
+  // aplica nos textos já desenhados numa área (sem tocar em campos, listas de escolha e no que a pessoa escreveu: [data-livre])
+  const vocDOM = (root, vende) => {
+    if (vende !== 'produto' || !root) return;
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: (n) => {
+      const p = n.parentElement;
+      if (!p || p.closest('input, textarea, select, option, script, style, [data-livre], [contenteditable]')) return NodeFilter.FILTER_REJECT;
+      return /servi[cç]|contrat/i.test(n.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+    } });
+    const ns = []; while (w.nextNode()) ns.push(w.currentNode);
+    ns.forEach((n) => { const v = voc(n.nodeValue, vende); if (v !== n.nodeValue) n.nodeValue = v; });
+    ['title', 'aria-label', 'placeholder'].forEach((at) => root.querySelectorAll('[' + at + ']').forEach((e) => {
+      if (e.closest('[data-livre]')) return; const v = voc(e.getAttribute(at), vende); if (v !== e.getAttribute(at)) e.setAttribute(at, v);
+    }));
+  };
   const setorNome = (s) => { for (const [, ops] of SETOR_GRUPOS) { const o = ops.find(([k]) => k === s); if (o) return o[1].replace(/ \(.*\)$/, '').replace(/ em geral$/, ''); } return ''; };
   // preenche um <select> com os setores agrupados, mantendo o valor atual
   const setorOpcoes = (sel, vazio) => {
@@ -803,5 +846,5 @@
   const confirma = (msg, opts = {}) => janela(msg, { ok: opts.ok || (/excluir|apagar|tirar|desativar|limpar/i.test(msg) ? 'Confirmar' : 'Continuar'), cancelar: 'Cancelar', perigo: opts.perigo != null ? opts.perigo : /excluir|apagar|tirar|desativar|limpar/i.test(msg) });
   const avisa = (msg, copiar) => janela(msg, { copiar });
 
-  window.GangUI = { confirma, avisa, buscaFonte, acessoVence, acessoVencido, acessoDiasRestantes, situacaoPlano, TOLERANCIA_DIAS, faturaAtraso, bloqueioEm, consultoriaBloqueada, graficos, esforcoPadrao, ESFORCO_SETOR, setorBase, setorNome, setorOpcoes, metaMarcaMes, mesesDeHistorico, metaMarcaPlano, esforcoReferencia, addDias, moedaFmt, moedaValor, moedaSet, PROMESSAS, promessaDe, tipoEsforco, pesoTamanho, combo, comboValue, comboSet, diasSemana, diasComArtigo, multi, multiValue, avatar, iniciais, $, el, say, day, fmt, cap, dia, diaAno, mesAno, hora, quando, ref, refDate, addRef, nomeMes, nomeMesCurto, mesesEntre, mesDoPlano, diasAte, reais, pct };
+  window.GangUI = { voc, vocDOM, vendeDe, confirma, avisa, buscaFonte, acessoVence, acessoVencido, acessoDiasRestantes, situacaoPlano, TOLERANCIA_DIAS, faturaAtraso, bloqueioEm, consultoriaBloqueada, graficos, esforcoPadrao, ESFORCO_SETOR, setorBase, setorNome, setorOpcoes, metaMarcaMes, mesesDeHistorico, metaMarcaPlano, esforcoReferencia, addDias, moedaFmt, moedaValor, moedaSet, PROMESSAS, promessaDe, tipoEsforco, pesoTamanho, combo, comboValue, comboSet, diasSemana, diasComArtigo, multi, multiValue, avatar, iniciais, $, el, say, day, fmt, cap, dia, diaAno, mesAno, hora, quando, ref, refDate, addRef, nomeMes, nomeMesCurto, mesesEntre, mesDoPlano, diasAte, reais, pct };
 })();

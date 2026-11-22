@@ -79,7 +79,7 @@
   const hoje = U.ref();
   const mesPassado = U.addRef(hoje, -1);
   const [emp, plano, cons, objs, acoes, desc, nums, encs, diag, ori, peds, mets, futs] = await Promise.all([
-    sb.from('empresas').select('id, nome, logo_url').maybeSingle(),
+    sb.from('empresas').select('*').maybeSingle(), // inclui setor e "vende" (produto ou serviço), para as palavras certas na tela
     sb.from('planos').select('*').maybeSingle(),
     sb.rpc('portal_consultor'),
     sb.from('objetivos').select('*').order('ordem'),
@@ -2937,6 +2937,12 @@
   const comecaUso = (r) => { usoTela = r; usoDesde = Date.now(); };
   document.addEventListener('visibilitychange', () => { if (document.hidden) registraUso(); else if (telaAtual && !usoTela) comecaUso(telaAtual); });
   window.addEventListener('pagehide', registraUso);
+  // o vocabulário do cliente: o que entra depois na tela (detalhes que abrem, listas que se redesenham) também é adaptado
+  const VENDE = U.vendeDe(D.empresa);
+  if (VENDE === 'produto' && window.MutationObserver) {
+    new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach((n) => { if (n.nodeType === 1) U.vocDOM(n, VENDE); else if (n.nodeType === 3 && n.parentElement) U.vocDOM(n.parentElement, VENDE); })))
+      .observe(document.body, { childList: true, subtree: true });
+  }
   function render() {
     const r = rota();
     const trocou = r !== telaAtual; telaAtual = r;
@@ -2944,6 +2950,7 @@
     const y = window.scrollY;
     $('crumb').textContent = SCREENS[r].crumb;
     $('screen').replaceChildren(el('div', 'screen screen--' + r + (trocou ? ' screen--entra' : ''), avisoFatura(), SCREENS[r].render()));
+    U.vocDOM($('screen'), VENDE); // quem vende produto lê "produto" onde o sistema diz "serviço"
     if (!trocou) window.scrollTo(0, y);
     document.querySelectorAll('[data-route]').forEach((a) => {
       if (a.dataset.route === r) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
