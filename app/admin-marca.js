@@ -576,7 +576,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     [hipotesesBriefing, {}],
     [ficha, { icone: 'pulso', titulo: 'Diagnóstico', nota: 'O ponto de partida da marca, como\u00a0o\u00a0cliente\u00a0vê\u00a0em\u00a0Diagnóstico.', tabela: 'diagnosticos', antes: frasesSug, fields: [
       { k: 'data', label: 'Data do diagnóstico', type: 'date' }, { k: 'proximo', label: 'Próximo diagnóstico', type: 'date' },
-      { k: 'resumo', label: 'Posicionamento atual, em uma frase', full: true, type: 'preset', presets: 'resumosDiagnostico' }] }],
+      { k: 'resumo', label: 'O diagnóstico em uma frase', full: true, type: 'preset', presets: 'resumosDiagnostico' }] }],
     [lista, { icone: 'olho', tom: 'gang', titulo: 'A marca do cliente', nota: 'Como as pessoas viam a marca antes do trabalho.', tabela: 'impressoes', fixo: { eh_cliente: true }, max: 1,
       vazio: 'Ainda sem a leitura da marca do cliente.', aoAbrir: (pre) => nomeEmpresa.then((n) => { const i = $(pre + 'marca_nome'); if (i && !i.value) i.value = n || ''; }), fields: [
       { k: 'marca_nome', label: 'Marca', req: true },
