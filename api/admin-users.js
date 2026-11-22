@@ -50,6 +50,7 @@ module.exports = async (req, res) => {
   const quem = await caller(req);
   if (quem.error) return fail(res, 403, quem.error);
   const admin = quem.user;
+  const { action } = body; // lido antes das conferências de permissão, que dependem dele
   // contas de consultor: só a principal cria, ativa, troca senha ou exclui
   // acessos de cliente: a principal, ou o consultor responsável por aquele cliente
   if (action !== 'create' || body.role === 'consultor' || !quem.principal) {
@@ -62,7 +63,6 @@ module.exports = async (req, res) => {
     }
   }
 
-  const { action } = body;
   if (action !== 'create' && (!isUuid(body.id) || body.id === admin.id)) return fail(res, 400, 'Conta inválida.');
 
   if (action === 'create') {
