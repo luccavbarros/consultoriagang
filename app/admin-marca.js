@@ -506,6 +506,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     const B = BF(); const r = B.recursos || {}; const a = B.ambicao || {}; const n = B.numeros || {};
     const itens = [
       a.nota ? ['Ambição', a.nota + ' · em ' + (a.meses || 12) + ' meses'] : null,
+      n.desconto ? ['Desconto', { raro: 'os clientes quase nunca pedem', as_vezes: 'os clientes pedem às vezes', sempre: 'os clientes pedem quase sempre: a marca compete por preço' }[n.desconto]] : null,
       n.faixa && n.faixa !== 'nao' ? ['Tamanho', 'faturamento ' + ({ ate20: 'até R$ 20 mil', '20a50': 'R$ 20 a 50 mil', '50a100': 'R$ 50 a 100 mil', '100a300': 'R$ 100 a 300 mil', '300mais': 'acima de R$ 300 mil' })[n.faixa] + ' por mês'] : null,
       (B.cliente || '').trim() ? ['Cliente que importa', B.cliente] : null,
       (B.nao_cliente || '').trim() ? ['Quem não é cliente', B.nao_cliente] : null,

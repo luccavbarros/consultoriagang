@@ -173,7 +173,7 @@
       if (acs.error || emps.error) { corpo.replaceChildren(el('p', 'msg is-error', 'Não foi possível carregar.')); return; }
       const setorDe = Object.fromEntries((emps.data || []).map((e) => [e.id, U.setorBase(e.setor)])); // o filtro compara pelo setor-base
       aprDados = (acs.data || []).map((a) => ({ ...a, setor: setorDe[a.empresa_id] || null }));
-      // resultado de cada cliente, sem números: o que ele respondeu em "Como foi o mês?" (melhor, igual ou pior)
+      // resultado de cada cliente, sem números: o que ele respondeu em "Como foi o mês?" (melhor, igual ou pior que o mesmo mês do ano passado)
       aprClientes = {};
       try {
         const todos = window.GangSaude ? await window.GangSaude.carregar(sb) : null;
@@ -247,7 +247,7 @@
     const estrategias = Object.values(porEstr).sort((a, b) => b.comNum - a.comNum || b.clientes - a.clientes).map((g) => {
       const med = g.melhores.length ? g.melhores.reduce((x, y) => x + y, 0) / g.melhores.length : null;
       const partes = [g.clientes + (g.clientes === 1 ? ' cliente' : ' clientes')];
-      if (med != null) partes.push(Math.round(med) + '% dos meses foram melhores que o anterior, em ' + g.comNum + (g.comNum === 1 ? ' cliente' : ' clientes') + ' com 3 meses respondidos');
+      if (med != null) partes.push(Math.round(med) + '% dos meses foram melhores que no ano passado, em ' + g.comNum + (g.comNum === 1 ? ' cliente' : ' clientes') + ' com 3 meses respondidos');
       else partes.push('ainda sem 3 meses respondidos');
       if (g.acAval) partes.push('ações da estratégia funcionaram em ' + fmt(g.acPts) + ' de ' + g.acAval);
       const tag = g.comNum >= 3 && med != null ? el('span', 'badge ' + (med >= 50 ? 'is-ok' : 'is-warn'), Math.round(med) + '% melhores') : el('span', 'badge', 'Sem evidência');

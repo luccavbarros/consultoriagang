@@ -85,7 +85,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id } }) => {
     !!dados.momento, !!(dados.cliente || '').trim(), (dados.situacoes || []).length > 0, (dados.concorrentes || []).some((c) => c.nome),
     (dados.motivadores || []).length > 0, (dados.discriminadores || []).length > 0,
     [...(dados.motivadores || []), ...(dados.discriminadores || [])].some((f) => f.posicao), (dados.obstaculos || []).length > 0,
-    !!(dados.tentado || '').trim() || (dados.naoRepetir || []).length > 0, ['faixa', 'modo', 'sazonal'].some((x) => (dados.numeros || {})[x]),
+    !!(dados.tentado || '').trim() || (dados.naoRepetir || []).length > 0, ['faixa', 'modo', 'desconto', 'sazonal'].some((x) => (dados.numeros || {})[x]),
     ['verba', 'horas', 'espaco'].some((x) => (dados.recursos || {})[x] !== undefined && (dados.recursos || {})[x] !== ''), !!((dados.ambicao || {}).nota || '').trim() || !!(dados.ambicao || {}).pct,
   ].filter(Boolean).length;
   const barra = el('span', 'bf-prog__b'); const contagem = el('span', 'bf-prog__n');
@@ -125,9 +125,10 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id } }) => {
           texto('tentado', 'Ex.: promoção no Instagram encheu a agenda um mês, com clientes que não voltaram', 2),
           rotulo('Não repetir', etiquetas('naoRepetir', 'naoFazer')))),
       bloco('5 · Números, recursos e ambição',
-        pergunta(10, 'O tamanho da empresa hoje', 'Só a faixa, para o plano caber no tamanho da empresa. A plataforma não pede números depois: o cliente conta como foi cada mês em um clique.', 'Plano: o tamanho das ações',
+        pergunta(10, 'O tamanho da empresa hoje', 'Só a faixa, para o plano caber no tamanho da empresa. A plataforma não pede números depois: o cliente conta como foi cada mês em um clique.', 'Plano: o tamanho das ações · Estratégia: preço e valor',
           rotulo('Faixa de faturamento por mês', escolhe([['ate20', 'Até R$ 20 mil'], ['20a50', 'De R$ 20 mil a R$ 50 mil'], ['50a100', 'De R$ 50 mil a R$ 100 mil'], ['100a300', 'De R$ 100 mil a R$ 300 mil'], ['300mais', 'Acima de R$ 300 mil'], ['nao', 'Não quis informar']],
             (dados.numeros || {}).faixa || ((dados.numeros || {}).modo === 'nao' ? 'nao' : null), (v) => { setIn('numeros', 'faixa', v); setIn('numeros', 'modo', v === 'nao' ? 'nao' : 'faixa'); })),
+          rotulo('Os clientes pedem desconto?', escolhe([['raro', 'Quase nunca'], ['as_vezes', 'Às vezes'], ['sempre', 'Quase sempre']], (dados.numeros || {}).desconto, (v) => setIn('numeros', 'desconto', v))),
           rotulo('Meses fortes e fracos', textoIn('numeros', 'sazonal', 'Ex.: forte em novembro e dezembro; fraco em fevereiro'))),
         pergunta(11, 'Os recursos para executar', 'O plano precisa caber na vida do cliente. Sem espaço físico de atendimento, as ações de loja ficam fora do plano.', 'Plano: o que entra e o peso dos meses · Estratégia: o que acompanhamos',
           el('div', 'bf-grid', rotulo('Verba de mídia por mês (R$)', numero('recursos', 'verba', 'Ex.: 2000')), rotulo('Horas por semana para a marca', numero('recursos', 'horas', 'Ex.: 4')),
