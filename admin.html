@@ -118,8 +118,8 @@
             </div>
             <div><label class="label" for="nc-start">Início</label><input class="field" id="nc-start" type="date" required /></div>
             <div><label class="label" for="nc-months">Duração (meses)</label><select class="field" id="nc-months"><option value="6">6 meses</option><option value="12">12 meses</option><option value="18" selected>18 meses</option><option value="24">24 meses</option><option value="36">36 meses</option></select></div>
-            <div><label class="label" for="nc-goal">Meta de faturamento (%)</label><select class="field" id="nc-goal"><option value="">Sem meta</option><option value="10">+10%</option><option value="15">+15%</option><option value="20">+20%</option><option value="25">+25%</option><option value="30" selected>+30%</option><option value="40">+40%</option><option value="50">+50%</option><option value="100">+100% (dobrar)</option></select></div>
-            <div><label class="label" for="nc-base">Faturamento de partida</label><input class="field" id="nc-base" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" aria-describedby="nc-base-d" /><p class="field-hint" id="nc-base-d">Média mensal dos 12 meses antes do plano</p></div>
+            <div hidden><label class="label" for="nc-goal">Meta de faturamento (%)</label><select class="field" id="nc-goal"><option value="">Sem meta</option><option value="10">+10%</option><option value="15">+15%</option><option value="20">+20%</option><option value="25">+25%</option><option value="30" selected>+30%</option><option value="40">+40%</option><option value="50">+50%</option><option value="100">+100% (dobrar)</option></select></div>
+            <div hidden><label class="label" for="nc-base">Faturamento de partida</label><input class="field" id="nc-base" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" aria-describedby="nc-base-d" /><p class="field-hint" id="nc-base-d">Média mensal dos 12 meses antes do plano</p></div>
           </div>
         </fieldset>
         <div class="new-client__foot">
@@ -213,7 +213,7 @@ Com menos de 5 casos é sorte, não evidência.</p>
   <script src="app/auth.js?v=3"></script>
   <script src="app/ui.js?v=46"></script>
   <script src="app/cerebro.js?v=1"></script>
-  <script src="app/saude.js?v=19"></script>
-  <script src="app/admin.js?v=33"></script>
+  <script src="app/saude.js?v=20"></script>
+  <script src="app/admin.js?v=34"></script>
 </body>
 </html>

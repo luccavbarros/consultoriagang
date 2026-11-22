@@ -138,8 +138,8 @@
               <select class="field" id="p-setor"><option value="">Não definido</option></select>
             </div>
             <div><label class="label" for="p-consultor">Consultor</label><select class="field" id="p-consultor"></select></div>
-            <div><label class="label" for="p-meta">Meta de faturamento (%)</label><select class="field" id="p-meta" data-num><option value="">Sem meta</option><option value="10">+10%</option><option value="15">+15%</option><option value="20">+20%</option><option value="25">+25%</option><option value="30">+30%</option><option value="40">+40%</option><option value="50">+50%</option><option value="100">+100% (dobrar)</option></select></div>
-            <div><label class="label" for="p-base">Faturamento de partida</label><input class="field" id="p-base" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" aria-describedby="p-base-d" /><p class="field-hint" id="p-base-d">Média mensal dos 12 meses antes do plano</p></div>
+            <div hidden><label class="label" for="p-meta">Meta de faturamento (%)</label><select class="field" id="p-meta" data-num><option value="">Sem meta</option><option value="10">+10%</option><option value="15">+15%</option><option value="20">+20%</option><option value="25">+25%</option><option value="30">+30%</option><option value="40">+40%</option><option value="50">+50%</option><option value="100">+100% (dobrar)</option></select></div>
+            <div hidden><label class="label" for="p-base">Faturamento de partida</label><input class="field" id="p-base" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" aria-describedby="p-base-d" /><p class="field-hint" id="p-base-d">Média mensal dos 12 meses antes do plano</p></div>
             <div><label class="label" for="p-esforco">Divisão do esforço de comunicação</label><select class="field" id="p-esforco" data-num aria-describedby="p-esforco-d"><option value="35">Lançamento: 35% marca no 1º ano, depois 57%</option><option value="40">40% marca · 60% ativação</option><option value="45">45% marca · 55% ativação (B2B)</option><option value="50">50% · 50%</option><option value="51">51% marca · 49% ativação (serviços)</option><option value="60">60% marca · 40% ativação</option><option value="62">62% marca · 38% ativação (média geral)</option><option value="64">64% marca · 36% ativação (varejo e loja online)</option><option value="70">70% marca · 30% ativação</option><option value="80">80% marca · 20% ativação (serviços financeiros)</option></select><p class="field-hint" id="p-esforco-d">Referência dos estudos de eficácia, por setor. Marca nova começa com mais ativação no 1º ano e passa para perto de 57% depois. Proposta, preço e atendimento ficam fora da conta.</p></div>
             <div><label class="label" for="p-revis">Revisões de peça por mês</label><input class="field" id="p-revis" type="number" min="0" max="50" step="1" placeholder="2" /></div>
             <div><label class="label" for="p-dias">Dias em que responde mensagens</label><input type="hidden" id="p-dias" data-dias /></div>
@@ -179,10 +179,10 @@
               <p class="msg" id="con-msg" role="status" aria-live="polite"></p>
               <ul class="acesso-hist" id="con-hist"></ul>
             </div>
-            <div class="full"><details class="plan__mais"><summary>Faturamento mês a mês do ano anterior <span class="plan__mais-sub">deixa o “O plano pagou?” justo com a época do ano</span></summary>
+            <div class="full" hidden><details class="plan__mais"><summary>Faturamento mês a mês do ano anterior <span class="plan__mais-sub">deixa o “O plano pagou?” justo com a época do ano</span></summary>
               <div class="new-client new-client--4 sazonal"><div><label class="label" for="p-fa-01">Jan</label><input class="field" id="p-fa-01" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-02">Fev</label><input class="field" id="p-fa-02" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-03">Mar</label><input class="field" id="p-fa-03" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-04">Abr</label><input class="field" id="p-fa-04" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-05">Mai</label><input class="field" id="p-fa-05" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-06">Jun</label><input class="field" id="p-fa-06" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-07">Jul</label><input class="field" id="p-fa-07" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-08">Ago</label><input class="field" id="p-fa-08" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-09">Set</label><input class="field" id="p-fa-09" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-10">Out</label><input class="field" id="p-fa-10" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-11">Nov</label><input class="field" id="p-fa-11" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div><div><label class="label" for="p-fa-12">Dez</label><input class="field" id="p-fa-12" data-moeda inputmode="numeric" autocomplete="off" placeholder="R$ 0,00" /></div></div></details></div>
             <div><label class="label" for="p-partmerc">Participação de mercado estimada (%)</label><input class="field" id="p-partmerc" type="number" min="0" max="100" step="any" placeholder="Ex.: 10" /></div>
-            <div class="full"><label class="chk"><input type="checkbox" id="p-semnum" /> Não avisar quando faltarem os números do mês deste cliente</label></div>
+            <div class="full" hidden><label class="chk"><input type="checkbox" id="p-semnum" /> Não avisar quando faltarem os números do mês deste cliente</label></div>
           </div>
         </fieldset>
         <div class="new-client__foot">
@@ -368,10 +368,10 @@
       <nav class="subnav" aria-label="Partes de Resultados"><a href="#res-num">Meses</a><a href="#res-pesq">Pesquisa de marca</a><a href="#res-met">Métricas</a><a href="#res-busca">Buscas</a><a href="#res-voz">Clientes disseram</a></nav>
       <div class="bloco" id="res-num">
       <h2 class="title-sm">Como foi cada mês</h2>
-      <p class="small">O cliente diz no portal se o mês foi melhor, igual ou pior.<br />Se ele contar algum número, você lança aqui.</p>
-      <div class="graf-grade" id="nums-graf" aria-label="Gráficos dos números"></div>
+      <p class="small">O cliente diz no portal se o mês foi melhor, igual ou pior<br />que o anterior. A resposta aparece aqui.</p>
+      <div class="graf-grade" id="nums-graf" aria-label="Gráficos dos números" hidden></div>
       <div class="table-wrap"><table class="table" id="nums"></table></div>
-      <form class="card" id="num-form" novalidate>
+      <form class="card" id="num-form" novalidate hidden>
         <h3 class="title-sm">Lançar ou corrigir números</h3>
         <div class="new-client new-client--4">
           <div><label class="label" for="n-mes">Mês</label><input class="field" id="n-mes" type="month" required /></div>
@@ -596,9 +596,9 @@
   <script src="app/auth.js?v=3"></script>
   <script src="app/ui.js?v=46"></script>
   <script src="app/cerebro.js?v=1"></script>
-  <script src="app/admin-briefing.js?v=3"></script>
-  <script src="app/admin-marca.js?v=60"></script>
-  <script src="app/saude.js?v=19"></script>
-  <script src="app/admin-cliente.js?v=138"></script>
+  <script src="app/admin-briefing.js?v=4"></script>
+  <script src="app/admin-marca.js?v=61"></script>
+  <script src="app/saude.js?v=20"></script>
+  <script src="app/admin-cliente.js?v=139"></script>
 </body>
 </html>
