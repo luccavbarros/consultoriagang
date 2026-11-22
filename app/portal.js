@@ -2869,7 +2869,10 @@
       // estratégia
       txt(p.desafio) ? slide('estratégia · o desafio', el('div', 'sl__fim', el('p', 'sl__t', txt(p.desafio)),
         txt(p.como_vencer) ? el('div', { style: 'margin-top:3cqw;max-width:64%' }, el('p', 'sl__l', 'Como vamos vencer'), el('p', 'sl__s', txt(p.como_vencer))) : null)) : null,
-      sFrase('estratégia · posicionamento', P.posicionamento, null, 'm'),
+      // o posicionamento é a escolha central da marca: slide invertido (fundo escuro), o único assim no documento
+      txt(P.posicionamento) ? el('section', 'sl sl--destaque', el('div', 'sl__in', el('p', 'sl__rot', '/ estratégia'),
+        el('div', 'sl__corpo', el('h2', 'sl__h', 'Posicionamento'), el('p', 'sl__s sl__dica', 'Para quem a marca é, o que só ela entrega e contra o quê compete.'),
+          el('div', 'sl__fim', el('p', 'sl__t sl__t--pos', txt(P.posicionamento)))))) : null,
       ...sCols('estratégia · objetivos', (D.objetivos || []).map((o) => [NIVO[o.nivel] || 'Objetivo', (o.destaque ? o.destaque + ' ' : '') + txt(o.titulo),
         o.nivel === 'comunicacao' && (o.notar || o.acreditar || o.sentir) ? ['Notar ' + (o.notar || '—'), 'acreditar ' + (o.acreditar || '—'), 'sentir ' + (o.sentir || '—')].join(' · ') : null]), 4),
       esc('prioridade').length || deixa.length ? slide('estratégia · onde jogamos', cab('onde jogamos'), el('div', 'sl__duas',

@@ -2574,3 +2574,10 @@ html.side-abrindo .side__plan .badge { display: none; }
 .side__me .side__who { min-width: 0; overflow: hidden; }
 #me-name, .consultant__name, .consultant__role { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
 .consultant__who > div { min-width: 0; }
+/* posicionamento em destaque: o único slide invertido do documento */
+.sl--destaque { background: #2f2d2b; }
+.sl--destaque .sl__in { color: #e9e6e1; }
+.sl--destaque .sl__rot, .sl--destaque .sl__dica { color: #a8a39c; }
+.sl--destaque .sl__h { color: #f4f2ee; }
+.sl__dica { margin-top: .6cqw; }
+.sl__t--pos { color: #f7f5f1; font-size: 3.6cqw; line-height: 1.22; max-width: 88%; }
