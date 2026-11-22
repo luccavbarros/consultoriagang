@@ -2080,7 +2080,7 @@
             .map(([k, v]) => el('div', null, el('dt', null, k), el('dd', null, v))))
           : el('div', 'oc__corpo', o.destaque ? el('p', 'oc__num', o.destaque) : null, el('p', o.destaque ? 'oc__sub' : 'oc__t', o.titulo));
         return el('article', 'oc',
-          el('div', 'oc__head', quad(ico), el('p', 'oc__rot', 'Objetivo de ' + rot.toLowerCase())),
+          el('div', 'oc__head', quad(ico), el('p', 'oc__rot', rot)),
           corpo,
           el('div', 'oc__pe', el('span', 'oc__pe-rot', 'Medimos por'),
             mets.length ? mets.map((m) => el('span', 'oc__met', m.nome, el('span', 'oc__freq', ' · ' + (FREQ_O[m.frequencia] || m.frequencia))))
