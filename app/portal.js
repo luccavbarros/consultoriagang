@@ -2294,6 +2294,12 @@
   // A página de pagamento é do Asaas; quando o pagamento entra, o acesso é liberado sozinho. Sem a configuração, o pedido vai à GANG.
   // O Asaas pede o CPF ou CNPJ de quem paga: o campo aparece só na primeira vez
   const escolherPlano = () => {
+    // plano pago: o próximo pagamento só abre 5 dias antes do fim do período (uma cobrança por período, mesma regra do servidor)
+    const Pp = D.plano;
+    if (Pp && Pp.acesso_ciclo && Pp.acesso_ate) {
+      const ate = U.addDias(String(Pp.acesso_ate).slice(0, 10), 1);
+      if (U.diasAte(ate) > 5) return el('p', 'box__text', 'Seu plano está pago até ' + U.diaAno(Pp.acesso_ate) + '.', el('br'), 'O próximo pagamento abre aqui em ' + U.diaAno(U.addDias(ate, -5)) + '.');
+    }
     const msg = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite' });
     const box = el('div', 'planos-ac');
     const pedeGang = async (nome, btn) => {
@@ -2403,6 +2409,10 @@
     const vence = soAcesso ? U.acessoVence(P) : P && P.proxima_fatura ? String(P.proxima_fatura).slice(0, 10) : null;
     const dias = soAcesso ? U.acessoDiasRestantes(P) : vence ? U.diasAte(vence) : null;
     const pago = !!(P && P.acesso_ciclo && P.acesso_ate);
+    // uma cobrança por período: com o período pago, o próximo pagamento só abre 5 dias antes do vencimento (mesma regra do servidor)
+    const pagoAte = soAcesso ? (pago ? U.addDias(String(P.acesso_ate).slice(0, 10), 1) : null) : vence;
+    const abreEm = pagoAte && U.diasAte(pagoAte) > 5 ? U.addDias(pagoAte, -5) : null;
+    const fechado = (t1) => el('p', 'box__text', t1, el('br'), 'O próximo pagamento abre aqui em ' + U.diaAno(abreEm) + '.');
     // a cor da situação: verde ativo, amarelo pausado ou pendente, vermelho vencido, cinza encerrado
     const sit = soAcesso ? (vencido ? ['Vencida', 'is-hot'] : pago ? ['Ativa', 'is-ok'] : ['Período grátis', dias != null && dias <= 10 ? 'is-warn' : 'is-ok'])
       : consBloq ? ['Pausado', 'is-hot'] : [selo ? selo[1] : '—', !selo ? '' : selo[1] === 'Ativo' ? 'is-ok' : selo[0].trim()];
@@ -2433,7 +2443,7 @@
               const r = await fetch('/api/pagamento', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (session ? session.access_token : '') }, body: JSON.stringify({ acao: 'cancelar' }) });
               const out = await r.json().catch(() => ({}));
               if (!r.ok) throw new Error(out.error || 'Não foi possível cancelar. Tente de novo.');
-              U.say(msg, soAcesso ? 'Renovação cancelada. Seu acesso continua até ' + U.diaAno(vence) + '.' : 'Renovação cancelada. A próxima mensalidade pode ser paga aqui.', 'ok'); carregar().then(() => grade.classList.toggle('is-uma', !col.querySelector('section')));
+              U.say(msg, soAcesso ? 'Renovação cancelada. Seu acesso continua até ' + U.diaAno(vence) + '.' : (abreEm ? 'Renovação cancelada. A próxima mensalidade pode ser paga aqui a partir de ' + U.diaAno(abreEm) + '.' : 'Renovação cancelada. A próxima mensalidade pode ser paga aqui.'), 'ok'); carregar().then(() => grade.classList.toggle('is-uma', !col.querySelector('section')));
             } catch (err) { s.disabled = false; U.say(msg, err.message, 'error'); }
           }); return s; })(),
           (() => { const n = el('button', { class: 'btn btn--ghost btn--sm', type: 'button' }, 'Não'); n.addEventListener('click', () => { conf.hidden = true; b.hidden = false; }); return n; })());
@@ -2449,11 +2459,12 @@
         renova.replaceChildren(msg.textContent ? el('section', 'box', msg) : '');
         if (soAcesso) planos.replaceChildren(el('section', { class: 'box', 'aria-labelledby': 'planos-as-t' },
           el('h2', { class: 'box__title', id: 'planos-as-t' }, pago || vencido ? 'Renovar ou trocar de plano' : 'Escolha um plano'),
-          pago && !vencido ? el('p', 'box__note', 'Pagando agora, o novo período começa quando o atual termina.') : null,
+          abreEm ? null : pago && !vencido ? el('p', 'box__note', 'Pagando agora, o novo período começa quando o atual termina.') : null,
           escolherPlano()));
         else planos.replaceChildren(el('section', { class: 'box', 'aria-labelledby': 'planos-as-t' },
           el('h2', { class: 'box__title', id: 'planos-as-t' }, 'Pagar a mensalidade'),
-          P && Number(P.mensalidade) > 0 ? pagarMensalidade(emp, P.mensalidade)
+          abreEm ? fechado('A mensalidade deste mês já está paga.')
+            : P && Number(P.mensalidade) > 0 ? pagarMensalidade(emp, P.mensalidade)
             : el('p', 'box__text', 'A mensalidade ainda não foi definida.', el('br'), 'Fale com o seu consultor.')));
       }
       hist.replaceChildren(historicoPagamentos(lista, abertas || []));
