@@ -7469,3 +7469,55 @@
     'A busca pelo nome da marca cresceu: mais gente está lembrando dela.',
   ].forEach((t) => { if (!P.vereditos.some((v) => v.texto === t)) P.vereditos.unshift({ grupo: G, texto: t }); });
 })();
+
+// ===== Diagnóstico "em uma frase" no presente =====
+// O diagnóstico é o retrato do momento e já leva a data ("Diagnóstico de mai 2026"); a frase no passado destoava da tela e do plano.
+// Muda só o tempo do verbo. A frase antiga continua ligada aos mesmos desafios, para quem já a escolheu (nada muda no plano automático).
+(function () {
+  const P = window.GangPresets; if (!P || !P.resumosDiagnostico || !P.resumoDesafios) return;
+  [
+    ["Os clientes diziam que o serviço era bom, mas não sabiam dizer o que a empresa tinha de diferente, e a maioria comparava orçamentos só pelo valor.", "Os clientes dizem que o serviço é bom, mas não sabem dizer o que a empresa tem de diferente, e a maioria compara orçamentos só pelo valor."],
+    ["Quase todos os clientes novos vinham de quem já conhecia a empresa; fora desse círculo, pouca gente tinha ouvido falar dela.", "Quase todos os clientes novos vêm de quem já conhece a empresa; fora desse círculo, pouca gente ouviu falar dela."],
+    ["O trabalho entregue era elogiado, mas o site, as redes e as propostas não mostravam nenhum resultado, caso ou número.", "O trabalho entregue é elogiado, mas o site, as redes e as propostas não mostram nenhum resultado, caso ou número."],
+    ["O visual e a forma de falar eram os mesmos de anos atrás, enquanto a empresa já oferecia serviços e atendia clientes bem diferentes.", "O visual e a forma de falar são os mesmos de anos atrás, enquanto a empresa já oferece serviços e atende clientes bem diferentes."],
+    ["Cada canal usava cores, versões do logo e mensagens diferentes, e os clientes não ligavam as peças à mesma empresa.", "Cada canal usa cores, versões do logo e mensagens diferentes, e os clientes não ligam as peças à mesma empresa."],
+    ["Quase todos os clientes chegavam por indicação, e os meses sem indicações eram meses sem vendas novas.", "Quase todos os clientes chegam por indicação, e os meses sem indicações são meses sem vendas novas."],
+    ["A empresa aceitava qualquer tipo de cliente e de pedido, e a comunicação falava com todos sem citar ninguém em especial.", "A empresa aceita qualquer tipo de cliente e de pedido, e a comunicação fala com todos sem citar ninguém em especial."],
+    ["As reclamações mudavam conforme quem atendia: o mesmo serviço saía ótimo com uma pessoa e fraco com outra.", "As reclamações mudam conforme quem atende: o mesmo serviço sai ótimo com uma pessoa e fraco com outra."],
+    ["Quem procurava o serviço na hora da necessidade encontrava primeiro os concorrentes; a empresa só aparecia para quem já a conhecia.", "Quem procura o serviço na hora da necessidade encontra primeiro os concorrentes; a empresa só aparece para quem já a conhece."],
+    ["A maior parte dos clientes fazia uma única compra, e a empresa não tinha nenhum contato com eles depois da entrega.", "A maior parte dos clientes faz uma única compra, e a empresa não tem nenhum contato com eles depois da entrega."],
+    ["Os contatos chegavam por canais espalhados e sem resposta rápida, e parte de quem procurava desistia antes de conseguir falar com a empresa.", "Os contatos chegam por canais espalhados e sem resposta rápida, e parte de quem procura desiste antes de conseguir falar com a empresa."],
+    ["A empresa anunciava em campanhas curtas com meses de silêncio entre elas, e os pedidos subiam e caíam junto.", "A empresa anuncia em campanhas curtas com meses de silêncio entre elas, e os pedidos sobem e caem junto."],
+    ["Quase toda a comunicação eram ofertas do mês; quando as promoções paravam, as vendas paravam junto.", "Quase toda a comunicação são ofertas do mês; quando as promoções param, as vendas param junto."],
+    ["Depois da compra apareciam queixas de que o serviço não era o que a propaganda tinha mostrado.", "Depois da compra aparecem queixas de que o serviço não é o que a propaganda mostrou."],
+    ["Os sites, as fotos e as promessas das empresas do setor eram quase idênticos, e os da empresa também.", "Os sites, as fotos e as promessas das empresas do setor são quase idênticos, e os da empresa também."],
+    ["Muitos que precisavam do serviço resolviam sozinhos ou deixavam para depois, e a comunicação nunca falava com eles.", "Muitos que precisam do serviço resolvem sozinhos ou deixam para depois, e a comunicação nunca fala com eles."],
+    ["Nos orçamentos, o cliente colocava a empresa ao lado de opções mais simples e baratas, que não faziam o mesmo trabalho.", "Nos orçamentos, o cliente coloca a empresa ao lado de opções mais simples e baratas, que não fazem o mesmo trabalho."],
+    ["Sem o nome escrito, ninguém reconhecia uma peça da empresa: não havia cor, símbolo ou frase que fosse só dela.", "Sem o nome escrito, ninguém reconhece uma peça da empresa: não há cor, símbolo ou frase que seja só dela."],
+    ["Os clientes escolhiam a empresa por ser a mais em conta e reagiam mal a qualquer aumento, mesmo elogiando o resultado.", "Os clientes escolhem a empresa por ser a mais em conta e reagem mal a qualquer aumento, mesmo elogiando o resultado."],
+    ["O preço estava entre os mais altos do setor, mas nada na proposta explicava a diferença, e muitos sumiam depois do orçamento.", "O preço está entre os mais altos do setor, mas nada na proposta explica a diferença, e muitos somem depois do orçamento."],
+    ["Dois ou três clientes respondiam pela maior parte do faturamento, e a saída de um deles derrubava o mês.", "Dois ou três clientes respondem pela maior parte do faturamento, e a saída de um deles derruba o mês."],
+    ["Os canais, o processo de venda e a comunicação eram os mesmos de muitos anos, enquanto os clientes já pesquisavam e compravam de outro jeito.", "Os canais, o processo de venda e a comunicação são os mesmos de muitos anos, enquanto os clientes já pesquisam e compram de outro jeito."],
+    ["Os clientes ligavam pedindo pelo dono e confiavam no que ele dizia, mais do que no nome da empresa.", "Os clientes ligam pedindo pelo dono e confiam no que ele diz, mais do que no nome da empresa."],
+    ["Os clientes diziam estar satisfeitos, mas quase nenhum indicava a empresa, porque ninguém pedia.", "Os clientes dizem estar satisfeitos, mas quase nenhum indica a empresa, porque ninguém pede."],
+    ["Quem usava o serviço gostava dele, mas quem aprovava a compra recebia outras informações e decidia pelo preço.", "Quem usa o serviço gosta dele, mas quem aprova a compra recebe outras informações e decide pelo preço."],
+    ["As peças chamavam atenção e recebiam elogios, mas as pessoas não sabiam dizer o que a empresa fazia.", "As peças chamam atenção e recebem elogios, mas as pessoas não sabem dizer o que a empresa faz."],
+    ["O que o vendedor dizia não batia com o site e as redes, e os clientes chegavam com dúvidas sobre qual versão valia.", "O que o vendedor diz não bate com o site e as redes, e os clientes chegam com dúvidas sobre qual versão vale."],
+    ["Com pouco tempo de mercado e sem casos para mostrar, a empresa perdia para nomes conhecidos mesmo cobrando menos.", "Com pouco tempo de mercado e sem casos para mostrar, a empresa perde para nomes conhecidos mesmo cobrando menos."],
+    ["A maior parte das pessoas que poderiam contratar ainda não estava procurando, e nenhuma ação da empresa chegava até elas.", "A maior parte das pessoas que poderiam contratar ainda não está procurando, e nenhuma ação da empresa chega até elas."],
+    ["A empresa nunca se posicionava sobre nada do setor, e seus textos poderiam ser assinados por qualquer concorrente.", "A empresa nunca se posiciona sobre nada do setor, e seus textos poderiam ser assinados por qualquer concorrente."],
+    ["A comunicação descrevia etapas e técnicas, enquanto os clientes, ao contratar, falavam do problema que queriam tirar da frente.", "A comunicação descreve etapas e técnicas, enquanto os clientes, ao contratar, falam do problema que querem tirar da frente."],
+    ["Os clientes confiavam no trabalho, mas descreviam o contato com a empresa como distante e burocrático.", "Os clientes confiam no trabalho, mas descrevem o contato com a empresa como distante e burocrático."],
+    ["O preço era montado somando custos e uma margem, sem levar em conta quanto o cliente ganhava com o resultado.", "O preço é montado somando custos e uma margem, sem levar em conta quanto o cliente ganha com o resultado."],
+    ["Havia um só preço e uma só oferta: quem queria mais não tinha opção, e quem podia menos ia embora.", "Há um só preço e uma só oferta: quem quer mais não tem opção, e quem pode menos vai embora."],
+    ["A verba e o tempo estavam divididos em muitos canais, e em nenhum deles a empresa aparecia com frequência.", "A verba e o tempo estão divididos em muitos canais, e em nenhum deles a empresa aparece com frequência."],
+    ["Muitos clientes saíam na primeira oferta de outro fornecedor, e nada na relação os fazia pensar duas vezes.", "Muitos clientes saem na primeira oferta de outro fornecedor, e nada na relação os faz pensar duas vezes."],
+    ["Toda a comunicação estava no momento da busca, e quem só ia precisar nos meses seguintes nunca tinha contato com a empresa.", "Toda a comunicação está no momento da busca, e quem só vai precisar nos meses seguintes nunca tem contato com a empresa."],
+    ["As vendas se concentravam nas datas especiais; no resto do ano, quase ninguém pensava na marca para o uso do dia a dia.", "As vendas se concentram nas datas especiais; no resto do ano, quase ninguém pensa na marca para o uso do dia a dia."],
+  ].forEach(([velha, nova]) => {
+    const r = P.resumosDiagnostico.find((x) => x.texto === velha);
+    if (r) r.texto = nova;
+    const m = P.resumoDesafios.find(([ini]) => velha.startsWith(ini));
+    if (m && !P.resumoDesafios.some(([ini]) => nova.startsWith(ini))) P.resumoDesafios.push([nova, m[1]]);
+  });
+})();
