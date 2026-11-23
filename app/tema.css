@@ -1677,6 +1677,7 @@ summary.hist__linha:hover, .hist__det[open] > summary { background: #1c1c1c; }
 .conv__topo { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
 .conv__av { flex: none; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: #f3f3f3 center / cover; color: #111; font-size: 12px; font-weight: 600; }
 .conv__quem { min-width: 0; display: grid; gap: 1px; }
+.conv__limpar { margin-left: auto; flex: none; }
 .conv__nome { margin: 0; font-size: var(--t-txt); font-weight: 600; color: #fff; }
 .conv__d { margin: 0; font-size: var(--t-leg); color: var(--ganggrey); }
 .conv__fio.chat--panel { max-height: 460px; min-height: 220px; border-radius: 0; background: #171717; padding: 18px 16px; gap: 8px; }
@@ -2576,4 +2577,4 @@ html.side-abrindo .side__plan .badge { display: none; }
 .consultant__who > div { min-width: 0; }
 /* posicionamento em destaque: fundo branco (sai bem na impressão), destaque pelo tamanho e por um fio grosso acima da frase */
 .sl__dica, .pmain .sl__dica { margin-top: .6cqw; max-width: none; }
-.sl__t--pos { font-size: 4cqw; line-height: 1.2; max-width: 90%; padding-top: 2.2cqw; border-top: .35cqw solid currentColor; }
+.sl__t--pos { font-size: 4cqw; line-height: 1.2; max-width: 90%; padding-top: 
