@@ -7324,8 +7324,6 @@
     'Mapear os códigos da categoria: o que todos repetem, o que está ficando velho e o que está surgindo',
     'Escrever por que os clientes compram em três níveis: por que compram a categoria, por que escolhem esse tipo de produto ou serviço e por que escolhem a marca, incluindo por que alguns escolhem o concorrente ou não compram',
   ]);
-  // as ações aposentadas: o painel tira do plano dos clientes, sozinho, as que ainda não foram começadas
-  P.aposentadas = [...SAI];
   const NOVO = {
     'Escolher a especialidade principal e mostrá-la em tudo, sem deixar de falar com toda a categoria':
       { texto: 'Mostrar a especialidade principal em tudo, sem deixar de falar com toda a categoria', passos: ['Pegar a especialidade definida na estratégia', 'Destacar no site, nas redes e nas propostas', 'Manter a comunicação aberta a toda a categoria', 'Contar os contatos que citam a especialidade'] },
@@ -7368,6 +7366,9 @@
     });
   };
   anda(P);
+  // as ações aposentadas: o painel tira do plano dos clientes, sozinho, as que ainda não foram começadas
+  // (depois do anda, que esvaziaria a lista por conter os mesmos títulos)
+  P.aposentadas = [...SAI];
   // "Escolher contra quem é comparada" perdeu a oficina e a descrição pela necessidade (são da estratégia e da narrativa entregues):
   // entram duas aplicações que já estão na biblioteca e executam a escolha da comparação
   const ab = (P.abordagens || []).find((y) => y.curto === 'Escolher contra quem é comparada');
