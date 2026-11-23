@@ -2590,4 +2590,48 @@
       list.append(el('li', 'client',
         el('div', null, el('div', 'client__name', c.name || '(sem nome)'), el('div', 'client__mail', c.email)),
         el('div'),
-        el('span', 'badge' + (c.active ? '' : ' is-off'), c.active ? 'Ati
+        el('span', 'badge' + (c.active ? '' : ' is-off'), c.active ? 'Ativo' : 'Desativado'),
+        el('div', 'client__actions',
+          el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: novaSenha }, 'Nova senha'),
+          btn(c.active ? 'Desativar' : 'Ativar', async () => { await adminApi({ action: 'set_active', id: c.id, active: !c.active }); await loadAcc(); }),
+          el('button', { class: 'btn btn--ghost btn--sm btn--danger', type: 'button', onclick: excluir }, 'Excluir'),
+        ),
+        extra,
+      ));
+    });
+
+    $('link-form').hidden = !loose.length;
+    $('link-sel').replaceChildren(...loose.map((c) => el('option', { value: c.id }, (c.name ? c.name + ' · ' : '') + c.email)));
+  };
+  await loadAcc();
+
+  $('link-form').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const r = await sb.from('profiles').update({ empresa_id: id }).eq('id', $('link-sel').value).eq('role', 'client');
+    say($('acc-msg'), r.error ? 'Não foi possível vincular.' : 'Acesso vinculado.', r.error ? 'error' : 'ok');
+    await loadAcc();
+  });
+
+  const card = $('acc-card');
+  $('open-acc').addEventListener('click', () => {
+    card.hidden = !card.hidden;
+    $('open-acc').setAttribute('aria-expanded', String(!card.hidden));
+    if (!card.hidden) { if (!$('a-pass').value) $('a-pass').value = randomPass(); $('a-name').focus(); }
+  });
+  $('a-gen').addEventListener('click', () => { $('a-pass').value = randomPass(); });
+  card.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const body = { action: 'create', name: $('a-name').value.trim(), company: emp.nome, email: $('a-email').value.trim(), password: $('a-pass').value, empresa_id: id };
+    if (!body.name || !body.email) return say($('a-msg'), 'Preencha nome e e-mail.', 'error');
+    if (body.password.length < 8) return say($('a-msg'), 'A senha precisa ter pelo menos 8 caracteres.', 'error');
+    const submit = card.querySelector('[type=submit]');
+    submit.disabled = true; say($('a-msg'), 'Criando…');
+    try {
+      await adminApi(body);
+      say($('a-msg'), 'Acesso criado. Envie para o cliente: ' + body.email + ' / ' + body.password, 'ok');
+      $('a-name').value = ''; $('a-email').value = ''; $('a-pass').value = randomPass();
+      await loadAcc();
+    } catch (err) { say($('a-msg'), err.message, 'error'); }
+    submit.disabled = false;
+  });
+})();
