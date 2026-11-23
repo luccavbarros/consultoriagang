@@ -1072,6 +1072,14 @@
       const n = await window.GangSaude.repor(sb, id, data, emp.setor);
       if (n) { say($('acoes-msg'), 'O cliente adiantou ' + (n === 1 ? '1 ação' : n + ' ações') + '. ' + (n === 1 ? 'Outra entrou' : 'Outras entraram') + ' no lugar, para o plano seguir completo até o fim.', 'ok'); return loadAcoes(); }
     }
+    // ação que saiu do cérebro e o cliente ainda não começou: sai do plano dele também (a começada, a travada e a feita ficam)
+    const apos = new Set(P.aposentadas || []);
+    const saem = data.filter((a) => apos.has(a.titulo_base || a.titulo) && a.status === 'a_fazer' && !a.travada && !a.resultado);
+    if (saem.length) {
+      const rd = await sb.from('acoes').delete().in('id', saem.map((a) => a.id));
+      if (!rd.error) { const ids = new Set(saem.map((a) => a.id)); data = data.filter((a) => !ids.has(a.id));
+        say($('acoes-msg'), saem.length === 1 ? '1 ação que a GANG já entrega saiu do plano: ' + saem[0].titulo : saem.length + ' ações que a GANG já entrega saíram do plano.', 'ok'); }
+    }
     acoes = data; desenhaFiltro();
     const box = $('acoes-list');
     if (!data.length) return box.replaceChildren(el('p', 'clients__empty', 'Nenhuma ação ainda. Crie a primeira em “Nova ação”.'));
