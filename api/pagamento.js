@@ -26,6 +26,10 @@ const as = (path, init = {}) => fetch(AS_URL + path, {
 const fail = (res, status, error) => res.status(status).json({ error });
 const um = async (r) => { const j = r.ok ? await r.json() : []; return Array.isArray(j) ? j[0] : j; };
 const hoje = (dias = 0) => { const d = new Date(Date.now() - 3 * 3600 * 1000 + dias * 864e5); return d.toISOString().slice(0, 10); }; // horário de Brasília
+// uma cobrança por período: o pagamento do próximo período só abre nos últimos dias do que já está pago
+const JANELA = 5;
+const diaBR = (iso) => String(iso).slice(8, 10) + '/' + String(iso).slice(5, 7);
+const menosDias = (iso, n) => { const d = new Date(String(iso).slice(0, 10) + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() - n); return d.toISOString().slice(0, 10); };
 const erroAsaas = (out, r) => (out && out.errors && out.errors.map((e) => e.description).join(' ')) || r.status;
 
 // quem está pagando: o cliente logado e a empresa dele
@@ -62,12 +66,19 @@ const criar = async (req, res, body) => {
   if (!cfg) return fail(res, 500, 'Pagamento ainda não configurado. Fale com a GANG.');
   if ((metodo === 'pix' && !cfg.pix) || (metodo === 'cartao' && !cfg.cartao)) return fail(res, 400, 'Esta forma de pagamento não está disponível.');
   // consultoria: a mensalidade do Contrato, todo mês; Só acesso: o preço do ciclo escolhido em Pagamentos
-  const plano = await um(await sb('/rest/v1/planos?select=tipo,mensalidade&empresa_id=eq.' + empresaId));
+  const plano = await um(await sb('/rest/v1/planos?select=tipo,mensalidade,proxima_fatura,acesso_ate,acesso_ciclo&empresa_id=eq.' + empresaId));
   const consultoria = !plano || plano.tipo !== 'acesso';
   const ciclo = consultoria ? 'mensal' : String(body.ciclo || '');
   if (!CICLOS[ciclo] || !['cartao', 'pix'].includes(metodo)) return fail(res, 400, 'Escolha o plano e a forma de pagamento.');
   const centavos = consultoria ? Math.round((Number(plano && plano.mensalidade) || 0) * 100) : Number((cfg.precos || {})[ciclo]);
   if (!(centavos > 0)) return fail(res, 500, consultoria ? 'A mensalidade ainda não foi definida. Fale com a GANG.' : 'Preço do plano não configurado. Fale com a GANG.');
+  // o período atual já está pago (cancelar a renovação não reabre o mês): só abre de novo nos últimos JANELA dias.
+  // Consultoria: até a próxima fatura do Contrato; Só acesso: até o fim do acesso pago (o período grátis não conta)
+  const pagoAte = consultoria ? (plano && plano.proxima_fatura) : (plano && plano.acesso_ciclo && plano.acesso_ate ? menosDias(plano.acesso_ate, -1) : null);
+  if (pagoAte && String(pagoAte).slice(0, 10) > hoje(JANELA)) {
+    const abre = menosDias(pagoAte, JANELA);
+    return res.status(409).json({ error: (consultoria ? 'A mensalidade deste mês já está paga.' : 'Seu plano já está pago.') + ' O próximo pagamento abre em ' + diaBR(abre) + '.', abreEm: abre });
+  }
   // com a renovação automática ativa, o cartão já cobra sozinho: trocar de plano pede cancelar antes (evita cobrar duas vezes)
   const atual = await um(await sb('/rest/v1/empresas?select=asaas_assinatura&id=eq.' + empresaId));
   if (atual && atual.asaas_assinatura) return fail(res, 400, 'Sua assinatura no cartão já renova sozinha. Para trocar de plano, cancele a renovação em Meu plano.');
