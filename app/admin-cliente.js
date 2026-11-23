@@ -224,6 +224,7 @@
     ev.preventDefault(); destacaAlvo(a.getAttribute('href').slice(1));
   }));
   // ===== mensagens do cliente =====
+  let chatLimpo = false; // depois de limpar, o vazio do chat confirma (em vez de uma linha solta embaixo do campo)
   const loadMsgs = async (marcar) => {
     const { data } = await sb.from('mensagens').select('*').eq('empresa_id', id).order('criada_em');
     const rows = data || [];
@@ -242,7 +243,10 @@
     });
     const lc = $('limpar-chat'); if (lc) { lc.hidden = !rows.length; if (!lc.dataset.certeza) lc.textContent = 'Limpar chat'; }
     box.classList.toggle('is-vazio', !rows.length);
-    box.replaceChildren(...(rows.length ? itens : [vazioC('chat', 'Nenhuma mensagem ainda', 'Escreva a primeira. Ela aparece em destaque no portal do cliente até ser lida.')]));
+    if (rows.length) chatLimpo = false;
+    box.replaceChildren(...(rows.length ? itens : [chatLimpo
+      ? vazioC('chat', 'Chat limpo', 'O cliente também não vê mais estas mensagens. Escreva quando surgir um novo assunto.')
+      : vazioC('chat', 'Nenhuma mensagem ainda', 'Escreva a primeira. Ela aparece em destaque no portal do cliente até ser lida.')]));
     box.scrollTop = box.scrollHeight;
   };
   if ($('conv-nome')) { $('conv-nome').textContent = emp.nome || 'Cliente'; U.avatar($('conv-av'), emp.nome, emp.logo_url); }
@@ -296,7 +300,7 @@
     const r = await sb.from('mensagens').delete().eq('empresa_id', id);
     lb.disabled = false;
     if (r.error) { lb.textContent = 'Limpar chat'; return say($('adm-chat-msg'), 'Não foi possível limpar o chat.', 'error'); }
-    say($('adm-chat-msg'), 'Chat limpo. O cliente também não vê mais estas mensagens.', 'ok'); loadMsgs(true);
+    say($('adm-chat-msg'), ''); chatLimpo = true; loadMsgs(true);
   });
   const naAbaMensagens = () => location.hash === '#mensagens';
   loadMsgs(naAbaMensagens());

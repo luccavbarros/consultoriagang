@@ -1693,7 +1693,7 @@ summary.hist__linha:hover, .hist__det[open] > summary { background: #1c1c1c; }
 .conv__txt.field { flex: 1; min-height: 40px; height: 40px; max-height: 160px; padding: 10px 12px; resize: none; line-height: 1.4; }
 .conv__env { flex: none; height: 40px; }
 .conv__msg:empty { display: none; }
-.conv__msg { margin: 0; padding: 0 14px 10px; }
+.conv .conv__msg { margin: 0; max-width: none; padding: 0 16px 12px; font-size: var(--t-micro); }
 
 /* ===== Vazio compacto (Mensagens, Encontros, Peças) ===== */
 .vz { max-width: 360px; margin: 0 auto; padding: 22px 20px; display: grid; justify-items: center; gap: 6px; text-align: center; }
