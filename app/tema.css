@@ -2575,5 +2575,5 @@ html.side-abrindo .side__plan .badge { display: none; }
 #me-name, .consultant__name, .consultant__role { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
 .consultant__who > div { min-width: 0; }
 /* posicionamento em destaque: fundo branco (sai bem na impressão), destaque pelo tamanho e por um fio grosso acima da frase */
-.sl__dica { margin-top: .6cqw; }
+.sl__dica, .pmain .sl__dica { margin-top: .6cqw; max-width: none; }
 .sl__t--pos { font-size: 4cqw; line-height: 1.2; max-width: 90%; padding-top: 2.2cqw; border-top: .35cqw solid currentColor; }

@@ -436,7 +436,7 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     const limpavel = ['pane-diagnostico', 'pane-estrategia', 'pane-plataforma', 'pane-identidade'].includes(pane); // "Limpar" para começar de novo, em todas as partes da marca
     blocos.forEach(([fn, cfg]) => { if (limpavel) cfg.limpar = true; const m = el('div', 'editor-block'); m.montagem = [fn, cfg]; box.append(m); fn(m, cfg); });
   };
-  const POS = [['entrega', 'Entregava'], ['entrega_mal', 'Entregava mal'], ['nao_entrega', 'Não entregava']];
+  const POS = [['entrega', 'Entrega'], ['entrega_mal', 'Entrega mal'], ['nao_entrega', 'Não entrega']];
   const POS_T = Object.fromEntries(POS);
   // o que a marca mostra hoje: os pontos de contato e como cada um está
   const CANAIS_PC = ['Site', 'Instagram', 'LinkedIn', 'Facebook', 'TikTok', 'YouTube', 'WhatsApp', 'Perfil no Google', 'Apresentação comercial', 'Proposta comercial',
@@ -607,17 +607,17 @@ window.addEventListener('gang:cliente', ({ detail: { sb, id, me } }) => {
     [ficha, { icone: 'pulso', titulo: 'Diagnóstico', nota: 'O ponto de partida da marca, como\u00a0o\u00a0cliente\u00a0vê\u00a0em\u00a0Diagnóstico.', tabela: 'diagnosticos', antes: frasesSug, fields: [
       { k: 'data', label: 'Data do diagnóstico', type: 'date' }, { k: 'proximo', label: 'Próximo diagnóstico', type: 'date' },
       { k: 'resumo', label: 'O diagnóstico em uma frase', full: true, type: 'preset', presets: 'resumosDiagnostico' }] }],
-    [lista, { icone: 'olho', tom: 'gang', titulo: 'A marca do cliente', nota: 'Como as pessoas viam a marca antes do trabalho.', tabela: 'impressoes', fixo: { eh_cliente: true }, max: 1,
+    [lista, { icone: 'olho', tom: 'gang', titulo: 'A marca do cliente', nota: 'Como as pessoas veem a marca hoje.', tabela: 'impressoes', fixo: { eh_cliente: true }, max: 1,
       vazio: 'Ainda sem a leitura da marca do cliente.', aoAbrir: (pre) => nomeEmpresa.then((n) => { const i = $(pre + 'marca_nome'); if (i && !i.value) i.value = n || ''; }), fields: [
       { k: 'marca_nome', label: 'Marca', req: true },
-      { k: 'notam', label: 'O que notavam', type: 'preset', presets: 'notam' }, { k: 'acreditam', label: 'O que acreditavam', type: 'preset', presets: 'acreditam' },
-      { k: 'sentem', label: 'O que sentiam', type: 'preset', presets: 'sentem' }],
+      { k: 'notam', label: 'O que notam', type: 'preset', presets: 'notam' }, { k: 'acreditam', label: 'O que acreditam', type: 'preset', presets: 'acreditam' },
+      { k: 'sentem', label: 'O que sentem', type: 'preset', presets: 'sentem' }],
     resumo: (r) => [r.marca_nome, [r.notam, r.acreditam, r.sentem].filter(Boolean).join(' · ')] }],
     [lista, { icone: 'olho', titulo: 'Concorrentes', nota: 'As mesmas perguntas para cada concorrente, para\u00a0comparar\u00a0com\u00a0a\u00a0marca\u00a0do\u00a0cliente.', tabela: 'impressoes', fixo: { eh_cliente: false }, sugere: bfConcorrentes,
       vazio: 'Nenhum concorrente ainda.', fields: [
       { k: 'marca_nome', label: 'Concorrente', req: true, placeholder: 'Nome do concorrente' },
-      { k: 'notam', label: 'O que notavam', type: 'preset', presets: 'notam' }, { k: 'acreditam', label: 'O que acreditavam', type: 'preset', presets: 'acreditam' },
-      { k: 'sentem', label: 'O que sentiam', type: 'preset', presets: 'sentem' }],
+      { k: 'notam', label: 'O que notam', type: 'preset', presets: 'notam' }, { k: 'acreditam', label: 'O que acreditam', type: 'preset', presets: 'acreditam' },
+      { k: 'sentem', label: 'O que sentem', type: 'preset', presets: 'sentem' }],
     resumo: (r) => [r.marca_nome, [r.notam, r.acreditam, r.sentem].filter(Boolean).join(' · ')] }],
     [lista, { icone: 'olho', titulo: 'O que a marca mostra hoje', nota: 'Sua leitura de cada ponto de contato: site, redes, apresentação, fachada. O cliente vê em Diagnóstico.', tabela: 'pontos_contato',
       vazio: 'Nenhum ponto de contato lido ainda.', fields: [
