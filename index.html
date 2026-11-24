@@ -112,7 +112,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 /* the site uses the system font (SF on Apple). Windows has no SF and fell back to a web font that, at the small sizes of the
    header and the buttons, comes out blurry and heavy there. On Windows those small labels use its own system font, drawn for
    its screen, just as the Mac gets SF (the "win" class is set by a small script at the end of the page) */
-.win .btn, .win .site-header__tag, .win .site-header__login, .win .site-header__lang, .win .consent__actions button {
+.win .btn, .win .site-header__tag, .win .site-header__login, .win .site-header__lang, .win .consent__actions button,
+.win .case-info__t, .win .case-info__d, .win .case-count, .win .case-ig {
   font-family: "Segoe UI Variable Text", "Segoe UI", var(--font);
 }
 /* label roll on hover: the text leaves upwards and a copy comes in from below (labels set up in main.js) */
@@ -762,7 +763,7 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
 .case-body { display: grid; grid-template-columns: auto 300px; gap: 28px; align-items: center; }
 /* the pictures, their name line and the card all take the picture's own width: on short screens the picture shrinks by height,
    and the name and the Instagram link stay aligned with its edges (no loose room beside it) */
-.case-main { width: min(568px, calc(100vw - 384px), calc((100vh - 120px) / var(--cr, 1.125))); width: min(568px, calc(100vw - 384px), calc((100dvh - 120px) / var(--cr, 1.125))); }
+.case-main { width: min(568px, calc(100vw - 384px), calc((100vh - 120px) / var(--cr, 1.125))); width: min(568px, calc(100vw - 384px), calc((100dvh - 120px) / var(--cr, 1.125))); width: round(down, min(568px, calc(100vw - 384px), calc((100dvh - 120px) / var(--cr, 1.125))), 2px); } /* whole, even pixels: the centred card lands on whole pixels and the text stays sharp on Windows */
 .case-info { display: grid; gap: 24px; padding: 0 20px 0 0; }
 /* previous / next case: dark circles centred in the free room on each side of the card (--cw: the card width, set by main.js) */
 .case-step { position: absolute; top: 50%; z-index: 1; width: 52px; height: 52px; margin-top: -26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--lightblack); color: var(--white); opacity: 0; transition: opacity .45s ease, background-color .3s; }
@@ -1837,6 +1838,6 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
     })();
   </script>
   <script src="i18n.js?v=13" defer></script> <!-- English version: runs before main.js -->
-  <script src="main.min.js?v=171" defer></script> <!-- built from main.js by tools/minify.py; bump ?v= when it changes, so no browser keeps an old copy -->
+  <script src="main.min.js?v=172" defer></script> <!-- built from main.js by tools/minify.py; bump ?v= when it changes, so no browser keeps an old copy -->
 </body>
 </html>

@@ -1741,9 +1741,19 @@
     showSlide(0);
     caseTrack.offsetWidth; // settle at the first picture before the slide transition comes back
     caseTrack.style.transition = '';
-    caseModal.style.setProperty('--cw', caseModal.querySelector('.modal__card').offsetWidth + 'px'); // the side arrows sit in the room left beside the card
+    fitCase();
   };
-  window.addEventListener('resize', () => { if (caseModal.classList.contains('is-open')) caseModal.style.setProperty('--cw', caseModal.querySelector('.modal__card').offsetWidth + 'px'); });
+  // the side arrows sit in the room left beside the card (--cw); and the card lands on whole pixels: centred in a window of odd
+  // width it fell half a pixel off, and Windows draws the text blurry there
+  const fitCase = () => {
+    const card = caseModal.querySelector('.modal__card');
+    card.style.left = '';
+    const w = card.offsetWidth;
+    caseModal.style.setProperty('--cw', w + 'px');
+    const f = ((caseModal.clientWidth - w) / 2) % 1;
+    if (f) card.style.left = -f + 'px';
+  };
+  window.addEventListener('resize', () => { if (caseModal.classList.contains('is-open')) fitCase(); });
   // the card slides out to one side and the next case slides in from the other (no motion for people who asked for less)
   const caseCard = caseModal.querySelector('.modal__card');
   let caseStepping = false;
