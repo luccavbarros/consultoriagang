@@ -89,7 +89,7 @@
     'Compreende o cenário completo.': 'Understands the whole picture.',
 
     // section 04
-    'Nossa metodologia': 'Our methodology',
+    'Nossa metodologia': 'Our\nmethodology', // em duas linhas, como em português: numa só, "Our methodology" não cabe na coluna
     'Com o Plano™, nossa metodologia de Brand-Led Growth, transformamos a estratégia da sua marca em ações de marketing que ajudam as pessoas a perceber o valor do que sua empresa oferece.': 'With Plano™, our Brand-Led Growth methodology, we turn your brand strategy into marketing actions that help people see the value of what your company offers.',
     'Diagnóstico': 'Diagnosis',
     'Entenda seu mercado': 'Understand your market',
