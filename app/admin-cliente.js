@@ -81,7 +81,7 @@
       }) : [el('li', 'vazio vazio--sm', el('span', 'vazio__ico'), el('p', 'vazio__t', 'Nada encontrado'), el('p', 'vazio__d', 'Tente outro nome.'))]));
       lblN.textContent = q ? f.length + (f.length === 1 ? ' resultado' : ' resultados') : 'Seus clientes';
     };
-    const abre = (on) => { pop.hidden = !on; btn.setAttribute('aria-expanded', String(on)); if (on) { busca.value = ''; desenha(); busca.focus(); } };
+    const abre = (on) => { pop.hidden = !on; btn.setAttribute('aria-expanded', String(on)); if (on) { busca.value = ''; desenha(); if (window.matchMedia('(hover: hover)').matches) busca.focus(); } }; // celular: sem abrir o teclado sozinho
     btn.addEventListener('click', (e) => { e.stopPropagation(); abre(pop.hidden); });
     busca.addEventListener('input', desenha);
     pop.addEventListener('click', (e) => e.stopPropagation());

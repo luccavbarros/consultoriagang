@@ -2,7 +2,8 @@
    No login: a tela escurece, a frase de boas-vindas surge letra por letra (subindo, como na referência), sai e a página troca.
    Na área do cliente ou do consultor: começa preta e o preto some em fade-out quando a tela já está montada. */
 (function () {
-  const FRASE = 'Seja bem-vindo à sua plataforma de marca.';
+  const LINHAS = ['Seja bem-vindo à sua', 'plataforma de marca']; // uma linha em cada
+  const FRASE = LINHAS.join(' ');
   const CHAVE = 'gang-entrada';
   const calmo = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const css = `
@@ -23,10 +24,13 @@
     const ov = document.createElement('div'); ov.className = 'gx'; ov.setAttribute('role', 'status'); ov.setAttribute('aria-live', 'polite');
     const f = document.createElement('p'); f.className = 'gx__f'; f.setAttribute('aria-label', FRASE);
     const letras = [];
-    FRASE.split(' ').forEach((pal, i, arr) => {
-      const w = document.createElement('span'); w.className = 'gx__p'; w.setAttribute('aria-hidden', 'true');
-      [...pal].forEach((c) => { const l = document.createElement('span'); l.className = 'gx__l'; l.textContent = c; w.appendChild(l); letras.push(l); });
-      f.appendChild(w); if (i < arr.length - 1) f.appendChild(document.createTextNode(' '));
+    LINHAS.forEach((linha, n) => {
+      if (n) f.appendChild(document.createElement('br'));
+      linha.split(' ').forEach((pal, i, arr) => {
+        const w = document.createElement('span'); w.className = 'gx__p'; w.setAttribute('aria-hidden', 'true');
+        [...pal].forEach((c) => { const l = document.createElement('span'); l.className = 'gx__l'; l.textContent = c; w.appendChild(l); letras.push(l); });
+        f.appendChild(w); if (i < arr.length - 1) f.appendChild(document.createTextNode(' '));
+      });
     });
     ov.appendChild(f); document.body.appendChild(ov);
     void ov.offsetWidth; ov.classList.add('is-on');

@@ -2633,3 +2633,10 @@ html.side-abrindo .side__plan .badge { display: none; }
   .pag-res > :last-child:nth-child(odd) { grid-column: 1 / -1; }
   .pag-res__n { font-size: 19px; white-space: nowrap; }
 }
+
+/* celular: a lista de "trocar de cliente" abre por cima da página, inteira. Antes o menu (que rola sozinho) cortava a lista e
+   a página passava por cima dela; e a busca com letra menor que 16px fazia o iPhone dar zoom na tela */
+@media (max-width: 860px) {
+  .side { overflow: visible; position: relative; z-index: 20; }
+  .switch__q { font-size: 16px; }
+}
