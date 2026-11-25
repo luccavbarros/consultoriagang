@@ -735,6 +735,7 @@
     const state = { m: 0 };
     let W = 0; let H = 0; let dpr = 1; let pts = []; let pairs = [];
     let beamX = 0; let mouseX = null; let mouseY = 0;
+    let fx = 0; let fr = 0; // the cloud's centre and radius: the beam never leaves it
     const push = []; // each dot's current nudge away from the mouse, eased
     const rand = (() => { let a = 7; return () => ((a = (a * 16807) % 2147483647) / 2147483647); })(); // the same cloud every time
     const build = () => {
@@ -790,6 +791,7 @@
         pr.at = Math.hypot((pts[i].x + pts[j].x) / 2 - cx, (pts[i].y + pts[j].y) / 2 - cy) / R;
       });
       beamX = cx - R * 0.5;
+      fx = cx; fr = R;
     };
     const clamp01 = gsap.utils.clamp(0, 1);
     const inout = gsap.parseEase('sine.inOut');
@@ -802,9 +804,13 @@
       const settle = clamp01(m - 2);
       const rest = inout(clamp01(settle / 0.4)); // the dots come to rest first...
       const join = clamp01((settle - 0.15) / 0.85); // ...while the links spread out from the middle
-      const goal = mouseX !== null && W > 860 ? mouseX : W * (W > 860 ? 0.66 : 0.5) + Math.sin(time * 0.7) * Math.min(W, H) * (W > 860 ? 0.3 : 0.25);
+      // the beam follows the mouse only while it is over the cloud; elsewhere (reading the title, the words) it sweeps the cloud by
+      // itself, so the lit part is always on screen. It never leaves the cloud (it used to follow the mouse off it and all went dark)
+      const sweep = fx + Math.sin(time * 0.7) * fr * 0.75;
+      const overCloud = mouseX !== null && W > 860 && Math.abs(mouseX - fx) < fr * 1.15;
+      const goal = gsap.utils.clamp(fx - fr * 0.85, fx + fr * 0.85, overCloud ? mouseX : sweep);
       beamX += (goal - beamX) * 0.08;
-      const beamW = Math.max(60, W * 0.07);
+      const beamW = Math.max(80, fr * 0.32);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, W, H);
       // the mouse: dots close to it are pushed gently away and drift back once it moves on
@@ -852,7 +858,7 @@
         const [x, y] = pos[i];
         const lit = Math.exp(-(((x - beamX) / beamW) ** 2));
         const bright = lit + (1 - lit) * widen;
-        const a = appear * (0.1 + 0.9 * bright);
+        const a = appear * (0.3 + 0.7 * bright); // the dots out of the beam stay visible (the whole is there, only a part is lit)
         if (a < 0.01) return;
         ctx.fillStyle = `rgba(243,243,243,${a})`;
         ctx.beginPath(); ctx.arc(x, y, 1.1 + 1.4 * bright, 0, Math.PI * 2); ctx.fill();
