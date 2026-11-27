@@ -1220,7 +1220,7 @@
   };
 
   // sem respostas ainda: os mesmos gráficos da pesquisa, vazios ("—"), para já mostrar o que vai aparecer
-  const SERIES_PESQ = [['Lembram na hora de comprar', C.acc], ['Lembram do nome sozinhos', C.acc === C.ink ? '#9a9a9a' : C.ink], ['Escolheriam vocês hoje', '#5c5c5c']];
+  const SERIES_PESQ = [['Lembram na hora de comprar', C.acc], ['Lembram do nome sozinhos', C.acc === C.ink ? '#9a9a9a' : C.ink], ['Escolheriam a sua marca hoje', '#5c5c5c']];
   const pesqVazia = (box, q) => {
     const tileV = (rot) => {
       const g = sv('svg', { class: 'anel__g', viewBox: '0 0 44 44', 'aria-hidden': 'true' });
@@ -1229,7 +1229,7 @@
     };
     const rot = ['Partida', 'Rodada 2', 'Rodada 3'];
     box.append(el('div', 'vista-resumo',
-      el('div', 'stats vista-kpis anim', tileV('Das marcas lembradas, quantas são vocês'), tileV('Lembram de vocês na hora de comprar'), tileV('Lembram do nome sozinhos'), tileV('Escolheriam vocês hoje')),
+      el('div', 'stats vista-kpis anim', tileV('Das marcas lembradas, quantas são a sua'), tileV('Lembram da sua marca na hora de comprar'), tileV('Lembram do nome sozinhos'), tileV('Escolheriam a sua marca hoje')),
       el('div', 'evol anim', el('p', 'eyebrow', 'Rodada a rodada'),
         el('div', 'chart__legend', SERIES_PESQ.map(([nome, cor]) => el('span', null, el('span', { class: 'chart__sq', style: 'background:' + cor }), nome))),
         graficoLinhas({ rotulos: rot, fmt: (v) => Math.round(v) + '%', escala: 100, label: 'Gráfico rodada a rodada, ainda sem respostas',
@@ -1340,14 +1340,14 @@
             pwAnt.length ? el('div', null, el('p', 'box__note', ant.q.titulo), el('ul', 'words__list is-before', pwAnt.map(([w, n]) => el('li', null, w, el('span', null, n))))) : null,
             el('div', null, el('p', 'box__note', atual.q.titulo), el('ul', 'words__list', pw.map(([w, n]) => el('li', null, w, el('span', null, n))))))));
         resumo.append(el('div', 'stats vista-kpis anim',
-          atual.fatia != null ? tile('Das marcas lembradas, quantas são vocês', atual.fatia, delta(atual.fatia, ant && ant.fatia)) : null,
-          atual.ment != null ? tile('Lembram de vocês na hora de comprar', atual.ment, delta(atual.ment, ant && ant.ment)) : null,
+          atual.fatia != null ? tile('Das marcas lembradas, quantas são a sua', atual.fatia, delta(atual.fatia, ant && ant.fatia)) : null,
+          atual.ment != null ? tile('Lembram da sua marca na hora de comprar', atual.ment, delta(atual.ment, ant && ant.ment)) : null,
           tile('Lembram do nome sozinhos', atual.lemb, delta(atual.lemb, ant && ant.lemb)),
-          atual.ult != null && grupoPesq !== 'novos' ? tile('Compraram de vocês na última vez', atual.ult, delta(atual.ult, ant && ant.ult)) : null,
-          tile('Escolheriam vocês hoje', atual.pref, delta(atual.pref, ant && ant.pref))));
+          atual.ult != null && grupoPesq !== 'novos' ? tile('Compraram da sua marca na última vez', atual.ult, delta(atual.ult, ant && ant.ult)) : null,
+          tile('Escolheriam a sua marca hoje', atual.pref, delta(atual.pref, ant && ant.pref))));
         if (comResp.length >= 2) {
           const rot = comResp.map((x) => x.q.titulo || U.mesAno(x.q.criada_em));
-          const ser = [['Lembram na hora de comprar', 'ment', C.acc], ['Lembram do nome sozinhos', 'lemb', C.acc === C.ink ? '#9a9a9a' : C.ink], ['Escolheriam vocês hoje', 'pref', '#5c5c5c']]
+          const ser = [['Lembram na hora de comprar', 'ment', C.acc], ['Lembram do nome sozinhos', 'lemb', C.acc === C.ink ? '#9a9a9a' : C.ink], ['Escolheriam a sua marca hoje', 'pref', '#5c5c5c']]
             .map(([nome, k, cor]) => ({ nome, cor, pontos: true, semArea: true, rotuloFim: true, valores: comResp.map((x) => x[k]) })).filter((x) => x.valores.some((v) => v != null));
           if (ser.length) resumo.append(el('div', 'evol anim', el('p', 'eyebrow', 'Rodada a rodada'),
             el('div', 'chart__legend', ser.map((x) => el('span', null, el('span', { class: 'chart__sq', style: 'background:' + x.cor }), x.nome))),
