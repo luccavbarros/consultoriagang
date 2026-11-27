@@ -1,12 +1,26 @@
 /* Portal do cliente: carrega os dados da empresa de quem está logado, monta o menu com os indicadores e troca as telas.
    O banco só devolve linhas da empresa do cliente (regras em supabase/portal.sql): aqui nada é filtrado "na confiança". */
 (async () => {
-  const { sb, guard, signOut, notConfigured } = window.GangAuth;
+  const { sb: base, guard, signOut, notConfigured } = window.GangAuth;
   const U = window.GangUI;
   const { $, el } = U;
-  if (!sb) return notConfigured($('main'));
-  const me = await guard('client');
+  if (!base) return notConfigured($('main'));
+  // o consultor abre o plano de marca de um cliente (cliente.html?marca=<empresa>#marca-pdf): é o mesmo documento que o cliente
+  // baixa, montado pelas mesmas funções. Só leitura: toda consulta vem filtrada pela empresa escolhida e nada é gravado
+  const VER = new URLSearchParams(location.search).get('marca');
+  const me = await guard(VER ? 'admin' : 'client');
   if (!me) return;
+  const sb = VER ? (() => {
+    const ok = Promise.resolve({ data: null, error: null });
+    const nada = new Proxy(function () {}, { get: (t, k) => (k === 'then' ? (a, b) => ok.then(a, b) : nada), apply: () => nada });
+    return {
+      from: (t) => { const q = base.from(t); return { select: (...a) => q.select(...a).eq(t === 'empresas' ? 'id' : 'empresa_id', VER), insert: nada, update: nada, upsert: nada, delete: nada }; },
+      rpc: () => nada,
+      auth: base.auth,
+      storage: { from: (b) => { const st = base.storage.from(b); return { createSignedUrl: (...a) => st.createSignedUrl(...a), getPublicUrl: (...a) => st.getPublicUrl(...a), upload: nada, remove: nada }; } },
+    };
+  })() : base;
+  if (VER) { me.empresa_id = VER; document.documentElement.classList.add('ver-consultor'); }
 
   $('sign-out').addEventListener('click', signOut);
   $('me-name').textContent = me.name || me.email;
@@ -162,7 +176,7 @@
   const dur = D.plano ? D.plano.duracao_meses : 18;
   // plano "Só acesso à marca": o cliente paga para acessar o material da marca, sem a consultoria mensal
   const soAcesso = !!D.plano && D.plano.tipo === 'acesso';
-  const SO_CONSULTORIA = ['plano', 'calendario', 'acoes', 'resultados', 'consultoria', 'relatorio'];
+  const SO_CONSULTORIA = ['plano', 'calendario', 'acoes', 'resultados', 'pesquisa', 'consultoria', 'relatorio'];
   // a linha do plano no menu: mês do plano e o selo da situação (o mesmo do painel do consultor)
   const selo = U.situacaoPlano(D.plano); // Ativo, Pausado, Encerrado ou Pagamento pendente
   // "Só acesso" com o período vencido, ou consultoria com a mensalidade atrasada há mais de 7 dias: ficam a Identidade Visual,
@@ -225,9 +239,9 @@
     ind('consultoria', semana ? String(semana) : '', semana > 0);
     const n = pendentesDoMes().length;
     ind('acoes', n ? String(n) : '', n > 0);
-    // Resultados avisa quando falta contar como foi o mês passado
+    // a Visão Geral avisa quando falta contar como foi o mês passado (a pergunta está no cartão da missão)
     const falta = !!inicioRef && mesPassado >= inicioRef && !comoFoi(mesPassado);
-    ind('resultados', falta ? '1' : '', falta);
+    ind('plano', falta ? '1' : '', falta);
   };
   indicadores();
 
@@ -247,7 +261,7 @@
     (D.cores || []).forEach((c) => out.push({ grupo: 'Sua marca', titulo: 'Cor ' + c.nome, sub: (c.hex || '').toUpperCase() + ' · Identidade Visual', href: '#identidade' }));
     (D.tipografias || []).forEach((t) => out.push({ grupo: 'Sua marca', titulo: 'Fonte ' + t.nome, sub: 'Identidade Visual', href: '#identidade' }));
     (D.pedidos || []).forEach((pd) => out.push({ grupo: 'Peças', titulo: pd.titulo || pd.tipo_peca, sub: ({ em_analise: 'Em análise', ajustar: 'Ajustar', aprovado: 'Aprovada' })[pd.status] || '', href: '#acoes', extra: pd.resposta || '' }));
-    (D.vozes || []).forEach((v) => out.push({ grupo: 'O que os clientes disseram', titulo: v.texto, sub: U.cap(U.nomeMes(v.mes_ref)), href: '#resultados' }));
+    (D.vozes || []).forEach((v) => out.push({ grupo: 'O que os clientes disseram', titulo: v.texto, sub: U.cap(U.nomeMes(v.mes_ref)), href: '#pesquisa' }));
     return out;
   });
 
@@ -470,6 +484,7 @@
     if (revAberta) out.splice(1, 0, formRevisao());
     const pcs = suasPecas(); if (pcs) out.push(pcs);
     const atv = atividade(); if (atv) out.push(atv);
+    const ea = esforcoEAprendizados(); if (ea) out.push(ea);
     if (D.descartadas.length) out.push(el('p', 'box__note nota-linha', 'O que decidimos não fazer está na ', el('a', { class: 'link', href: '#estrategia' }, 'Estratégia'), ', em “Deixamos de lado”.'));
     return out;
   };
@@ -831,7 +846,7 @@
     series.forEach((s) => {
       let d = ''; let caneta = false;
       s.valores.forEach((v, i) => { if (v == null) { caneta = false; return; } d += (caneta ? 'L' : 'M') + x(i) + ' ' + y(v) + ' '; caneta = true; });
-      if (s.pontos) {
+      if (s.pontos && !s.semArea) {
         const pts = s.valores.map((v, i) => (v == null ? null : [x(i), y(v)])).filter(Boolean);
         if (pts.length > 1) {
           const gid = 'g' + Math.random().toString(36).slice(2, 8);
@@ -842,7 +857,7 @@
           svg.append(sv('path', { d: 'M' + pts[0][0] + ' ' + yb + ' ' + pts.map((q) => 'L' + q[0] + ' ' + q[1]).join(' ') + ' L' + pts[pts.length - 1][0] + ' ' + yb + 'Z', fill: 'url(#' + gid + ')' }));
         }
       }
-      svg.append(sv('path', { d, fill: 'none', stroke: s.cor, 'stroke-width': s.tracejado ? 1.5 : 2.5, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', 'stroke-dasharray': s.tracejado ? '4 5' : null }));
+      svg.append(sv('path', { d, fill: 'none', stroke: s.cor, 'stroke-width': s.tracejado ? 1.5 : 2.5, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', 'stroke-dasharray': s.tracejado ? '4 5' : null, pathLength: s.tracejado ? null : 1, class: s.tracejado ? null : 'chart__traco' }));
       if (s.pontos) s.valores.forEach((v, i) => { if (v != null) svg.append(sv('circle', { cx: x(i), cy: y(v), r: 4, fill: s.cor, stroke: C.surface, 'stroke-width': 2 })); });
       const last = s.valores.reduce((a, v, i) => (v != null ? i : a), -1);
       if (last >= 0 && s.rotuloFim) svg.append(sv('text', { x: x(last) + 8, y: y(s.valores[last]) - 10, class: 'chart__end' }, fmt(s.valores[last])));
@@ -996,47 +1011,49 @@
     return out;
   };
 
-  const telaResultados = () => {
-    const out = [head('Estamos chegando lá?', 'Resultados',
-      ['A empresa muda em semanas, a marca em meses.', el('br'), 'Por isso acompanhamos os dois, em ritmos diferentes.'],
-      el('a', { class: 'btn btn--ghost', href: '#relatorio' }, 'Relatório do mês')),
-    // no topo, antes das abas: o que o consultor diz do mês e como foi o mês para a empresa (sem números)
-    veredito(), blocoComoFoi()].filter(Boolean);
-    const p = D.plano;
-
-    // parte "Marca": onde vai o esforço e como a marca é vista
-    out.push(parte('Marca', 'A marca muda em meses, não em semanas. Medimos em pesquisas e nas buscas.'));
-    let esf = null;
+  // ===== Pesquisa: como as pessoas enxergam a marca, rodada a rodada (uma a cada 6 meses). Os gráficos aparecem animados ao rolar.
+  // O que era do mês (como foi o mês, veredito, relatório) foi para a Visão Geral; o esforço e os aprendizados, para Ações =====
+  const telaPesquisa = () => {
+    const out = [head('Uma rodada a cada 6 meses', 'Pesquisa',
+      ['Como as pessoas enxergam a sua marca', el('br'), 'e o que mudou desde a rodada anterior.'])];
+    const mv = marcaVista();
+    const busca = mv.find((x) => x.getAttribute('aria-labelledby') === 'busca-t');
+    out.push(...mv.filter((x) => x !== busca));
+    // sem pesquisa ainda: explica o que vai aparecer e quando, em vez de ficar vazia
+    const semPesq = !D.pesquisas.length ? el('section', { class: 'box', 'aria-labelledby': 'mv-vazio-t' },
+      el('h2', { class: 'box__title', id: 'mv-vazio-t' }, 'Como a marca é vista'),
+      el('p', 'box__text', ['Aparece com a primeira pesquisa com seus clientes:', el('br'), 'quem lembra da marca, em que situações e com que palavras.']),
+      el('p', 'box__note', ['O consultor abre a pesquisa e o convite pronto chega aqui.', el('br'), 'Depois, a cada 6 meses, uma nova rodada mostra a evolução.'])) : null;
+    // quadros de conteúdo estreito lado a lado (sem quadro largo com vazio à direita); no celular, um embaixo do outro
+    const voz = vozDoCliente();
+    if (semPesq) { out.push(lado(semPesq, voz)); if (busca) out.push(busca); }
+    else out.push(lado(busca, voz));
+    return out;
+  };
+  // em Ações: onde vai o esforço (marca × ativação), se a marca é fácil de achar e comprar, e o que as ações concluídas ensinaram
+  const esforcoEAprendizados = () => {
+    const p = D.plano; const blocos = [];
     if (p) {
       const marca = p.esforco_marca_pct != null ? U.metaMarcaMes(p) : 62; // no lançamento, a divisão do momento (35% no 1º ano, 57% depois)
-      esf = (el('section', { class: 'box', 'aria-labelledby': 'eff-t' },
+      blocos.push(el('section', { class: 'box', 'aria-labelledby': 'eff-t' },
         el('h2', { class: 'box__title', id: 'eff-t' }, 'Onde vai o esforço'),
         el('div', 'esf__legend',
           el('div', 'esf__item esf__item--marca', el('span', 'esf__lbl', 'Marca'), el('strong', 'esf__v', marca + '%'), el('span', 'esf__sub', 'Ser lembrada antes da compra')),
           el('div', 'esf__item esf__item--vendas', el('span', 'esf__lbl', 'Ativação'), el('strong', 'esf__v', (100 - marca) + '%'), el('span', 'esf__sub', 'Converter quem já quer comprar'))),
         el('div', 'esf__rows', esfLinha('Planejado', marca), esforcoReal(marca))));
     }
-    const mv = marcaVista();
-    const busca = mv.find((x) => x.getAttribute('aria-labelledby') === 'busca-t');
-    out.push(...mv.filter((x) => x !== busca));
-    // sem pesquisa ainda: a aba explica o que vai aparecer e quando, em vez de ficar vazia
-    if (!D.pesquisas.length) out.push(el('section', { class: 'box', 'aria-labelledby': 'mv-vazio-t' },
-      el('h2', { class: 'box__title', id: 'mv-vazio-t' }, 'Como a marca é vista'),
-      el('p', 'box__text', ['Aparece com a primeira pesquisa com seus clientes:', el('br'), 'quem lembra da marca, em que situações e com que palavras.']),
-      el('p', 'box__note', ['O consultor abre a pesquisa e o convite pronto chega aqui.', el('br'), 'Depois, a cada 6 meses, uma nova rodada mostra a evolução.'])));
     const dp = D.disponibilidade[0];
     if (dp) {
       const DISP = { google: 'Perfil completo no Google', mapas: 'Aparece nos mapas e marketplaces', resposta: 'Responde em até 1 hora', pagamento: 'Pix, cartão e orçamento rápido', site: 'Contato em um clique', onde_procura: 'Está onde o cliente procura' };
-      out.push(el('section', { class: 'box disp-c', 'aria-labelledby': 'disp-t' },
+      blocos.push(el('section', { class: 'box disp-c', 'aria-labelledby': 'disp-t' },
         el('div', 'box__head', el('h2', { class: 'box__title', id: 'disp-t' }, 'Fácil de encontrar e de comprar'), el('p', 'box__note', 'Verificado em ' + U.nomeMes(dp.mes_ref))),
         el('div', 'kbig', el('span', 'kbig__v', dp.nota + '/100'), el('span', 'kbig__lbl', 'Ser lembrada só vende se for fácil achar e comprar.')),
         el('ul', 'disp-c__list', Object.entries(DISP).map(([k, t]) => el('li', dp.itens[k] ? 'is-ok' : null, el('span', { class: 'rot__ico', 'aria-hidden': 'true' }), t)))));
     }
-    const parEsf = lado([esf], [busca]);
-    if (parEsf) out.push(el('details', 'mais mais--res', el('summary', null, el('span', null, 'Mais sobre a marca'), el('span', 'mais__sub', 'Onde vai o esforço e buscas pelo nome no Google')), parEsf));
-    const apr = aprendizados(); const voz = vozDoCliente();
-    if (apr.length || voz) out.push(parte('Aprendizados', 'O que funcionou, o que não funcionou e\u00a0o\u00a0que\u00a0seus\u00a0clientes\u00a0dizem.'), lado(apr, [voz]));
-    return emAbas(out.filter(Boolean));
+    blocos.push(...aprendizados());
+    if (!blocos.length) return null;
+    return el('details', 'mais mais--res', el('summary', null, el('span', null, 'Esforço e aprendizados'),
+      el('span', 'mais__sub', 'Onde vai o esforço, se a marca é fácil de achar e o que as ações ensinaram')), ...blocos);
   };
   // Resultados em abas: o resumo (números, veredito) fica em cima; Negócio, Marca e Aprendizados ficam cada um na sua aba
   let abaRes = 'Marca';
@@ -1111,13 +1128,13 @@
       const alvo = e.alvo.find((a) => a.status !== 'feita' && comCliente(a)) || e.alvo[0];
       return { href: '#acoes', dica: 'abrir em Ações', onclick: () => { if (alvo) abreAcao = alvo.id; } };
     }
-    if (/^Contou/.test(t)) return { href: '#resultados', dica: 'responder em Resultados', onclick: () => foca('como-foi') };
+    if (/^Contou/.test(t)) return { href: '#plano', dica: 'responder na Visão Geral', onclick: () => foca('como-foi') };
     if (/^Presença/.test(t)) return { href: '#consultoria', dica: 'ver no Calendário', onclick: null };
     if (/^Ações avaliadas/.test(t)) {
       const alvo = e.acs.find((a) => a.status === 'feita' && !a.resultado && comCliente(a));
       return { href: '#acoes', dica: 'responder em Ações', onclick: () => { abaAcoes = 'feitas'; if (alvo) abreAcao = alvo.id; } };
     }
-    return { href: '#resultados', dica: 'registrar em Resultados', onclick: () => foca('voz-txt') };
+    return { href: '#pesquisa', dica: 'registrar em Pesquisa', onclick: () => foca('voz-txt') };
   };
 
   // ===== missões do mês: o que o cliente faz agora, em cartões simples (ações, números e encontro) =====
@@ -1131,8 +1148,8 @@
     });
     if (inicioRef && mesPassado >= inicioRef) {
       const ok = !!comoFoi(mesPassado);
-      itens.push({ feita: ok, ord: ok ? '9' : '0', titulo: 'Contar como foi ' + U.nomeMes(mesPassado), sub: ok ? 'Respondido' : 'Um clique', hot: false, tipo: 'num', botao: 'Responder',
-        href: '#resultados', onclick: () => foca('como-foi') });
+      itens.push({ feita: ok, ord: ok ? '9' : '0', titulo: 'Contar como foi ' + U.nomeMes(mesPassado), sub: ok ? U.cap(COMO[comoFoi(mesPassado)][0].toLowerCase()) + ' que no ano passado' : 'Um clique', hot: false, tipo: 'num', botao: 'Responder',
+        href: '#plano', comoFoi: !ok });
     }
     const enc = D.encontros.filter((x) => x.inicio.slice(0, 7) === hoje).sort((x, y) => (x.inicio < y.inicio ? -1 : 1))[0];
     if (enc) {
@@ -1153,10 +1170,16 @@
     misPctAntes = pct; misFeitasAntes = feitas;
     const barra = el('span', { style: 'width:' + pctDe + '%' });
     if (pctDe !== pct) requestAnimationFrame(() => requestAnimationFrame(() => { barra.style.width = pct + '%'; }));
-    const card = (x) => el('a', { class: 'missao missao--' + x.tipo + (x.feita ? ' is-ok' : '') + (x.andamento ? ' is-doing' : '') + (x.recem ? ' is-recem' : ''), href: x.href, onclick: x.onclick || null, title: x.titulo },
+    // "Contar como foi": melhor, igual ou pior direto no cartão, sem trocar de tela
+    const cardComoFoi = (x) => el('div', { class: 'missao missao--num missao--cf', id: 'como-foi', tabindex: '-1', title: x.titulo },
+      el('span', 'missao__top', el('span', { class: 'missao__ico', 'aria-hidden': 'true' }), el('span', 'missao__s', 'Comparado com o ano passado')),
+      el('span', 'missao__t', curto(x.titulo)),
+      el('span', { class: 'missao__cf', role: 'group', 'aria-label': x.titulo }, Object.entries(COMO).map(([k, [t, ic]]) =>
+        el('button', { class: 'missao__cfb missao__cfb--' + k, type: 'button', onclick: (ev) => respondeComoFoi(k, ev.currentTarget) }, el('span', { 'aria-hidden': 'true' }, ic), t))));
+    const card = (x) => (x.comoFoi ? cardComoFoi(x) : el('a', { class: 'missao missao--' + x.tipo + (x.feita ? ' is-ok' : '') + (x.andamento ? ' is-doing' : '') + (x.recem ? ' is-recem' : ''), href: x.href, onclick: x.onclick || null, title: x.titulo },
       el('span', 'missao__top', el('span', { class: 'missao__ico', 'aria-hidden': 'true' }), el('span', 'missao__s' + (x.hot ? ' is-hot' : ''), x.sub)),
       el('span', 'missao__t', curto(x.titulo)),
-      el('span', 'missao__btn' + (x.feita ? ' is-ok' : ''), x.feita ? 'Feita' : x.botao));
+      el('span', 'missao__btn' + (x.feita ? ' is-ok' : ''), x.feita ? 'Feita' : x.botao)));
     return el('section', { class: 'missoes', 'aria-labelledby': 'mis-t' },
       el('div', 'missoes__head',
         el('div', null, el('h2', { class: 'missoes__t', id: 'mis-t' }, 'Missões de ' + U.nomeMes(hoje)),
@@ -1180,7 +1203,7 @@
       ['O que as pessoas ouvem', ouvem, 'Lembram da sua marca nas situações de compra.'],
       ['O que elas entendem', entendem, 'Escolhem a sua mensagem central como a frase que descreve a marca.'],
     ];
-    return el('div', 'funnel',
+    return el('div', 'funnel anim',
       el('p', 'eyebrow', 'Do que você quer dizer ao que entendem'),
       linhas.map(([t, v, d]) => el('div', 'funnel__row',
         el('div', 'funnel__lab', el('p', 'funnel__t', t), el('p', 'box__note', d)),
@@ -1247,8 +1270,14 @@
       const ant = comResp.length > 1 ? comResp[comResp.length - 2] : null;
       const aberta = [...pesq].reverse().find((x) => x.aberta);
       const delta = (a, b) => (b == null || a == null ? null : a - b);
-      const tile = (rot, v, d) => el('div', 'stat', el('p', 'stat__label', rot), el('p', 'stat__value', v == null ? '—' : (atual.n < 30 ? '≈' : '') + v + '%'),
-        d != null ? el('p', 'stat__delta', (d > 0 ? '+' : '') + d + ' pontos desde a rodada anterior') : null);
+      // cada número num anel que se fecha até o valor, e o número conta de 0 até ele (ao aparecer na tela)
+      const tile = (rot, v, d) => {
+        const g = sv('svg', { class: 'anel__g', viewBox: '0 0 44 44', 'aria-hidden': 'true' });
+        g.append(sv('circle', { cx: 22, cy: 22, r: 18, class: 'anel__fundo' }), sv('circle', { cx: 22, cy: 22, r: 18, class: 'anel__arco', pathLength: 100, style: '--v:' + (v || 0) }));
+        return el('div', 'stat anel', g, el('div', 'anel__txt', el('p', 'stat__label', rot),
+          el('p', { class: 'stat__value', 'data-conta': v == null ? null : v, 'data-pre': atual.n < 30 ? '≈' : '' }, v == null ? '—' : (atual.n < 30 ? '≈' : '') + v + '%'),
+          d != null ? el('p', 'stat__delta' + (d > 0 ? ' is-up' : d < 0 ? ' is-down' : ''), (d > 0 ? '+' : '') + d + ' pontos desde a rodada anterior') : null));
+      };
       const box = el('section', { class: 'box', 'aria-labelledby': 'pesq-t' },
         el('div', 'box__head', el('h2', { class: 'box__title', id: 'pesq-t' }, 'Como a marca é vista'),
           atual.n && atual.n < 30
@@ -1280,12 +1309,21 @@
           el('div', 'words__cols',
             pwAnt.length ? el('div', null, el('p', 'box__note', ant.q.titulo), el('ul', 'words__list is-before', pwAnt.map(([w, n]) => el('li', null, w, el('span', null, n))))) : null,
             el('div', null, el('p', 'box__note', atual.q.titulo), el('ul', 'words__list', pw.map(([w, n]) => el('li', null, w, el('span', null, n))))))));
-        resumo.append(el('div', 'stats vista-kpis',
+        resumo.append(el('div', 'stats vista-kpis anim',
           atual.fatia != null ? tile('Das marcas lembradas, quantas são vocês', atual.fatia, delta(atual.fatia, ant && ant.fatia)) : null,
           atual.ment != null ? tile('Lembram de vocês na hora de comprar', atual.ment, delta(atual.ment, ant && ant.ment)) : null,
           tile('Lembram do nome sozinhos', atual.lemb, delta(atual.lemb, ant && ant.lemb)),
           atual.ult != null && grupoPesq !== 'novos' ? tile('Compraram de vocês na última vez', atual.ult, delta(atual.ult, ant && ant.ult)) : null,
           tile('Escolheriam vocês hoje', atual.pref, delta(atual.pref, ant && ant.pref))));
+        if (comResp.length >= 2) {
+          const rot = comResp.map((x) => x.q.titulo || U.mesAno(x.q.criada_em));
+          const ser = [['Lembram na hora de comprar', 'ment', C.acc], ['Lembram do nome sozinhos', 'lemb', C.acc === C.ink ? '#9a9a9a' : C.ink], ['Escolheriam vocês hoje', 'pref', '#5c5c5c']]
+            .map(([nome, k, cor]) => ({ nome, cor, pontos: true, semArea: true, rotuloFim: true, valores: comResp.map((x) => x[k]) })).filter((x) => x.valores.some((v) => v != null));
+          if (ser.length) resumo.append(el('div', 'evol anim', el('p', 'eyebrow', 'Rodada a rodada'),
+            el('div', 'chart__legend', ser.map((x) => el('span', null, el('span', { class: 'chart__sq', style: 'background:' + x.cor }), x.nome))),
+            graficoLinhas({ rotulos: rot, fmt: (v) => Math.round(v) + '%', series: ser,
+              label: ser.map((x) => x.nome + ': ' + x.valores.map((v, i) => rot[i] + ' ' + (v == null ? 'sem dado' : v + '%')).join(', ')).join('. ') })));
+        }
         // fatia nas lembranças × participação de mercado: lembrada acima do tamanho tende a crescer
         if (atual.fatia != null && D.plano && D.plano.participacao_mercado != null) {
           const pm = Number(D.plano.participacao_mercado); const dif = atual.fatia - pm;
@@ -1299,7 +1337,7 @@
           colB.append(el('p', 'eyebrow', 'Em cada situação de compra: quem lembra da sua marca e do concorrente mais lembrado'),
             el('div', 'chart__legend', el('span', null, el('span', { class: 'chart__sq', style: 'background:' + C.bar }), 'Sua marca'),
               el('span', null, el('span', { class: 'chart__sq', style: 'background:#8a8a8a' }), 'Concorrente mais lembrado')),
-            el('div', 'hbars', atual.porSit.map((x) => el('div', 'hbar hbar--pair',
+            el('div', 'hbars anim', atual.porSit.map((x) => el('div', 'hbar hbar--pair',
               el('p', 'hbar__label', x.texto),
               el('div', 'hbar__pair',
                 el('div', 'hbar__track', el('span', { class: 'hbar__fill', style: 'width:' + x.sua + '%' })),
@@ -1310,7 +1348,7 @@
         const af = atual.q.afirmacoes || [];
         if (af.length) {
           colB.append(el('p', 'eyebrow', 'Quem liga cada frase à marca (%)'),
-            el('p', 'box__note', 'Lê com cuidado: essas ligações sobem principalmente com quem já conhece e usa a marca, e marcas maiores sempre têm mais. Para crescer, valem mais as situações de compra acima.'), el('div', 'hbars', af.map((t, i) => el('div', 'hbar',
+            el('p', 'box__note', 'Lê com cuidado: essas ligações sobem principalmente com quem já conhece e usa a marca, e marcas maiores sempre têm mais. Para crescer, valem mais as situações de compra acima.'), el('div', 'hbars anim', af.map((t, i) => el('div', 'hbar',
             el('p', 'hbar__label', t),
             el('div', 'hbar__track', el('span', { class: 'hbar__fill', style: 'width:' + (atual.medias[i] || 0) + '%' })),
             el('p', 'hbar__value', atual.medias[i] == null ? '—' : String(atual.medias[i]),
@@ -1351,9 +1389,9 @@
       out.push(el('section', { class: 'box', 'aria-labelledby': 'busca-t' },
         el('div', 'box__head', el('h2', { class: 'box__title', id: 'busca-t' }, 'Buscas pelo nome da marca'), el('p', 'box__note', 'Google Trends, mês a mês')),
         el('p', 'box__text', 'De todas as buscas pela categoria e pelas marcas concorrentes, quantas são pela sua marca. Quando sobe, a marca está sendo mais lembrada.'),
-        graficoLinhas({ rotulos: D.buscas.map((b) => U.cap(U.nomeMesCurto(b.mes_ref))), fmt: (v) => Math.round(v) + '%',
+        el('div', 'anim', graficoLinhas({ rotulos: D.buscas.map((b) => U.cap(U.nomeMesCurto(b.mes_ref))), fmt: (v) => Math.round(v) + '%',
           label: 'Participação da marca nas buscas: ' + D.buscas.map((b) => U.nomeMesCurto(b.mes_ref) + ' ' + b.marca_pct + '%').join(', '),
-          series: [{ nome: 'Sua marca', valores: D.buscas.map((b) => Number(b.marca_pct)), cor: C.acc, pontos: true, rotuloFim: true }] }),
+          series: [{ nome: 'Sua marca', valores: D.buscas.map((b) => Number(b.marca_pct)), cor: C.acc, pontos: true, rotuloFim: true }] })),
         D.plano && D.plano.participacao_mercado != null ? (() => {
           const v = Math.round((Number(D.buscas[D.buscas.length - 1].marca_pct) - Number(D.plano.participacao_mercado)) * 10) / 10;
           return el('p', 'insight', el('span', 'insight__lbl', 'Voz ' + (v >= 0 ? 'acima' : 'abaixo') + ' do tamanho'),
@@ -1402,25 +1440,37 @@
   // "Como foi o mês?": no lugar dos números da empresa, o cliente diz em um clique se o mês foi melhor, igual ou pior
   // que o mesmo mês do ano passado (comparar com o mês anterior misturaria a época do ano com o efeito do plano)
   const COMO = { melhor: ['Melhor', '↑'], igual: ['Igual', '='], pior: ['Pior', '↓'] };
-  const blocoComoFoi = () => {
+  const respondeComoFoi = async (v, b) => {
+    b.disabled = true;
+    const { error } = await sb.rpc('portal_como_foi', { p_mes: mesPassado, p_valor: v });
+    b.disabled = false;
+    if (error) return anuncia('Não foi possível salvar agora.');
+    const n = D.numeros.find((x) => x.mes_ref === mesPassado);
+    const primeira = !n || !n.como_foi;
+    if (n) n.como_foi = v; else D.numeros.push({ mes_ref: mesPassado, como_foi: v });
+    cfRecente = v; if (primeira) cfMissaoNova = true;
+    render(); cfRecente = null; indicadores(); anuncia(U.cap(U.nomeMes(mesPassado)) + ': ' + COMO[v][0].toLowerCase() + '. Obrigado!');
+  };
+  // soHistorico (Visão Geral): só a faixa dos meses, quando já há mais de um mês respondido (a pergunta fica no cartão da missão)
+  const blocoComoFoi = (soHistorico) => {
     if (!inicioRef || mesPassado < inicioRef) return null;
     const atual = comoFoi(mesPassado);
-    const responde = async (v, b) => {
-      b.disabled = true;
-      const { error } = await sb.rpc('portal_como_foi', { p_mes: mesPassado, p_valor: v });
-      b.disabled = false;
-      if (error) return anuncia('Não foi possível salvar agora.');
-      const n = D.numeros.find((x) => x.mes_ref === mesPassado);
-      const primeira = !n || !n.como_foi;
-      if (n) n.como_foi = v; else D.numeros.push({ mes_ref: mesPassado, como_foi: v });
-      cfRecente = v; if (primeira) cfMissaoNova = true;
-      render(); cfRecente = null; indicadores(); anuncia(U.cap(U.nomeMes(mesPassado)) + ': ' + COMO[v][0].toLowerCase() + '. Obrigado!');
-    };
+    const responde = respondeComoFoi;
     // os meses do plano já encerrados (até 12), do mais antigo para o mais recente
     const meses = []; for (let r = inicioRef; r <= mesPassado; r = U.addRef(r, 1)) meses.push(r);
     const ult = meses.slice(-12);
     const respondidos = ult.filter((r) => comoFoi(r));
     const melhores = respondidos.filter((r) => comoFoi(r) === 'melhor').length;
+    if (soHistorico) {
+      if (respondidos.length < 2) return null;
+      return el('section', { class: 'box comofoi comofoi--hist', 'aria-labelledby': 'cfh-t' },
+        el('div', 'box__head', el('h2', { class: 'box__title', id: 'cfh-t' }, 'Como foram os meses'), el('p', 'box__note', 'Comparado com o mesmo mês do ano passado')),
+        el('div', 'comofoi__hist',
+          el('p', 'comofoi__res', melhores + ' de ' + respondidos.length + (respondidos.length === 1 ? ' mês melhor' : ' meses melhores') + ' que no ano passado'),
+          el('ol', { class: 'comofoi__meses', 'aria-label': 'Como foi cada mês' }, ult.map((r) => { const v = comoFoi(r);
+            return el('li', 'comofoi__m' + (v ? ' is-' + v : '') + (cfRecente && r === mesPassado ? ' is-recem' : ''), el('span', 'comofoi__mi', v ? COMO[v][1] : '·'), el('span', 'comofoi__ml', U.nomeMesCurto(r)),
+              el('span', 'sr-only', v ? COMO[v][0] : 'sem resposta')); }))));
+    }
     return el('section', { class: 'box comofoi' + (respondidos.length > 1 ? ' comofoi--dois' : ''), id: 'como-foi', tabindex: '-1', 'aria-labelledby': 'cf-t' },
       el('div', 'comofoi__q', el('div', 'box__head', el('h2', { class: 'box__title', id: 'cf-t' }, 'Como foi ' + U.nomeMes(mesPassado) + '?'), atual ? (() => { const c = chip('done', 'Respondido'); if (cfRecente) c.classList.add('is-surge'); return c; })() : null),
       el('p', 'box__text', ['Comparado com ' + U.nomeMes(mesPassado) + ' do ano passado.', el('br'), 'Sem números: só você e o consultor veem.']),
@@ -2557,12 +2607,16 @@
     // a tela abre no que fazer agora (as missões); a meta vira o título do caminho, logo abaixo.
     // "Mês X de Y" aparece uma vez só, na linha de cima do título
     const out = [head(inicioRef ? 'Mês ' + mesAgora + ' de ' + dur + ' · ' + U.cap(U.nomeMes(hoje)) + ' ' + hoje.slice(0, 4) : 'Plano de marca', 'Visão Geral',
-      ['O que fazer este mês e o caminho até a meta.', el('br'), 'Cada mês concluído deixa a marca mais perto dela.'])];
+      ['O que fazer este mês e o caminho até a meta.', el('br'), 'Cada mês concluído deixa a marca mais perto dela.'],
+      inicioRef ? el('a', { class: 'btn btn--ghost', href: '#relatorio' }, 'Relatório do mês') : null)];
     const bm = bannerMensagem(); if (bm) out.push(bm);
     if (!inicioRef) return out.concat(vazio('A trilha aparece assim que o consultor cadastrar o plano.'));
 
     // as missões do mês (os números entram como uma missão, sem aviso à parte)
     out.push(missoes());
+    // o que o consultor diz do mês e como foram os meses (antes ficavam em Resultados)
+    const vd = veredito(); if (vd) out.push(vd);
+    const cfH = blocoComoFoi(true); if (cfH) out.push(cfH);
 
     // os primeiros meses: o que acontece agora e quando os resultados começam a aparecer
     // some no 3º mês ou antes, assim que os passos estiverem cumpridos (o 1º, conhecer a marca, já vem cumprido)
@@ -2587,7 +2641,7 @@
               const t = document.getElementById('convite'); if (t) t.focus({ preventScroll: true });
             }, 450); };
             return abertaP
-              ? passo(D.respostas.length > 0, 'Convide clientes para a pesquisa de partida', 'É ela que mostra como a marca é vista hoje, para comparar depois. A mensagem já vem pronta.', '#resultados', 'Ver o convite', vaiConvite)
+              ? passo(D.respostas.length > 0, 'Convide clientes para a pesquisa de partida', 'É ela que mostra como a marca é vista hoje, para comparar depois. A mensagem já vem pronta.', '#pesquisa', 'Ver o convite', vaiConvite)
               : passo(false, 'Convide clientes para a pesquisa de partida', 'É ela que mostra como a marca é vista hoje. Assim que o consultor abrir a pesquisa, o convite pronto aparece aqui.');
           })())));
     }
@@ -2795,7 +2849,7 @@
       el('div', 'sl__meta', el('span', null, nome), el('span'), el('span', null, 'GANG'), el('span', null, U.cap(U.nomeMes(hoje)) + ' ' + hoje.slice(0, 4))),
       el('div', 'sl__capa', el('div', null, el('h1', 'sl__capa-t', titulo), sub ? el('p', 'sl__capa-s', sub) : null), direita || img)));
   };
-  const deckBarra = (voltar, ...extras) => el('div', 'deck__bar no-print', el('a', { class: 'link', href: voltar }, '← Voltar'), ...extras,
+  const deckBarra = (voltar, ...extras) => el('div', 'deck__bar no-print', el('a', { class: 'link', href: VER ? 'admin-cliente.html?id=' + encodeURIComponent(VER) + '#estrategia' : voltar }, VER ? '← Voltar ao painel' : '← Voltar'), ...extras,
     el('button', { class: 'btn btn--light btn--sm', type: 'button', onclick: () => window.print() }, 'Imprimir ou salvar em PDF'));
 
   // ===== Relatório do mês: o que aconteceu, o que vem e como a marca está, para mostrar aos sócios =====
@@ -2824,7 +2878,7 @@
     }
     const troca = el('div', { class: 'rel__modo', role: 'group', 'aria-label': 'Formato do relatório' },
       [['completo', 'Completo'], ['socios', '1 página para sócios']].map(([k, t]) => el('button', { class: 'fchip', type: 'button', 'aria-pressed': String(relModo === k), onclick: () => { relModo = k; render(); } }, t)));
-    const barra = deckBarra('#resultados', troca);
+    const barra = deckBarra('#plano', troca);
     const proximos = essenciais.slice(0, 5).map((a) => a.titulo);
     if (relModo === 'socios') {
       return [el('article', 'deck', barra, slide('resumo de ' + U.nomeMes(r1),
@@ -2919,7 +2973,7 @@
     plano: { crumb: 'Visão Geral · ' + U.nomeMes(hoje) + ' de ' + hoje.slice(0, 4), render: telaCaminho },
     inicio: { crumb: 'Início · ' + U.nomeMes(hoje) + ' de ' + hoje.slice(0, 4), render: telaInicio },
     acoes: { crumb: 'Acompanhamento / Ações', render: telaAcoes },
-    resultados: { crumb: 'Acompanhamento / Resultados', render: telaResultados },
+    pesquisa: { crumb: 'Acompanhamento / Pesquisa', render: telaPesquisa },
     relatorio: { crumb: 'Acompanhamento / Relatório do mês', render: telaRelatorio },
     'marca-pdf': { crumb: 'Sua marca / Plano de marca', render: telaPlanoMarca },
     consultoria: { crumb: 'Acompanhamento / Calendário', render: telaConsultoria },
@@ -2931,7 +2985,7 @@
   };
 
   const side = document.querySelector('.side');
-  const rota = () => { const r0 = location.hash.slice(1); const r = r0 === 'calendario' ? 'consultoria' : r0; const padrao = soAcesso ? 'inicio' : consBloq ? 'assinatura' : 'plano'; return SCREENS[r] && !(soAcesso && SO_CONSULTORIA.includes(r)) && !(!soAcesso && r === 'inicio') && !(vencido && !ABERTAS_VENCIDO.includes(r)) ? r : padrao; };
+  const rota = () => { if (VER) return 'marca-pdf'; const r0 = location.hash.slice(1); const r = r0 === 'calendario' ? 'consultoria' : r0 === 'resultados' ? 'pesquisa' : r0; const padrao = soAcesso ? 'inicio' : consBloq ? 'assinatura' : 'plano'; return SCREENS[r] && !(soAcesso && SO_CONSULTORIA.includes(r)) && !(!soAcesso && r === 'inicio') && !(vencido && !ABERTAS_VENCIDO.includes(r)) ? r : padrao; };
   // a animação de entrada só roda ao trocar de tela; atualizar algo na mesma tela (ex.: status de uma ação) não pisca
   let telaAtual = null;
   // uso: cada tela aberta e quanto tempo a pessoa ficou nela (só telas e tempo; o consultor vê isso para decidir o que simplificar)
@@ -2950,6 +3004,24 @@
     new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach((n) => { if (n.nodeType === 1) U.vocDOM(n, VENDE); else if (n.nodeType === 3 && n.parentElement) U.vocDOM(n.parentElement, VENDE); })))
       .observe(document.body, { childList: true, subtree: true });
   }
+  // gráficos que aparecem animados: cada .anim ganha is-in quando entra na tela (barras crescem, anéis fecham, linhas se desenham)
+  // e os números [data-conta] contam de 0 até o valor. Quem pediu menos movimento vê tudo pronto
+  const contaNumeros = (box) => box.querySelectorAll('[data-conta]').forEach((n) => {
+    const alvo = Number(n.dataset.conta); const pre = n.dataset.pre || ''; if (!Number.isFinite(alvo)) return;
+    const t0 = performance.now(); const dur = 1100;
+    const passo = (t) => { const k = Math.min(1, Math.max(0, (t - t0) / dur)); n.textContent = pre + Math.round(alvo * (1 - (1 - k) ** 3)) + '%'; if (k < 1) requestAnimationFrame(passo); };
+    n.textContent = pre + '0%'; requestAnimationFrame(passo);
+  });
+  const animaTela = (root) => {
+    const els = [...root.querySelectorAll('.anim')]; if (!els.length) return;
+    if ((window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) || !('IntersectionObserver' in window)) { els.forEach((e) => e.classList.add('is-in')); return; }
+    const io = new IntersectionObserver((es) => es.forEach((en) => { if (!en.isIntersecting) return; en.target.classList.add('is-in'); contaNumeros(en.target); io.unobserve(en.target); }), { threshold: 0.2 });
+    // só depois que a página aparece (a entrada começa preta): antes disso, a animação passaria sem ninguém ver
+    const html = document.documentElement;
+    const comeca = () => setTimeout(() => els.forEach((e) => io.observe(e)), 250);
+    if (html.classList.contains('is-ready')) comeca();
+    else { const mo = new MutationObserver(() => { if (html.classList.contains('is-ready')) { mo.disconnect(); comeca(); } }); mo.observe(html, { attributes: true, attributeFilter: ['class'] }); }
+  };
   function render() {
     const r = rota();
     const trocou = r !== telaAtual; telaAtual = r;
@@ -2958,6 +3030,7 @@
     $('crumb').textContent = SCREENS[r].crumb;
     $('screen').replaceChildren(el('div', 'screen screen--' + r + (trocou ? ' screen--entra' : ''), avisoFatura(), SCREENS[r].render()));
     U.vocDOM($('screen'), VENDE); // quem vende produto lê "produto" onde o sistema diz "serviço"
+    animaTela($('screen'));
     if (!trocou) window.scrollTo(0, y);
     document.querySelectorAll('[data-route]').forEach((a) => {
       if (a.dataset.route === r) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');

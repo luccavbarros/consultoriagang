@@ -304,6 +304,7 @@ a.kpi:hover { background: #1f1f1f; }
   --i-chat: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7.9 20A9 9 0 1 0 4 16.1L2 22Z'/%3E%3C/svg%3E");
   --i-listcheck: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3 17 2 2 4-4M3 7l2 2 4-4M13 6h8M13 12h8M13 18h8'/%3E%3C/svg%3E");
   --i-chart: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 3v18h18M18 17V9M13 17V5M8 17v-3'/%3E%3C/svg%3E");
+  --i-pie: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12a9 9 0 1 1-9-9v9z'/%3E%3Cpath d='M15 3.5A9 9 0 0 1 20.5 9H15z'/%3E%3C/svg%3E");
   --i-target: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E");
   --i-filecheck: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z'/%3E%3Cpath d='M14 2v4a2 2 0 0 0 2 2h4M9 15l2 2 4-4'/%3E%3C/svg%3E");
   --i-search: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E");
@@ -351,6 +352,7 @@ a.kpi:hover { background: #1f1f1f; }
 .side__link[href="#mensagens"] { --ico: var(--i-msg); }
 .side__link[href="#acoes"] { --ico: var(--i-listcheck); }
 .side__link[href="#resultados"] { --ico: var(--i-chart); }
+.side__link[href="#pesquisa"] { --ico: var(--i-pie); } /* Pesquisa: o gráfico de pizza da pesquisa (a lupa é do Diagnóstico) */
 .side__link[href="#foco"] { --ico: var(--i-target); }
 .side__link[href="#encontros"], .side__link[href="#calendario"] { --ico: var(--i-cal); }
 .side__link[href="#pecas"] { --ico: var(--i-filecheck); }
@@ -2639,4 +2641,56 @@ html.side-abrindo .side__plan .badge { display: none; }
 @media (max-width: 860px) {
   .side { overflow: visible; position: relative; z-index: 20; }
   .switch__q { font-size: 16px; }
+}
+
+/* painel: título da aba com o botão do plano de marca ao lado (Estratégia) */
+.admin-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.admin-head .admin-title { margin-bottom: 0; }
+.admin-main > .admin-head { margin-bottom: -12px; }
+/* portal aberto pelo consultor: só o plano de marca, sem o menu do cliente (o "Voltar ao painel" fica na barra do documento) */
+.ver-consultor .side { display: none !important; }
+.ver-consultor .portal { grid-template-columns: minmax(0, 1fr); }
+.ver-consultor .pmain { margin-left: 8px; }
+
+/* ===== Visão Geral: "Contar como foi" respondido no próprio cartão da missão ===== */
+.missao--cf:hover { transform: none; background: var(--lightblack); border-color: var(--line); }
+.missao__cf { display: flex; flex-wrap: wrap; gap: 6px; }
+.missao__cfb { display: inline-flex; align-items: center; gap: 6px; padding: 7px 11px; border-radius: 9px; background: #262626; color: #e6e6e6; font-size: 13px; font-weight: 600; transition: background-color .15s, color .15s; }
+.missao__cfb:hover, .missao__cfb:focus-visible { background: #f3f3f3; color: #0a0a0a; }
+.missao__cfb:disabled { opacity: .5; }
+.comofoi--hist .comofoi__hist { margin-top: 4px; }
+
+/* ===== Pesquisa: gráficos que aparecem animados ao rolar (main: portal.js, animaTela) ===== */
+.vista-kpis .anel { display: grid; align-content: start; gap: 12px; }
+.anel__g { width: 56px; height: 56px; transform: rotate(-90deg); }
+.anel__fundo { fill: none; stroke: #2a2a2a; stroke-width: 5; }
+.anel__arco { fill: none; stroke: var(--accent, #f3f3f3); stroke-width: 5; stroke-linecap: round; stroke-dasharray: var(--v) 100; }
+.anim .anel__arco { stroke-dasharray: 0 100; transition: stroke-dasharray 1.2s cubic-bezier(.2, .7, .2, 1); }
+.anim.is-in .anel__arco { stroke-dasharray: var(--v) 100; }
+.anel__txt { display: grid; gap: 4px; }
+.stat__delta.is-up { color: var(--ok); } .stat__delta.is-down { color: var(--bad); }
+.anim .hbar__fill, .anim .funnel__track > span { transform: scaleX(0); transform-origin: left center; transition: transform 1s cubic-bezier(.2, .7, .2, 1); }
+.anim.is-in .hbar__fill, .anim.is-in .funnel__track > span { transform: none; }
+.anim.is-in > :nth-child(2) .hbar__fill, .anim.is-in > :nth-child(2) .funnel__track > span { transition-delay: .08s; }
+.anim.is-in > :nth-child(3) .hbar__fill, .anim.is-in > :nth-child(3) .funnel__track > span { transition-delay: .16s; }
+.anim.is-in > :nth-child(4) .hbar__fill, .anim.is-in > :nth-child(4) .funnel__track > span { transition-delay: .24s; }
+.anim.is-in > :nth-child(5) .hbar__fill, .anim.is-in > :nth-child(5) .funnel__track > span { transition-delay: .32s; }
+.anim.is-in > :nth-child(n+6) .hbar__fill, .anim.is-in > :nth-child(n+6) .funnel__track > span { transition-delay: .4s; }
+.anim .chart__traco { stroke-dasharray: 1; stroke-dashoffset: 1; }
+.anim.is-in .chart__traco { animation: traca 1.6s cubic-bezier(.4, 0, .2, 1) forwards; }
+.anim .chart svg circle, .anim .chart svg path[fill^="url"], .anim .chart__end { opacity: 0; }
+.anim.is-in .chart svg circle, .anim.is-in .chart__end { animation: surge .4s ease 1.3s forwards; }
+.anim.is-in .chart svg path[fill^="url"] { animation: surge 1s ease .5s forwards; }
+@keyframes traca { to { stroke-dashoffset: 0; } }
+@keyframes surge { to { opacity: 1; } }
+.evol { display: grid; gap: 10px; margin-top: 18px; }
+@media (prefers-reduced-motion: reduce) {
+  .anim .anel__arco, .anim .hbar__fill, .anim .funnel__track > span { transition: none; }
+  .anim .chart__traco { stroke-dashoffset: 0; animation: none !important; }
+  .anim .chart svg circle, .anim .chart svg path[fill^="url"], .anim .chart__end { opacity: 1; animation: none !important; }
+}
+@media (max-width: 520px) {
+  /* Pesquisa: "Ainda não compram · Todos · Clientes" cabem numa linha, divididos por igual */
+  .grupo .tabs--mini { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-left: 0; width: 100%; }
+  .grupo .tabs--mini .tabs__btn { min-width: 0; padding: 4px 6px; font-size: 11.5px; line-height: 1.25; white-space: normal; text-align: center; justify-content: center; }
 }

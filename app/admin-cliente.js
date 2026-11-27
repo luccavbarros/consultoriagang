@@ -114,6 +114,8 @@
         $('crumb').textContent = $('name').textContent + ' / ' + rotulo;
       }
     });
+    // Estratégia: o mesmo plano de marca que o cliente baixa no portal (abre em outra aba, só leitura)
+    const pm = $('plano-marca'); if (pm) { pm.hidden = name !== 'estrategia'; pm.href = 'cliente.html?marca=' + encodeURIComponent(id) + '#marca-pdf'; }
     $('raiox').classList.toggle('is-off', ['briefing', 'diagnostico', 'estrategia', 'plataforma', 'identidade', 'acessos', 'plano', 'mensagens', 'foco'].includes(name));
     side.classList.remove('is-open'); $('menu-btn').setAttribute('aria-expanded', 'false');
     if (focus) { window.scrollTo(0, 0); $('app').focus({ preventScroll: true }); }
@@ -2528,7 +2530,7 @@
   loadPeds();
 
   // ===== uso do portal (últimos 30 dias): o que o cliente abre de fato =====
-  const TELAS_PORTAL = [['plano', 'Plano (tela inicial)'], ['acoes', 'Ações'], ['resultados', 'Resultados'], ['consultoria', 'Calendário'],
+  const TELAS_PORTAL = [['plano', 'Plano (tela inicial)'], ['acoes', 'Ações'], ['pesquisa', 'Pesquisa'], ['resultados', 'Resultados (antiga)'], ['consultoria', 'Calendário'],
     ['relatorio', 'Relatório do mês'], ['diagnostico', 'Diagnóstico'], ['estrategia', 'Estratégia'], ['plataforma', 'Narrativa'], ['identidade', 'Identidade Visual'], ['inicio', 'Início (só acesso)']];
   const tempo = (s) => (s < 60 ? s + ' s' : s < 3600 ? Math.round(s / 60) + ' min' : (s / 3600).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' h');
   const loadUso = async () => {
@@ -2541,7 +2543,7 @@
       ? [dias.size + (dias.size === 1 ? ' dia' : ' dias') + ' com acesso nos últimos 30 · último em ' + U.dia(ult) + '.', el('br'), 'Telas com zero visitas são candidatas a simplificar.']
       : ['Nenhum acesso registrado nos últimos 30 dias. O registro começa a contar a partir de agora.']));
     const por = (t) => { const x = rows.filter((r) => r.tela === t); return { dias: new Set(x.map((r) => r.dia)).size, vezes: x.reduce((a, r) => a + r.vezes, 0), seg: x.reduce((a, r) => a + r.segundos, 0) }; };
-    const linhas = TELAS_PORTAL.filter(([t]) => t !== 'inicio' || rows.some((r) => r.tela === 'inicio')).map(([t, nome]) => ({ nome, ...por(t) }))
+    const linhas = TELAS_PORTAL.filter(([t]) => !['inicio', 'resultados'].includes(t) || rows.some((r) => r.tela === t)).map(([t, nome]) => ({ nome, ...por(t) }))
       .sort((a, b) => b.vezes - a.vezes || b.seg - a.seg);
     $('uso-tab').replaceChildren(...tabela(['Tela', 'Dias', 'Visitas', 'Tempo'], linhas.map((l) => [
       l.vezes ? l.nome : el('span', 'uso__zero', l.nome), l.dias || '—', l.vezes || '—', l.seg ? tempo(l.seg) : '—'])));
