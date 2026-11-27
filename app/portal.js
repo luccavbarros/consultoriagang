@@ -165,6 +165,9 @@
   const ajustarNaoVistos = () => D.pedidos.filter((p) => p.status === 'ajustar' && !p.visto_pelo_cliente);
   const objetivo = Object.fromEntries(D.objetivos.map((o) => [o.id, o]));
   const NIVEL = { negocio: 'Negócio', marca: 'Marca', comunicacao: 'Comunicação' };
+  // os pilares sempre nesta ordem: Negócio, Comunicação (Marketing nas métricas) e Marca
+  const ORDEM_NIVEL = ['negocio', 'comunicacao', 'marketing', 'marca'];
+  const porNivel = (xs) => [...xs].sort((a, b) => ORDEM_NIVEL.indexOf(a.nivel) - ORDEM_NIVEL.indexOf(b.nivel));
   const TIPO_ENCONTRO = { mensal: 'Revisão mensal', semestral: 'Revisão semestral', anual: 'Revisão anual', entrega: 'Entrega do plano' };
   const STATUS = { a_fazer: 'A fazer', em_andamento: 'Em andamento', feita: 'Feita' };
 
@@ -2131,27 +2134,30 @@
       // cartão de objetivo (como os cartões de indicador do designer): nível com ícone, o objetivo e, no rodapé, como medimos
       const NIV_O = { negocio: ['Negócio', 'grafico', 'negocio'], marca: ['Marca', 'alvo', 'marca'], comunicacao: ['Comunicação', 'balao', 'marketing'] };
       const FREQ_O = { mensal: 'todo mês', semestral: 'a cada 6 meses', anual: 'todo ano' };
-      const card = (o) => {
+      const corpoDe = (o) => (o.nivel === 'comunicacao' && (o.notar || o.acreditar || o.sentir)
+        ? el('dl', 'oc__com', [['Notar', o.notar], ['Acreditar', o.acreditar], ['Sentir', o.sentir]].filter(([, v]) => v)
+          .map(([k, v]) => el('div', null, el('dt', null, k), el('dd', null, v))))
+        : el('div', 'oc__corpo', o.destaque ? el('p', 'oc__num', o.destaque) : null, el('p', o.destaque ? 'oc__sub' : 'oc__t', o.titulo)));
+      // um cartão por pilar: dois objetivos do mesmo pilar entram no mesmo cartão (antes viravam dois "Comunicação")
+      const card = (os) => {
+        const o = os[0];
         const [rot, ico, nivM] = NIV_O[o.nivel] || ['Objetivo', 'alvo', o.nivel];
         const mets = D.metricas.filter((m) => m.nivel === nivM).slice(0, 2);
-        const corpo = o.nivel === 'comunicacao' && (o.notar || o.acreditar || o.sentir)
-          ? el('dl', 'oc__com', [['Notar', o.notar], ['Acreditar', o.acreditar], ['Sentir', o.sentir]].filter(([, v]) => v)
-            .map(([k, v]) => el('div', null, el('dt', null, k), el('dd', null, v))))
-          : el('div', 'oc__corpo', o.destaque ? el('p', 'oc__num', o.destaque) : null, el('p', o.destaque ? 'oc__sub' : 'oc__t', o.titulo));
         return el('article', 'oc',
           el('div', 'oc__head', quad(ico), el('p', 'oc__rot', rot)),
-          corpo,
+          os.length > 1 ? el('div', 'oc__varios', os.map(corpoDe)) : corpoDe(o),
           // sem métrica cadastrada, o rodapé não aparece (um "a definir" em cada cartão parecia coisa inacabada)
           mets.length ? el('div', 'oc__pe', el('span', 'oc__pe-rot', 'Medimos por'),
             mets.map((m) => el('span', 'oc__met', m.nome, el('span', 'oc__freq', ' · ' + (FREQ_O[m.frequencia] || m.frequencia))))) : null);
       };
-      out.push(secN('obj-t', 'Objetivos', D.objetivos.length, 'Toda ação do plano liga a um destes.', el('div', 'ocs', D.objetivos.map(card))));
+      const grupos = []; porNivel(D.objetivos).forEach((o) => { const g = grupos.find((x) => x[0].nivel === o.nivel); if (g) g.push(o); else grupos.push([o]); });
+      out.push(secN('obj-t', 'Objetivos', grupos.length, 'Toda ação do plano liga a um destes.', el('div', 'ocs', grupos.map(card))));
     }
     if (D.metricas.length) {
       const NIV = { negocio: 'Negócio', marketing: 'Marketing', marca: 'Marca' };
       const FREQ = { mensal: 'Todo mês', semestral: 'A cada 6 meses', anual: 'Todo ano' };
       out.push(sec('met-t', 'Como medimos cada objetivo',
-        tabela(['Nível', 'Métrica', 'Medimos', 'Agora'], D.metricas.map((m) => [el('span', 'nivel nivel--' + m.nivel, NIV[m.nivel] || m.nivel), m.nome, FREQ[m.frequencia] || m.frequencia,
+        tabela(['Nível', 'Métrica', 'Medimos', 'Agora'], porNivel(D.metricas).map((m) => [el('span', 'nivel nivel--' + m.nivel, NIV[m.nivel] || m.nivel), m.nome, FREQ[m.frequencia] || m.frequencia,
           m.valor_atual || el('span', 'muted', m.proxima_medicao ? '1ª em ' + U.mesAno(m.proxima_medicao) : '—')]))));
     }
 
@@ -2941,8 +2947,12 @@
       txt(P.posicionamento) ? el('section', 'sl sl--destaque', el('div', 'sl__in', el('p', 'sl__rot', '/ estratégia'),
         el('div', 'sl__corpo', el('h2', 'sl__h', 'Posicionamento'), el('p', 'sl__s sl__dica', 'Para quem a marca é, o que só ela entrega e contra o quê compete.'),
           el('div', 'sl__fim', el('p', 'sl__t sl__t--pos', txt(P.posicionamento)))))) : null,
-      ...sCols('estratégia · objetivos', (D.objetivos || []).map((o) => [NIVO[o.nivel] || 'Objetivo', (o.destaque ? o.destaque + ' ' : '') + txt(o.titulo),
-        o.nivel === 'comunicacao' && (o.notar || o.acreditar || o.sentir) ? ['Notar ' + (o.notar || '—'), 'acreditar ' + (o.acreditar || '—'), 'sentir ' + (o.sentir || '—')].join(' · ') : null]), 4),
+      // um objetivo por pilar, na ordem Negócio, Comunicação e Marca (dois do mesmo pilar ficam na mesma coluna)
+      ...sCols('estratégia · objetivos', (() => {
+        const gs = []; porNivel(D.objetivos || []).forEach((o) => { const g = gs.find((x) => x[0].nivel === o.nivel); if (g) g.push(o); else gs.push([o]); });
+        return gs.map((os) => [NIVO[os[0].nivel] || 'Objetivo', os.map((o) => (o.destaque ? o.destaque + ' ' : '') + txt(o.titulo)).join(' · '),
+          os.filter((o) => o.nivel === 'comunicacao' && (o.notar || o.acreditar || o.sentir)).map((o) => ['Notar ' + (o.notar || '—'), 'acreditar ' + (o.acreditar || '—'), 'sentir ' + (o.sentir || '—')].join(' · ')).join(' / ') || null]);
+      })(), 4),
       esc('prioridade').length || deixa.length ? slide('estratégia · onde jogamos', cab('onde jogamos'), el('div', 'sl__duas',
         el('div', null, el('p', 'sl__l', 'Prioridade'), el('ul', 'sl__lista', esc('prioridade').map((t) => el('li', null, t)))),
         el('div', null, el('p', 'sl__l', 'Deixamos de lado'), el('ul', 'sl__lista', deixa.map((t) => el('li', null, t)))))) : null,
@@ -3026,25 +3036,4 @@
     const r = rota();
     const trocou = r !== telaAtual; telaAtual = r;
     if (trocou) { registraUso(); comecaUso(r); }
-    const y = window.scrollY;
-    $('crumb').textContent = SCREENS[r].crumb;
-    $('screen').replaceChildren(el('div', 'screen screen--' + r + (trocou ? ' screen--entra' : ''), avisoFatura(), SCREENS[r].render()));
-    U.vocDOM($('screen'), VENDE); // quem vende produto lê "produto" onde o sistema diz "serviço"
-    animaTela($('screen'));
-    if (!trocou) window.scrollTo(0, y);
-    document.querySelectorAll('[data-route]').forEach((a) => {
-      if (a.dataset.route === r) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
-    });
-  }
-  const go = (focus) => {
-    render();
-    side.classList.remove('is-open'); $('menu-btn').setAttribute('aria-expanded', 'false');
-    if (focus) { window.scrollTo(0, 0); $('main').focus({ preventScroll: true }); }
-  };
-  window.addEventListener('hashchange', () => go(true));
-  $('menu-btn').addEventListener('click', () => {
-    const open = side.classList.toggle('is-open');
-    $('menu-btn').setAttribute('aria-expanded', String(open));
-  });
-  go(false);
-})();
+    const y
