@@ -834,10 +834,10 @@
   };
 
   // linhas: rótulos no X, séries com valores (null = sem dado)
-  const graficoLinhas = ({ rotulos, series, fmt, label }) => grafico('chart--line', label, (W, tip, box) => {
+  const graficoLinhas = ({ rotulos, series, fmt, label, escala = 1 }) => grafico('chart--line', label, (W, tip, box) => {
     const H = 240; const L = 48; const R = 56; const T = 14; const B = 30;
     const vals = series.flatMap((s) => s.valores.filter((v) => v != null));
-    const tk = ticks(Math.min(0, ...vals), Math.max(1, ...vals));
+    const tk = ticks(Math.min(0, ...vals), Math.max(escala, ...vals)); // escala: o teto do eixo quando ainda não há dados
     const y = (v) => T + (H - T - B) * (1 - (v - tk[0]) / (tk[tk.length - 1] - tk[0]));
     const n = rotulos.length;
     const x = (i) => L + (n === 1 ? (W - L - R) / 2 : ((W - L - R) * i) / (n - 1));
@@ -1023,14 +1023,9 @@
     const busca = mv.find((x) => x.getAttribute('aria-labelledby') === 'busca-t');
     out.push(...mv.filter((x) => x !== busca));
     // sem pesquisa ainda: explica o que vai aparecer e quando, em vez de ficar vazia
-    const semPesq = !D.pesquisas.length ? el('section', { class: 'box', 'aria-labelledby': 'mv-vazio-t' },
-      el('h2', { class: 'box__title', id: 'mv-vazio-t' }, 'Como a marca é vista'),
-      el('p', 'box__text', ['Aparece com a primeira pesquisa com seus clientes:', el('br'), 'quem lembra da marca, em que situações e com que palavras.']),
-      el('p', 'box__note', ['O consultor abre a pesquisa e o convite pronto chega aqui.', el('br'), 'Depois, a cada 6 meses, uma nova rodada mostra a evolução.'])) : null;
     // quadros de conteúdo estreito lado a lado (sem quadro largo com vazio à direita); no celular, um embaixo do outro
     const voz = vozDoCliente();
-    if (semPesq) { out.push(lado(semPesq, voz)); if (busca) out.push(busca); }
-    else out.push(lado(busca, voz));
+    out.push(lado(busca, voz));
     return out;
   };
   // em Ações: onde vai o esforço (marca × ativação), se a marca é fácil de achar e comprar, e o que as ações concluídas ensinaram
@@ -1198,7 +1193,7 @@
     const resp = D.pedidos.filter((p) => p.status !== 'em_analise');
     const comunica = resp.length ? Math.round(resp.filter((p) => p.status === 'aprovado').length / resp.length * 100) : null;
     const ouvem = atual.ment != null ? atual.ment : atual.lemb;
-    const rs = D.respostas.filter((r) => r.pesquisa_id === atual.q.id && r.entende != null);
+    const rs = atual.q ? D.respostas.filter((r) => r.pesquisa_id === atual.q.id && r.entende != null) : [];
     const entendem = rs.length ? Math.round(rs.filter((r) => r.entende).length / rs.length * 100) : null;
     const linhas = [
       ['O que você enxerga', 100, 'Tudo, com absoluta clareza.'],
@@ -1222,6 +1217,38 @@
     const cont = {};
     D.respostas.filter((r) => r.pesquisa_id === q.id && r.palavra).forEach((r) => { const w = r.palavra.trim().toLowerCase(); if (w) cont[w] = (cont[w] || 0) + 1; });
     return Object.entries(cont).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  };
+
+  // sem respostas ainda: os mesmos gráficos da pesquisa, vazios ("—"), para já mostrar o que vai aparecer
+  const SERIES_PESQ = [['Lembram na hora de comprar', C.acc], ['Lembram do nome sozinhos', C.acc === C.ink ? '#9a9a9a' : C.ink], ['Escolheriam vocês hoje', '#5c5c5c']];
+  const pesqVazia = (box, q) => {
+    const tileV = (rot) => {
+      const g = sv('svg', { class: 'anel__g', viewBox: '0 0 44 44', 'aria-hidden': 'true' });
+      g.append(sv('circle', { cx: 22, cy: 22, r: 18, class: 'anel__fundo' }), sv('circle', { cx: 22, cy: 22, r: 18, class: 'anel__arco', pathLength: 100, style: '--v:0' }));
+      return el('div', 'stat anel is-vazio', g, el('div', 'anel__txt', el('p', 'stat__label', rot), el('p', 'stat__value', '—'), el('p', 'stat__delta', 'Aguardando respostas')));
+    };
+    const rot = ['Partida', 'Rodada 2', 'Rodada 3'];
+    box.append(el('div', 'vista-resumo',
+      el('div', 'stats vista-kpis anim', tileV('Das marcas lembradas, quantas são vocês'), tileV('Lembram de vocês na hora de comprar'), tileV('Lembram do nome sozinhos'), tileV('Escolheriam vocês hoje')),
+      el('div', 'evol anim', el('p', 'eyebrow', 'Rodada a rodada'),
+        el('div', 'chart__legend', SERIES_PESQ.map(([nome, cor]) => el('span', null, el('span', { class: 'chart__sq', style: 'background:' + cor }), nome))),
+        graficoLinhas({ rotulos: rot, fmt: (v) => Math.round(v) + '%', escala: 100, label: 'Gráfico rodada a rodada, ainda sem respostas',
+          series: SERIES_PESQ.map(([nome, cor]) => ({ nome, cor, pontos: true, semArea: true, valores: rot.map(() => null) })) }))));
+    // o detalhe: funil e situações de compra com as barras zeradas
+    const sits = (q && q.situacoes && q.situacoes.length ? q.situacoes : D.situacoes || []).slice(0, 6);
+    const af = (q && q.afirmacoes) || [];
+    const colA = el('div', 'vista__col', funilClareza({ q: null, ment: null, lemb: null }));
+    const colB = el('div', 'vista__col');
+    if (sits.length) colB.append(el('p', 'eyebrow', 'Em cada situação de compra: quem lembra da sua marca e do concorrente mais lembrado'),
+      el('div', 'chart__legend', el('span', null, el('span', { class: 'chart__sq', style: 'background:' + C.bar }), 'Sua marca'),
+        el('span', null, el('span', { class: 'chart__sq', style: 'background:#8a8a8a' }), 'Concorrente mais lembrado')),
+      el('div', 'hbars anim', sits.map((x) => el('div', 'hbar hbar--pair', el('p', 'hbar__label', x.texto),
+        el('div', 'hbar__pair', el('div', 'hbar__track', el('span', { class: 'hbar__fill', style: 'width:0%' })), el('div', 'hbar__track', el('span', { class: 'hbar__fill hbar__fill--rival', style: 'width:0%' }))),
+        el('p', 'hbar__value', '—')))));
+    if (af.length) colB.append(el('p', 'eyebrow', 'Quem liga cada frase à marca (%)'),
+      el('div', 'hbars anim', af.map((t) => el('div', 'hbar', el('p', 'hbar__label', t), el('div', 'hbar__track', el('span', { class: 'hbar__fill', style: 'width:0%' })), el('p', 'hbar__value', '—')))));
+    if (!colB.children.length) colB.append(el('p', 'eyebrow', 'Em cada situação de compra'), el('p', 'box__note', 'As situações em que o cliente pensa na categoria entram com a pesquisa, montada pelo consultor.'));
+    box.append(el('details', 'mais', el('summary', null, el('span', null, 'Ver a pesquisa em detalhe'), el('span', 'mais__sub', 'Antes e depois, funil, palavras e situações de compra')), el('div', 'vista', colA, colB)));
   };
 
   // pesquisa de marca + participação nas buscas
@@ -1359,6 +1386,7 @@
         }
       }
       if (atual.n) box.append(mais);
+      else { box.querySelector('.box__text').replaceChildren('Os números aparecem com as primeiras respostas.', el('br'), 'Mande o convite abaixo para os seus clientes.'); pesqVazia(box, atual.q); }
       if (aberta) {
         const url = location.origin + '/pesquisa.html?t=' + aberta.token;
         // mensagem pronta para o cliente mandar aos clientes dele (editável), com o link dentro
@@ -1387,6 +1415,21 @@
           el('details', 'share__edit', el('summary', null, 'Ver e editar a mensagem'), convite, copiaLink)));
       }
       out.push(box);
+    } else {
+      out.push(el('section', { class: 'box', 'aria-labelledby': 'pesq-t' },
+        el('div', 'box__head', el('h2', { class: 'box__title', id: 'pesq-t' }, 'Como a marca é vista'), el('p', 'box__note', 'Primeira rodada em preparo')),
+        el('p', 'box__text', ['Os números aparecem com as primeiras respostas.', el('br'), 'O consultor abre a pesquisa e o convite chega aqui.'])));
+      pesqVazia(out[out.length - 1], null);
+    }
+    if (D.buscas.length < 2) {
+      // ainda sem meses suficientes: o gráfico aparece vazio, com os últimos 6 meses
+      const meses = [5, 4, 3, 2, 1, 0].map((k) => U.addRef(hoje, -k));
+      out.push(el('section', { class: 'box', 'aria-labelledby': 'busca-t' },
+        el('div', 'box__head', el('h2', { class: 'box__title', id: 'busca-t' }, 'Buscas pelo nome da marca'), el('p', 'box__note', 'Google Trends, mês a mês')),
+        el('p', 'box__text', 'De todas as buscas pela categoria e pelas marcas concorrentes, quantas são pela sua marca. Quando sobe, a marca está sendo mais lembrada.'),
+        el('div', 'anim', graficoLinhas({ rotulos: meses.map((m) => U.cap(U.nomeMesCurto(m))), fmt: (v) => Math.round(v) + '%', escala: 15, label: 'Participação da marca nas buscas, ainda sem dados',
+          series: [{ nome: 'Sua marca', valores: meses.map((m) => { const b = D.buscas.find((x) => x.mes_ref === m); return b ? Number(b.marca_pct) : null; }), cor: C.acc, pontos: true, rotuloFim: true }] })),
+        el('p', 'box__note', 'O consultor registra a cada mês.')));
     }
     if (D.buscas.length >= 2) {
       out.push(el('section', { class: 'box', 'aria-labelledby': 'busca-t' },
