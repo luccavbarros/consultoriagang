@@ -3036,4 +3036,25 @@
     const r = rota();
     const trocou = r !== telaAtual; telaAtual = r;
     if (trocou) { registraUso(); comecaUso(r); }
-    const y
+    const y = window.scrollY;
+    $('crumb').textContent = SCREENS[r].crumb;
+    $('screen').replaceChildren(el('div', 'screen screen--' + r + (trocou ? ' screen--entra' : ''), avisoFatura(), SCREENS[r].render()));
+    U.vocDOM($('screen'), VENDE); // quem vende produto lê "produto" onde o sistema diz "serviço"
+    animaTela($('screen'));
+    if (!trocou) window.scrollTo(0, y);
+    document.querySelectorAll('[data-route]').forEach((a) => {
+      if (a.dataset.route === r) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
+  }
+  const go = (focus) => {
+    render();
+    side.classList.remove('is-open'); $('menu-btn').setAttribute('aria-expanded', 'false');
+    if (focus) { window.scrollTo(0, 0); $('main').focus({ preventScroll: true }); }
+  };
+  window.addEventListener('hashchange', () => go(true));
+  $('menu-btn').addEventListener('click', () => {
+    const open = side.classList.toggle('is-open');
+    $('menu-btn').setAttribute('aria-expanded', String(open));
+  });
+  go(false);
+})();
