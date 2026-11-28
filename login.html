@@ -26,14 +26,17 @@
               <div class="app__emp"><span class="ui-logo">lume</span><div><div class="app__emp-n">Clínica Lume</div><div class="app__emp-s">Mês 9 de 18 do plano</div></div></div>
               <div class="app__busca"><span class="ui-ico"></span><span>Buscar na plataforma…</span><kbd>/</kbd></div>
               <div class="app__grupo">Acompanhamento</div>
-              <div class="app__link" data-tela="0 2" style="--ico: var(--i-flag)"><span class="ui-ico"></span><span>Visão Geral</span></div>
-              <div class="app__link" data-tela="3" style="--ico: var(--i-listcheck)"><span class="ui-ico"></span><span>Ações</span><span class="ui-ind">1</span></div>
-              <div class="app__link" data-tela="1 4" style="--ico: var(--i-chart)"><span class="ui-ico"></span><span>Resultados</span></div>
+              <div class="app__link" data-tela="0 1" style="--ico: var(--i-flag)"><span class="ui-ico"></span><span>Visão Geral</span></div>
+              <div class="app__link" data-tela="2" style="--ico: var(--i-listcheck)"><span class="ui-ico"></span><span>Ações</span><span class="ui-ind">1</span></div>
+              <div class="app__link" data-tela="3" style="--ico: var(--i-chart)"><span class="ui-ico"></span><span>Pesquisa</span></div>
               <div class="app__link" style="--ico: var(--i-cal)"><span class="ui-ico"></span><span>Calendário</span></div>
               <div class="app__grupo">Sua marca</div>
-              <div class="app__link"><span class="ui-sk" style="width:16px;height:16px;border-radius:5px"></span><span class="ui-sk" style="max-width:46%"></span></div>
-              <div class="app__link"><span class="ui-sk" style="width:16px;height:16px;border-radius:5px"></span><span class="ui-sk" style="max-width:38%"></span></div>
-              <div class="app__link"><span class="ui-sk" style="width:16px;height:16px;border-radius:5px"></span><span class="ui-sk" style="max-width:54%"></span></div>
+              <div class="app__link" style="--ico: var(--i-search)"><span class="ui-ico"></span><span>Diagnóstico</span></div>
+              <div class="app__link" style="--ico: var(--i-compass)"><span class="ui-ico"></span><span>Estratégia</span></div>
+              <div class="app__link" style="--ico: var(--i-book)"><span class="ui-ico"></span><span>Narrativa</span></div>
+              <div class="app__link" style="--ico: var(--i-palette)"><span class="ui-ico"></span><span>Identidade Visual</span></div>
+              <div class="app__grupo">Conta</div>
+              <div class="app__link" style="--ico: var(--i-person)"><span class="ui-ico"></span><span>Meu plano</span></div>
             </div>
             <div class="app__tela-area">
 
@@ -53,25 +56,7 @@
                 </div>
               </div>
 
-              <!-- 1. resultados: o faturamento contra o esperado -->
-              <div class="tela">
-                <div class="tela__h"><div class="tela__t">Resultados</div><div class="tela__d">O que o plano já devolveu e o que falta para a meta.</div></div>
-                <div style="display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start">
-                  <div class="ui-card ui-graf">
-                    <div class="ui-graf__head"><div><div class="ui-graf__t">Faturamento mês a mês</div><div class="ui-graf__sub">Meta: +30% em 18 meses</div></div><div class="ui-abas"><span class="is-on">Faturamento</span><span>Clientes</span></div></div>
-                    <div class="ui-leg"><span><i></i>Realizado</span><span><i class="trac"></i>Esperado</span></div>
-                    <svg id="graf" viewBox="0 0 470 236" width="470" height="236"></svg>
-                  </div>
-                  <div class="ui-card ui-pagou">
-                    <div class="ui-graf__t">O plano pagou?</div>
-                    <div><span class="ui-chip ui-chip--ok">Pagou</span></div>
-                    <div class="ui-pagou__v">+R$ 19.100</div>
-                    <div class="ui-lbl">por mês, contra o ponto de partida</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 2. plano: a trilha e as estrelas do mês -->
+              <!-- 1. plano: a trilha e as missões do mês -->
               <div class="tela">
                 <div class="tela__h"><div class="tela__t" style="font-size:18px">O caminho até a meta</div></div>
                 <div class="ui-card ui-trilha">
@@ -79,14 +64,13 @@
                   <div class="ui-meses"><span>Mar</span><span>Abr</span><span>Mai</span><span>Jun</span><span>Jul</span><span>Ago</span><span>Set</span><span>Out</span><span>Nov</span><span>Dez</span><span>Jan</span><span>Ago 27</span></div>
                   <div class="ui-estrelas">
                     <div class="ui-lbl">Mês 8 · Outubro</div>
-                    <div class="ui-estrelas__t">4 de 4 estrelas</div>
-                    <div class="ui-estrelas__s">★★★★</div>
+                    <div class="ui-estrelas__t">3 de 3 missões</div>
                     <div class="ui-chips"><span><b>★</b><i class="ui-sk" style="width:70px;height:7px;background:rgba(229,72,42,.35)"></i></span><span><b>★</b><i class="ui-sk" style="width:84px;height:7px;background:rgba(229,72,42,.35)"></i></span><span><b>★</b><i class="ui-sk" style="width:60px;height:7px;background:rgba(229,72,42,.35)"></i></span></div>
                   </div>
                 </div>
               </div>
 
-              <!-- 3. ações: a lista do mês -->
+              <!-- 2. ações: a lista do mês -->
               <div class="tela">
                 <div class="tela__h"><div class="tela__t">Ações</div><div class="tela__d">O que fazer neste mês e o que já ficou pronto.</div></div>
                 <div class="ui-abas2"><span class="is-on">Novembro (5)</span><span>Próximos meses</span><span>Concluídas</span></div>
@@ -96,7 +80,7 @@
                 </div>
               </div>
 
-              <!-- 4. resultados: como a marca é lembrada -->
+              <!-- 3. pesquisa: como a marca é lembrada -->
               <div class="tela">
                 <div class="tela__h"><div class="tela__t">Como a marca é vista</div><div class="tela__d">Pesquisa com clientes e com quem ainda não compra.</div></div>
                 <div class="ui-card ui-vista">
@@ -169,27 +153,7 @@ e a senha que a GANG enviou para você.</p>
   <script>
     // ===== vitrine: as cenas trocam em fade, com um zoom lento; quem prefere menos movimento troca pelos passos =====
     (() => {
-      const LEG = [['A meta do plano'], ['O faturamento contra o esperado'], ['O caminho até a meta'], ['As ações do mês'], ['Como a marca é lembrada']];
-      // gráfico de faturamento (fictício), igual ao da plataforma: realizado contra o esperado, em % sobre o ponto de partida
-      const g = document.getElementById('graf');
-      if (g) {
-        const W = 470, L = 46, R = 420, T = 14, B = 206, max = 30, meta = 30;
-        const real = [0, 1.8, 3.9, 6.2, 8.1, 10.9, 13.2, 16.4, 19.1];
-        const x = (i) => L + (i * (R - L)) / 17; const y = (v) => B - (v / max) * (B - T);
-        const ns = 'http://www.w3.org/2000/svg'; const mk = (t, a, txt) => { const e = document.createElementNS(ns, t); Object.entries(a).forEach(([k, v]) => e.setAttribute(k, v)); if (txt) e.textContent = txt; return e; };
-        [0, 10, 20, 30].forEach((v) => {
-          g.append(mk('line', { x1: L, x2: R, y1: y(v), y2: y(v), stroke: '#2e2e2e', 'stroke-dasharray': v ? '3 4' : '' }));
-          g.append(mk('text', { x: L - 10, y: y(v) + 4, 'text-anchor': 'end' }, v ? '+' + v + '%' : '0%'));
-        });
-        [['Mar 26', 0], ['Jul', 4], ['Nov', 8], ['Mar', 12], ['Ago 27', 17]].forEach(([t, i]) => g.append(mk('text', { x: x(i), y: B + 24, 'text-anchor': 'middle' }, t)));
-        g.append(mk('line', { x1: x(0), y1: y(0), x2: x(17), y2: y(meta), stroke: '#737373', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }));
-        const d = real.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ');
-        g.append(mk('path', { d, fill: 'none', stroke: '#E5482A', 'stroke-width': 2.6, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
-        const n = real.length - 1;
-        g.append(mk('circle', { cx: x(n), cy: y(real[n]), r: 4.5, fill: '#E5482A', stroke: '#1c1c1c', 'stroke-width': 2 }));
-        g.append(mk('text', { x: x(n) + 10, y: y(real[n]) - 8, class: 'fim' }, '+19%'));
-      }
-
+      const LEG = [['A meta do plano'], ['O caminho até a meta'], ['As ações do mês'], ['Como a marca é lembrada']];
       const telas = [...document.querySelectorAll('.tela')];
       const links = [...document.querySelectorAll('.app__link[data-tela]')];
       const passos = document.getElementById('vit-passos');
