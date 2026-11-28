@@ -226,48 +226,31 @@
   gsap.from('.hero__title .line, .hero__sub, .hero__cta, .hero__note', {
     ...HIDDEN, duration: 1.1, ease: 'power3.out', stagger: 0.12, delay: 0.15,
   });
-  // the pictures arrive turning on a large ring around the title, like a wheel, each tilted with the turn; the ring closes in
-  // as it turns (a spiral), so every picture keeps moving until it lands exactly on its place — no stop far away, then a jump.
-  // The tilt only ever shrinks towards upright, so no picture flips over on the way
+  // the pictures come from far behind the screen: small, blurred and see-through, a little nearer the middle (as things
+  // far away sit closer to the vanishing point), and they come forward until they stand sharp on their own places
   const heroImgs = gsap.utils.toArray('.hero__img');
   if (reduceMotion) gsap.from(heroImgs, { autoAlpha: 0, duration: 0.6 });
   else {
     const hb = hero.getBoundingClientRect();
-    const screenH = Math.min(hb.height, window.innerHeight);
     const cx = hb.width / 2;
-    const cy = screenH / 2;
-    // close enough to the middle that the pictures are seen going round the text (on phones, around the narrow screen's width)
-    const R = hb.width < 861 ? hb.width * 0.62 : Math.hypot(hb.width, screenH) * 0.34;
-    const SPIN = 2.4; // how far round each one travels, in radians
-    const TILT = 0.4; // how much of the turn shows as tilt
+    const cy = Math.min(hb.height, window.innerHeight) / 2;
+    const PULL = 0.3; // how much nearer the middle each one starts
     const orbits = heroImgs.map((el) => el.querySelector('.hero__orbit'));
-    const parts = heroImgs.map((el, i) => {
-      const r = el.getBoundingClientRect();
-      const dx = r.left - hb.left + r.width / 2 - cx;
-      const dy = r.top - hb.top + r.height / 2 - cy;
-      return { el: orbits[i], a: Math.atan2(dy, dx), r: Math.hypot(dx, dy), t: 0 };
+    const ida = orbits.map((o, i) => {
+      const r = heroImgs[i].getBoundingClientRect();
+      return { x: (cx - (r.left - hb.left + r.width / 2)) * PULL, y: (cy - (r.top - hb.top + r.height / 2)) * PULL };
     });
-    const draw = (p) => {
-      const left = 1 - p.t;
-      const a = p.a - SPIN * left;
-      const r = p.r + (R - p.r) * left;
-      gsap.set(p.el, {
-        x: r * Math.cos(a) - p.r * Math.cos(p.a),
-        y: r * Math.sin(a) - p.r * Math.sin(p.a),
-        rotation: (-SPIN * left * 180 / Math.PI) * TILT,
-      });
-    };
-    parts.forEach(draw);
-    const intro = gsap.timeline({ delay: 0.2, onComplete: () => gsap.set(orbits, { clearProps: 'transform' }) })
-      .fromTo(heroImgs, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.6, stagger: 0.06 }, 0);
-    parts.forEach((p, i) => intro.to(p, { t: 1, duration: 2.8, ease: 'power3.out', onUpdate: () => draw(p) }, i * 0.06));
+    const longe = (i) => ({ x: ida[i].x, y: ida[i].y, scale: 0.3, filter: 'blur(14px)' });
+    orbits.forEach((o, i) => gsap.set(o, longe(i)));
+    const intro = gsap.timeline({ delay: 0.2, onComplete: () => gsap.set(orbits, { clearProps: 'transform,filter' }) })
+      .fromTo(heroImgs, { autoAlpha: 0 }, { autoAlpha: 1, duration: 1.4, ease: 'power1.out', stagger: 0.12 }, 0);
+    orbits.forEach((o, i) => intro.fromTo(o, longe(i), { x: 0, y: 0, scale: 1, filter: 'blur(0px)', duration: 2.4, ease: 'power3.out' }, i * 0.12));
     // it plays in front of the visitor: on arrival, and again each time they come back up to the hero (once it is
     // well on screen). Leaving before it ends finishes it at once; a page opened further down starts with it done
-    // when the hero is out of sight the pictures go back to the start of the ring, hidden, so on the way back up nothing
+    // when the hero is out of sight the pictures go back far behind, hidden, so on the way back up nothing
     // shows until the arrival plays
     if (window.scrollY > hb.height * 0.5) intro.pause(0);
-    // replays only once the hero is almost whole again: earlier, the pictures turning low on the ring would pass behind
-    // the next section and show cut off at its edge
+    // replays only once the hero is almost whole again
     ScrollTrigger.create({ trigger: hero, start: 'top top', end: 'bottom 92%', onEnterBack: () => intro.restart() });
     ScrollTrigger.create({ trigger: hero, start: 'top top', end: 'bottom top', onLeave: () => intro.pause(0) });
   }

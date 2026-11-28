@@ -249,7 +249,7 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
   .hero__img { width: clamp(62px, min(7.55vw, 10vh), 109px); }
   .hero__img:nth-child(1) { --x: 27% !important; }
 }
-.hero__orbit { width: 100%; height: 100%; } /* carries the arrival on the ring (main.js), apart from the floating and the parallax */
+.hero__orbit { width: 100%; height: 100%; } /* carries the arrival from far behind (main.js), apart from the floating and the parallax */
 .hero__float { width: 100%; height: 100%; will-change: transform; }
 .hero__float img { width: 100%; height: 100%; object-fit: cover; border-radius: 4.4px; }
 
@@ -1838,6 +1838,6 @@ img[src$="logo.svg"] { width: 100px; max-width: 100%; height: auto; aspect-ratio
     })();
   </script>
   <script src="i18n.js?v=14" defer></script> <!-- English version: runs before main.js -->
-  <script src="main.min.js?v=174" defer></script> <!-- built from main.js by tools/minify.py; bump ?v= when it changes, so no browser keeps an old copy -->
+  <script src="main.min.js?v=175" defer></script> <!-- built from main.js by tools/minify.py; bump ?v= when it changes, so no browser keeps an old copy -->
 </body>
 </html>
