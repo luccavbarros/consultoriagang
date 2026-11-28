@@ -103,7 +103,11 @@
 
       const { data: P, error } = await sb.rpc('pesquisa_publica', { p_token: token });
       if (error || !P) return fim('Pesquisa encerrada', 'Esta pesquisa não está mais recebendo respostas. Obrigado!');
-      document.title = 'Pesquisa rápida · ' + P.marca;
+      document.title = 'Pesquisa rápida' + (P.categoria ? ' · ' + P.categoria : ''); // sem o nome da marca: ele só aparece no fim
+      // ordem das marcas sorteada para cada pessoa (e a mesma em todas as perguntas): nenhuma marca ganha por vir primeiro
+      const mix = [...(P.opcoes || [])];
+      for (let i = mix.length - 1; i > 0; i -= 1) { const j = Math.floor(Math.random() * (i + 1)); [mix[i], mix[j]] = [mix[j], mix[i]]; }
+      P.opcoes = mix;
 
       const radio = (name, v, t) => el('label', 'opt', el('input', { type: 'radio', name, value: v }), el('span', null, t));
       let nq = 0;
