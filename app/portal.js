@@ -1386,14 +1386,16 @@
         }
       }
       if (atual.n) box.append(mais);
-      else { box.querySelector('.box__text').replaceChildren('Os números aparecem com as primeiras respostas.', el('br'), 'Mande o convite abaixo para os seus clientes.'); pesqVazia(box, atual.q); }
+      else { box.querySelector('.box__text').replaceChildren('Os números aparecem com as primeiras respostas.', el('br'), 'Mande o convite para clientes e para quem ainda não comprou.'); pesqVazia(box, atual.q); }
       if (aberta) {
         const url = location.origin + '/pesquisa.html?t=' + aberta.token;
         // mensagem pronta para o cliente mandar aos clientes dele (editável), com o link dentro
         const nomeMarca = D.empresa ? D.empresa.nome : 'nossa empresa';
         const convite = el('textarea', { class: 'field share__msg', id: 'convite', rows: 5, 'aria-label': 'Mensagem de convite para a pesquisa' });
-        convite.value = 'Oi! Aqui é da ' + nomeMarca + '. Estamos ouvindo nossos clientes para melhorar cada vez mais o nosso trabalho, e a sua opinião é muito importante para nós. '
-          + 'Você pode responder uma pesquisa rápida? Leva 2 minutos e é anônima:\n\n' + url + '\n\nMuito obrigado!';
+        // a mensagem não pede ajuda à marca nem diz o nome dela: quem quer agradar quem mandou responde a marca, e não o que pensa
+        const sobre = (aberta.categoria || '').trim();
+        convite.value = 'Oi! Estamos fazendo uma pesquisa rápida' + (sobre ? ' sobre ' + sobre : '') + ', com perguntas sobre várias marcas. '
+          + 'Não existe resposta certa: vale a sua opinião sincera. Leva 2 minutos e é anônima:\n\n' + url + '\n\nMuito obrigado!';
         const texto = () => convite.value.trim();
         const copia = el('button', { class: 'btn btn--light btn--sm', type: 'button', onclick: async () => {
           try { await navigator.clipboard.writeText(texto()); copia.textContent = 'Copiada ✓'; clearTimeout(copia._t); copia._t = setTimeout(() => { copia.textContent = 'Copiar mensagem'; }, 2000); } catch (e) { convite.select(); }
@@ -1402,7 +1404,7 @@
         const mail = el('a', { class: 'btn btn--ghost btn--sm', href: '#' }, 'Enviar por e-mail');
         const atualiza = () => {
           wa.href = 'https://wa.me/?text=' + encodeURIComponent(texto());
-          mail.href = 'mailto:?subject=' + encodeURIComponent('Pode nos ajudar com 2 minutos? · ' + nomeMarca) + '&body=' + encodeURIComponent(texto());
+          mail.href = 'mailto:?subject=' + encodeURIComponent('Pesquisa rápida' + (sobre ? ' sobre ' + sobre : '') + ' · 2 minutos') + '&body=' + encodeURIComponent(texto());
         };
         convite.addEventListener('input', atualiza); atualiza();
         const copiaLink = el('button', { class: 'link', type: 'button', onclick: async () => {
@@ -1410,7 +1412,7 @@
         } }, 'Copiar só o link');
         box.append(el('div', { class: 'share', id: 'convidar', tabindex: '-1' },
           el('div', 'share__head', el('div', null, el('p', 'share__t', 'Convide mais pessoas'),
-            el('p', 'box__note', 'Quanto mais respostas, mais confiável (o ideal é passar de 30). Vale mandar também para quem ainda não comprou.')),
+            el('p', 'box__note', ['O ideal é passar de 30 respostas.', el('br'), 'Mande também para quem ainda não comprou.'])),
             el('div', 'share__btns', copia, wa, mail, el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => abreQR(url, nomeMarca) }, 'QR code'))),
           el('details', 'share__edit', el('summary', null, 'Ver e editar a mensagem'), convite, copiaLink)));
       }
