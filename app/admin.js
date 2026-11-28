@@ -192,7 +192,8 @@
     const P = window.GangPresets || {}; const lib = new Set((P.acoes || []).map((x) => x.texto));
     const por = {};
     lista.forEach((a) => {
-      const h = por[a.titulo] || (por[a.titulo] = { t: a.titulo, n: 0, vencidas: 0, feitas: 0, noPrazo: 0, travadas: 0, motivos: {}, adiantadas: 0, aval: 0, pts: 0, marca: a.esforco === 'marca', clientes: new Set() });
+      const tit = (((window.GangPresets || {}).renomeadas || {})[a.titulo]) || a.titulo; // nome antigo conta para a ação nova
+      const h = por[tit] || (por[tit] = { t: tit, n: 0, vencidas: 0, feitas: 0, noPrazo: 0, travadas: 0, motivos: {}, adiantadas: 0, aval: 0, pts: 0, marca: a.esforco === 'marca', clientes: new Set() });
       h.n += 1; h.clientes.add(a.empresa_id);
       if (a.mes_previsto < hojeRef) h.vencidas += 1;
       if (a.status === 'feita') { h.feitas += 1; if (!a.prazo || (a.concluida_em && a.concluida_em <= a.prazo)) h.noPrazo += 1; }

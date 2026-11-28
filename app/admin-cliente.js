@@ -9,6 +9,11 @@
 
   // listas de respostas prontas (app/presets.js) no lugar dos campos abertos
   const P = window.GangPresets || {};
+  // nome atual da ação: planos antigos guardam o nome de antes (o cérebro mantém a lista das trocas)
+  const NA = (t) => (((window.GangPresets || {}).renomeadas || {})[t] || t);
+  // o planejador reconhece o tipo da ação pelo título; ação renomeada continua sendo lida pelo nome de antes, para o plano não mudar
+  const NO = (t) => (((window.GangPresets || {}).nomesDeAntes || {})[t] || t);
+  const peloNomeDeAntes = (...res) => res.forEach((re) => { re.test = (t) => RegExp.prototype.test.call(re, NO(t)); });
   document.querySelectorAll('[data-combo]').forEach((m) => {
     const idc = m.dataset.id;
     const onPick = {
@@ -527,7 +532,7 @@
 
   // ===== a ação da biblioteca já entra com passos, tamanho, quando medir e mensagem pronta =====
   const detalheDe = (titulo) => {
-    const x = ((window.GangPresets || {}).acoes || []).find((a) => a.texto === titulo);
+    const x = ((window.GangPresets || {}).acoes || []).find((a) => a.texto === NA(titulo));
     // sempre as mesmas colunas: numa gravação em lote, a coluna que falta numa linha vira vazio (e passos não aceita vazio)
     if (!x) return { passos: [], tamanho: null, ler_em_dias: null, modelo: null, tipo: null };
     return { passos: (x.passos || []).map((t) => ({ t, ok: false })), tamanho: x.tam || null, ler_em_dias: x.ler || null, modelo: x.modelo || null, tipo: x.tipo || null };
@@ -551,7 +556,7 @@
     // cada ação guarda o total e o resultado por setor (uma ação pode funcionar no varejo e não em serviços)
     (data || []).filter((a) => a.esforco !== 'marca').forEach((a) => {
       const v = a.resultado === 'sim' ? 1 : a.resultado === 'parcial' ? 0.5 : 0;
-      const h = historico[a.titulo] || (historico[a.titulo] = { n: 0, pts: 0, setor: {} });
+      const h = historico[NA(a.titulo)] || (historico[NA(a.titulo)] = { n: 0, pts: 0, setor: {} });
       h.n += 1; h.pts += v;
       const st = setorDe[a.empresa_id];
       if (st) { const x = h.setor[st] || (h.setor[st] = { n: 0, pts: 0 }); x.n += 1; x.pts += v; }
@@ -560,7 +565,7 @@
   };
   // a evidência que vale para este cliente: a do setor dele, se já tiver 5 casos; senão, a de todos
   const evid = (titulo) => {
-    const h = historico && historico[titulo]; if (!h) return null;
+    const h = historico && historico[NA(titulo)]; if (!h) return null;
     const st = emp.setor && h.setor && h.setor[U.setorBase(emp.setor)];
     if (st && st.n >= 5) return { n: st.n, pts: st.pts, doSetor: true };
     return h.n >= 5 ? { n: h.n, pts: h.pts, doSetor: false } : null; // com menos de 5 casos é sorte, não evidência
@@ -595,7 +600,7 @@
     ordem.forEach((x) => { acum += pts(x); const i = Math.min(sextas.length - 1, Math.max(0, Math.ceil((acum / total) * sextas.length) - 1)); out[x.texto] = sextas[i]; });
     return out;
   };
-  const prazosEscolhidos = (mes) => distribuiPrazos(mes, [...escolhidas.entries()].map(([t, ess]) => ({ ...((window.GangPresets.acoes || []).find((a) => a.texto === t) || { texto: t }), essencial: ess ? 1 : 0 })));
+  const prazosEscolhidos = (mes) => distribuiPrazos(mes, [...escolhidas.entries()].map(([t, ess]) => ({ ...((window.GangPresets.acoes || []).find((a) => a.texto === NA(t)) || { texto: t }), essencial: ess ? 1 : 0 })));
 
   // ===== planejar o mês: veredito (o que passou) → foco (o mês) → ações sugeridas para o foco =====
   const MF = (window.GangPresets && window.GangPresets.modelosFoco) || {};
@@ -674,7 +679,7 @@
     const { data } = await sb.from('acoes').select('titulo, mes_previsto, status, peso, tamanho').eq('empresa_id', id);
     const todas = data || []; await carregaHistorico();
     const temEss = todas.some((a) => a.mes_previsto === mes && a.peso === 'essencial');
-    const lib = (t) => (window.GangPresets.acoes || []).find((x) => x.texto === t) || { texto: t };
+    const lib = (t) => (window.GangPresets.acoes || []).find((x) => x.texto === NA(t)) || { texto: t };
     [...escolhidas.keys()].forEach((t) => { if (!m.acoes.includes(t)) escolhidas.delete(t); });
     const sug = prazosEscolhidos(mes);
     const itens = m.acoes.map(lib).sort((a, b) => (doSetor(b) - doSetor(a)) || (taxaDe(b.texto) - taxaDe(a.texto))).map((x) => {
@@ -764,7 +769,7 @@
     // as ações marcadas entram no plano do mês, com o que a biblioteca já sabe sobre elas
     const prazos = prazosEscolhidos(mes);
     const novas = [...escolhidas.entries()].map(([t, essencial]) => {
-      const x = (window.GangPresets.acoes || []).find((a) => a.texto === t) || {};
+      const x = (window.GangPresets.acoes || []).find((a) => a.texto === NA(t)) || {};
       return { ...detalheDe(t), empresa_id: id, titulo: t, mes_previsto: mes, esforco: x.esforco || null, metrica_sucesso: x.metrica || null, porque: x.porque || null, promessa: x.promessa || null,
         peso: essencial ? 'essencial' : 'ajuda', prazo: prazos[t] || null, responsavel: 'cliente', status: 'a_fazer', atualizada_por: me.id, atualizada_em: new Date().toISOString() };
     });
@@ -881,7 +886,7 @@
     };
     // renomeou uma ação da biblioteca: guarda o título original, para o motor continuar reconhecendo a ação
     if (antiga && row.titulo !== antiga.titulo) {
-      const naLib = (t) => (window.GangPresets.acoes || []).some((x) => x.texto === t);
+      const naLib = (t) => (window.GangPresets.acoes || []).some((x) => x.texto === NA(t));
       const orig = antiga.titulo_base || (naLib(antiga.titulo) ? antiga.titulo : null);
       row.titulo_base = orig && orig !== row.titulo ? orig : null;
     }
@@ -956,9 +961,9 @@
       const noPlano = new Set(B.acoes.map((a) => a.titulo_base || a.titulo));
       const proxMes = U.addRef(U.ref(), 1);
       E.causasSemAcao.forEach((c) => {
-        const t = [...acoesDaCausa(c.texto)].find((x) => !noPlano.has(x) && (P.acoes || []).some((y) => y.texto === x));
+        const t = [...acoesDaCausa(c.texto)].find((x) => !noPlano.has(x) && (P.acoes || []).some((y) => y.texto === NA(x)));
         if (!t) return;
-        const x = (P.acoes || []).find((y) => y.texto === t);
+        const x = (P.acoes || []).find((y) => y.texto === NA(t));
         resolver.push(el('div', 'equil__sug', el('p', 'small', 'Para “' + c.texto + '”: ' + t),
           el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: async (ev) => {
             ev.currentTarget.disabled = true;
@@ -1189,9 +1194,10 @@
   const BASE = /^(Lançar a pesquisa de partida|Escrever|Reescrever o modelo|Reescrever o site|Reescrever os textos|Definir|Escolher a especialidade|Escolher a palavra|Combinar|Listar as|Refazer a tabela|Revisar o caminho|Montar a proposta|Montar e ensaiar|Trocar propostas|Cobrar|Padronizar|Treinar a equipe na|Aplicar a identidade|Trocar a fachada|Atualizar redes|Fazer uma oficina|Dar um nome|Dar nome|Completar a proposta|Criar uma garantia|Criar uma versão premium|Organizar os serviços|Cortar um item|Calcular com o cliente|Explicar o tratamento|Deixar o preço|Publicar o método|Mandar o guia de tom|Responder todas as avaliações)/;
   const PROVA = /(estudo de caso|caso curto|depoimentos|avaliação)/i; // prova vem depois da base, mesmo quando começa por "Escrever"
   const OTIMIZA = /(auditoria|clube de clientes|conselho com|grupo de clientes|marcos da relação|data própria|programa próprio|uma vez por ano)/i;
+  peloNomeDeAntes(RECORRENTE, BASE, PROVA, OTIMIZA);
   const faseDe = (t) => {
-    const x = (P.acoes || []).find((a) => a.texto === t) || {};
-    if (OTIMIZA.test(t) || (x.tema === 'medicao' && /^(Testar|Comparar|Revisar a cada|Acompanhar)/.test(t))) return 3;
+    const x = (P.acoes || []).find((a) => a.texto === NA(t)) || {};
+    if (OTIMIZA.test(t) || (x.tema === 'medicao' && /^(Testar|Comparar|Revisar a cada|Acompanhar)/.test(NO(t)))) return 3;
     if (PROVA.test(t)) return 2;
     if (BASE.test(t) || (x.tema === 'posicionamento' && !RECORRENTE.test(t))) return 1;
     return 2;
@@ -1226,9 +1232,9 @@
     const MEDE = /^(Revisão|Segunda rodada da pesquisa|Pesquisa de marca de)/;
     const doModelo = m.acoes.map(([mes, peso, promessa, esforco, titulo, porque, metrica]) => ({ mes: U.addRef(ini, opt.marcosReais && dur < 18 && MEDE.test(titulo) ? mes - 1 : Math.round((mes - 1) * (dur - 1) / 17)), peso, titulo,
       // o texto vem da biblioteca atual (porquê, métrica, promessa, esforço revisados), e não da cópia antiga guardada no modelo do setor
-      ...(((l) => ({ promessa: l.promessa || promessa, esforco: l.esforco || esforco, porque: l.porque || porque, metrica: l.metrica || metrica }))((P.acoes || []).find((y) => y.texto === titulo) || {})) }))
+      ...(((l) => ({ promessa: l.promessa || promessa, esforco: l.esforco || esforco, porque: l.porque || porque, metrica: l.metrica || metrica }))((P.acoes || []).find((y) => y.texto === NA(titulo)) || {})) }))
       .filter((x) => !(opt.marcosReais && dur < 18 && MEDE.test(x.titulo) && (nRef(x.mes) > nRef(fim) || (/^Revisão/.test(x.titulo) && x.mes === fim))))
-      .filter((x) => doSetor((P.acoes || []).find((y) => y.texto === x.titulo) || {})); // o esqueleto também respeita o setor do modelo
+      .filter((x) => doSetor((P.acoes || []).find((y) => y.texto === NA(x.titulo)) || {})); // o esqueleto também respeita o setor do modelo
     const ja = (t) => foraDaEstrategia.has(t) || acoes.some((a) => a.titulo === t) || novas.some((x) => x.titulo === t);
     const novas = [];
     // carga do mês em pontos (P=1, M=2, G=4): 7 pontos ou 5 ações. Um mês de ações rápidas recebe mais; um mês com uma ação grande, menos
@@ -1254,7 +1260,7 @@
     let semEspaco = 0; // ações que ficaram de fora porque o plano não tem espaço (plano curto ou refeito no fim)
     const vaga = (desde0, t) => { const desde = Math.min(Math.max(desde0, desdeHist(t)), meses.length - 1); return vagaDe(desde, t); };
     const vagaDe = (desde, t) => meses.slice(desde).find((mm) => carga(mm) + (t ? ptsT(t) : 2) <= LIM && cabeN(mm, t)) || meses.slice(desde).reduce((a, b) => (carga(b) < carga(a) ? b : a), meses[Math.min(desde, meses.length - 1)]);
-    const libDe = (t) => (P.acoes || []).find((a) => a.texto === t) || { texto: t };
+    const libDe = (t) => (P.acoes || []).find((a) => a.texto === NA(t)) || { texto: t };
     const daLib = (t, peso) => { const x = libDe(t); return { peso, promessa: x.promessa || null, esforco: x.esforco || null, titulo: t, porque: x.porque || null, metrica: x.metrica || null }; };
     const marco = (t) => /^(Revisão|Chegada|Lançar a pesquisa de partida|Segunda rodada da pesquisa|Pesquisa de marca de)/.test(t);
     // janelas das fases nos meses que faltam: a base nos primeiros ~20%, presença e prova a partir de ~15%, otimização da metade em diante
@@ -1364,6 +1370,7 @@
     const CEP = /situaç/i;
     const PROVA_P = /(depoimentos|estudo de caso|caso curto|avaliação no Google|prova social|resultados reais|antes e depois|provas de credibilidade)/i;
     const ATIVOS = /(ativos da marca|ativos mais fortes|inventário dos ativos|Testar os ativos|bordão ou personagem|vinheta|nova identidade|Padronizar WhatsApp)/i; // o piso de ativos (2) também não sai no acerto do equilíbrio
+    peloNomeDeAntes(ALC, CEP, PROVA_P, ATIVOS);
     const noPlano = (re) => acoes.concat(novas.map((y) => ({ titulo: y.titulo }))).filter((y) => re.test(y.titulo)).length;
     [[ALC, 2], [CEP, 1]].forEach(([re, min]) => {
       const cand = (P.acoes || []).filter((y) => re.test(y.texto) && !ja(y.texto) && doSetor(y) && !y.manutencao && faseDe(y.texto) !== 3).sort((a, b) => ptsT(a.texto) - ptsT(b.texto));
@@ -1504,7 +1511,7 @@
       const w1Abs = Math.max(3, Math.round(dur / 3));
       // estratégia definida (ou trocada) com o plano andando: a base dela pode começar quando ela é definida, nos 3 meses seguintes
       const baseDaNova = (y) => estrNova && y.executa && nRef(y.mes) - nRef(de) <= 2;
-      const tarde = todos.filter((y) => (P.acoes || []).some((a) => a.texto === y.titulo) && faseDe(y.titulo) === 1 && nRef(y.mes) - nRef(ini) >= w1Abs + 1 && !baseDaNova(y)).length;
+      const tarde = todos.filter((y) => (P.acoes || []).some((a) => a.texto === NA(y.titulo)) && faseDe(y.titulo) === 1 && nRef(y.mes) - nRef(ini) >= w1Abs + 1 && !baseDaNova(y)).length;
       if (tarde) f.push(['base', tarde + (tarde === 1 ? ' ação de base fica' : ' ações de base ficam') + ' depois do ' + (w1Abs + 1) + 'º mês']);
       if (ab) { const ne = acoes.filter((a) => a.executa || (ab.acoes || []).includes(a.titulo)).length + novas.filter((x) => x.executa).length; if (ne < 4) f.push(['estrategia', 'só ' + ne + (ne === 1 ? ' ação executa' : ' ações executam') + ' a estratégia (o mínimo é 4)']); }
       const passa = meses.filter((mm) => carga(mm) > LIM || nMes(mm) > LIM_N).length;
@@ -1768,6 +1775,7 @@
     const RE = { alcance: /(alcance amplo|para quem não está comprando|fatia de voz|aparecer mais que os concorrentes|anúncios no ar todos os meses|para alcance|Nova campanha de alcance)/i,
       ativos: /(ativos da marca|ativos mais fortes|inventário dos ativos|Testar os ativos|bordão ou personagem|vinheta|nova identidade|Padronizar WhatsApp)/i,
       situacao: /situaç/i, prova: /(depoimentos|estudo de caso|caso curto|avaliação no Google|prova social|resultados reais|antes e depois|provas de credibilidade)/i };
+    peloNomeDeAntes(...Object.values(RE));
     const MIN = { alcance: 2, ativos: 2, situacao: 1, prova: 1 };
     const tipoDe = (t, esf) => { const x = libDe(t); if (x.tipo) return x.tipo; if (MARCO.test(t)) return 'base'; return (x.esforco || esf) === 'marca' ? 'marca' : 'ativacao'; };
     const pts = (t, tam) => ({ P: 1, M: 2, G: 4 }[libDe(t).tam || tam] || 2);
@@ -1981,7 +1989,7 @@
     ligaAcoes(novas, await dadosLigacao()); // cada ação nova já sai ligada à causa que ataca e ao objetivo que serve
     const prz = {};
     [...new Set(novas.map((x) => x.mes))].forEach((mm) => {
-      const doM = novas.filter((x) => x.mes === mm).map((x) => ({ ...((P.acoes || []).find((a) => a.texto === x.titulo) || { texto: x.titulo }), essencial: x.peso === 'essencial' ? 1 : 0 }));
+      const doM = novas.filter((x) => x.mes === mm).map((x) => ({ ...((P.acoes || []).find((a) => a.texto === NA(x.titulo)) || { texto: x.titulo }), essencial: x.peso === 'essencial' ? 1 : 0 }));
       Object.assign(prz, Object.fromEntries(Object.entries(distribuiPrazos(mm, doM)).map(([t, d]) => [mm + '|' + t, d])));
     });
     const r = await sb.from('acoes').insert(novas.map((x) => ({ ...detalheDe(x.titulo), prazo: prz[x.mes + '|' + x.titulo] || null, empresa_id: id, titulo: x.titulo, mes_previsto: x.mes, peso: x.peso, promessa: x.promessa, esforco: x.esforco,
@@ -2664,15 +2672,4 @@
     ev.preventDefault();
     const body = { action: 'create', name: $('a-name').value.trim(), company: emp.nome, email: $('a-email').value.trim(), password: $('a-pass').value, empresa_id: id };
     if (!body.name || !body.email) return say($('a-msg'), 'Preencha nome e e-mail.', 'error');
-    if (body.password.length < 8) return say($('a-msg'), 'A senha precisa ter pelo menos 8 caracteres.', 'error');
-    const submit = card.querySelector('[type=submit]');
-    submit.disabled = true; say($('a-msg'), 'Criando…');
-    try {
-      await adminApi(body);
-      say($('a-msg'), 'Acesso criado. Envie para o cliente: ' + body.email + ' / ' + body.password, 'ok');
-      $('a-name').value = ''; $('a-email').value = ''; $('a-pass').value = randomPass();
-      await loadAcc();
-    } catch (err) { say($('a-msg'), err.message, 'error'); }
-    submit.disabled = false;
-  });
-})();
+    if (body.password.length < 8) return say($('a-msg'), 'A senha precisa ter pelo menos 8 caracteres.

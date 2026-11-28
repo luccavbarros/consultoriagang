@@ -492,6 +492,54 @@
     return out;
   };
 
+  // ===== prompt para a IA do cliente: ações criativas (escrever, criar, montar, gravar…) ganham um prompt pronto para copiar.
+  // O prompt leva a estratégia entregue (mensagem, tom, o que nunca diz, ativos, situações de compra): a IA trabalha dentro da marca,
+  // e não devolve um texto genérico, igual ao dos concorrentes.
+  const IA_SIM = /^(Escrever|Reescrever|Criar|Produzir|Gravar|Montar|Planejar|Publicar|Preparar|Desenhar|Adaptar|Fazer uma campanha|Fazer a apresentação|Fazer uma peça|Contar \d|Contar a história|Transformar|Mandar|Oferecer|Anunciar|Dar uma palestra|Fotografar)/;
+  const IA_NAO = /^(Montar um gráfico|Contar (os|quantos))/;
+  const temIA = (a) => !!a && IA_SIM.test(a.titulo || '') && !IA_NAO.test(a.titulo || '');
+  const PECA_IA = /campanha|anúncio|post|peça|conteúdo|vídeo|site|página|apresentação|catálogo|Publicar|Gravar|Fotografar/i; // o que o público vê
+  const entregaIA = (t) => (/conversa|negociação|atendimento|reunião|respostas/i.test(t) ? 'o roteiro escrito: abertura, perguntas, apresentação e respostas para as objeções mais comuns'
+    : /^(Gravar|Fotografar)|vídeo|filmar/i.test(t) ? 'o roteiro pronto, cena a cena, com as falas (até 60 segundos), e uma lista do que fotografar ou filmar'
+    : /^(Montar o calendário|Planejar)|calendário/i.test(t) ? 'o plano em uma tabela (quando, o quê, onde e com qual mensagem)'
+      : /proposta|apresentação|tabela de preços|catálogo|página|site/i.test(t) ? 'a estrutura completa, seção por seção, já com os textos escritos'
+        : /campanha|anúncio|peça|post|conteúdo/i.test(t) ? '3 versões diferentes da peça (título, texto e chamada), e qual você recomenda e por quê'
+          : /^(Mandar|Oferecer|Anunciar)|mensagem|e-mail|WhatsApp/i.test(t) ? 'a mensagem pronta para enviar, em 2 versões (uma curta e uma completa)'
+            : 'um rascunho completo, pronto para usar');
+  const promptIA = (a) => {
+    const L = []; const add = (...x) => L.push(...x);
+    const lista = (arr) => arr.filter(Boolean).map((x) => '- ' + x);
+    const P0 = D.plataforma || {}; const emp = D.empresa || {};
+    const cat = ((D.pesquisas || []).slice(-1)[0] || {}).categoria;
+    add('Você vai me ajudar a fazer uma tarefa de marca. Use o contexto da marca abaixo à risca: ele foi definido na estratégia e não deve ser mudado.', '');
+    add('TAREFA', a.titulo);
+    if (a.porque) add('Por que fazer: ' + a.porque);
+    const ps = (Array.isArray(a.passos) ? a.passos : []).map((x) => x.t).filter(Boolean);
+    if (ps.length) add('Passos:', ...ps.map((x, i) => (i + 1) + '. ' + x));
+    if (a.metrica_sucesso) add('Sucesso se: ' + a.metrica_sucesso);
+    add('', 'A MARCA', 'Empresa: ' + (emp.nome || '[nome da empresa]') + (cat ? ' (' + cat + ')' : ''));
+    if (P0.posicionamento) add('Posicionamento: ' + P0.posicionamento);
+    if (P0.mensagem_central) add('Mensagem central (a ideia que a marca repete): ' + P0.mensagem_central);
+    const apoio = (D.mensagens_apoio || []).map((x) => x.texto); if (apoio.length) add('Provas e mensagens de apoio:', ...lista(apoio));
+    const ic = (D.identidade_central || []).map((x) => x.texto + (x.explicacao ? ': ' + x.explicacao : '')); if (ic.length) add('O que não muda na marca:', ...lista(ic));
+    const tom = (D.tom_atributos || []).map((x) => x.nome + (x.descricao ? ': ' + x.descricao : '')); if (tom.length) add('Tom de voz:', ...lista(tom));
+    const diz = (D.tom_exemplos || []).filter((x) => x.tipo === 'diz').map((x) => '“' + x.texto + '”'); if (diz.length) add('A marca fala assim:', ...lista(diz));
+    const nunca = (D.tom_exemplos || []).filter((x) => x.tipo === 'nunca_diz').map((x) => '“' + x.texto + '”'); if (nunca.length) add('A marca nunca diz:', ...lista(nunca));
+    const F = D.facetas || {}; if (F.cliente_projetado) add('Para quem a marca fala: ' + F.cliente_projetado);
+    if (F.personalidade) add('Personalidade: ' + F.personalidade);
+    const sit = (D.situacoes || []).map((x) => x.texto); if (sit.length) add('Momentos em que o cliente pensa na categoria:', ...lista(sit));
+    const atv = (D.ativos || []).map((x) => (x.tipo === 'cor' ? 'cor ' + x.nome + (x.texto ? ' (' + x.texto + ')' : '') : x.nome + (x.texto && x.tipo !== 'cor' ? ': “' + x.texto + '”' : '')));
+    if (atv.length) add('Sinais da marca, para usar sempre e do mesmo jeito:', ...lista(atv));
+    const fora = (D.escolhas || []).filter((x) => x.tipo === 'deixa_de_lado').map((x) => x.texto); if (fora.length) add('O que a marca decidiu não fazer:', ...lista(fora));
+    add('', 'REGRAS',
+      '- Use a mensagem central e o tom de voz acima. Não troque por outra ideia.',
+      ...(PECA_IA.test(a.titulo) ? ['- Mostre a marca e os sinais dela logo no começo, não só no final.', '- Fale com quem compra a categoria, inclusive quem ainda não é cliente.'] : []),
+      '- Não invente números, prêmios, depoimentos ou garantias. Deixe [entre colchetes] o que eu preciso completar.',
+      '- Linguagem simples e frases curtas, em português do Brasil.');
+    add('', 'ENTREGA', 'Me entregue ' + entregaIA(a.titulo) + '. No fim, faça até 3 perguntas sobre o que faltou para ficar melhor.');
+    return L.join('\n');
+  };
+
   // ===== cada ação é uma tarefa de checklist: marcar, mudar o status e abrir os detalhes =====
   const abertas = new Set();
   // "Novo": ação que o consultor colocou depois da montagem inicial do plano, até o cliente abrir
@@ -613,6 +661,15 @@
     } }, 'Copiar mensagem') : null;
     const modelo = a.modelo ? el('div', 'modelo', el('div', 'modelo__head', el('p', 'passos__t', 'Mensagem pronta'), copiaModelo),
       el('p', 'modelo__txt', a.modelo), el('p', 'box__note', 'Troque o que está entre colchetes antes de enviar.')) : null;
+    const ia = temIA(a) && editavel && a.status !== 'feita' ? (() => {
+      const bt = el('button', { class: 'btn btn--light btn--sm', type: 'button', onclick: async (e) => {
+        e.stopPropagation(); const b = e.currentTarget;
+        try { await navigator.clipboard.writeText(promptIA(a)); b.textContent = 'Prompt copiado ✓'; clearTimeout(b._t); b._t = setTimeout(() => { b.textContent = 'Copiar prompt'; }, 2500); }
+        catch (err) { U.avisa('Copie o prompt:', promptIA(a)); }
+      } }, 'Copiar prompt');
+      return el('div', 'modelo ia', el('div', 'modelo__head', el('p', 'passos__t', 'Fazer com a sua IA'), bt),
+        el('p', 'box__note', ['Cole na IA que você usa. O prompt já leva a mensagem,', el('br'), 'o tom de voz e os sinais da sua marca.']));
+    })() : null;
     const ajuda = editavel && a.status !== 'feita' ? (() => {
       const txt = el('textarea', { class: 'field', rows: 2, maxlength: 2000, placeholder: 'Qual é a dúvida sobre esta ação?', 'aria-label': 'Dúvida sobre ' + a.titulo });
       const caixa = el('div', { class: 'duvida__form', hidden: true }, txt,
@@ -627,12 +684,12 @@
           el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: (e) => { e.stopPropagation(); caixa.hidden = false; txt.focus(); e.currentTarget.remove(); } }, 'Levar para o encontro')),
         caixa);
     })() : null;
-    const temDetalhe = porque.length || a.observacao || a.status === 'feita' || ps.length || a.modelo;
+    const temDetalhe = porque.length || a.observacao || a.status === 'feita' || ps.length || a.modelo || ia;
     // primeiro a intenção (objetivo, por que funciona, sucesso), depois o como (passos e mensagem pronta)
     const corpo = temDetalhe && aberta ? el('div', 'task__body',
       porque.length ? el('dl', { class: 'why', 'aria-label': 'Por que esta ação' }, porque.map(([k, v, tag]) => el('div', 'why__item',
         el('dt', null, k, tag ? el('span', 'why__tag', tag) : null), el('dd', null, v)))) : null,
-      passos, modelo,
+      passos, modelo, ia,
       a.observacao ? el('div', 'action__obs', D.consultor ? avatar(D.consultor) : null,
         el('div', null, el('p', 'action__obs-lbl', 'Observação ' + (D.consultor && D.consultor.nome ? 'de ' + D.consultor.nome.split(' ')[0] : 'do consultor')), el('p', 'action__obs-txt', a.observacao))) : null,
       a.status === 'feita' ? blocoResultado(a) : null, ajuda) : null;
