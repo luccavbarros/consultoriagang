@@ -7524,3 +7524,255 @@
     if (m && !P.resumoDesafios.some(([ini]) => nova.startsWith(ini))) P.resumoDesafios.push([nova, m[1]]);
   });
 })();
+
+// ===== Rodada 59: ação é tarefa, não conselho =====
+// Ações escritas como regra ("Antes de…", "Quando…", "Para marcas premium…") viram tarefas com verbo e entrega.
+// As que eram só um cuidado entram como passo da ação certa; as repetidas se juntam. Nenhum conhecimento sai: muda de lugar.
+// O nome antigo fica em P.renomeadas, para os planos já criados e as avaliações antigas continuarem ligados à ação nova.
+// Os marcos da GANG (revisões, rodadas da pesquisa, chegada) mantêm o nome: o painel os reconhece pelo começo do título.
+(() => {
+  const P = window.GangPresets;
+  const R = {
+ "Antes de aprovar o plano ou a campanha, pedir a alguém que defenda o contrário": "Escrever o briefing de cada campanha em uma página: o que a pessoa deve pensar, sentir e fazer",
+ "Antes de cada reunião com cliente, escrever 3 hipóteses sobre o problema dele e testá-las com perguntas": "Montar a ficha de preparo de reunião: 3 hipóteses sobre o problema do cliente, cada uma virando uma pergunta",
+ "Antes de cortar custo no produto ou serviço, testar com clientes e não aprovar se a avaliação cair, mesmo pouco": "Testar com 10 clientes a versão mais barata e só aprovar o corte de custo se a nota não cair",
+ "Antes de criar um serviço novo, abrir uma lista de espera e ver quantos se inscrevem": "Abrir uma lista de espera para o serviço novo e contar os inscritos em 30 dias",
+ "Antes de decidir algo grande, listar o que falta saber e medir só o que pode mudar a decisão": "Listar o que falta saber para a próxima decisão grande e medir só o que pode mudar a escolha",
+ "Antes de falar de uma causa ou propósito, conferir se a empresa já pratica o que vai dizer": "Produzir uma peça emocional de marca (história, causa ou cliente real)",
+ "Antes de fixar o preço de um serviço novo, vender de verdade a poucos clientes (pré-venda ou reserva com sinal) em vez de só perguntar quanto pagariam": "Vender o serviço novo em pré-venda a 5 clientes, com sinal, antes de fixar o preço",
+ "Antes de lançar algo com o nome da marca, conferir se combina com o que a marca representa": "Perguntar a 10 clientes se esperariam o serviço novo da marca e quais serviços acham que ela já oferece",
+ "Antes de lançar um serviço novo com o nome da marca, perguntar a clientes se esperariam isso dela e quais serviços acham que ela já oferece": "Perguntar a 10 clientes se esperariam o serviço novo da marca e quais serviços acham que ela já oferece",
+ "Antes de lançar um serviço novo, perguntar a 10 clientes se pagariam, quanto e de que forma": "Vender o serviço novo em pré-venda a 5 clientes, com sinal, antes de fixar o preço",
+ "Antes de lançar um serviço ou produto novo, combinar por escrito quantas vendas ele precisa ter em 3 a 6 meses para continuar": "Escrever a meta de vendas em 3 a 6 meses que o serviço ou produto novo precisa bater para continuar",
+ "Antes de montar um serviço ou oferta nova, anunciar que está chegando com uma lista de interesse e contar quantos se inscrevem": "Abrir uma lista de espera para o serviço novo e contar os inscritos em 30 dias",
+ "Antes de pôr mais verba num anúncio, testar outra peça ou mensagem; se a peça não mostrar efeito nas primeiras semanas, trocá-la em vez de aumentar a verba": "Fazer uma campanha de alcance amplo para quem ainda não é cliente, com a maior parte da verba",
+ "Apresentação comercial e catálogo novos": "Fazer a apresentação comercial e o catálogo novos, com a identidade e a mensagem central",
+ "Depois de uma campanha para um público novo, conferir se o perfil de quem passou a comprar mudou na direção planejada": "Comparar o perfil de quem passou a comprar com o público planejado na campanha",
+ "Em cada campanha por e-mail ou WhatsApp, contar quantos se descadastram ou bloqueiam e descontar essa perda do resultado": "Contar os descadastros e bloqueios de cada campanha por e-mail ou WhatsApp e descontar essa perda do resultado",
+ "Em planos de uso contínuo (aulas, academia, tratamento ou assinatura), cobrar por mês em vez de cobrar o ano adiantado": "Trocar a cobrança anual adiantada por mensalidade nos planos de uso contínuo (aulas, academia, tratamento ou assinatura)",
+ "Em planos e pacotes pagos de uma vez, lembrar o cliente de usar e marcar os próximos usos ao longo de todo o período": "Marcar, na hora da compra, os próximos usos do pacote e mandar lembretes ao longo do período",
+ "Em época de crise no setor, manter a presença da marca e juntar a mensagem de marca com uma condição de preço ou pagamento": "Montar a campanha de crise: manter a presença e juntar a mensagem de marca a uma condição de preço ou pagamento",
+ "Entre a compra e o atendimento, mandar ao cliente o que vai acontecer, com fotos ou vídeo, para ele aproveitar a espera": "Gravar o vídeo ou as fotos de \"o que vai acontecer\" e mandar a todo cliente entre a compra e o atendimento",
+ "Na negociação, perguntar o motivo por trás de cada pedido do cliente antes de responder": "Escrever o roteiro de negociação com a pergunta \"por que isso é importante para você?\" e treinar a equipe",
+ "Na pesquisa de satisfação, sortear quem responde e contar a parte de notas máximas, não só a média": "Refazer a pesquisa de satisfação: sortear quem responde e contar a parte de notas máximas, não só a média",
+ "Na tabela de preços, pôr ao lado do pacote que a marca quer vender uma opção parecida e claramente menos vantajosa": "Montar a tabela de preços com uma opção parecida e claramente menos vantajosa ao lado do pacote principal",
+ "No espaço físico, escolher aroma e música que combinem entre si e com o que a marca vende (os dois calmos ou os dois animados)": "Escolher aroma e música para o espaço que combinem entre si e com o que a marca vende (os dois calmos ou os dois animados)",
+ "Nos anúncios em vídeo ou animados, mostrar o nome e o símbolo da marca junto com a imagem principal desde o primeiro quadro, e não só no final": "Reeditar os vídeos e anúncios para a marca aparecer nos 3 primeiros segundos",
+ "Para chegar a um serviço bem diferente do atual, ir por etapas: primeiro um serviço vizinho, depois o mais distante, sempre com o mesmo nome": "Escolher o serviço vizinho que vem antes do mais distante e planejar a entrada por etapas, sempre com o mesmo nome",
+ "Para compras pensadas com antecedência, manter duas frentes: comunicação de marca com emoção para quem ainda não está procurando e material completo, com detalhes e preço, para quem está procurando agora": "Montar as duas frentes da compra pensada: uma peça de marca com emoção para quem ainda não procura e um material completo, com detalhes e preço, para quem procura agora",
+ "Para marcas premium: tirar o desconto público e reservar condições só para clientes antigos": "Tirar o desconto público e criar condições só para clientes antigos (marcas premium)",
+ "Para quem usa mas não paga (a criança, quem ganha o presente, o paciente), criar uma atividade ou um espaço próprio, e dar a quem paga as informações de que ele precisa para decidir": "Criar uma atividade ou espaço para quem usa mas não paga (a criança, quem ganha o presente, o paciente) e um material de decisão para quem paga",
+ "Para quem vende só on-line: testar um ponto físico temporário (loja provisória, espaço dentro de outra loja ou evento) para os clientes verem e provarem": "Testar um ponto físico temporário (loja provisória, espaço dentro de outra loja ou evento) para os clientes verem e provarem",
+ "Quando anunciar mais em alguns bairros, cidades ou lojas do que em outros, comparar as vendas desses lugares com as dos demais": "Comparar as vendas dos bairros, cidades ou lojas com mais anúncio com as dos demais",
+ "Quando faltar um número para decidir, medir primeiro em 5 casos sorteados antes de esperar uma pesquisa grande": "Medir o número que falta em 5 casos sorteados antes de encomendar uma pesquisa grande",
+ "Quando não der para dividir os clientes em dois grupos, ligar e desligar a ação em semanas alternadas, várias vezes, e comparar os períodos": "Ligar e desligar a ação em semanas alternadas, várias vezes, e comparar os períodos",
+ "Quando precisar aumentar o preço, cortar primeiro descontos e condições especiais, e só depois mexer no preço de tabela": "Cortar descontos e condições especiais antes de mexer no preço de tabela",
+ "Uma vez por ano, escrever as 10 coisas mais importantes que a empresa consegue fazer e começar pela primeira": "Escrever as 10 coisas mais importantes que a empresa consegue fazer e começar pela primeira",
+ "Uma vez por ano, fazer o check da marca: sinais de envelhecimento e desvios da estratégia": "Fazer o check anual da marca: anotar os sinais de envelhecimento e os desvios da estratégia"
+};
+  const CUIDADOS = {
+ "Escrever o briefing de cada campanha em uma página: o que a pessoa deve pensar, sentir e fazer": [
+  "Antes de aprovar, pedir a alguém que defenda o contrário"
+ ],
+ "Produzir uma peça emocional de marca (história, causa ou cliente real)": [
+  "Se falar de causa ou propósito, conferir antes se a empresa já pratica o que vai dizer"
+ ],
+ "Fazer uma campanha de alcance amplo para quem ainda não é cliente, com a maior parte da verba": [
+  "Se a peça não mostrar efeito em 3 semanas, trocar a peça antes de pôr mais verba"
+ ],
+ "Manter anúncios no ar todos os meses, com menos verba por mês, em vez de picos com meses parados": [
+  "Se a peça não mostrar efeito em 3 semanas, trocar a peça antes de pôr mais verba"
+ ],
+ "Reeditar os vídeos e anúncios para a marca aparecer nos 3 primeiros segundos": [
+  "Mostrar o nome e o símbolo junto com a imagem principal desde o primeiro quadro"
+ ],
+ "Perguntar a 10 clientes se esperariam o serviço novo da marca e quais serviços acham que ela já oferece": [
+  "Conferir se o serviço novo combina com o que a marca representa"
+ ],
+ "Trocar a fachada / ambiente para a nova identidade": [
+  "Manter os sinais que o cliente já reconhece (cor, símbolo, frase)"
+ ],
+ "Renovar o visual, os formatos e as campanhas sem mexer na identidade central nem nos sinais próprios": [
+  "Manter os sinais que o cliente já reconhece (cor, símbolo, frase)"
+ ],
+ "Atualizar redes sociais com a nova identidade": [
+  "Manter os sinais que o cliente já reconhece (cor, símbolo, frase)"
+ ]
+};
+  const PRINCIPAL = {
+    'Vender o serviço novo em pré-venda a 5 clientes, com sinal, antes de fixar o preço': 'Antes de fixar o preço de um serviço novo, vender de verdade a poucos clientes (pré-venda ou reserva com sinal) em vez de só perguntar quanto pagariam',
+    'Abrir uma lista de espera para o serviço novo e contar os inscritos em 30 dias': 'Antes de criar um serviço novo, abrir uma lista de espera e ver quantos se inscrevem',
+    'Perguntar a 10 clientes se esperariam o serviço novo da marca e quais serviços acham que ela já oferece': 'Antes de lançar um serviço novo com o nome da marca, perguntar a clientes se esperariam isso dela e quais serviços acham que ela já oferece',
+  };
+  // renomeia ações em todo o cérebro (usada também pelas rodadas seguintes)
+  P.renomearAcoes = (R, PRINCIPAL = {}) => {
+    // o planejador classifica as ações pelo título (base, prova, alcance…); o nome de antes fica guardado para a classificação não mudar
+    const existentes = new Set((P.acoes || []).map((x) => x.texto));
+    P.nomesDeAntes = P.nomesDeAntes || {};
+    Object.entries(R).forEach(([velha, nova]) => { if (!existentes.has(nova) && !P.nomesDeAntes[nova]) P.nomesDeAntes[nova] = P.nomesDeAntes[velha] || velha; });
+    P.nomeDeAntes = (t) => P.nomesDeAntes[t] || t;
+    P.renomeadas = P.renomeadas || {};
+    Object.keys(P.renomeadas).forEach((k) => { if (R[P.renomeadas[k]]) P.renomeadas[k] = R[P.renomeadas[k]]; }); // nomes de rodadas antigas apontam para o nome de agora
+    Object.assign(P.renomeadas, R);
+    P.nomeAtual = (t) => P.renomeadas[t] || t;
+    // troca os nomes em tudo (listas de ações, modelos por setor, abordagens) e tira as repetições que a junção criou
+    const vistos = new WeakSet();
+    const troca = (v) => {
+      if (!v || typeof v !== 'object' || vistos.has(v)) return v;
+      vistos.add(v);
+      if (Array.isArray(v)) {
+        let mudou = false;
+        for (let i = 0; i < v.length; i += 1) {
+          if (typeof v[i] === 'string') { if (R[v[i]]) { v[i] = R[v[i]]; mudou = true; } }
+          else if (v[i] && typeof v[i] === 'object') { if (typeof v[i].texto === 'string' && R[v[i].texto]) { v[i]._antes = v[i].texto; v[i].texto = R[v[i].texto]; mudou = true; } troca(v[i]); }
+        }
+        if (!mudou) return v; // só mexe na ordem das listas onde algum nome mudou
+        // sem repetições: strings iguais, ou ações com o mesmo texto (fica a original, não a renomeada)
+        const fica = []; const pos = new Map();
+        v.forEach((x) => {
+          const k = typeof x === 'string' ? 's:' + x : x && typeof x === 'object' && !Array.isArray(x) && typeof x.texto === 'string' ? 't:' + x.texto : null;
+          if (k == null || !pos.has(k)) { if (k != null) pos.set(k, fica.length); fica.push(x); return; }
+          const atual = fica[pos.get(k)];
+          // fica a ação original; se as duas foram renomeadas, fica a que tem a evidência mais forte (PRINCIPAL)
+          if (k[0] === 't' && atual._antes && (!x._antes || (PRINCIPAL[x.texto] === x._antes && PRINCIPAL[x.texto] !== atual._antes))) fica[pos.get(k)] = x;
+        });
+        if (fica.length !== v.length) v.splice(0, v.length, ...fica);
+        v.forEach((x) => { if (x && typeof x === 'object') delete x._antes; });
+      } else Object.keys(v).forEach((k) => {
+        if (k === 'detalhes' || k === 'renomeadas' || k === 'aposentadas' || k === 'nomesDeAntes') return; // aposentadas guarda os títulos que saíram: não muda
+        if (k === 'antes' && typeof v[k] === 'string') { if (R[v[k]]) v[k] = R[v[k]]; return; } // o que vem antes desta ação
+        troca(v[k]);
+      });
+      return v;
+    };
+    troca(P);
+    // detalhes: a chave é o texto da ação
+    const D = P.detalhes || (P.detalhes = {});
+    Object.keys(R).forEach((velha) => { if (D[velha]) { if (!D[R[velha]]) D[R[velha]] = D[velha]; delete D[velha]; } });
+    // "o que vem antes" de cada ação aponta para o nome novo
+    Object.values(D).forEach((d) => {
+      if (!d || typeof d !== 'object') return;
+      if (typeof d.antes === 'string' && R[d.antes]) d.antes = R[d.antes];
+      else if (Array.isArray(d.antes)) d.antes = [...new Set(d.antes.map((x) => R[x] || x))];
+    });
+  };
+  P.renomearAcoes(R, PRINCIPAL);
+  const D = P.detalhes || (P.detalhes = {});
+  // o cuidado vira passo da ação certa (nos detalhes ou na própria ação, onde os passos estiverem)
+  Object.keys(CUIDADOS).forEach((t) => {
+    // os passos que valem são os da ação (os detalhes só entram nela no começo do arquivo)
+    const acao = (P.acoes || []).find((a) => a.texto === t);
+    const alvos = [acao && Array.isArray(acao.passos) ? acao.passos : null, D[t] && Array.isArray(D[t].passos) ? D[t].passos : null].filter(Boolean);
+    alvos.forEach((alvo) => CUIDADOS[t].forEach((p) => { if (!alvo.includes(p)) alvo.push(p); }));
+  });
+})();
+
+// ===== Rodada 60: passo a passo das ações que ainda não tinham =====
+// Toda ação da biblioteca passa a ter passos: o último passo diz quando a ação está pronta.
+(() => {
+  const P = window.GangPresets; const D = P.detalhes || (P.detalhes = {});
+  const NOVOS = {
+ "Criar um programa próprio e recorrente que dê energia à marca (prêmio local, série de conteúdo ou encontro anual), sempre com o mesmo nome": {
+  "tam": "G",
+  "ler": 180,
+  "passos": [
+   "Escolher o formato: prêmio local, série de conteúdo ou encontro",
+   "Dar um nome fixo ao programa, ligado à marca",
+   "Marcar a data da primeira edição e a frequência",
+   "Fazer a primeira edição com a marca visível em tudo",
+   "Contar menções e participantes e marcar a próxima"
+  ]
+ },
+ "Revisar a cada semestre o que mudou na categoria: novos concorrentes, novos canais e novas exigências dos clientes": {
+  "tam": "P",
+  "ler": 180,
+  "passos": [
+   "Listar os concorrentes novos e os que sumiram",
+   "Anotar os canais em que os clientes passaram a comprar",
+   "Perguntar a 5 clientes o que passaram a exigir",
+   "Escrever as 3 mudanças que mais afetam a marca",
+   "Levar as mudanças para o plano do próximo semestre"
+  ]
+ },
+ "Escolher os sinais de qualidade que o cliente enxerga (pontualidade, acabamento, limpeza, resposta rápida) e padronizar esses primeiro": {
+  "tam": "M",
+  "ler": 60,
+  "passos": [
+   "Listar o que o cliente vê em cada contato",
+   "Escolher os 3 sinais que mais pesam na impressão de qualidade",
+   "Escrever o padrão de cada um (prazo, aparência, tempo de resposta)",
+   "Treinar a equipe nesses 3 padrões",
+   "Conferir 5 atendimentos reais contra o padrão"
+  ]
+ },
+ "Contar a história de alguém da equipe que mostre, na prática, como a empresa trabalha": {
+  "tam": "M",
+  "ler": 45,
+  "passos": [
+   "Escolher uma pessoa da equipe e um caso real do trabalho dela",
+   "Entrevistar a pessoa: o problema, o cuidado e o resultado",
+   "Escrever ou gravar a história em até 1 minuto",
+   "Publicar com a marca visível",
+   "Enviar a história em 3 conversas de venda"
+  ]
+ },
+ "Criar um clube de clientes com nome, encontros e pequenos benefícios para quem já compra": {
+  "tam": "G",
+  "ler": 120,
+  "passos": [
+   "Definir quem entra no clube e o nome dele",
+   "Escolher 2 benefícios pequenos, sem desconto no preço",
+   "Marcar o primeiro encontro",
+   "Convidar os clientes que já compram",
+   "Anotar quantas indicações vieram do clube e quanto custou"
+  ]
+ },
+ "Escrever o roteiro da conversa de venda com a mesma promessa, as mesmas provas e os mesmos limites da comunicação": {
+  "tam": "M",
+  "ler": 45,
+  "passos": [
+   "Copiar a promessa, as provas e os limites que a comunicação usa",
+   "Escrever a abertura, as perguntas e a apresentação com eles",
+   "Listar as respostas para as 5 objeções mais comuns",
+   "Testar o roteiro em 3 conversas reais",
+   "Ajustar e entregar a toda a equipe de vendas"
+  ]
+ },
+ "Escrever o padrão de atendimento: quem responde, como responde e em quanto tempo, do primeiro contato ao pós-venda": {
+  "tam": "M",
+  "ler": 45,
+  "passos": [
+   "Desenhar as etapas: primeiro contato, orçamento, entrega e pós-venda",
+   "Definir quem responde em cada etapa e em quanto tempo",
+   "Escrever as mensagens-modelo de cada etapa no tom da marca",
+   "Treinar a equipe no padrão",
+   "Conferir 5 atendimentos reais contra o padrão"
+  ]
+ },
+ "Montar o acompanhamento depois da compra, com um contato marcado e a oferta do próximo passo": {
+  "tam": "M",
+  "ler": 90,
+  "passos": [
+   "Definir quando fazer o contato depois da entrega",
+   "Escrever a mensagem do contato, no tom da marca",
+   "Escolher o próximo passo a oferecer (revisão, recompra ou serviço vizinho)",
+   "Agendar o contato de todos os clientes do mês",
+   "Contar quantos voltaram a comprar"
+  ]
+ },
+ "Transformar cada entrega concluída em um caso curto: o problema, o que foi feito e o resultado em número": {
+  "tam": "P",
+  "ler": 60,
+  "passos": [
+   "Montar um modelo de caso: problema, o que foi feito e resultado",
+   "Pedir autorização ao cliente",
+   "Preencher o modelo com a entrega do mês",
+   "Publicar e guardar na pasta de casos",
+   "Usar o caso na próxima proposta"
+  ]
+ },
+ "Deixar o preço de partida e o próximo passo visíveis em todos os canais da marca": {
+  "tam": "P",
+  "ler": 30,
+  "passos": [
+   "Definir o preço de partida (\"a partir de\") e o pró
