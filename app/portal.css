@@ -1026,7 +1026,7 @@ a.kpi:hover { background: var(--lightblack); }
 @media (min-width: 861px) { .trail-box.is-rola { padding-top: 64px; } }
 
 /* a trilha e o checkpoint escolhido viram um bloco só: a setinha aponta para a bolinha clicada */
-.trail-box { border-radius: 16px 16px 0 0; }
+.trail-box { border-radius: 16px; }
 .trail-box + .cp { position: relative; margin-top: -40px; padding: 30px 32px 32px; border: 1px solid var(--line); border-top: 0; border-radius: 0 0 16px 16px; scroll-margin-top: 24px; }
 .trail-box + .cp::before { content: ""; position: absolute; top: 0; left: var(--seta, 50%); transform: translateX(-50%); border: 11px solid transparent; border-top-color: var(--lightblack); transition: left .25s ease; }
 .trail-box + .cp.sem-seta::before { display: none; }
@@ -1241,3 +1241,9 @@ a.kpi:hover { background: var(--lightblack); }
 /* painel do consultor: coluna mais estreita, para as informações não se espalharem pela tela */
 .admin-main > * { max-width: 1120px; }
 .admin-main .small, .admin-main .lib summary .small, .admin-main .row__text { max-width: 72ch; }
+
+/* caminho e missões do mês numa caixa só: a trilha em cima, as missões do mês logo abaixo */
+.caminho-unido { border-radius: 16px; background: var(--lightblack); overflow: hidden; }
+.caminho-unido .trail-box { border-radius: 0; background: transparent; }
+.caminho-unido .missoes { margin: 0; padding: 22px 28px 28px; border-top: 1px solid var(--line); }
+@media (max-width: 640px) { .caminho-unido .missoes { padding: 20px 16px 22px; } }

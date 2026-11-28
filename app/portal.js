@@ -2733,11 +2733,10 @@
     const bm = bannerMensagem(); if (bm) out.push(bm);
     if (!inicioRef) return out.concat(vazio('A trilha aparece assim que o consultor cadastrar o plano.'));
 
-    // as missões do mês (os números entram como uma missão, sem aviso à parte)
-    out.push(missoes());
+    // as missões do mês ficam dentro do caminho (mais abaixo); aqui só guardo o lugar delas
+    const iTopo = out.length;
     // o que o consultor diz do mês e como foram os meses (antes ficavam em Resultados)
     const vd = veredito(); if (vd) out.push(vd);
-    const cfH = blocoComoFoi(true); if (cfH) out.push(cfH);
 
     // os primeiros meses: o que acontece agora e quando os resultados começam a aparecer
     // some no 3º mês ou antes, assim que os passos estiverem cumpridos (o 1º, conhecer a marca, já vem cumprido)
@@ -2781,22 +2780,18 @@
       return { r, acs, alvo, feitas, fase, st, essenciais: acs.some((a) => a.peso === 'essencial') };
     };
     const ests = meses.map(estado);
-    // as estrelas do mês: o que o cliente faz para o mês ficar completo
-    // só acende o que foi feito de verdade: sem tarefa, sem encontro ou sem ação para avaliar, a estrela fica apagada
+    // o mês no caminho é o mês das missões: as ações do cliente, "Contar como foi" e o encontro
     const agoraISO = new Date().toISOString();
-    const estrelas = (e) => [
-      ['Essenciais feitas', !e.alvo.length ? 'Nada previsto para o mês' : 'Fazer as ' + (e.essenciais ? 'essenciais' : 'ações') + ' do mês (' + e.feitas + ' de ' + e.alvo.length + ' feitas)', e.fase !== 'futuro' && e.alvo.length > 0 && e.feitas === e.alvo.length],
-      e.r === inicioRef ? ['Contou como foi o mês', 'Começo do plano: nada a contar ainda', e.fase !== 'futuro'] : ['Contou como foi o mês', 'Dizer se ' + U.nomeMes(U.addRef(e.r, -1)) + ' foi melhor, igual ou pior', !!comoFoi(U.addRef(e.r, -1))],
-      (() => { const enc = D.encontros.filter((x) => x.inicio.slice(0, 7) === e.r);
-        return enc.length ? ['Presença no encontro', 'Participar do encontro do mês', enc.some((x) => x.status === 'realizado' || (x.status === 'agendado' && x.inicio < agoraISO))]
-          : ['Presença no encontro', 'Sem encontro marcado neste mês', false]; })(),
-      (() => { const fe = e.acs.filter((a) => a.status === 'feita' && a.responsavel !== 'gang');
-        return ['Ações avaliadas', fe.length ? 'Responder a pergunta de cada ação feita' : 'Nenhuma ação feita para avaliar', e.fase !== 'futuro' && fe.length > 0 && fe.every((a) => a.resultado)]; })(),
-      // a 5ª estrela ainda vai ser definida: por enquanto, o mês completo tem 4
-    ];
-    const TOT = 4; // quantas estrelas fecham o mês
-    const nEstrelas = (e) => estrelas(e).filter((x) => x[2]).length;
-    const cincoEstrelas = ests.filter((e) => e.fase !== 'futuro' && nEstrelas(e) === TOT).length;
+    const missoesDe = (r) => {
+      const acs = D.acoes.filter((a) => comCliente(a) && (a.mes_previsto === r || (r === hoje && a.status !== 'feita' && a.mes_previsto < hoje)));
+      let total = acs.length; let feitas = acs.filter((a) => a.status === 'feita').length;
+      if (U.addRef(r, -1) >= inicioRef) { total += 1; if (comoFoi(U.addRef(r, -1))) feitas += 1; }
+      const enc = D.encontros.filter((x) => x.inicio.slice(0, 7) === r).sort((x, y) => (x.inicio < y.inicio ? -1 : 1))[0];
+      if (enc) { total += 1; if (enc.status === 'realizado' || new Date(enc.inicio).getTime() < agoraMs) feitas += 1; }
+      return { feitas, total };
+    };
+    const completo = (r) => { const m = missoesDe(r); return m.total > 0 && m.feitas === m.total; };
+    const completos = ests.filter((e) => e.fase !== 'futuro' && completo(e.r)).length;
     if (!caminhoSel || !meses.includes(caminhoSel)) caminhoSel = meses.includes(hoje) ? hoje : meses[0];
 
     // as ações do cliente pendentes no mês (o "o que fazer agora" fica na tela Ações)
@@ -2812,11 +2807,11 @@
       const marco = MARCOS[n] || (ultimo ? 'Chegada' : null);
       const rotulo = U.cap(U.nomeMesCurto(e.r)) + (e.r.slice(5) === '01' || i === 0 ? ' ' + e.r.slice(2, 4) : '');
       // um só sistema: as estrelas do mês. 5 = mês completo; menos que isso mostra quantas
-      const k = e.fase === 'futuro' ? null : nEstrelas(e);
-      const cls = e.fase === 'futuro' ? 'futuro' : k === TOT ? 'conquistado' : e.fase === 'agora' ? 'agora' : k ? 'parcial' : 'pendente';
+      const mm = missoesDe(e.r); const k = e.fase === 'futuro' ? null : mm.feitas;
+      const cls = e.fase === 'futuro' ? 'futuro' : completo(e.r) ? 'conquistado' : e.fase === 'agora' ? 'agora' : k ? 'parcial' : 'pendente';
       const b = el('button', { class: 'trail__node is-' + cls + (ultimo ? ' is-fim' : '') + (e.r === caminhoSel ? ' is-sel' : ''), type: 'button', 'aria-pressed': String(e.r === caminhoSel),
-        'aria-label': U.cap(U.nomeMes(e.r)) + ', mês ' + n + ': ' + (k == null ? 'por vir' : k + ' de ' + TOT + ' estrelas' + (e.fase === 'agora' ? ', em andamento' : '')),
-        onclick: () => { if (!ultimo && e.r > U.addRef(hoje, 1)) return; caminhoSel = e.r; cpTrocou = true; render(); } });
+        'aria-label': U.cap(U.nomeMes(e.r)) + ', mês ' + n + ': ' + (k == null ? 'por vir' : k + ' de ' + mm.total + ' missões' + (e.fase === 'agora' ? ', em andamento' : '')),
+        style: 'cursor:default' });
       // meses mais à frente ficam trancados (as ações chegam no mês anterior), como em "Próximos meses"
       const trancado = !ultimo && e.r > U.addRef(hoje, 1);
       if (trancado) {
@@ -2825,7 +2820,7 @@
         b.setAttribute('aria-disabled', 'true'); b.removeAttribute('aria-pressed');
         b.setAttribute('aria-label', U.cap(U.nomeMes(e.r)) + ', mês ' + n + ': trancado, abre em ' + U.nomeMes(U.addRef(e.r, -1)));
       } else if (ultimo) { b.innerHTML = BANDEIRA; b.dataset.dica = 'Chegada · ' + U.nomeMes(e.r) + ' de ' + e.r.slice(0, 4); }
-      else if (k === TOT) b.textContent = '★';
+      else if (completo(e.r)) b.textContent = '★';
       else if (k != null && e.fase === 'passado') b.replaceChildren(String(k), el('span', 'trail__star', '★'));
       else b.textContent = String(n);
       return el('li', 'trail__step' + (e.r === hoje ? ' is-hoje' : ''),
@@ -2872,58 +2867,17 @@
     });
     wrap.addEventListener('scroll', () => { trilhaX = wrap.scrollLeft; }, { passive: true });
     const nav = (d) => { wrap.scrollBy({ left: d * wrap.clientWidth * 0.7, behavior: 'smooth' }); };
-    out.push(el('div', 'step-sec__head caminho-head',
+    const caminho = [];
+    caminho.push(el('div', 'step-sec__head caminho-head',
       el('div', null, el('p', 'eyebrow', 'O caminho até a meta'),
         el('h2', { class: 'step-sec__t caminho-head__meta' }, numero ? el('span', 'caminho-head__n', numero) : null, numero ? ' ' + frase : fraseMeta)),
-      cincoEstrelas ? el('p', 'step-sec__d', cincoEstrelas + (cincoEstrelas === 1 ? ' mês ' + TOT + ' ★' : ' meses ' + TOT + ' ★')) : null));
-    out.push(el('section', { class: 'trail-box', 'aria-label': 'Trilha' },
+      completos ? el('p', 'step-sec__d', completos + (completos === 1 ? ' mês completo ★' : ' meses completos ★')) : null));
+    caminho.push(el('div', 'caminho-unido', el('section', { class: 'trail-box', 'aria-label': 'Trilha' },
       el('div', 'trail-nav',
         el('button', { class: 'trail-nav__btn', type: 'button', 'aria-label': 'Voltar na trilha', onclick: () => nav(-1) }, '‹'),
         el('button', { class: 'trail-nav__btn', type: 'button', 'aria-label': 'Avançar na trilha', onclick: () => nav(1) }, '›')),
-      wrap, dica));
-
-    // o checkpoint aberto
-    const e = ests[meses.indexOf(caminhoSel)];
-    const n = meses.indexOf(caminhoSel) + 1;
-    const acs = [...e.acs].sort((a, b) => (PESO[b.peso] || PESO.ajuda)[1] - (PESO[a.peso] || PESO.ajuda)[1]);
-    const ultimo = caminhoSel === fim;
-    const st = estrelas(e); const k = st.filter((x) => x[2]).length; const futuro = e.fase === 'futuro';
-    // estrelas que acenderam desde a última vez que o cliente viu este mês (na primeira visita, nada pisca)
-    const chaveEst = 'gang-estrelas-' + ((D.empresa && D.empresa.id) || '') + '-' + caminhoSel;
-    const acesas = st.filter((x) => x[2]).map((x) => x[0]);
-    const vistas = guarda.get(chaveEst);
-    const novas = new Set(Array.isArray(vistas) && !futuro ? acesas.filter((t) => !vistas.includes(t)) : []);
-    if (!futuro) guarda.set(chaveEst, acesas);
-    const cpEl = el('section', { class: 'cp' + (cpTrocou ? ' cp--entra' : '') + (k === TOT ? ' is-5' : ''), 'aria-labelledby': 'cp-t', 'aria-live': 'polite' },
-      el('div', 'cp__head',
-        el('div', null, el('p', 'eyebrow', (ultimo ? 'Chegada · ' : 'Mês ' + n + ' · ') + U.cap(U.nomeMes(caminhoSel)) + ' ' + caminhoSel.slice(0, 4)),
-          el('h2', { class: 'cp__t', id: 'cp-t' }, futuro ? (caminhoSel > U.addRef(hoje, 1) && caminhoSel !== fim ? 'Trancado: abre em ' + U.nomeMes(U.addRef(caminhoSel, -1)) : 'Este mês ainda vai começar') : k === TOT ? 'Mês ' + TOT + ' estrelas' : k + ' de ' + TOT + ' estrelas' + (e.fase === 'agora' ? ' até agora' : ''))),
-        futuro ? chip('todo', 'Por vir') : e.fase === 'agora' ? chip('doing', 'Em andamento') : chip(k === TOT ? 'done' : 'todo', 'Encerrado')),
-      futuro ? null : el('p', { class: 'stars__row', role: 'img', 'aria-label': k + ' de ' + TOT + ' estrelas' }, st.map((x) => el('span', x[2] ? 'is-on' + (novas.has(x[0]) ? ' is-nova' : '') : null, x[2] ? '★' : '☆'))),
-      el('ul', 'stars__chips' + (futuro ? ' is-futuro' : ''), st.map(([t, d, ok]) => {
-        const ir = irParaEstrela(t, e);
-        return el('li', { class: ok ? 'is-on' + (novas.has(t) ? ' is-nova' : '') : null }, el('a', { href: ir.href, onclick: ir.onclick, title: ok ? 'Feito · ' + ir.dica : d + ' · ' + ir.dica },
-          el('span', { class: 'stars__ico', 'aria-hidden': 'true' }, ok ? '★' : '☆'), t));
-      })));
-    out.push(cpEl);
-    // a setinha do painel aponta para a bolinha escolhida; ao trocar de mês, o painel aparece na tela
-    const aponta = () => {
-      const sel = trilha.querySelector('.trail__node.is-sel'); if (!sel || !cpEl.isConnected) return;
-      const x = sel.getBoundingClientRect().left + sel.offsetWidth / 2 - cpEl.getBoundingClientRect().left;
-      cpEl.style.setProperty('--seta', Math.max(24, Math.min(cpEl.offsetWidth - 24, x)) + 'px');
-      cpEl.classList.toggle('sem-seta', x < 8 || x > cpEl.offsetWidth - 8);
-    };
-    wrap.addEventListener('scroll', aponta, { passive: true });
-    if (window.ResizeObserver) new ResizeObserver(aponta).observe(cpEl);
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      aponta();
-      if (cpTrocou) {
-        cpTrocou = false;
-        const r = cpEl.getBoundingClientRect();
-        if (r.top > window.innerHeight - 140) cpEl.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest' });
-      }
-    }));
-
+      wrap, dica), missoes()));
+    out.splice(iTopo, 0, ...caminho);
 
     return out;
   };
