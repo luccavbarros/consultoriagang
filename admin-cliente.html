@@ -459,18 +459,26 @@
 
       <div class="bloco bloco--card" id="res-busca">
       <div class="app-section__head">
-        <div><h2 class="title-sm">Participação nas buscas</h2><p class="small">Uma vez por mês, anote a fatia da marca (%) na comparação pronta.</p></div>
-        <a class="btn btn--ghost btn--sm" id="b-trends" target="_blank" rel="noopener" href="https://trends.google.com/trends/explore?geo=BR&amp;date=today%2012-m">Abrir no Google Trends</a>
-      </div>
-      <div id="busca-graf"></div>
-      <form class="linha-add" id="busca-form" novalidate>
-        <div class="new-client__pass">
-          <input class="field" id="b-mes" type="month" aria-label="Mês" />
-          <input class="field" id="b-pct" type="number" min="0" max="100" step="any" placeholder="%" aria-label="Participação da marca (%)" />
-          <button class="btn btn--ghost btn--sm" type="submit">Salvar</button>
+        <div><h2 class="title-sm">Participação nas buscas</h2><p class="small">A cada 6 meses, junto com a pesquisa: abra a comparação pronta,<br />baixe o arquivo do gráfico (ícone de download) e envie aqui.</p></div>
+        <div class="share__btns">
+          <a class="btn btn--ghost btn--sm" id="b-trends" target="_blank" rel="noopener" href="https://trends.google.com/trends/explore?geo=BR&amp;date=today%205-y">Abrir no Google Trends</a>
+          <label class="btn btn--light btn--sm" for="b-arq">Enviar arquivo</label>
+          <input id="b-arq" type="file" accept=".csv,text/csv" hidden />
         </div>
-        <p class="msg" id="b-msg" role="status" aria-live="polite"></p>
-      </form>
+      </div>
+      <p class="msg" id="b-arq-msg" role="status" aria-live="polite"></p>
+      <div id="busca-graf"></div>
+      <details class="share__edit">
+        <summary>Anotar um mês à mão</summary>
+        <form class="linha-add" id="busca-form" novalidate>
+          <div class="new-client__pass">
+            <input class="field" id="b-mes" type="month" aria-label="Mês" />
+            <input class="field" id="b-pct" type="number" min="0" max="100" step="any" placeholder="%" aria-label="Participação da marca (%)" />
+            <button class="btn btn--ghost btn--sm" type="submit">Salvar</button>
+          </div>
+          <p class="msg" id="b-msg" role="status" aria-live="polite"></p>
+        </form>
+      </details>
       <ul class="rows rows--compact" id="buscas"></ul>
       </div>
 
@@ -605,6 +613,6 @@
   <script src="app/admin-briefing.js?v=5"></script>
   <script src="app/admin-marca.js?v=70"></script>
   <script src="app/saude.js?v=20"></script>
-  <script src="app/admin-cliente.js?v=151"></script>
+  <script src="app/admin-cliente.js?v=152"></script>
 </body>
 </html>
