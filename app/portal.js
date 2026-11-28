@@ -217,7 +217,7 @@
   if (soAcesso) {
     SO_CONSULTORIA.forEach((r) => { const li = document.querySelector('[data-route="' + r + '"]'); if (li) li.closest('li').hidden = true; });
     const g1 = document.getElementById('g1'); if (g1) g1.hidden = true;
-    const ini = document.querySelector('[data-route="inicio"] span'); if (ini) ini.textContent = 'Início';
+    const ini = document.querySelector('[data-route="inicio"] span'); if (ini) { ini.textContent = 'Início'; ini.closest('li').hidden = false; } // o item já vem escondido no HTML (sem piscar dois "Visão Geral")
   } else {
     // na consultoria, o Plano já é a visão geral: a tela "Visão Geral" sai do menu
     const li = document.querySelector('[data-route="inicio"]'); if (li) li.closest('li').hidden = true;
@@ -1024,7 +1024,7 @@
     out.push(...mv.filter((x) => x !== busca));
     // sem pesquisa ainda: explica o que vai aparecer e quando, em vez de ficar vazia
     // quadros de conteúdo estreito lado a lado (sem quadro largo com vazio à direita); no celular, um embaixo do outro
-    const voz = vozDoCliente();
+    const voz = quemCompra();
     out.push(lado(busca, voz));
     return out;
   };
@@ -1132,7 +1132,7 @@
       const alvo = e.acs.find((a) => a.status === 'feita' && !a.resultado && comCliente(a));
       return { href: '#acoes', dica: 'responder em Ações', onclick: () => { abaAcoes = 'feitas'; if (alvo) abreAcao = alvo.id; } };
     }
-    return { href: '#pesquisa', dica: 'registrar em Pesquisa', onclick: () => foca('voz-txt') };
+    return { href: '#plano', dica: 'ver na Visão Geral', onclick: () => foca('como-foi') };
   };
 
   // ===== missões do mês: o que o cliente faz agora, em cartões simples (ações, números e encontro) =====
@@ -1408,7 +1408,7 @@
         const copiaLink = el('button', { class: 'link', type: 'button', onclick: async () => {
           try { await navigator.clipboard.writeText(url); copiaLink.textContent = 'Link copiado ✓'; clearTimeout(copiaLink._t); copiaLink._t = setTimeout(() => { copiaLink.textContent = 'Copiar só o link'; }, 2000); } catch (e) { U.avisa('Copie o link:', url); }
         } }, 'Copiar só o link');
-        box.append(el('div', 'share',
+        box.append(el('div', { class: 'share', id: 'convidar', tabindex: '-1' },
           el('div', 'share__head', el('div', null, el('p', 'share__t', 'Convide mais pessoas'),
             el('p', 'box__note', 'Quanto mais respostas, mais confiável (o ideal é passar de 30). Vale mandar também para quem ainda não comprou.')),
             el('div', 'share__btns', copia, wa, mail, el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => abreQR(url, nomeMarca) }, 'QR code'))),
@@ -1458,25 +1458,40 @@
         el('span', 'todo__sub', a.aprendizado || (a.metrica_sucesso ? 'Sucesso se: ' + U.cap(a.metrica_sucesso) : ''))), chip(...RES[a.resultado])))))];
   };
 
-  // a voz do cliente final
-  const vozDoCliente = () => {
-    const txt = el('textarea', { class: 'field', id: 'voz-txt', rows: 2, maxlength: 1000, placeholder: '“Achei que vocês eram uma empresa nova, bem mais séria.”' });
-    const msg = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite' });
-    const f = el('form', { class: 'voice__form', novalidate: true },
-      el('label', { class: 'label', for: 'voz-txt' }, 'Algo que um cliente disse este mês'), txt,
-      el('div', 'numbers__foot', el('button', { class: 'btn btn--ghost btn--sm', type: 'submit' }, 'Registrar'), msg));
-    f.addEventListener('submit', async (ev) => {
-      ev.preventDefault();
-      const t = txt.value.trim(); if (!t) return U.say(msg, 'Escreva a frase.', 'error');
-      const { error } = await sb.rpc('portal_registrar_voz', { p_texto: t });
-      if (error) return U.say(msg, 'Não foi possível salvar.', 'error');
-      D.vozes.unshift({ texto: t, mes_ref: hoje, criada_em: new Date().toISOString() }); render(); anuncia('Frase registrada.');
-    });
-    return el('section', { class: 'box', 'aria-labelledby': 'voz-t' },
-      el('h2', { class: 'box__title', id: 'voz-t' }, 'O que seus clientes disseram'),
-      el('p', 'box__text', ['Frases reais de clientes sobre a marca:', el('br'), 'elogios, dúvidas e comparações, que mostram', el('br'), 'mês a mês se a percepção está mudando.']),
-      f,
-      D.vozes.length ? el('ul', 'voices', D.vozes.slice(0, 12).map((v) => el('li', null, el('p', 'voices__text', v.texto), el('p', 'box__note', U.cap(U.nomeMes(v.mes_ref)) + ' ' + v.mes_ref.slice(0, 4))))) : null);
+  // de quem compraram na última vez: a fatia da marca nas compras reais da categoria, ao lado da fatia nas lembranças
+  // (a marca cresce ganhando compradores; lembrada mais que comprada = falta ser fácil de achar e comprar)
+  const quemCompra = () => {
+    const nome = D.empresa ? D.empresa.nome : '';
+    const rodadas = D.pesquisas.map((q) => {
+      const rs = D.respostas.filter((r) => r.pesquisa_id === q.id && r.ultima && r.ultima !== 'Não lembro');
+      const cont = {}; rs.forEach((r) => { cont[r.ultima] = (cont[r.ultima] || 0) + 1; });
+      // fatia nas lembranças (todas as situações de compra), para comparar com a fatia nas compras
+      const sits = q.situacoes || []; let lig = 0; let todas = 0;
+      D.respostas.filter((r) => r.pesquisa_id === q.id).forEach((r) => sits.forEach((st) => { const l = (r.ceps || {})[st.id] || []; todas += l.length; if (l.includes(nome)) lig++; }));
+      return { q, n: rs.length, cont, lemb: todas ? Math.round((lig / todas) * 100) : null };
+    }).filter((x) => x.n > 0);
+    const atual = rodadas[rodadas.length - 1]; const ant = rodadas.length > 1 ? rodadas[rodadas.length - 2] : null;
+    const pc = (x, m) => Math.round(((x.cont[m] || 0) / x.n) * 100);
+    let linhas;
+    if (atual) {
+      const outras = Object.keys(atual.cont).filter((m) => m !== nome).sort((a, b) => atual.cont[b] - atual.cont[a]);
+      linhas = [nome, ...outras.slice(0, 4)].map((m) => ({ m, v: pc(atual, m), sua: m === nome }));
+      const resto = outras.slice(4).reduce((t, m) => t + pc(atual, m), 0);
+      if (resto) linhas.push({ m: 'Outras', v: resto });
+    } else linhas = [{ m: nome || 'Sua marca', v: null, sua: true }, { m: 'Concorrente', v: null }, { m: 'Concorrente', v: null }];
+    const sua = atual ? pc(atual, nome) : null;
+    const dif = ant ? sua - pc(ant, nome) : null;
+    const gap = atual && atual.lemb != null ? atual.lemb - sua : null;
+    return el('section', { class: 'box', 'aria-labelledby': 'compra-t' },
+      el('div', 'box__head', el('h2', { class: 'box__title', id: 'compra-t' }, 'De quem compraram na última vez'), el('p', 'box__note', atual ? atual.n + ' compradores' : 'Pela pesquisa')),
+      el('p', 'box__text', ['Entre quem compra a categoria, a fatia de cada marca', el('br'), 'nas compras de verdade. A marca cresce', el('br'), 'ganhando mais compradores.']),
+      el('div', 'hbars anim', linhas.map((x) => el('div', 'hbar',
+        el('p', 'hbar__label', x.sua ? el('strong', null, x.m) : x.m),
+        el('div', 'hbar__track', el('span', { class: 'hbar__fill' + (x.sua ? '' : ' hbar__fill--rival'), style: 'width:' + (x.v || 0) + '%' })),
+        el('p', 'hbar__value', x.v == null ? '—' : x.v + '%', x.sua && dif != null ? el('span', 'muted', ' (' + (dif > 0 ? '+' : '') + dif + ')') : null)))),
+      gap == null ? el('p', 'box__note', atual ? 'Com as situações de compra na pesquisa, aparece a comparação com a lembrança.' : 'Os números aparecem com as primeiras respostas.')
+        : el('p', 'insight' + (gap >= 5 ? '' : ' insight--ok'), el('span', 'insight__lbl', gap >= 5 ? 'Lembrada mais do que comprada' : gap <= -5 ? 'Comprada mais do que lembrada' : 'Lembrança e compra juntas'),
+          el('span', null, 'Entre todos que responderam, a marca tem ' + atual.lemb + '% das lembranças e ' + sua + '% das compras. ' + (gap >= 5 ? 'As pessoas pensam nela, mas compram de outra: vale ver se é fácil achar e comprar.' : gap <= -5 ? 'Quem compra volta, mas a marca vem pouco à cabeça: é aí que as ações de marca entram.' : 'Para crescer, as duas precisam subir juntas.'))));
   };
 
   const tabela = (cols, linhas) => el('div', 'table-wrap', el('table', 'table',
@@ -2709,7 +2724,7 @@
       return { r, acs, alvo, feitas, fase, st, essenciais: acs.some((a) => a.peso === 'essencial') };
     };
     const ests = meses.map(estado);
-    // as 5 estrelas do mês: o que o cliente faz para o mês ser "5 estrelas"
+    // as estrelas do mês: o que o cliente faz para o mês ficar completo
     // só acende o que foi feito de verdade: sem tarefa, sem encontro ou sem ação para avaliar, a estrela fica apagada
     const agoraISO = new Date().toISOString();
     const estrelas = (e) => [
@@ -2720,10 +2735,11 @@
           : ['Presença no encontro', 'Sem encontro marcado neste mês', false]; })(),
       (() => { const fe = e.acs.filter((a) => a.status === 'feita' && a.responsavel !== 'gang');
         return ['Ações avaliadas', fe.length ? 'Responder a pergunta de cada ação feita' : 'Nenhuma ação feita para avaliar', e.fase !== 'futuro' && fe.length > 0 && fe.every((a) => a.resultado)]; })(),
-      ['Ouviu um cliente', 'Registrar o que um cliente disse ou receber respostas da pesquisa', (D.vozes || []).some((x) => x.mes_ref === e.r) || (D.respostas || []).some((x) => (x.criada_em || '').slice(0, 7) === e.r)],
+      // a 5ª estrela ainda vai ser definida: por enquanto, o mês completo tem 4
     ];
+    const TOT = 4; // quantas estrelas fecham o mês
     const nEstrelas = (e) => estrelas(e).filter((x) => x[2]).length;
-    const cincoEstrelas = ests.filter((e) => e.fase !== 'futuro' && nEstrelas(e) === 5).length;
+    const cincoEstrelas = ests.filter((e) => e.fase !== 'futuro' && nEstrelas(e) === TOT).length;
     if (!caminhoSel || !meses.includes(caminhoSel)) caminhoSel = meses.includes(hoje) ? hoje : meses[0];
 
     // as ações do cliente pendentes no mês (o "o que fazer agora" fica na tela Ações)
@@ -2740,9 +2756,9 @@
       const rotulo = U.cap(U.nomeMesCurto(e.r)) + (e.r.slice(5) === '01' || i === 0 ? ' ' + e.r.slice(2, 4) : '');
       // um só sistema: as estrelas do mês. 5 = mês completo; menos que isso mostra quantas
       const k = e.fase === 'futuro' ? null : nEstrelas(e);
-      const cls = e.fase === 'futuro' ? 'futuro' : k === 5 ? 'conquistado' : e.fase === 'agora' ? 'agora' : k ? 'parcial' : 'pendente';
+      const cls = e.fase === 'futuro' ? 'futuro' : k === TOT ? 'conquistado' : e.fase === 'agora' ? 'agora' : k ? 'parcial' : 'pendente';
       const b = el('button', { class: 'trail__node is-' + cls + (ultimo ? ' is-fim' : '') + (e.r === caminhoSel ? ' is-sel' : ''), type: 'button', 'aria-pressed': String(e.r === caminhoSel),
-        'aria-label': U.cap(U.nomeMes(e.r)) + ', mês ' + n + ': ' + (k == null ? 'por vir' : k + ' de 5 estrelas' + (e.fase === 'agora' ? ', em andamento' : '')),
+        'aria-label': U.cap(U.nomeMes(e.r)) + ', mês ' + n + ': ' + (k == null ? 'por vir' : k + ' de ' + TOT + ' estrelas' + (e.fase === 'agora' ? ', em andamento' : '')),
         onclick: () => { if (!ultimo && e.r > U.addRef(hoje, 1)) return; caminhoSel = e.r; cpTrocou = true; render(); } });
       // meses mais à frente ficam trancados (as ações chegam no mês anterior), como em "Próximos meses"
       const trancado = !ultimo && e.r > U.addRef(hoje, 1);
@@ -2752,7 +2768,7 @@
         b.setAttribute('aria-disabled', 'true'); b.removeAttribute('aria-pressed');
         b.setAttribute('aria-label', U.cap(U.nomeMes(e.r)) + ', mês ' + n + ': trancado, abre em ' + U.nomeMes(U.addRef(e.r, -1)));
       } else if (ultimo) { b.innerHTML = BANDEIRA; b.dataset.dica = 'Chegada · ' + U.nomeMes(e.r) + ' de ' + e.r.slice(0, 4); }
-      else if (k === 5) b.textContent = '★';
+      else if (k === TOT) b.textContent = '★';
       else if (k != null && e.fase === 'passado') b.replaceChildren(String(k), el('span', 'trail__star', '★'));
       else b.textContent = String(n);
       return el('li', 'trail__step' + (e.r === hoje ? ' is-hoje' : ''),
@@ -2802,7 +2818,7 @@
     out.push(el('div', 'step-sec__head caminho-head',
       el('div', null, el('p', 'eyebrow', 'O caminho até a meta'),
         el('h2', { class: 'step-sec__t caminho-head__meta' }, numero ? el('span', 'caminho-head__n', numero) : null, numero ? ' ' + frase : fraseMeta)),
-      cincoEstrelas ? el('p', 'step-sec__d', cincoEstrelas + (cincoEstrelas === 1 ? ' mês 5 ★' : ' meses 5 ★')) : null));
+      cincoEstrelas ? el('p', 'step-sec__d', cincoEstrelas + (cincoEstrelas === 1 ? ' mês ' + TOT + ' ★' : ' meses ' + TOT + ' ★')) : null));
     out.push(el('section', { class: 'trail-box', 'aria-label': 'Trilha' },
       el('div', 'trail-nav',
         el('button', { class: 'trail-nav__btn', type: 'button', 'aria-label': 'Voltar na trilha', onclick: () => nav(-1) }, '‹'),
@@ -2821,12 +2837,12 @@
     const vistas = guarda.get(chaveEst);
     const novas = new Set(Array.isArray(vistas) && !futuro ? acesas.filter((t) => !vistas.includes(t)) : []);
     if (!futuro) guarda.set(chaveEst, acesas);
-    const cpEl = el('section', { class: 'cp' + (cpTrocou ? ' cp--entra' : '') + (k === 5 ? ' is-5' : ''), 'aria-labelledby': 'cp-t', 'aria-live': 'polite' },
+    const cpEl = el('section', { class: 'cp' + (cpTrocou ? ' cp--entra' : '') + (k === TOT ? ' is-5' : ''), 'aria-labelledby': 'cp-t', 'aria-live': 'polite' },
       el('div', 'cp__head',
         el('div', null, el('p', 'eyebrow', (ultimo ? 'Chegada · ' : 'Mês ' + n + ' · ') + U.cap(U.nomeMes(caminhoSel)) + ' ' + caminhoSel.slice(0, 4)),
-          el('h2', { class: 'cp__t', id: 'cp-t' }, futuro ? (caminhoSel > U.addRef(hoje, 1) && caminhoSel !== fim ? 'Trancado: abre em ' + U.nomeMes(U.addRef(caminhoSel, -1)) : 'Este mês ainda vai começar') : k === 5 ? 'Mês 5 estrelas' : k + ' de 5 estrelas' + (e.fase === 'agora' ? ' até agora' : ''))),
-        futuro ? chip('todo', 'Por vir') : e.fase === 'agora' ? chip('doing', 'Em andamento') : chip(k === 5 ? 'done' : 'todo', 'Encerrado')),
-      futuro ? null : el('p', { class: 'stars__row', role: 'img', 'aria-label': k + ' de 5 estrelas' }, st.map((x) => el('span', x[2] ? 'is-on' + (novas.has(x[0]) ? ' is-nova' : '') : null, x[2] ? '★' : '☆'))),
+          el('h2', { class: 'cp__t', id: 'cp-t' }, futuro ? (caminhoSel > U.addRef(hoje, 1) && caminhoSel !== fim ? 'Trancado: abre em ' + U.nomeMes(U.addRef(caminhoSel, -1)) : 'Este mês ainda vai começar') : k === TOT ? 'Mês ' + TOT + ' estrelas' : k + ' de ' + TOT + ' estrelas' + (e.fase === 'agora' ? ' até agora' : ''))),
+        futuro ? chip('todo', 'Por vir') : e.fase === 'agora' ? chip('doing', 'Em andamento') : chip(k === TOT ? 'done' : 'todo', 'Encerrado')),
+      futuro ? null : el('p', { class: 'stars__row', role: 'img', 'aria-label': k + ' de ' + TOT + ' estrelas' }, st.map((x) => el('span', x[2] ? 'is-on' + (novas.has(x[0]) ? ' is-nova' : '') : null, x[2] ? '★' : '☆'))),
       el('ul', 'stars__chips' + (futuro ? ' is-futuro' : ''), st.map(([t, d, ok]) => {
         const ir = irParaEstrela(t, e);
         return el('li', { class: ok ? 'is-on' + (novas.has(t) ? ' is-nova' : '') : null }, el('a', { href: ir.href, onclick: ir.onclick, title: ok ? 'Feito · ' + ir.dica : d + ' · ' + ir.dica },
