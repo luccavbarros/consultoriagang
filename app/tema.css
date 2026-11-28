@@ -2511,7 +2511,9 @@ html.side-abrindo .side__plan .badge { display: none; }
    Cada página é um slide A4 deitado, de tamanho fixo: nada quebra no meio. Na impressão a página não tem margem,
    então o navegador não tem onde pôr o cabeçalho e o rodapé dele (data, título, endereço do site) */
 .deck { display: grid; gap: 28px; max-width: 1100px; }
-.deck__bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.deck__bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px;
+  position: sticky; top: 0; z-index: 20; margin: -12px -12px 0; padding: 12px; background: var(--canvas); border-bottom: 1px solid var(--line); }
+.deck__dir { display: flex; gap: 8px; margin-left: auto; }
 .deck__bar .rel__modo { margin: 0 auto 0 0; }
 .sl { container-type: inline-size; background: #faf9f7; border-radius: 6px; box-shadow: 0 1px 0 rgba(0, 0, 0, .04);
   -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -2695,11 +2697,4 @@ html.side-abrindo .side__plan .badge { display: none; }
   .grupo .tabs--mini .tabs__btn { min-width: 0; padding: 4px 6px; font-size: 11.5px; line-height: 1.25; white-space: normal; text-align: center; justify-content: center; }
 }
 
-/* Estratégia: dois objetivos do mesmo pilar no mesmo cartão, separados por uma linha fina */
-.oc__varios { display: grid; gap: 14px; }
-.oc__varios > * + * { padding-top: 14px; border-top: 1px solid var(--line); }
-
-/* Pesquisa sem respostas: os mesmos gráficos, vazios e em tom apagado */
-.anel.is-vazio .stat__value { color: var(--muted, #8a8a8a); }
-.anel.is-vazio .stat__delta { color: var(--muted, #8a8a8a); }
-.anel.is-vazio .anel__arco { display: none; }
+/* Estratégi

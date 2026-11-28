@@ -1632,10 +1632,8 @@
   let filtroHist = 'todos';
   const telaConsultoria = () => {
     const p = D.plano;
-    const ativo = !p || p.status === 'ativo';
-    const out = [head(null, 'Calendário', ['O próximo encontro, os prazos do mês', el('br'), 'e o que já conversamos em cada encontro.'],
-      el('div', 'status-line', chip(ativo ? 'done' : 'todo', 'Consultoria mensal · ' + (p ? { ativo: 'ativa', pausado: 'pausada', encerrado: 'encerrada' }[p.status] : 'ativa')),
-        p ? el('p', 'box__note', 'Desde ' + U.mesAno(p.inicio) + ' com a GANG') : null))];
+    // a situação da consultoria (ativa, desde quando) fica em Meu plano
+    const out = [head(null, 'Calendário', ['O próximo encontro, os prazos do mês', el('br'), 'e o que já conversamos em cada encontro.'])];
 
     // próximo encontro
     const e = D.proximo;
@@ -2973,8 +2971,12 @@
       el('div', 'sl__meta', el('span', null, nome), el('span'), el('span', null, 'GANG'), el('span', null, U.cap(U.nomeMes(hoje)) + ' ' + hoje.slice(0, 4))),
       el('div', 'sl__capa', el('div', null, el('h1', 'sl__capa-t', titulo), sub ? el('p', 'sl__capa-s', sub) : null), direita || img)));
   };
-  const deckBarra = (voltar, ...extras) => el('div', 'deck__bar no-print', el('a', { class: 'link', href: VER ? 'admin-cliente.html?id=' + encodeURIComponent(VER) + '#estrategia' : voltar }, VER ? '← Voltar ao painel' : '← Voltar'), ...extras,
-    el('button', { class: 'btn btn--light btn--sm', type: 'button', onclick: () => window.print() }, 'Imprimir ou salvar em PDF'));
+  // a barra fica presa no topo ao rolar (tema.css): voltar e subir ao topo sempre à mão, mesmo no meio das páginas
+  const DECK_VOLTA = { '#estrategia': 'Voltar para Estratégia', '#plano': 'Voltar para Visão Geral' };
+  const deckBarra = (voltar, ...extras) => el('div', 'deck__bar no-print', el('a', { class: 'link', href: VER ? 'admin-cliente.html?id=' + encodeURIComponent(VER) + '#estrategia' : voltar }, VER ? '← Voltar ao painel' : '← ' + (DECK_VOLTA[voltar] || 'Voltar')), ...extras,
+    el('span', 'deck__dir',
+      el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: () => window.scrollTo({ top: 0, behavior: 'smooth' }) }, '↑ Topo'),
+      el('button', { class: 'btn btn--light btn--sm', type: 'button', onclick: () => window.print() }, 'Imprimir ou salvar em PDF')));
 
   // ===== Relatório do mês: o que aconteceu, o que vem e como a marca está, para mostrar aos sócios =====
   let relModo = 'completo';
