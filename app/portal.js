@@ -1431,7 +1431,7 @@
         el('p', 'box__text', 'De todas as buscas pela categoria e pelas marcas concorrentes, quantas são pela sua marca. Quando sobe, a marca está sendo mais lembrada.'),
         el('div', 'anim', graficoLinhas({ rotulos: meses.map((m) => U.cap(U.nomeMesCurto(m))), fmt: (v) => Math.round(v) + '%', escala: 15, label: 'Participação da marca nas buscas, ainda sem dados',
           series: [{ nome: 'Sua marca', valores: meses.map((m) => { const b = D.buscas.find((x) => x.mes_ref === m); return b ? Number(b.marca_pct) : null; }), cor: C.acc, pontos: true, rotuloFim: true }] })),
-        el('p', 'box__note', 'O consultor registra a cada mês.')));
+        el('p', 'box__note', 'Atualizado junto com a pesquisa.')));
     }
     if (D.buscas.length >= 2) {
       out.push(el('section', { class: 'box', 'aria-labelledby': 'busca-t' },

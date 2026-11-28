@@ -2378,10 +2378,10 @@
   loadDisp();
 
   const loadBuscas = async () => {
-    // a comparação já montada no Google Trends: a marca e até 4 concorrentes do Diagnóstico, Brasil, últimos 12 meses
+    // a comparação já montada no Google Trends: a marca e até 4 concorrentes do Diagnóstico, Brasil, últimos 5 anos (mês a mês)
     sb.from('impressoes').select('marca_nome, eh_cliente').eq('empresa_id', id).order('ordem').then(({ data: imp }) => {
       const termos = [emp.nome].concat((imp || []).filter((x) => !x.eh_cliente).map((x) => x.marca_nome)).filter(Boolean).slice(0, 5);
-      $('b-trends').href = 'https://trends.google.com/trends/explore?geo=BR&date=today%2012-m&q=' + termos.map((t) => encodeURIComponent(t)).join(',');
+      $('b-trends').href = 'https://trends.google.com/trends/explore?geo=BR&date=today%205-y&q=' + termos.map((t) => encodeURIComponent(t)).join(',');
     });
     const { data } = await sb.from('buscas').select('*').eq('empresa_id', id).order('mes_ref', { ascending: false });
     const bs = [...(data || [])].reverse();
@@ -2402,6 +2402,41 @@
     if (!r.error) { $('b-pct').value = ''; loadBuscas(); }
   });
   loadBuscas();
+
+  // o arquivo baixado do Google Trends: a % da marca em cada mês = buscas da marca / soma das buscas de todas as marcas comparadas
+  const lerTrends = (txt, marca) => {
+    const linhas = txt.replace(/^﻿/, '').split(/\r?\n/).filter((l) => l.trim());
+    const sep = (l) => ((l.match(/;/g) || []).length > (l.match(/,/g) || []).length ? ';' : ',');
+    const cel = (l) => l.split(sep(l)).map((c) => c.trim().replace(/^"|"$/g, ''));
+    const mesDe = (c) => { const m = c.match(/^(\d{4})-(\d{2})/); if (m) return m[1] + '-' + m[2]; const d = new Date(c); return isNaN(d) ? null : d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+    const i0 = linhas.findIndex((l) => mesDe(cel(l)[0]) && cel(l).length > 2);
+    if (i0 < 1) return { erro: 'Não achei os meses no arquivo. Baixe o arquivo do gráfico "Interesse ao longo do tempo".' };
+    const cab = cel(linhas[i0 - 1]).map((c) => c.split(':')[0].trim());
+    const norm = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+    let col = cab.findIndex((c, i) => i > 0 && norm(c) === norm(marca));
+    if (col < 1) col = 1; // na comparação pronta, a marca vem primeiro
+    const soma = {}; const daMarca = {};
+    linhas.slice(i0).forEach((l) => {
+      const c = cel(l); const m = mesDe(c[0]); if (!m) return;
+      const v = c.slice(1).map((x) => (x.startsWith('<') ? 0.5 : Number(x.replace(',', '.')) || 0));
+      soma[m] = (soma[m] || 0) + v.reduce((a, b) => a + b, 0); daMarca[m] = (daMarca[m] || 0) + v[col - 1];
+    });
+    // os últimos 24 meses fechados (o mês corrente ainda está pela metade)
+    const meses = Object.keys(soma).filter((m) => m < U.ref() && soma[m] > 0).sort().slice(-24);
+    if (!meses.length) return { erro: 'O arquivo não tem buscas suficientes para calcular.' };
+    return { marca: cab[col], linhas: meses.map((m) => ({ mes_ref: m, marca_pct: Math.round((daMarca[m] / soma[m]) * 1000) / 10 })) };
+  };
+  $('b-arq').addEventListener('change', async () => {
+    const f = $('b-arq').files[0]; if (!f) return;
+    const r = lerTrends(await f.text(), emp.nome);
+    $('b-arq').value = '';
+    if (r.erro) return say($('b-arq-msg'), r.erro, 'error');
+    const up = await sb.from('buscas').upsert(r.linhas.map((x) => ({ empresa_id: id, ...x })), { onConflict: 'empresa_id,mes_ref' });
+    if (up.error) return say($('b-arq-msg'), 'Não foi possível salvar.', 'error');
+    const ult = r.linhas[r.linhas.length - 1];
+    say($('b-arq-msg'), r.linhas.length + ' meses salvos. ' + U.cap(MESES(ult.mes_ref)) + ': ' + ult.marca_pct.toLocaleString('pt-BR') + '% das buscas são pela marca' + (r.marca ? ' (coluna “' + r.marca + '”).' : '.'), 'ok');
+    loadBuscas();
+  });
 
   // ===== resultados: o que os clientes disseram =====
   const loadVozes = async () => {
