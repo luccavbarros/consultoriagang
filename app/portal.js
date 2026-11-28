@@ -599,6 +599,25 @@
   // tarefas de medição e de revisão (pesquisa, revisão do semestre ou do ano): medem a marca, não constroem lembrança,
   // então não levam a etiqueta de efeito de marca
   const ehMedicao = (a) => /pesquisa|revis[aã]o (semestral|anual)|plano do segundo ano/i.test(a.titulo_base || a.titulo || '');
+  // acordeão: o detalhe da ação abre e fecha deslizando (quem prefere menos movimento vê a troca direta)
+  const semMovimento = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const desliza = (no, abrindo, fim) => {
+    if (semMovimento() || !no.animate) { if (fim) fim(); return; }
+    const cs = getComputedStyle(no); const pt = cs.paddingTop; const pb = cs.paddingBottom; const h = no.scrollHeight;
+    no.style.overflow = 'hidden'; no.style.boxSizing = 'border-box';
+    const aberto = { height: h + 'px', paddingTop: pt, paddingBottom: pb, opacity: 1 }; const fechado = { height: '0px', paddingTop: '0px', paddingBottom: '0px', opacity: 0 };
+    const an = no.animate(abrindo ? [fechado, aberto] : [aberto, fechado], { duration: 300, easing: 'cubic-bezier(.3, .7, .2, 1)', fill: 'both' });
+    const acabou = () => { an.cancel(); no.style.overflow = ''; no.style.boxSizing = ''; if (fim) fim(); };
+    an.onfinish = acabou; an.oncancel = null;
+  };
+  const marcaCartao = (li, aberto) => {
+    li.classList.toggle('is-aberta', aberto);
+    const lin = li.querySelector('.task__row'); if (lin && lin.hasAttribute('aria-expanded')) lin.setAttribute('aria-expanded', String(aberto));
+    const ch = li.querySelector('.task__chev'); if (ch) ch.classList.toggle('is-open', aberto);
+  };
+  const fechaCartao = (li) => { const corpo = li.querySelector(':scope > .task__body'); marcaCartao(li, false); if (corpo) desliza(corpo, false, () => corpo.remove()); };
+  const abreCartao = (li, monta) => { marcaCartao(li, true); const corpo = monta(); li.append(corpo); desliza(corpo, true); };
+
   const cartaoAcao = (a) => {
     const o = objetivo[a.objetivo_id];
     const p = prazo(a);
@@ -686,17 +705,24 @@
     })() : null;
     const temDetalhe = porque.length || a.observacao || a.status === 'feita' || ps.length || a.modelo || ia;
     // primeiro a intenção (objetivo, por que funciona, sucesso), depois o como (passos e mensagem pronta)
-    const corpo = temDetalhe && aberta ? el('div', 'task__body',
+    const montaCorpo = () => el('div', 'task__body',
       porque.length ? el('dl', { class: 'why', 'aria-label': 'Por que esta ação' }, porque.map(([k, v, tag]) => el('div', 'why__item',
         el('dt', null, k, tag ? el('span', 'why__tag', tag) : null), el('dd', null, v)))) : null,
       passos, modelo, ia,
       a.observacao ? el('div', 'action__obs', D.consultor ? avatar(D.consultor) : null,
         el('div', null, el('p', 'action__obs-lbl', 'Observação ' + (D.consultor && D.consultor.nome ? 'de ' + D.consultor.nome.split(' ')[0] : 'do consultor')), el('p', 'action__obs-txt', a.observacao))) : null,
-      a.status === 'feita' ? blocoResultado(a) : null, ajuda) : null;
+      a.status === 'feita' ? blocoResultado(a) : null, ajuda);
+    const corpo = temDetalhe && aberta ? montaCorpo() : null;
     // uma ação aberta por vez: abrir uma fecha a outra (sem amontoado de detalhes na tela)
     const alterna = () => {
       if (!temDetalhe) return;
-      const abrir = !abertas.has(a.id); abertas.clear(); if (abrir) { abertas.add(a.id); vistaAcao(a); } render();
+      const li = linha.parentElement;
+      const abrir = !abertas.has(a.id);
+      const anterior = document.querySelector('.task.is-aberta');
+      abertas.clear(); if (abrir) { abertas.add(a.id); vistaAcao(a); }
+      if (!li || !li.isConnected) { render(); return; }
+      if (anterior) fechaCartao(anterior);
+      if (abrir && anterior !== li) abreCartao(li, montaCorpo);
       if (abrir) requestAnimationFrame(() => { const n = document.querySelector('.task[data-id="' + a.id + '"]'); if (n && n.getBoundingClientRect().top < 70) n.scrollIntoView({ block: 'start', behavior: 'smooth' }); });
     };
     const linha = el('div', { class: 'task__row', role: temDetalhe ? 'button' : null, tabindex: temDetalhe ? '0' : null, 'aria-expanded': temDetalhe ? String(aberta) : null,
@@ -3098,37 +3124,4 @@
   });
   const animaTela = (root) => {
     const els = [...root.querySelectorAll('.anim')]; if (!els.length) return;
-    if ((window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) || !('IntersectionObserver' in window)) { els.forEach((e) => e.classList.add('is-in')); return; }
-    const io = new IntersectionObserver((es) => es.forEach((en) => { if (!en.isIntersecting) return; en.target.classList.add('is-in'); contaNumeros(en.target); io.unobserve(en.target); }), { threshold: 0.2 });
-    // só depois que a página aparece (a entrada começa preta): antes disso, a animação passaria sem ninguém ver
-    const html = document.documentElement;
-    const comeca = () => setTimeout(() => els.forEach((e) => io.observe(e)), 250);
-    if (html.classList.contains('is-ready')) comeca();
-    else { const mo = new MutationObserver(() => { if (html.classList.contains('is-ready')) { mo.disconnect(); comeca(); } }); mo.observe(html, { attributes: true, attributeFilter: ['class'] }); }
-  };
-  function render() {
-    const r = rota();
-    const trocou = r !== telaAtual; telaAtual = r;
-    if (trocou) { registraUso(); comecaUso(r); }
-    const y = window.scrollY;
-    $('crumb').textContent = SCREENS[r].crumb;
-    $('screen').replaceChildren(el('div', 'screen screen--' + r + (trocou ? ' screen--entra' : ''), avisoFatura(), SCREENS[r].render()));
-    U.vocDOM($('screen'), VENDE); // quem vende produto lê "produto" onde o sistema diz "serviço"
-    animaTela($('screen'));
-    if (!trocou) window.scrollTo(0, y);
-    document.querySelectorAll('[data-route]').forEach((a) => {
-      if (a.dataset.route === r) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
-    });
-  }
-  const go = (focus) => {
-    render();
-    side.classList.remove('is-open'); $('menu-btn').setAttribute('aria-expanded', 'false');
-    if (focus) { window.scrollTo(0, 0); $('main').focus({ preventScroll: true }); }
-  };
-  window.addEventListener('hashchange', () => go(true));
-  $('menu-btn').addEventListener('click', () => {
-    const open = side.classList.toggle('is-open');
-    $('menu-btn').setAttribute('aria-expanded', String(open));
-  });
-  go(false);
-})();
+    if ((window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) || !('IntersectionObserver' in window)) { els.fo
