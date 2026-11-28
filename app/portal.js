@@ -1296,10 +1296,75 @@
   };
 
   // com que palavras descrevem a marca (antes e depois): mostra a percepção mudando
-  const palavrasDe = (q) => {
+  // as palavras que só mudam em acento, maiúscula ou pontuação contam juntas; a forma mais escrita dá o nome. O dado guardado não muda
+  const palavrasDe = (q, max) => {
     const cont = {};
-    D.respostas.filter((r) => r.pesquisa_id === q.id && r.palavra).forEach((r) => { const w = r.palavra.trim().toLowerCase(); if (w) cont[w] = (cont[w] || 0) + 1; });
-    return Object.entries(cont).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    D.respostas.filter((r) => r.pesquisa_id === q.id && r.palavra).forEach((r) => {
+      const orig = r.palavra.trim().replace(/[.!?,;:]+$/g, '').toLowerCase(); const k = semAcento(orig).replace(/\s+/g, ' ');
+      if (!k) return;
+      const c = cont[k] || (cont[k] = { n: 0, formas: {} }); c.n += 1; c.formas[orig] = (c.formas[orig] || 0) + 1;
+    });
+    return Object.values(cont).map((c) => [Object.entries(c.formas).sort((x, y) => y[1] - x[1])[0][0], c.n]).sort((x, y) => y[1] - x[1]).slice(0, max || 8);
+  };
+  const nPalavras = (q) => D.respostas.filter((r) => r.pesquisa_id === q.id && r.palavra && r.palavra.trim()).length;
+  // gráfico de bolhas: a área de cada bolha é proporcional a quantas pessoas escreveram a palavra
+  const nuvemPalavras = (pal) => {
+    const W = 360; const H = 300; const fmax = pal[0][1]; const RMAX = 66; const RMIN = 28; const folga = 4;
+    const cs = pal.map(([w, n]) => ({ w, n, r: RMIN + (RMAX - RMIN) * Math.sqrt(n / fmax) }));
+    const postas = [];
+    cs.forEach((c) => {
+      for (let t = 0; t < 4000; t += 1) {
+        const ang = t * 0.55; const raio = t * 0.9;
+        const x = W / 2 + Math.cos(ang) * raio * 1.25; const y = H / 2 + Math.sin(ang) * raio * 0.9;
+        if (postas.every((o) => Math.hypot(o.x - x, o.y - y) >= o.r + c.r + folga)) { c.x = x; c.y = y; break; }
+      }
+      postas.push(c);
+    });
+    const x0 = Math.min(...postas.map((c) => c.x - c.r)) - 4; const x1 = Math.max(...postas.map((c) => c.x + c.r)) + 4;
+    const y0 = Math.min(...postas.map((c) => c.y - c.r)) - 4; const y1 = Math.max(...postas.map((c) => c.y + c.r)) + 4;
+    const g = sv('svg', { class: 'nuvem__svg', viewBox: x0.toFixed(1) + ' ' + y0.toFixed(1) + ' ' + (x1 - x0).toFixed(1) + ' ' + (y1 - y0).toFixed(1), role: 'img',
+      'aria-label': 'Palavras que descrevem a marca: ' + pal.map(([w, n]) => w + ' ' + n).join(', ') });
+    postas.forEach((c, i) => {
+      // a palavra ocupa no máximo 70% da largura da bolha (respiro nas bordas); se não couber nem em 9px, corta com "…"
+      const forte = i === 0; const livre = c.r * 1.4; let fs = Math.min(c.r * 0.4, livre / (c.w.length * 0.58)); let txt = c.w;
+      if (fs < 9) { fs = 9; const maxc = Math.max(3, Math.floor(livre / (9 * 0.58))); txt = c.w.length > maxc ? c.w.slice(0, maxc - 1) + '…' : c.w; }
+      g.append(sv('g', { class: 'nuvem__b' + (forte ? ' is-top' : '') },
+        sv('title', null, c.w + ': ' + c.n),
+        sv('circle', { class: 'nuvem__c', cx: c.x.toFixed(1), cy: c.y.toFixed(1), r: c.r.toFixed(1) }),
+        fs >= 9 ? sv('text', { x: c.x.toFixed(1), y: (c.y - (c.r >= 28 ? 3 : -4)).toFixed(1), 'text-anchor': 'middle', class: 'nuvem__w', 'font-size': Math.min(fs, 19).toFixed(1) }, txt) : null,
+        c.r >= 28 && fs >= 9 ? sv('text', { x: c.x.toFixed(1), y: (c.y + Math.min(fs, 19) * 0.85 + 2).toFixed(1), 'text-anchor': 'middle', class: 'nuvem__q', 'font-size': 11 }, c.n) : null));
+    });
+    return g;
+  };
+  // as palavras da rodada: bolhas + as mais usadas em lista (a lista dá a ordem exata quando as bolhas ficam pequenas).
+  // Com poucas respostas as bolhas não dizem nada: a lista simples continua
+  const MIN_NUVEM = 10;
+  // sem respostas ainda: o mesmo bloco, vazio (círculos tracejados e "—"), para já mostrar o que vai aparecer
+  const palavrasVazia = () => {
+    const g = sv('svg', { class: 'nuvem__svg', viewBox: '0 0 360 250', 'aria-hidden': 'true' });
+    [[180, 125, 50], [86, 100, 34], [276, 100, 40], [112, 190, 30], [250, 196, 28], [178, 36, 24]].forEach(([x, y, r]) => g.append(sv('circle', { class: 'nuvem__c is-vazio', cx: x, cy: y, r })));
+    return el('div', 'words nuvem is-vazio', el('p', 'eyebrow', 'Em uma palavra, como descrevem a marca'),
+      el('p', 'box__note', 'Aguardando respostas. As palavras que as pessoas escreverem para descrever a marca aparecem aqui.'),
+      el('div', 'nuvem__corpo', g, el('div', 'hbars', [0, 1, 2, 3, 4].map(() => el('div', 'hbar', el('p', 'hbar__label', '—'), el('div', 'hbar__track'), el('p', 'hbar__value', '—'))))));
+  };
+  const blocoPalavras = (atual, ant) => {
+    const tot = nPalavras(atual.q);
+    if (!tot) return palavrasVazia();
+    if (tot < MIN_NUVEM) {
+      return el('div', 'words', el('p', 'eyebrow', 'Em uma palavra, como descrevem a marca'),
+        el('div', 'words__cols', el('div', null, el('p', 'box__note', atual.q.titulo), el('ul', 'words__list', palavrasDe(atual.q, 8).map(([w, n]) => el('li', null, w, el('span', null, n)))))));
+    }
+    const pal = palavrasDe(atual.q, 14);
+    const antes = ant && nPalavras(ant.q) >= MIN_NUVEM ? Object.fromEntries(palavrasDe(ant.q, 200)) : null;
+    const fmax = pal[0][1];
+    return el('div', 'words nuvem',
+      el('p', 'eyebrow', 'Em uma palavra, como descrevem a marca'),
+      el('p', 'box__note', atual.q.titulo + ' · ' + tot + (tot === 1 ? ' resposta' : ' respostas') + (antes ? '. Entre parênteses, a rodada anterior.' : '')),
+      el('div', 'nuvem__corpo', nuvemPalavras(pal),
+        el('div', 'hbars anim', pal.slice(0, 6).map(([w, n]) => el('div', 'hbar',
+          el('p', 'hbar__label', w),
+          el('div', 'hbar__track', el('span', { class: 'hbar__fill', style: 'width:' + Math.round(n / fmax * 100) + '%' })),
+          el('p', 'hbar__value', String(n), antes ? el('span', 'muted', ' (antes ' + (antes[w] || 0) + ')') : null))))));
   };
 
   // sem respostas ainda: os mesmos gráficos da pesquisa, vazios ("—"), para já mostrar o que vai aparecer
@@ -1320,7 +1385,7 @@
     // o detalhe: funil e situações de compra com as barras zeradas
     const sits = (q && q.situacoes && q.situacoes.length ? q.situacoes : D.situacoes || []).slice(0, 6);
     const af = (q && q.afirmacoes) || [];
-    const colA = el('div', 'vista__col', funilClareza({ q: null, ment: null, lemb: null }));
+    const colA = el('div', 'vista__col', funilClareza({ q: null, ment: null, lemb: null }), palavrasVazia());
     const colB = el('div', 'vista__col');
     if (sits.length) colB.append(el('p', 'eyebrow', 'Em cada situação de compra: quem lembra da sua marca e do concorrente mais lembrado'),
       el('div', 'chart__legend', el('span', null, el('span', { class: 'chart__sq', style: 'background:' + C.bar }), 'Sua marca'),
@@ -1416,12 +1481,7 @@
           .map(([k, v]) => el('div', null, el('dt', null, k), el('dd', null, v))))));
       if (atual.n) {
         colA.append(funilClareza(atual));
-        const pw = palavrasDe(atual.q); const pwAnt = ant ? palavrasDe(ant.q) : [];
-        if (pw.length) colA.append(el('div', 'words',
-          el('p', 'eyebrow', 'Em uma palavra, como descrevem a marca'),
-          el('div', 'words__cols',
-            pwAnt.length ? el('div', null, el('p', 'box__note', ant.q.titulo), el('ul', 'words__list is-before', pwAnt.map(([w, n]) => el('li', null, w, el('span', null, n))))) : null,
-            el('div', null, el('p', 'box__note', atual.q.titulo), el('ul', 'words__list', pw.map(([w, n]) => el('li', null, w, el('span', null, n))))))));
+        colA.append(blocoPalavras(atual, ant));
         resumo.append(el('div', 'stats vista-kpis anim',
           atual.fatia != null ? tile('Das marcas lembradas, quantas são a sua', atual.fatia, delta(atual.fatia, ant && ant.fatia)) : null,
           atual.ment != null ? tile('Lembram da sua marca na hora de comprar', atual.ment, delta(atual.ment, ant && ant.ment)) : null,
@@ -3095,66 +3155,4 @@
   };
 
   const side = document.querySelector('.side');
-  const rota = () => { if (VER) return 'marca-pdf'; const r0 = location.hash.slice(1); const r = r0 === 'calendario' ? 'consultoria' : r0 === 'resultados' ? 'pesquisa' : r0; const padrao = soAcesso ? 'inicio' : consBloq ? 'assinatura' : 'plano'; return SCREENS[r] && !(soAcesso && SO_CONSULTORIA.includes(r)) && !(!soAcesso && r === 'inicio') && !(vencido && !ABERTAS_VENCIDO.includes(r)) ? r : padrao; };
-  // a animação de entrada só roda ao trocar de tela; atualizar algo na mesma tela (ex.: status de uma ação) não pisca
-  let telaAtual = null;
-  // uso: cada tela aberta e quanto tempo a pessoa ficou nela (só telas e tempo; o consultor vê isso para decidir o que simplificar)
-  let usoTela = null; let usoDesde = 0;
-  const registraUso = () => {
-    if (!usoTela) return;
-    const seg = Math.round((Date.now() - usoDesde) / 1000); const t = usoTela; usoTela = null;
-    sb.rpc('portal_registrar_uso', { p_tela: t, p_segundos: seg }).then(() => {}); // o .then envia o pedido (o rpc só sai quando é esperado)
-  };
-  const comecaUso = (r) => { usoTela = r; usoDesde = Date.now(); };
-  document.addEventListener('visibilitychange', () => { if (document.hidden) registraUso(); else if (telaAtual && !usoTela) comecaUso(telaAtual); });
-  window.addEventListener('pagehide', registraUso);
-  // o vocabulário do cliente: o que entra depois na tela (detalhes que abrem, listas que se redesenham) também é adaptado
-  const VENDE = U.vendeDe(D.empresa);
-  if (VENDE === 'produto' && window.MutationObserver) {
-    new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach((n) => { if (n.nodeType === 1) U.vocDOM(n, VENDE); else if (n.nodeType === 3 && n.parentElement) U.vocDOM(n.parentElement, VENDE); })))
-      .observe(document.body, { childList: true, subtree: true });
-  }
-  // gráficos que aparecem animados: cada .anim ganha is-in quando entra na tela (barras crescem, anéis fecham, linhas se desenham)
-  // e os números [data-conta] contam de 0 até o valor. Quem pediu menos movimento vê tudo pronto
-  const contaNumeros = (box) => box.querySelectorAll('[data-conta]').forEach((n) => {
-    const alvo = Number(n.dataset.conta); const pre = n.dataset.pre || ''; if (!Number.isFinite(alvo)) return;
-    const t0 = performance.now(); const dur = 1100;
-    const passo = (t) => { const k = Math.min(1, Math.max(0, (t - t0) / dur)); n.textContent = pre + Math.round(alvo * (1 - (1 - k) ** 3)) + '%'; if (k < 1) requestAnimationFrame(passo); };
-    n.textContent = pre + '0%'; requestAnimationFrame(passo);
-  });
-  const animaTela = (root) => {
-    const els = [...root.querySelectorAll('.anim')]; if (!els.length) return;
-    if ((window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) || !('IntersectionObserver' in window)) { els.forEach((e) => e.classList.add('is-in')); return; }
-    const io = new IntersectionObserver((es) => es.forEach((en) => { if (!en.isIntersecting) return; en.target.classList.add('is-in'); contaNumeros(en.target); io.unobserve(en.target); }), { threshold: 0.2 });
-    // só depois que a página aparece (a entrada começa preta): antes disso, a animação passaria sem ninguém ver
-    const html = document.documentElement;
-    const comeca = () => setTimeout(() => els.forEach((e) => io.observe(e)), 250);
-    if (html.classList.contains('is-ready')) comeca();
-    else { const mo = new MutationObserver(() => { if (html.classList.contains('is-ready')) { mo.disconnect(); comeca(); } }); mo.observe(html, { attributes: true, attributeFilter: ['class'] }); }
-  };
-  function render() {
-    const r = rota();
-    const trocou = r !== telaAtual; telaAtual = r;
-    if (trocou) { registraUso(); comecaUso(r); }
-    const y = window.scrollY;
-    $('crumb').textContent = SCREENS[r].crumb;
-    $('screen').replaceChildren(el('div', 'screen screen--' + r + (trocou ? ' screen--entra' : ''), avisoFatura(), SCREENS[r].render()));
-    U.vocDOM($('screen'), VENDE); // quem vende produto lê "produto" onde o sistema diz "serviço"
-    animaTela($('screen'));
-    if (!trocou) window.scrollTo(0, y);
-    document.querySelectorAll('[data-route]').forEach((a) => {
-      if (a.dataset.route === r) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
-    });
-  }
-  const go = (focus) => {
-    render();
-    side.classList.remove('is-open'); $('menu-btn').setAttribute('aria-expanded', 'false');
-    if (focus) { window.scrollTo(0, 0); $('main').focus({ preventScroll: true }); }
-  };
-  window.addEventListener('hashchange', () => go(true));
-  $('menu-btn').addEventListener('click', () => {
-    const open = side.classList.toggle('is-open');
-    $('menu-btn').setAttribute('aria-expanded', String(open));
-  });
-  go(false);
-})();
+  con

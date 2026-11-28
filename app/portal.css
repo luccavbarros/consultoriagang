@@ -1247,3 +1247,12 @@ a.kpi:hover { background: var(--lightblack); }
 .caminho-unido .trail-box { border-radius: 0; background: transparent; }
 .caminho-unido .missoes { margin: 0; padding: 22px 28px 28px; border-top: 1px solid var(--line); }
 @media (max-width: 640px) { .caminho-unido .missoes { padding: 20px 16px 22px; } }
+
+/* palavras da pesquisa em bolhas (área proporcional à frequência) + as mais usadas nas linhas de sempre.
+   O que cabe lado a lado depende da largura do próprio bloco, e não da tela */
+.words { container-type: inline-size; }
+.nuvem__corpo { display: grid; gap: 18px; align-items: center; }
+.nuvem__svg { display: block; width: 100%; height: auto; max-height: 320px; }
+/* o mesmo estilo dos selos (como o "Ativo"): fundo suave, aro fino e texto na cor */
+.nuvem__c { fill: #242424; stroke: rgba(255, 255, 255, .14); stroke-width: 1; }
+.nuvem__b.is-top .nuvem__c { fill: rgba(229, 72, 42, .16); fill: color-mix(in srgb, var(--accent) 16%, transparent); stroke: rgba(229, 72, 42, .5); stroke: color-mix(in srgb, var(--accent) 50%, t
