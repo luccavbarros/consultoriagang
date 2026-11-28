@@ -131,6 +131,7 @@
     '18 meses': '18 months',
     'das pessoas lembram da marca em 18 meses': 'of people remember the brand in 18 months',
     'Mais lembrada': 'More remembered',
+    'Interpretado por um consultor humano, não por IA': 'Interpreted by a human consultant, not by AI',
     'Mais clara': 'Clearer',
     'faturamento em 18 meses': 'revenue in 18 months',
     'Vender mais': 'Sell more',
@@ -365,4 +366,8 @@
     lang = lang === 'en' ? 'pt' : 'en';
     try { localStorage.setItem(KEY, lang); } catch (err) { /* not remembered, still switches */ }
     apply(lang);
-    // the texts changed size: line breaks, alig
+    // the texts changed size: line breaks, aligned blocks and scroll positions are measured again
+    document.dispatchEvent(new Event('gang:lang'));
+    window.dispatchEvent(new Event('resize'));
+  });
+})();
