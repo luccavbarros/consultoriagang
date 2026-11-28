@@ -7775,4 +7775,63 @@
   "tam": "P",
   "ler": 30,
   "passos": [
-   "Definir o preço de partida (\"a partir de\") e o pró
+   "Definir o preço de partida (\"a partir de\") e o próximo passo",
+   "Colocar no site, no perfil das redes e no WhatsApp",
+   "Colocar nos anúncios e nos materiais de venda",
+   "Conferir cada canal como se fosse um cliente"
+  ]
+ }
+};
+  Object.keys(NOVOS).forEach((t) => {
+    if (!(D[t] && (D[t].passos || []).length)) D[t] = Object.assign({}, D[t] || {}, NOVOS[t]);
+    const a = (P.acoes || []).find((x) => x.texto === t);
+    if (a && !(a.passos || []).length) Object.assign(a, NOVOS[t]); // é na ação que o plano lê os passos
+  });
+})();
+
+// ===== Rodada 61: títulos que ainda soavam como conselho ("Mostrar…", "Manter…", "Usar…") viram tarefas com entrega =====
+// O conteúdo e os passos não mudam (só onde o título novo pede um passo a mais). O planejador continua classificando pelo nome de antes.
+(() => {
+  const P = window.GangPresets; if (!P || !P.renomearAcoes) return;
+  P.renomearAcoes({
+ "Mostrar a especialidade principal em tudo, sem deixar de falar com toda a categoria": "Colocar a especialidade principal no site, nas redes e nas propostas, sem deixar de falar com toda a categoria",
+ "Usar sempre o mesmo nome para a categoria que a empresa quer liderar": "Trocar em todos os canais os nomes diferentes pelo nome da categoria que a empresa quer liderar",
+ "Mostrar na comunicação de que lado a marca está na tensão que o cliente vive": "Publicar uma peça de marca com a posição da marca na tensão que o cliente vive",
+ "Mostrar o que a escolha da marca diz sobre quem compra": "Escrever 3 mensagens sobre o que a escolha da marca diz de quem compra e usá-las em anúncios e redes",
+ "Mostrar cuidado com as pessoas, e não só competência: gestos, histórias e respostas humanas": "Contar 3 histórias reais de cuidado com clientes e reescrever as respostas-padrão para soarem humanas",
+ "Repetir em tudo a palavra que a marca quer ocupar na cabeça do cliente": "Colocar a palavra que a marca quer ocupar no título do site, nas redes e no atendimento",
+ "Usar a identidade central como filtro para aprovar peças, parcerias e novos serviços": "Montar o checklist de aprovação com a identidade central e passar por ele cada peça, parceria e serviço novo",
+ "Manter a mesma ideia de campanha por pelo menos 2 anos, variando só as peças": "Escrever a ideia de campanha dos próximos 2 anos e planejar 4 peças novas com ela",
+ "Manter anúncios no ar todos os meses, com menos verba por mês, em vez de picos com meses parados": "Montar o calendário anual de anúncios no ar todos os meses, com uma verba mínima por mês em vez de picos com meses parados",
+ "Manter o anúncio que funciona no ar por mais tempo: o cansaço da equipe não é o cansaço do público": "Definir o sinal de desgaste dos anúncios e só trocar os que funcionam quando o resultado cair",
+ "Garantir que o produto ou a agenda não falte nos períodos de pico": "Planejar estoque ou agenda extra para os períodos de pico do ano",
+ "Mostrar o trabalho que o cliente não vê: o cuidado e as etapas por trás do resultado": "Fotografar ou filmar 3 etapas do trabalho que o cliente não vê e incluir no site e na entrega",
+ "Falar com quem acabou de passar por uma mudança de vida (mudança de casa, empresa nova, filho, novo emprego)": "Montar uma oferta de experimentação para quem acabou de passar por uma mudança de vida (mudança de casa, empresa nova, filho, novo emprego)",
+ "Mostrar a quem ainda não é cliente como a empresa trata quem já compra: atendimento, benefícios e reconhecimento": "Publicar para quem ainda não é cliente como a empresa trata quem já compra: atendimento, benefícios e reconhecimento"
+});
+  const PASSOS = {
+ "Montar o checklist de aprovação com a identidade central e passar por ele cada peça, parceria e serviço novo": [
+  "Escrever o checklist com as ideias da identidade central",
+  "Deixar o checklist com quem aprova",
+  "Conferir cada peça, parceria ou serviço novo contra ele",
+  "Recusar ou ajustar o que contradiz",
+  "Anotar o que foi recusado e por quê"
+ ],
+ "Fotografar ou filmar 3 etapas do trabalho que o cliente não vê e incluir no site e na entrega": [
+  "Listar as etapas que o cliente não vê",
+  "Escolher as 3 mais impressionantes",
+  "Fotografar ou filmar cada uma",
+  "Incluir no site, nas redes e no material de entrega"
+ ],
+ "Planejar estoque ou agenda extra para os períodos de pico do ano": [
+  "Marcar os picos do ano no calendário",
+  "Ver o que faltou no último pico",
+  "Planejar estoque ou agenda extra para cada pico",
+  "Registrar as vendas perdidas por falta no próximo pico"
+ ]
+};
+  Object.keys(PASSOS).forEach((t) => {
+    const a = (P.acoes || []).find((x) => x.texto === t); if (a) a.passos = PASSOS[t];
+    if (P.detalhes && P.detalhes[t]) P.detalhes[t].passos = PASSOS[t];
+  });
+})();
