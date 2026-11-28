@@ -3155,4 +3155,66 @@
   };
 
   const side = document.querySelector('.side');
-  con
+  const rota = () => { if (VER) return 'marca-pdf'; const r0 = location.hash.slice(1); const r = r0 === 'calendario' ? 'consultoria' : r0 === 'resultados' ? 'pesquisa' : r0; const padrao = soAcesso ? 'inicio' : consBloq ? 'assinatura' : 'plano'; return SCREENS[r] && !(soAcesso && SO_CONSULTORIA.includes(r)) && !(!soAcesso && r === 'inicio') && !(vencido && !ABERTAS_VENCIDO.includes(r)) ? r : padrao; };
+  // a animação de entrada só roda ao trocar de tela; atualizar algo na mesma tela (ex.: status de uma ação) não pisca
+  let telaAtual = null;
+  // uso: cada tela aberta e quanto tempo a pessoa ficou nela (só telas e tempo; o consultor vê isso para decidir o que simplificar)
+  let usoTela = null; let usoDesde = 0;
+  const registraUso = () => {
+    if (!usoTela) return;
+    const seg = Math.round((Date.now() - usoDesde) / 1000); const t = usoTela; usoTela = null;
+    sb.rpc('portal_registrar_uso', { p_tela: t, p_segundos: seg }).then(() => {}); // o .then envia o pedido (o rpc só sai quando é esperado)
+  };
+  const comecaUso = (r) => { usoTela = r; usoDesde = Date.now(); };
+  document.addEventListener('visibilitychange', () => { if (document.hidden) registraUso(); else if (telaAtual && !usoTela) comecaUso(telaAtual); });
+  window.addEventListener('pagehide', registraUso);
+  // o vocabulário do cliente: o que entra depois na tela (detalhes que abrem, listas que se redesenham) também é adaptado
+  const VENDE = U.vendeDe(D.empresa);
+  if (VENDE === 'produto' && window.MutationObserver) {
+    new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach((n) => { if (n.nodeType === 1) U.vocDOM(n, VENDE); else if (n.nodeType === 3 && n.parentElement) U.vocDOM(n.parentElement, VENDE); })))
+      .observe(document.body, { childList: true, subtree: true });
+  }
+  // gráficos que aparecem animados: cada .anim ganha is-in quando entra na tela (barras crescem, anéis fecham, linhas se desenham)
+  // e os números [data-conta] contam de 0 até o valor. Quem pediu menos movimento vê tudo pronto
+  const contaNumeros = (box) => box.querySelectorAll('[data-conta]').forEach((n) => {
+    const alvo = Number(n.dataset.conta); const pre = n.dataset.pre || ''; if (!Number.isFinite(alvo)) return;
+    const t0 = performance.now(); const dur = 1100;
+    const passo = (t) => { const k = Math.min(1, Math.max(0, (t - t0) / dur)); n.textContent = pre + Math.round(alvo * (1 - (1 - k) ** 3)) + '%'; if (k < 1) requestAnimationFrame(passo); };
+    n.textContent = pre + '0%'; requestAnimationFrame(passo);
+  });
+  const animaTela = (root) => {
+    const els = [...root.querySelectorAll('.anim')]; if (!els.length) return;
+    if ((window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) || !('IntersectionObserver' in window)) { els.forEach((e) => e.classList.add('is-in')); return; }
+    const io = new IntersectionObserver((es) => es.forEach((en) => { if (!en.isIntersecting) return; en.target.classList.add('is-in'); contaNumeros(en.target); io.unobserve(en.target); }), { threshold: 0.2 });
+    // só depois que a página aparece (a entrada começa preta): antes disso, a animação passaria sem ninguém ver
+    const html = document.documentElement;
+    const comeca = () => setTimeout(() => els.forEach((e) => io.observe(e)), 250);
+    if (html.classList.contains('is-ready')) comeca();
+    else { const mo = new MutationObserver(() => { if (html.classList.contains('is-ready')) { mo.disconnect(); comeca(); } }); mo.observe(html, { attributes: true, attributeFilter: ['class'] }); }
+  };
+  function render() {
+    const r = rota();
+    const trocou = r !== telaAtual; telaAtual = r;
+    if (trocou) { registraUso(); comecaUso(r); }
+    const y = window.scrollY;
+    $('crumb').textContent = SCREENS[r].crumb;
+    $('screen').replaceChildren(el('div', 'screen screen--' + r + (trocou ? ' screen--entra' : ''), avisoFatura(), SCREENS[r].render()));
+    U.vocDOM($('screen'), VENDE); // quem vende produto lê "produto" onde o sistema diz "serviço"
+    animaTela($('screen'));
+    if (!trocou) window.scrollTo(0, y);
+    document.querySelectorAll('[data-route]').forEach((a) => {
+      if (a.dataset.route === r) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
+  }
+  const go = (focus) => {
+    render();
+    side.classList.remove('is-open'); $('menu-btn').setAttribute('aria-expanded', 'false');
+    if (focus) { window.scrollTo(0, 0); $('main').focus({ preventScroll: true }); }
+  };
+  window.addEventListener('hashchange', () => go(true));
+  $('menu-btn').addEventListener('click', () => {
+    const open = side.classList.toggle('is-open');
+    $('menu-btn').setAttribute('aria-expanded', String(open));
+  });
+  go(false);
+})();

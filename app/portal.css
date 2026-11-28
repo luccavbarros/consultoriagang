@@ -1255,4 +1255,12 @@ a.kpi:hover { background: var(--lightblack); }
 .nuvem__svg { display: block; width: 100%; height: auto; max-height: 320px; }
 /* o mesmo estilo dos selos (como o "Ativo"): fundo suave, aro fino e texto na cor */
 .nuvem__c { fill: #242424; stroke: rgba(255, 255, 255, .14); stroke-width: 1; }
-.nuvem__b.is-top .nuvem__c { fill: rgba(229, 72, 42, .16); fill: color-mix(in srgb, var(--accent) 16%, transparent); stroke: rgba(229, 72, 42, .5); stroke: color-mix(in srgb, var(--accent) 50%, t
+.nuvem__b.is-top .nuvem__c { fill: rgba(229, 72, 42, .16); fill: color-mix(in srgb, var(--accent) 16%, transparent); stroke: rgba(229, 72, 42, .5); stroke: color-mix(in srgb, var(--accent) 50%, transparent); }
+.nuvem__w { fill: #d4d4d4; font-weight: 500; pointer-events: none; }
+.nuvem__q { fill: #8a8a8a; pointer-events: none; }
+.nuvem__b.is-top .nuvem__w { fill: var(--accent); }
+.nuvem__b.is-top .nuvem__q { fill: var(--accent); fill-opacity: .8; }
+.nuvem .hbar { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+@container (min-width: 560px) { .nuvem__corpo { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; } }
+.nuvem__c.is-vazio { fill: transparent; stroke: #3a3a3a; stroke-dasharray: 3 5; }
+.nuvem.is-vazio .hbar__label, .nuvem.is-vazio .hbar__value { color: var(--ganggrey); }
