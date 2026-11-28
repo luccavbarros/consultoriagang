@@ -2697,4 +2697,11 @@ html.side-abrindo .side__plan .badge { display: none; }
   .grupo .tabs--mini .tabs__btn { min-width: 0; padding: 4px 6px; font-size: 11.5px; line-height: 1.25; white-space: normal; text-align: center; justify-content: center; }
 }
 
-/* Estratégi
+/* Estratégia: dois objetivos do mesmo pilar no mesmo cartão, separados por uma linha fina */
+.oc__varios { display: grid; gap: 14px; }
+.oc__varios > * + * { padding-top: 14px; border-top: 1px solid var(--line); }
+
+/* Pesquisa sem respostas: os mesmos gráficos, vazios e em tom apagado */
+.anel.is-vazio .stat__value { color: var(--muted, #8a8a8a); }
+.anel.is-vazio .stat__delta { color: var(--muted, #8a8a8a); }
+.anel.is-vazio .anel__arco { display: none; }
